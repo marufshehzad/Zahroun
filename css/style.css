@@ -1,21 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&display=swap');
 
 :root {
-  --primary-color: #7B9E87; /* Premium Sage Green */
-  --primary-hover: #5A7E67;
-  --bg-color: #EAF4EC; /* Soft Botanical Mint */
+  --primary-color: #163E34; /* Premium Deep Green */
+  --primary-hover: #0F2E27;
+  --bg-color: #F5F3EF; /* Soft Cream */
   --surface-color: #FFFFFF;
-  --accent-color: #C8E0D0; /* Pale Green */
-  --text-main: #143D2C; /* Deep Forest Green */
-  --text-muted: #4A6B59;
-  --border-color: #B5D1C0;
+  --accent-color: #E8E4DB; /* Subtle warm accent */
+  --text-main: #1A1A1A; /* Text Dark */
+  --text-muted: #666666;
+  --border-color: #DCD8CF;
   
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Cinzel Decorative', serif;
   
-  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  --shadow-sm: 0 4px 6px rgba(20, 61, 44, 0.05);
-  --shadow-md: 0 10px 25px rgba(20, 61, 44, 0.08);
+  --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -65,7 +65,11 @@ img {
 .mt-4 { margin-top: 2rem; }
 .mb-4 { margin-bottom: 2rem; }
 .py-4 { padding: 2rem 0; }
-.py-8 { padding: 6rem 0; }
+.py-8 { padding: 4rem 0; }
+
+section:not(.hero) {
+  margin-top: 100px;
+}
 
 .btn {
   display: inline-block;
@@ -122,6 +126,7 @@ img {
   font-size: 2.2rem;
   font-weight: 700;
   letter-spacing: 2px;
+  color: var(--primary-color);
 }
 
 .nav-links {
@@ -234,10 +239,10 @@ img {
   margin-top: 15vh;
   padding: 32px;
   text-align: left;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 18px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   animation: fadeInUp 1s ease forwards;
@@ -313,12 +318,13 @@ img {
 /* Products Grid */
 .section-title {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 3.5rem;
 }
 
 .section-title h2 {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
+  color: var(--primary-color);
 }
 
 .section-title p {
@@ -329,21 +335,21 @@ img {
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2.5rem;
+  gap: 3.5rem;
 }
 
 .product-card {
   background-color: var(--surface-color);
-  border-radius: 4px;
+  border-radius: 12px;
   overflow: hidden;
-  transition: var(--transition);
+  transition: all 0.3s ease;
   position: relative;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
 .product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-6px) scale(1.05);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 
 .product-img-wrapper {
@@ -518,10 +524,10 @@ img {
     max-width: 320px;
     margin: 20vh auto 30px auto;
     padding: 18px 20px;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.25);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 18px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     text-align: center;
@@ -549,6 +555,24 @@ img {
 
   .hero-btn {
     padding: 12px 24px;
+  }
+
+  .py-8 {
+    padding: 3rem 0;
+  }
+  
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .product-card {
+    text-align: center;
+  }
+  
+  .btn {
+    width: 100%;
+    display: flex;
+    justify-content: center;
   }
 }
 
@@ -674,15 +698,17 @@ img {
     color: white;
     text-align: center;
     line-height: 1;
-    margin-bottom: 4rem;
-    padding-top: 4rem;
+    margin-bottom: 2rem;
+    padding-top: 2rem;
     overflow: hidden;
     white-space: nowrap;
 }
 .footer-grid-new {
     display: grid;
     grid-template-columns: 1.5fr 1fr 1fr 1fr;
-    gap: 4rem;
+    gap: 6rem;
+    font-size: 1rem;
+    line-height: 1.8;
 }
 .footer-grid-new a {
     text-decoration: none;
@@ -694,7 +720,7 @@ img {
 @media (max-width: 900px) {
     .footer-grid-new {
         grid-template-columns: 1fr;
-        gap: 2rem;
+        gap: 3rem;
     }
 }
 /* Size Selection Styles */
@@ -762,4 +788,26 @@ img {
     filter: drop-shadow(0 15px 30px rgba(0,0,0,0.12));
     mix-blend-mode: normal;
     background-color: #FFFFFF;
+}
+
+/* Contact Hero Glass Effect */
+.hero-glass {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 16px;
+  padding: 20px 30px;
+  display: inline-block;
+  animation: fadeInUp 1s ease-out;
+}
+
+@media (max-width: 768px) {
+  .hero-glass {
+    padding: 14px 18px;
+  }
+
+  .hero-glass h1 {
+    font-size: 28px !important;
+  }
 }

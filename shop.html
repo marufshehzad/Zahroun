@@ -64,7 +64,7 @@
     </style>
 </head>
 <body>
-    <!-- Header code from index.html (I am reusing it to keep it simple, typically you'd use a templating engine) -->
+    <!-- Header -->
     <header class="header">
         <div class="container nav-container">
             <a href="index.html" class="logo">ZAHROUN</a>
@@ -116,7 +116,80 @@
         </div>
     </div>
 
-    <!-- Reusing Footer and Cart Modal Structure -->
+    <!-- Why Choose Zahroun -->
+    <section class="container py-8 fade-in" style="margin-top: 80px;">
+        <div class="section-title">
+            <h2 style="font-size: 2.5rem; color: var(--primary-color);">Why Choose Zahroun</h2>
+            <p>Experience the pinnacle of fine fragrance</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem; text-align: center;">
+            <div style="padding: 2rem; background: var(--surface-color); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
+                <ion-icon name="leaf-outline" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></ion-icon>
+                <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Organic Ingredients</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Sourced from the finest botanical gardens around the globe for a pure, clean scent.</p>
+            </div>
+            <div style="padding: 2rem; background: var(--surface-color); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
+                <ion-icon name="time-outline" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></ion-icon>
+                <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Extreme Longevity</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">High concentration Extrait de Parfum guarantees an invisible signature all day.</p>
+            </div>
+            <div style="padding: 2rem; background: var(--surface-color); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
+                <ion-icon name="flask-outline" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></ion-icon>
+                <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Cruelty Free</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Ethically crafted without animal testing, so you can wear your luxury with pride.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="massive-footer">
+        <div class="footer-massive-brand">ZAHROUN</div>
+        <div class="container footer-grid-new">
+            <div class="footer-col-1">
+                <h4 style="font-size: 1.5rem; color: white; margin-bottom: 1rem;">Stay in the Loop</h4>
+                <p style="color: #999; font-size: 1rem; margin-bottom: 1.5rem;">Be the first to know about new arrivals, exclusive offers, and behind-the-scenes stories.</p>
+                <form style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <input type="email" placeholder="Enter your email" style="background: #222; border: none; padding: 1rem; color: white; flex: 1; border-radius: 4px;">
+                    <button type="submit" class="btn" style="background: white; color: black;">Subscribe &rarr;</button>
+                </form>
+                <p style="color: #666; font-size: 0.95rem;">By subscribing, you agree to our Privacy Policy. Unsubscribe anytime.</p>
+            </div>
+            
+            <div class="footer-col-2">
+                <p style="font-family: var(--font-serif); font-size: 1.2rem; line-height: 1.6;">The finest fragrances in the world. By the ml. For you.</p>
+            </div>
+
+            <div class="footer-col-3">
+                <h5 style="color: #666; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;">Shop</h5>
+                <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
+                    <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Explore Fragrance DNAs</a></li>
+                    <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Best Sellers</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 1rem;">Blog</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 1rem;">Reviews</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col-4">
+                <h5 style="color: #666; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;">Connect</h5>
+                <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
+                    <li><a href="about.html" style="color: #ccc; font-size: 1rem;">How It Works</a></li>
+                    <li><a href="contact.html" style="color: #ccc; font-size: 1rem;">Contact Us</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 1rem;">Shipping</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 1rem;">Payment Methods</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom-new" style="border-top: 1px solid #222; margin-top: 4rem; padding-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+            <div style="display: flex; gap: 1.5rem; color: white; font-size: 1.2rem;">
+                <a href="#"><ion-icon name="logo-facebook"></ion-icon></a>
+                <a href="#"><ion-icon name="logo-instagram"></ion-icon></a>
+                <a href="#"><ion-icon name="logo-youtube"></ion-icon></a>
+            </div>
+            <p style="color: #666; font-size: 0.95rem;">Dhanmondi, Dhaka, Bangladesh, 1205 | WhatsApp: +880 1886-936581</p>
+            <p style="color: #666; font-size: 0.95rem;">&copy; 2026 Zahroun. All rights reserved.</p>
+        </div>
+    </footer>
+
     <!-- Cart Modal -->
     <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
         <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
@@ -130,7 +203,7 @@
                     <span>Total</span>
                     <span id="cart-total">0 BDT</span>
                 </div>
-                <button class="btn" style="width: 100%;">Checkout</button>
+                <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
         </div>
     </div>
@@ -233,4 +306,3 @@
     </script>
 </body>
 </html>
-

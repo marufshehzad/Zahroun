@@ -30,26 +30,54 @@
         </div>
     </header>
 
-    <div style="background-color: var(--accent-color); padding: 5rem 0; text-align: center;">
-        <div class="container" style="max-width: 800px;">
-            <h1 style="font-size: 3rem; margin-bottom: 1rem;">Zahroun Perfumes</h1>
-            <p style="font-size: 1.2rem; color: var(--text-muted);">Zahroun Perfumes — where every scent tells a story of confidence, beauty, and unforgettable moments.</p>
+    <div style="background: url('assets/Home.jpg') center/cover no-repeat; padding: 10rem 0; text-align: center; position: relative;">
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6));"></div>
+        <div class="container fade-in" style="position: relative; z-index: 2; max-width: 800px;">
+            <h1 style="font-size: 4rem; color: white; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 2px;">Our Heritage</h1>
+            <p style="font-size: 1.2rem; color: rgba(255,255,255,0.85); letter-spacing: 1px;">Crafting memories through the art of perfumery.</p>
         </div>
     </div>
 
-    <div class="container py-8">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
-            <div style="border-radius: 8px; overflow: hidden; height: 500px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md);">
+    <section class="container py-8 fade-in">
+        <div class="section-title">
+            <h2 style="font-size: 2.5rem; color: var(--primary-color);">Brand Story</h2>
+        </div>
+        <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+            <p style="font-size: 1.2rem; color: var(--text-main); line-height: 2; margin-bottom: 2rem;">
+                Zahroun was born from a passion for the profound emotional connection between scent and memory. We believe that a fragrance is more than a blend of notes; it is an invisible signature that lingers long after you've left the room. By sourcing the rarest organic botanicals from around the world, we craft olfactory masterpieces designed to evoke confidence and timeless elegance.
+            </p>
+        </div>
+    </section>
+
+    <section class="container py-8 fade-in">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 4rem; align-items: center;">
+            <div style="border-radius: 12px; overflow: hidden; height: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.12);">
                  <img src="assets/last.jpeg" alt="Zahroun Philosophy" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div>
-                <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem;">The Philosophy</h2>
+                <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem; color: var(--primary-color);">Mission & Vision</h2>
                 <p style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 1.5rem;">
-                    We believe that a scent is more than just a fragrance—it's an extension of your identity. That's why every Zahroun perfume is meticulously crafted using only the finest organic botanicals and potent natural extracts to create a long-lasting, luxury olfactory experience.
+                    <strong>Our Mission:</strong> To democratize luxury perfumery by offering niche, designer-quality fragrances crafted from the finest ingredients, ensuring extraordinary longevity and sillage without the traditional luxury markup.
+                </p>
+                <p style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.8;">
+                    <strong>Our Vision:</strong> To become the global benchmark for sustainable, high-end perfumery, where every bottle poured is a testament to ethical sourcing, uncompromising quality, and the timeless art of scent making.
                 </p>
             </div>
         </div>
-    </div>
+    </section>
+
+    <section style="background-color: var(--primary-color); color: white; padding: 6rem 0; margin-top: 100px;" class="fade-in">
+        <div class="container text-center" style="max-width: 800px;">
+            <ion-icon name="flower-outline" style="font-size: 3rem; margin-bottom: 1rem; color: var(--accent-color);"></ion-icon>
+            <p style="font-family: var(--font-serif); font-size: 2rem; font-style: italic; line-height: 1.6; margin-bottom: 2rem;">
+                "A signature scent should arrive before you do, and stay long after you leave."
+            </p>
+            <p style="font-size: 1rem; letter-spacing: 2px; text-transform: uppercase;">— The Master Perfumer</p>
+        </div>
+    </section>
+
+    <footer class="massive-footer">
+        </footer>
 
     <!-- Reusing Cart Modal Structure -->
     <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
@@ -64,7 +92,7 @@
                     <span>Total</span>
                     <span id="cart-total">0 BDT</span>
                 </div>
-                <button class="btn" style="width: 100%;">Checkout</button>
+                <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
         </div>
     </div>
@@ -74,4 +102,5 @@
     <script src="js/ui.js"></script>
 </body>
 </html>
+
 
