@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | Zahroun</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .checkout-container {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 4rem;
+            margin: 4rem auto;
+        }
+        .checkout-section {
+            background: var(--surface-color);
+            padding: 2.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+        .checkout-section h2 {
+            font-family: var(--font-serif);
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: var(--font-sans);
+            font-size: 1rem;
+            background: var(--bg-color);
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .payment-option {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .payment-option:hover {
+            border-color: var(--primary-color);
+        }
+        .payment-option input[type="radio"] {
+            margin-right: 0.5rem;
+        }
+        .payment-details {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--border-color);
+            display: none;
+        }
+        .order-summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 2px solid var(--text-main);
+        }
+        @media (max-width: 768px) {
+            .checkout-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container nav-container">
+            <a href="index.html" class="logo">Zahroun.</a>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="nav-icons">
+                <button aria-label="Cart" id="cart-icon">
+                    <ion-icon name="bag-outline"></ion-icon>
+                    <span class="cart-count" id="cart-count">0</span>
+                </button>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <form id="checkout-form" class="checkout-container">
+            <!-- Left Column: Shipping & Payment -->
+            <div>
+                <div class="checkout-section" style="margin-bottom: 2rem;">
+                    <h2>Shipping Details</h2>
+                    <div class="form-group">
+                        <label for="fullName">Full Name *</label>
+                        <input type="text" id="fullName" class="form-control" required placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="mobile">Mobile Number *</label>
+                        <input type="tel" id="mobile" class="form-control" required placeholder="01XXXXXXXXX">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Full Delivery Address *</label>
+                        <textarea id="address" class="form-control" rows="3" required placeholder="House, Road, Block, Area..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="deliveryArea">Delivery Area *</label>
+                        <select id="deliveryArea" class="form-control" required onchange="calculateTotal()">
+                            <option value="70">Inside Dhaka (70 BDT)</option>
+                            <option value="130">Outside Dhaka (130 BDT)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="checkout-section">
+                    <h2>Payment Method</h2>
+                    <div class="payment-methods">
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="bKash" onchange="togglePaymentDetails()"> bKash (Manual)
+                            <div class="payment-details" id="bkash-details">
+                                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Please send money to our bKash Number: <strong>01886936581</strong> (Personal)</p>
+                                <input type="text" id="bkashTxn" class="form-control" placeholder="Enter Transaction ID">
+                            </div>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="Nagad" onchange="togglePaymentDetails()"> Nagad (Manual)
+                            <div class="payment-details" id="nagad-details">
+                                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Please send money to our Nagad Number: <strong>01886936581</strong> (Personal)</p>
+                                <input type="text" id="nagadTxn" class="form-control" placeholder="Enter Transaction ID">
+                            </div>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="COD" checked onchange="togglePaymentDetails()"> Cash on Delivery
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Order Summary -->
+            <div>
+                <div class="checkout-section">
+                    <h2>Order Summary</h2>
+                    <div id="checkout-cart-items">
+                        <!-- Populated by JS -->
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted);">
+                            <span>Subtotal</span>
+                            <span id="summary-subtotal">0 BDT</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted);">
+                            <span>Delivery Charge</span>
+                            <span id="summary-delivery">70 BDT</span>
+                        </div>
+                        <div class="order-total">
+                            <span>Total</span>
+                            <span id="summary-total">0 BDT</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn" style="width: 100%; margin-top: 2rem; font-size: 1.2rem; padding: 1rem;">Place Order via WhatsApp</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Reusing Cart Modal Structure -->
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h3>Your Cart</h3>
+                <button id="close-cart" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div id="cart-items" style="flex: 1; overflow-y: auto;"></div>
+            <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
+                    <span>Total</span>
+                    <span id="cart-total">0 BDT</span>
+                </div>
+                <button class="btn checkout-redirect-btn" style="width: 100%;">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/products.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCheckoutCart();
+            calculateTotal();
+            togglePaymentDetails(); // Initialize UI state
+
+            const form = document.getElementById('checkout-form');
+            form.addEventListener('submit', handleCheckout);
+            form.addEventListener('input', checkFormValidity);
+            form.addEventListener('change', checkFormValidity);
+            checkFormValidity(); // Initial check
+        });
+
+        function checkFormValidity() {
+            const form = document.getElementById('checkout-form');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (form.checkValidity()) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.5';
+                submitBtn.style.cursor = 'not-allowed';
+            }
+        }
+
+        function renderCheckoutCart() {
+            const container = document.getElementById('checkout-cart-items');
+            if (cart.length === 0) {
+                container.innerHTML = '<p>Your cart is empty. Please add items before checking out.</p>';
+                return;
+            }
+
+            container.innerHTML = cart.map(item => `
+                <div class="order-summary-item">
+                    <div style="display: flex; gap: 1rem;">
+                        <img src="${item.image}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: contain; border: 1px solid var(--border-color); border-radius: 4px;">
+                        <div>
+                            <h4 style="font-size: 1rem; margin-bottom: 0.25rem;">${item.name}</h4>
+                            <div style="color: var(--text-muted); font-size: 0.8rem;">Size: ${item.size}</div>
+                            <div style="color: var(--text-muted); font-size: 0.9rem;">Qty: ${item.quantity}</div>
+                        </div>
+                    </div>
+                    <div style="font-weight: 600;">${(parseFloat(item.selectedPrice) * item.quantity).toFixed(2)} BDT</div>
+                </div>
+            `).join('');
+        }
+
+        function calculateTotal() {
+            const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.selectedPrice) * item.quantity), 0);
+            const deliverySelect = document.getElementById('deliveryArea');
+            const deliveryCharge = parseInt(deliverySelect.value);
+            
+            const appliedVoucher = localStorage.getItem('zahroun_voucher');
+            let discount = 0;
+            if (appliedVoucher === 'myzahroun10' && subtotal >= 4000) {
+                discount = subtotal * 0.1;
+            }
+            
+            const total = (subtotal - discount) + deliveryCharge;
+
+            let subtotalHtml = subtotal.toFixed(2) + ' BDT';
+            if (discount > 0) {
+                subtotalHtml = `<span style="text-decoration: line-through; color: #999; margin-right: 0.5rem;">${subtotal.toFixed(2)} BDT</span> ${(subtotal - discount).toFixed(2)} BDT <br><span style="color: #27ae60; font-size: 0.85rem;">(10% Voucher Applied)</span>`;
+            }
+
+            document.getElementById('summary-subtotal').innerHTML = subtotalHtml;
+            document.getElementById('summary-delivery').textContent = deliveryCharge + ' BDT';
+            document.getElementById('summary-total').textContent = total.toFixed(2) + ' BDT';
+        }
+
+        function togglePaymentDetails() {
+            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+            const bkashDetails = document.getElementById('bkash-details');
+            const nagadDetails = document.getElementById('nagad-details');
+            const bkashTxn = document.getElementById('bkashTxn');
+            const nagadTxn = document.getElementById('nagadTxn');
+
+            bkashDetails.style.display = 'none';
+            nagadDetails.style.display = 'none';
+            bkashTxn.required = false;
+            nagadTxn.required = false;
+
+            if (paymentMethod === 'bKash') {
+                bkashDetails.style.display = 'block';
+                bkashTxn.required = true;
+            } else if (paymentMethod === 'Nagad') {
+                nagadDetails.style.display = 'block';
+                nagadTxn.required = true;
+            }
+        }
+
+        function handleCheckout(e) {
+            e.preventDefault();
+
+            if (cart.length === 0) {
+                alert('Your cart is empty! Add products to proceed.');
+                return;
+            }
+
+            const name = document.getElementById('fullName').value;
+            const mobile = document.getElementById('mobile').value;
+            const address = document.getElementById('address').value;
+            
+            const deliverySelect = document.getElementById('deliveryArea');
+            const deliveryAreaText = deliverySelect.options[deliverySelect.selectedIndex].text;
+            const deliveryCharge = parseInt(deliverySelect.value);
+
+            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+            let txnId = '';
+            if (paymentMethod === 'bKash') txnId = document.getElementById('bkashTxn').value;
+            if (paymentMethod === 'Nagad') txnId = document.getElementById('nagadTxn').value;
+
+            const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.selectedPrice) * item.quantity), 0);
+            
+            const appliedVoucher = localStorage.getItem('zahroun_voucher');
+            let discount = 0;
+            if (appliedVoucher === 'myzahroun10' && subtotal >= 4000) {
+                discount = subtotal * 0.1;
+            }
+            
+            const total = (subtotal - discount) + deliveryCharge;
+
+            // Build Item List
+            let itemList = '';
+            cart.forEach(item => {
+                itemList += `- ${item.name} (${item.size}) (x${item.quantity}) : ${(parseFloat(item.selectedPrice) * item.quantity).toFixed(2)} BDT\n`;
+            });
+
+            // Construct WhatsApp Message
+            let message = `*New Order for Zahroun*\n`;
+            message += `------------------------\n`;
+            message += `*Customer Details:*\n`;
+            message += `Name: ${name}\n`;
+            message += `Mobile: ${mobile}\n`;
+            message += `Address: ${address}\n`;
+            message += `Delivery Area: ${deliveryAreaText}\n\n`;
+            
+            message += `*Items:*\n${itemList}\n`;
+            
+            message += `Subtotal: ${subtotal.toFixed(2)} BDT\n`;
+            if (discount > 0) {
+                message += `Discount (10%): -${discount.toFixed(2)} BDT\n`;
+            }
+            message += `Delivery: ${deliveryCharge} BDT\n`;
+            message += `*Total:* ${total.toFixed(2)} BDT\n\n`;
+            
+            message += `*Payment Method:* ${paymentMethod}\n`;
+            if (txnId) {
+                message += `*Transaction ID:* ${txnId}\n`;
+            }
+
+            const whatsappNumber = "8801886936581";
+            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+            
+            // Redirect to WhatsApp
+            window.open(whatsappUrl, '_blank');
+        }
+    </script>
+</body>
+</html>
+

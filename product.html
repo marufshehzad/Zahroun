@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details | Zahroun</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .product-detail-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            margin-top: 4rem;
+            margin-bottom: 4rem;
+        }
+        .product-image-large {
+            background-color: var(--surface-color);
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .product-image-large img {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            object-fit: contain;
+        }
+        .product-meta h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .product-meta .price {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        .product-meta .description {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+        .accordion {
+            border-top: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+        .accordion-item {
+            border-bottom: 1px solid var(--border-color);
+        }
+        .accordion-header {
+            padding: 1.5rem 0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+        }
+        .accordion-content {
+            padding-bottom: 1.5rem;
+            color: var(--text-muted);
+            display: none;
+        }
+        .accordion-content.active {
+            display: block;
+        }
+
+        .product-detail-container {
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+            margin-top: 2rem;
+            margin-bottom: 4rem;
+        }
+        .product-image-large {
+            order: -1; /* Always renders first */
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .product-meta {
+            max-width: 700px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        @media (min-width: 900px) {
+            .product-detail-container {
+                display: grid;
+                grid-template-columns: 1fr 1.2fr;
+                gap: 4rem;
+                align-items: start;
+            }
+            .product-image-large {
+                max-width: 100%;
+                position: sticky;
+                top: 100px; /* Sticks while scrolling meta */
+            }
+            .product-meta {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container nav-container">
+            <a href="index.html" class="logo">Zahroun.</a>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="shop.html" class="active">Shop</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="nav-icons">
+                <button aria-label="Cart" id="cart-icon">
+                    <ion-icon name="bag-outline"></ion-icon>
+                    <span class="cart-count" id="cart-count">0</span>
+                </button>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="product-detail-container" id="product-detail-content">
+            <!-- Injected by JS -->
+            <p>Loading product details...</p>
+        </div>
+    </div>
+
+    <section class="container py-8" style="border-top: 1px solid var(--border-color); padding-top: 4rem;">
+        <h3 style="font-size: 1.1rem; font-family: var(--font-sans); margin-bottom: 2rem; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">Frequently Bought Together..</h3>
+        <div class="product-grid" id="upsell-products" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
+            <!-- Injected by JS -->
+        </div>
+    </section>
+
+        <footer class="massive-footer">
+        <div class="footer-massive-brand">ZAHROUN</div>
+        <div class="container footer-grid-new">
+            <div class="footer-col-1">
+                <h4 style="font-size: 1.5rem; color: white; margin-bottom: 1rem;">Stay in the Loop</h4>
+                <p style="color: #999; font-size: 0.9rem; margin-bottom: 1.5rem;">Be the first to know about new arrivals, exclusive offers, and behind-the-scenes stories.</p>
+                <form style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <input type="email" placeholder="Enter your email" style="background: #222; border: none; padding: 1rem; color: white; flex: 1; border-radius: 4px;">
+                    <button type="submit" class="btn" style="background: white; color: black;">Subscribe &rarr;</button>
+                </form>
+                <p style="color: #666; font-size: 0.8rem;">By subscribing, you agree to our Privacy Policy. Unsubscribe anytime.</p>
+            </div>
+            
+            <div class="footer-col-2">
+                <p style="font-family: var(--font-serif); font-size: 1.2rem; line-height: 1.6;">The finest fragrances in the world. By the ml. For you.</p>
+            </div>
+
+            <div class="footer-col-3">
+                <h5 style="color: #666; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;">Shop</h5>
+                <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
+                    <li><a href="shop.html" style="color: #ccc; font-size: 0.9rem;">Explore Fragrance DNAs</a></li>
+                    <li><a href="shop.html" style="color: #ccc; font-size: 0.9rem;">Best Sellers</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 0.9rem;">Blog</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 0.9rem;">Reviews</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col-4">
+                <h5 style="color: #666; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;">Connect</h5>
+                <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
+                    <li><a href="about.html" style="color: #ccc; font-size: 0.9rem;">How It Works</a></li>
+                    <li><a href="contact.html" style="color: #ccc; font-size: 0.9rem;">Contact Us</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 0.9rem;">Shipping</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 0.9rem;">Payment Methods</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom-new" style="border-top: 1px solid #222; margin-top: 4rem; padding-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+            <div style="display: flex; gap: 1.5rem; color: white; font-size: 1.2rem;">
+                <a href="#"><ion-icon name="logo-facebook"></ion-icon></a>
+                <a href="#"><ion-icon name="logo-instagram"></ion-icon></a>
+                <a href="#"><ion-icon name="logo-youtube"></ion-icon></a>
+            </div>
+            <p style="color: #666; font-size: 0.8rem;">Dhanmondi, Dhaka, Bangladesh, 1205 | WhatsApp: +880 1886-936581</p>
+            <p style="color: #666; font-size: 0.8rem;">&copy; 2026 Zahroun. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h3>Your Cart</h3>
+                <button id="close-cart" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div id="cart-items" style="flex: 1; overflow-y: auto;"></div>
+            <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
+                    <span>Total</span>
+                    <span id="cart-total">0 BDT</span>
+                </div>
+                <button class="btn" style="width: 100%;">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/products.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = parseInt(urlParams.get('id'));
+            
+            const product = products.find(p => p.id === productId) || products[0]; // fallback to first product
+
+            const container = document.getElementById('product-detail-content');
+            container.innerHTML = `
+                <div class="product-image-large">
+                    <img src="${product.image}" alt="${product.name}" class="${product.image.includes('transparent') ? 'realistic-shadow' : ''}">
+                </div>
+                <div class="product-meta">
+                    <span class="product-category" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem;">${product.category}</span>
+                    <h1 style="font-family: var(--font-serif); margin-bottom: 0.5rem; font-size: 2.5rem;">${product.name}</h1>
+                    <div class="price" id="display-price" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 2rem; color: var(--primary-color);">399 BDT</div>
+
+                    <button class="btn btn-black" style="width: 100%; margin-bottom: 1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>
+                    <button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;">BUY IT NOW</button>
+                    
+                    <div style="display: flex; gap: 2rem; margin-bottom: 2rem; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 500;">
+                        <span style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;"><ion-icon name="share-outline" style="font-size: 1.2rem;"></ion-icon> SHARE</span>
+                        <span style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;"><ion-icon name="heart-outline" style="font-size: 1.2rem;"></ion-icon> WISHLIST</span>
+                    </div>
+
+                    <div class="decant-section" style="margin-bottom: 2rem; background: var(--surface-color); padding: 1.5rem; border-radius: 8px;">
+                        <p style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-muted);">Options</p>
+                        <div class="size-grid">
+                            <button class="size-btn active" onclick="selectSize('10ML', 399, this)"><ion-icon name="checkmark-outline" class="check-icon"></ion-icon> 10ML DECANT (150+ SPRAYS)</button>
+                            <button class="size-btn" onclick="selectSize('20ML', 799, this)"><ion-icon name="checkmark-outline" class="check-icon" style="display:none;"></ion-icon> 20ML DECANT (300+ SPRAYS)</button>
+                            <button class="size-btn" onclick="selectSize('30ML', 1199, this)"><ion-icon name="checkmark-outline" class="check-icon" style="display:none;"></ion-icon> 30ML DECANT (450+ SPRAYS)</button>
+                            <button class="size-btn" onclick="selectSize('50ML', 1499, this)"><ion-icon name="checkmark-outline" class="check-icon" style="display:none;"></ion-icon> 50ML DECANT (750+ SPRAYS)</button>
+                        </div>
+                    </div>
+
+                    <div class="tags-section">
+                        <h4><span style="color: #f39c12; margin-right: 0.5rem;">🔖</span> Notes <span style="float: right; color: #999; font-size: 0.8rem; font-weight: normal;">3 items</span></h4>
+                        <div class="tags-grid">
+                            <span class="tag"><span class="tag-label">Gender:</span> ${product.tags.gender}</span>
+                            <span class="tag"><span class="tag-label">Type:</span> ${product.tags.type}</span>
+                            <span class="tag"><span class="tag-label">Concentration:</span> ${product.tags.concentration}</span>
+                        </div>
+                    </div>
+
+                    <div class="tags-section">
+                        <h4>Fragrance Notes <span style="float: right; color: #999; font-size: 0.8rem; font-weight: normal;">${product.fragrance_notes.length} items</span></h4>
+                        <div class="tags-flex">
+                            ${product.fragrance_notes.map(note => `<span class="tag-pill">${note}</span>`).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="tags-section">
+                        <h4>Seasons <span style="float: right; color: #999; font-size: 0.8rem; font-weight: normal;">${product.seasons.length} items</span></h4>
+                        <div class="tags-flex">
+                            ${product.seasons.map(season => `<span class="tag-pill">${season}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    <div class="tags-section">
+                        <h4>Occasions <span style="float: right; color: #999; font-size: 0.8rem; font-weight: normal;">${product.occasions.length} items</span></h4>
+                        <div class="tags-flex">
+                            ${product.occasions.map(occ => `<span class="tag-pill">${occ}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    <div class="inline-cart" style="background: #f9f9f9; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                        <h4 style="display: flex; align-items: center; gap: 0.5rem;"><ion-icon name="cart-outline"></ion-icon> Your Cart</h4>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                            <span>Current cart subtotal</span>
+                            <span id="inline-cart-subtotal" style="font-weight: bold; color: var(--text-main);">BDT 0</span>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Offers don't stack. Applied at checkout if eligible.</p>
+                        
+                        <p style="font-size: 0.8rem; color: var(--text-main); font-weight: 500; margin-bottom: 0.5rem;">Available offers</p>
+                        <div style="background: white; padding: 1rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <strong>10% off on orders 4000 BDT+</strong>
+                                <span style="background: #eee; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-family: monospace;">myzahroun10</span>
+                            </div>
+                            <p id="inline-spend-more" style="color: var(--primary-color); font-size: 0.8rem;">Add 4000 BDT to unlock this offer</p>
+                        </div>
+                    </div>
+
+                    <div class="accordion">
+                        <div class="accordion-item">
+                            <div class="accordion-header" onclick="toggleAccordion(this)">
+                                Description - ${product.name} <ion-icon name="add-outline"></ion-icon>
+                            </div>
+                            <div class="accordion-content">
+                                ${product.description}<br><br>
+                                <strong>Ingredients:</strong><br>
+                                ${product.ingredients}
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <div class="accordion-header" onclick="toggleAccordion(this)">
+                                Reviews <ion-icon name="add-outline"></ion-icon>
+                            </div>
+                            <div class="accordion-content">
+                                No reviews yet. Be the first to review this product!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Set document title
+            document.title = `${product.name} | Zahroun`;
+
+            // Populate Upsell Grid
+            const upsellGrid = document.getElementById('upsell-products');
+            const upsellProducts = products.filter(p => p.id !== productId).slice(0, 4); // Get 4 other products
+            upsellGrid.innerHTML = upsellProducts.map(p => `
+                <div class="product-card" style="border: none; text-align: center;">
+                    <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer; background: transparent;">
+                        <img src="${p.image}" alt="${p.name}" class="product-img ${p.image.includes('transparent') ? 'realistic-shadow' : ''}" style="max-height: 200px; padding: 1rem;">
+                    </div>
+                    <div class="product-info" style="padding-top: 1rem;">
+                        <h3 class="product-title" style="font-size: 0.9rem;"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Zahroun</span>
+                        <div class="product-price" style="font-size: 0.9rem;">BDT ${p.price * 10}</div>
+                    </div>
+                </div>
+            `).join('');
+        });
+
+        function toggleAccordion(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('ion-icon');
+            
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+                icon.setAttribute('name', 'chevron-down-outline');
+            } else {
+                content.style.display = 'block';
+                icon.setAttribute('name', 'chevron-up-outline');
+            }
+        }
+
+        let currentSelectedSize = '10ML';
+        let currentSelectedPrice = 399;
+
+        window.selectSize = function(size, price, btnElement) {
+            currentSelectedSize = size;
+            currentSelectedPrice = price;
+            
+            // Update UI
+            document.getElementById('display-price').textContent = price + ' BDT';
+            
+            // Update active state on buttons
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.querySelector('.check-icon').style.display = 'none';
+            });
+            btnElement.classList.add('active');
+            btnElement.querySelector('.check-icon').style.display = 'inline-block';
+        };
+
+        window.addCurrentSizeToCart = function(productId) {
+            addToCart(productId, currentSelectedSize, currentSelectedPrice);
+            updateInlineCart();
+        };
+
+        function updateInlineCart() {
+            const subtotalEl = document.getElementById('inline-cart-subtotal');
+            const spendMoreEl = document.getElementById('inline-spend-more');
+            if (!subtotalEl || !spendMoreEl) return;
+
+            const subtotal = typeof getCartSubtotal === 'function' ? getCartSubtotal() : 0;
+            subtotalEl.textContent = 'BDT ' + subtotal.toFixed(2);
+
+            if (subtotal >= 4000) {
+                spendMoreEl.textContent = '✅ 10% Discount Unlocked! Use code: myzahroun10';
+                spendMoreEl.style.color = '#27ae60';
+            } else if (subtotal > 0) {
+                const diff = (4000 - subtotal).toFixed(2);
+                spendMoreEl.textContent = 'Add BDT ' + diff + ' more to unlock 10% off';
+                spendMoreEl.style.color = 'var(--primary-color)';
+            } else {
+                spendMoreEl.textContent = 'Add 4000 BDT to unlock this offer';
+                spendMoreEl.style.color = 'var(--primary-color)';
+            }
+        }
+
+        // Run on page load to reflect existing cart
+        document.addEventListener('DOMContentLoaded', updateInlineCart);
+    </script>
+</body>
+</html>
+

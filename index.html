@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zahroun | Nature meets care</title>
+    <meta name="description" content="Zahroun offers premium, natural skincare and haircare products. Experience luxury organic care.">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Ionicons for clean, minimal icons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <header class="header">
+        <div class="container nav-container">
+            <a href="index.html" class="logo">Zahroun.</a>
+            
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html" class="active">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+
+            <div class="nav-icons">
+                <button aria-label="Search" onclick="window.location.href='shop.html'"><ion-icon name="search-outline"></ion-icon></button>
+                <button aria-label="Cart" id="cart-icon">
+                    <ion-icon name="bag-outline"></ion-icon>
+                    <span class="cart-count" id="cart-count">0</span>
+                </button>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <img src="assets/Home.jpg" alt="Zahroun Premium Fragrances" class="hero-bg">
+        <div class="container">
+            <div class="hero-content">
+                <p class="hero-subtitle">Perfumery</p>
+                <h1 class="hero-title" style="font-size: 3.5rem;">Zahroun Perfumes</h1>
+                <p class="hero-desc">Zahroun Perfumes — where every scent tells a story of confidence, beauty, and unforgettable moments.</p>
+                <a href="shop.html" class="btn">Explore Collection</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Bar -->
+    <section class="benefits">
+        <div class="container benefits-grid">
+            <div class="benefit-item">
+                <ion-icon name="leaf-outline"></ion-icon>
+                100% Organic Ingredients
+            </div>
+            <div class="benefit-item">
+                <ion-icon name="flask-outline"></ion-icon>
+                Dermatologist Tested
+            </div>
+            <div class="benefit-item">
+                <ion-icon name="heart-outline"></ion-icon>
+                Cruelty-Free
+            </div>
+            <div class="benefit-item">
+                <ion-icon name="shield-checkmark-outline"></ion-icon>
+                Trusted Quality
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Categories -->
+    <section class="py-8 bg-white">
+        <div class="container">
+            <div class="section-title">
+                <h2>Shop by Category</h2>
+                <p>Curated essentials for your natural beauty routine.</p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                <div style="position: relative; height: 400px; overflow: hidden; border-radius: 4px; cursor: pointer;" onclick="window.location.href='shop.html?category=women'">
+                    <img src="assets/perfume_2_solid.png" alt="Women" style="width: 100%; height: 100%; object-fit: contain; background-color: var(--surface-color); transition: transform 0.5s; padding: 1rem;">
+                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 2rem; color: white;">
+                        <h3 style="color: white; font-size: 1.5rem;">For Her</h3>
+                        <p style="color: #eee;">Elegant and radiant</p>
+                    </div>
+                </div>
+                <div style="position: relative; height: 400px; overflow: hidden; border-radius: 4px; cursor: pointer;" onclick="window.location.href='shop.html?category=unisex'">
+                    <img src="assets/perfume_3_solid.png" alt="Unisex" style="width: 100%; height: 100%; object-fit: contain; background-color: var(--surface-color); transition: transform 0.5s; padding: 1rem;">
+                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 2rem; color: white;">
+                        <h3 style="color: white; font-size: 1.5rem;">Unisex</h3>
+                        <p style="color: #eee;">Versatile and balanced</p>
+                    </div>
+                </div>
+                <div style="position: relative; height: 400px; overflow: hidden; border-radius: 4px; cursor: pointer;" onclick="window.location.href='shop.html?category=men'">
+                      <img src="product pictures/7.jpg" alt="For Him" style="width: 100%; height: 100%; object-fit: contain; background-color: #FFFFFF; transition: transform 0.5s; padding: 1rem; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.12));">
+                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 2rem; color: white;">
+                        <h3 style="color: white; font-size: 1.5rem;">For Him</h3>
+                        <p style="color: #eee;">Bold and refined</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="py-8" style="background-color: var(--bg-color);">
+        <div class="container">
+            <div class="section-title">
+                <h2>Bestsellers</h2>
+                <p>Our most loved formulations.</p>
+            </div>
+            <div class="product-grid" id="featured-products">
+                <!-- Products dynamically injected via JS -->
+            </div>
+            <div class="text-center mt-4">
+                <a href="shop.html" class="btn btn-outline">View All Products</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-8" style="background-color: var(--accent-color);">
+        <div class="container text-center" style="max-width: 800px;">
+            <ion-icon name="star" style="color: #d4af37; font-size: 1.5rem;"></ion-icon>
+            <ion-icon name="star" style="color: #d4af37; font-size: 1.5rem;"></ion-icon>
+            <ion-icon name="star" style="color: #d4af37; font-size: 1.5rem;"></ion-icon>
+            <ion-icon name="star" style="color: #d4af37; font-size: 1.5rem;"></ion-icon>
+            <ion-icon name="star" style="color: #d4af37; font-size: 1.5rem;"></ion-icon>
+            <p style="font-family: var(--font-serif); font-size: 1.5rem; font-style: italic; margin: 1.5rem 0; line-height: 1.8;">
+                "Zahroun has completely redefined my signature scent. The long-lasting botanical notes are truly a luxury experience."
+            </p>
+            <h4 style="font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">- Sarah J.</h4>
+        </div>
+    </section>
+
+    <!-- Footer -->
+        <footer class="massive-footer">
+        <div class="footer-massive-brand">ZAHROUN</div>
+        <div class="container footer-grid-new">
+            <div class="footer-col-1">
+                <h4 style="font-size: 1.5rem; color: white; margin-bottom: 1rem;">Stay in the Loop</h4>
+                <p style="color: #999; font-size: 0.9rem; margin-bottom: 1.5rem;">Be the first to know about new arrivals, exclusive offers, and behind-the-scenes stories.</p>
+                <form style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <input type="email" placeholder="Enter your email" style="background: #222; border: none; padding: 1rem; color: white; flex: 1; border-radius: 4px;">
+                    <button type="submit" class="btn" style="background: white; color: black;">Subscribe &rarr;</button>
+                </form>
+                <p style="color: #666; font-size: 0.8rem;">By subscribing, you agree to our Privacy Policy. Unsubscribe anytime.</p>
+            </div>
+            
+            <div class="footer-col-2">
+                <p style="font-family: var(--font-serif); font-size: 1.2rem; line-height: 1.6;">The finest fragrances in the world. By the ml. For you.</p>
+            </div>
+
+            <div class="footer-col-3">
+                <h5 style="color: #666; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;">Shop</h5>
+                <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
+                    <li><a href="shop.html" style="color: #ccc; font-size: 0.9rem;">Explore Fragrance DNAs</a></li>
+                    <li><a href="shop.html" style="color: #ccc; font-size: 0.9rem;">Best Sellers</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 0.9rem;">Blog</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 0.9rem;">Reviews</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col-4">
+                <h5 style="color: #666; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;">Connect</h5>
+                <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
+                    <li><a href="about.html" style="color: #ccc; font-size: 0.9rem;">How It Works</a></li>
+                    <li><a href="contact.html" style="color: #ccc; font-size: 0.9rem;">Contact Us</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 0.9rem;">Shipping</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 0.9rem;">Payment Methods</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom-new" style="border-top: 1px solid #222; margin-top: 4rem; padding-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+            <div style="display: flex; gap: 1.5rem; color: white; font-size: 1.2rem;">
+                <a href="#"><ion-icon name="logo-facebook"></ion-icon></a>
+                <a href="#"><ion-icon name="logo-instagram"></ion-icon></a>
+                <a href="#"><ion-icon name="logo-youtube"></ion-icon></a>
+            </div>
+            <p style="color: #666; font-size: 0.8rem;">Dhanmondi, Dhaka, Bangladesh, 1205 | WhatsApp: +880 1886-936581</p>
+            <p style="color: #666; font-size: 0.8rem;">&copy; 2026 Zahroun. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Cart Modal (Hidden by default) -->
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h3>Your Cart</h3>
+                <button id="close-cart" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div id="cart-items" style="flex: 1; overflow-y: auto;">
+                <!-- Cart items injected here -->
+            </div>
+            <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
+                    <span>Total</span>
+                    <span id="cart-total">0 BDT</span>
+                </div>
+                <button class="btn" style="width: 100%;">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/products.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        // Load featured products
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('featured-products');
+            const featured = products.slice(0, 4); // First 4 products
+            
+            grid.innerHTML = featured.map(p => {
+                const defaultPrice = (p.prices && p.prices['10ML']) ? p.prices['10ML'] : 399;
+                return `
+                <div class="product-card">
+                    <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
+                        <img src="${p.image}" alt="${p.name}" class="product-img" style="background-color:#FFFFFF;">
+                        <button class="add-to-cart-quick" onclick="event.stopPropagation(); addToCart(${p.id}, '10ML', ${defaultPrice}); showAddedToast('${p.name}')">Add to Cart</button>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">${p.category}</span>
+                        <h3 class="product-title"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+                        <div class="product-price">${defaultPrice} BDT</div>
+                    </div>
+                </div>`;
+            }).join('');
+        });
+
+        function showAddedToast(name) {
+            let toast = document.getElementById('cart-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'cart-toast';
+                toast.style.cssText = `
+                    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+                    background: var(--primary-color, #2d6a4f); color: white;
+                    padding: 0.8rem 2rem; border-radius: 50px; font-size: 0.9rem;
+                    font-family: var(--font-sans); z-index: 9999;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.2); opacity: 0;
+                    transition: opacity 0.3s ease;
+                `;
+                document.body.appendChild(toast);
+            }
+            toast.textContent = `✓ ${name} added to cart`;
+            toast.style.opacity = '1';
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+        }
+    </script>
+</body>
+</html>
+
