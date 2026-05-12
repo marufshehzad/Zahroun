@@ -89,6 +89,139 @@
             margin: 0 auto;
             width: 100%;
         }
+        .product-main-img {
+            transition: opacity 0.25s ease, transform 0.35s ease;
+        }
+        .product-main-img.is-switching {
+            opacity: 0;
+            transform: scale(0.98);
+        }
+        .product-option-panel {
+            margin-bottom: 2rem;
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.05);
+        }
+        .option-label {
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .available-sizes {
+            position: relative;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .size-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.9rem;
+        }
+        .size-preview {
+            border: 1px solid var(--border-color);
+            background: #fff;
+            border-radius: 8px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            text-align: center;
+            font-family: var(--font-sans);
+            color: var(--text-main);
+        }
+        .size-preview:hover,
+        .size-preview.active {
+            transform: translateY(-4px);
+            border-color: var(--text-main);
+            box-shadow: 0 14px 30px rgba(0,0,0,0.12);
+        }
+        .size-preview img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: contain;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.10));
+        }
+        .size-preview span {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .floating-preview {
+            position: fixed;
+            top: 120px;
+            left: 50%;
+            z-index: 1200;
+            width: min(340px, 100%);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px) scale(0.98);
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+        .floating-preview.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0) scale(1);
+        }
+        .floating-preview-card {
+            position: relative;
+            background: rgba(255,255,255,0.96);
+            border: 1px solid rgba(220,216,207,0.9);
+            border-radius: 18px;
+            box-shadow: 0 18px 42px rgba(22,62,52,0.14);
+            padding: 1.15rem;
+            overflow: visible;
+        }
+        .floating-preview-card img {
+            width: 100%;
+            max-height: 360px;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 12px 26px rgba(0,0,0,0.12));
+        }
+        .preview-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 34px;
+            height: 34px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.68);
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            z-index: 5;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+        .preview-close:hover {
+            transform: scale(1.08);
+            background: rgba(0,0,0,0.82);
+        }
+        .size-btn {
+            border-radius: 8px;
+        }
+        .size-btn:hover {
+            box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+        }
+        @media (max-width: 520px) {
+            .size-grid,
+            .size-preview-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .product-option-panel {
+                padding: 1.1rem;
+            }
+            .floating-preview {
+                width: 100%;
+            }
+        }
         @media (min-width: 900px) {
             .product-detail-container {
                 display: grid;
@@ -110,7 +243,7 @@
 <body>
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo">ZAHROUN</a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo.png" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html" class="active">Shop</a>
@@ -118,6 +251,7 @@
                 <a href="contact.html">Contact</a>
             </nav>
             <div class="nav-icons">
+                <button aria-label="Search" onclick="window.location.href='shop.html'"><ion-icon name="search-outline"></ion-icon></button>
                 <button aria-label="Cart" id="cart-icon">
                     <ion-icon name="bag-outline"></ion-icon>
                     <span class="cart-count" id="cart-count">0</span>
@@ -213,21 +347,45 @@
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
     <script>
+        const sizeOrder = ['6ML', '15ML', '30ML', '50ML'];
+        let currentProduct = null;
+        let hoverPreviewTimer = null;
+
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const productId = parseInt(urlParams.get('id'));
             
             const product = products.find(p => p.id === productId) || products[0]; // fallback to first product
+            currentProduct = product;
+            const productPrice = getSizePrice(product, '50ML');
+            currentSelectedSize = '50ML';
+            currentSelectedPrice = productPrice;
+            const optionButtons = sizeOrder.map(size => {
+                const price = getSizePrice(product, size);
+                const isActive = size === currentSelectedSize;
+                return `
+                    <button class="size-btn ${isActive ? 'active' : ''}" data-size="${size}" onclick="selectSize('${size}', ${price}, this)">
+                        <ion-icon name="checkmark-outline" class="check-icon" style="${isActive ? '' : 'display:none;'}"></ion-icon> ${size} SPRAY
+                    </button>`;
+            }).join('');
+            const sizePreviews = sizeOrder.map(size => {
+                const image = getSizeImage(product, size);
+                return `
+                    <button class="size-preview ${size === currentSelectedSize ? 'active' : ''}" data-size="${size}" onclick="selectSizeFromPreview('${size}', true)" onmouseenter="showSizePreview('${image}', '${size}')" onmouseleave="schedulePreviewClose()">
+                        <img src="${image}" alt="${product.name} ${size}">
+                        <span>${size}</span>
+                    </button>`;
+            }).join('');
 
             const container = document.getElementById('product-detail-content');
             container.innerHTML = `
                 <div class="product-image-large">
-                    <img src="${product.image}" alt="${product.name}" class="${product.image.includes('transparent') ? 'realistic-shadow' : ''}">
+                    <img id="main-product-image" src="${getSizeImage(product, currentSelectedSize)}" alt="${product.name}" class="product-main-img">
                 </div>
                 <div class="product-meta">
                     <span class="product-category" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem;">${product.category}</span>
                     <h1 style="font-family: var(--font-serif); margin-bottom: 0.5rem; font-size: 2.5rem;">${product.name}</h1>
-                    <div class="price" id="display-price" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 2rem; color: var(--primary-color);">399 BDT</div>
+                    <div class="price" id="display-price" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 2rem; color: var(--primary-color);">${productPrice} BDT</div>
 
                     <button class="btn btn-black" style="width: 100%; margin-bottom: 1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>
                     <button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="window.location.href='checkout.html'">BUY IT NOW</button>
@@ -237,18 +395,17 @@
                         <span style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;"><ion-icon name="heart-outline" style="font-size: 1.2rem;"></ion-icon> WISHLIST</span>
                     </div>
 
-                    <div class="decant-section" style="margin-bottom: 2rem; background: var(--surface-color); padding: 1.5rem; border-radius: 8px;">
-                        <p style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-muted);">Options</p>
-                        <div class="size-grid">
-                            <button class="size-btn active" onclick="selectSize('10ML', 399, this)"><ion-icon name="checkmark-outline" class="check-icon"></ion-icon> 10ML DECANT (150+ SPRAYS)</button>
-                            <button class="size-btn" onclick="selectSize('20ML', 799, this)"><ion-icon name="checkmark-outline" class="check-icon" style="display:none;"></ion-icon> 20ML DECANT (300+ SPRAYS)</button>
-                            <button class="size-btn" onclick="selectSize('30ML', 1199, this)"><ion-icon name="checkmark-outline" class="check-icon" style="display:none;"></ion-icon> 30ML DECANT (450+ SPRAYS)</button>
-                            <button class="size-btn" onclick="selectSize('50ML', 1499, this)"><ion-icon name="checkmark-outline" class="check-icon" style="display:none;"></ion-icon> 50ML DECANT (750+ SPRAYS)</button>
+                    <div class="product-option-panel">
+                        <p class="option-label">Options</p>
+                        <div class="size-grid">${optionButtons}</div>
+                        <div class="available-sizes">
+                            <p class="option-label">Available Sizes</p>
+                            <div class="size-preview-grid">${sizePreviews}</div>
                         </div>
                     </div>
 
                     <div class="tags-section">
-                        <h4><span style="color: #f39c12; margin-right: 0.5rem;">🔖</span> Notes <span style="float: right; color: #999; font-size: 0.8rem; font-weight: normal;">3 items</span></h4>
+                        <h4>Product Details <span style="float: right; color: #999; font-size: 0.8rem; font-weight: normal;">3 items</span></h4>
                         <div class="tags-grid">
                             <span class="tag"><span class="tag-label">Gender:</span> ${product.tags.gender}</span>
                             <span class="tag"><span class="tag-label">Type:</span> ${product.tags.type}</span>
@@ -332,11 +489,113 @@
                     <div class="product-info" style="padding-top: 1rem;">
                         <h3 class="product-title" style="font-size: 0.9rem;"><a href="product.html?id=${p.id}">${p.name}</a></h3>
                         <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Zahroun</span>
-                        <div class="product-price" style="font-size: 0.9rem;">BDT ${p.price * 10}</div>
+                        <div class="product-price" style="font-size: 0.9rem;">BDT ${(p.prices && p.prices['50ML']) ? p.prices['50ML'] : p.price}</div>
                     </div>
                 </div>
             `).join('');
         });
+
+        function getSizePrice(product, size) {
+            return product.prices && product.prices[size] ? product.prices[size] : product.price;
+        }
+
+        function getSizeImage(product, size) {
+            return product.sizeImages && product.sizeImages[size] ? product.sizeImages[size] : product.image;
+        }
+
+        function updateSelectedSizeUI(size) {
+            document.querySelectorAll('.size-btn, .size-preview').forEach(el => {
+                const isActive = el.dataset.size === size;
+                el.classList.toggle('active', isActive);
+                const icon = el.querySelector('.check-icon');
+                if (icon) icon.style.display = isActive ? 'inline-block' : 'none';
+            });
+        }
+
+        function updateProductImage(image) {
+            const mainImage = document.getElementById('main-product-image');
+            if (!mainImage) return;
+            mainImage.classList.add('is-switching');
+            setTimeout(() => {
+                mainImage.src = image;
+                mainImage.classList.remove('is-switching');
+            }, 160);
+        }
+
+        function positionSizePreview(popover) {
+            const holder = document.querySelector('.available-sizes');
+            if (!holder || !popover) return;
+
+            const rect = holder.getBoundingClientRect();
+            const margin = 16;
+            const previewWidth = Math.min(340, window.innerWidth - (margin * 2));
+            let left = rect.right + margin;
+            let top = rect.top;
+
+            if (left + previewWidth > window.innerWidth - margin) {
+                left = Math.min(Math.max(rect.left, margin), window.innerWidth - previewWidth - margin);
+                top = rect.bottom + 12;
+            }
+
+            const maxTop = Math.max(margin, window.innerHeight - 420);
+            top = Math.min(Math.max(top, margin), maxTop);
+            popover.style.width = previewWidth + 'px';
+            popover.style.left = left + 'px';
+            popover.style.top = top + 'px';
+        }
+
+        window.selectSizeFromPreview = function(size, persistPreview = false) {
+            const button = document.querySelector(`.size-btn[data-size="${size}"]`);
+            selectSize(size, getSizePrice(currentProduct, size), button);
+            showSizePreview(getSizeImage(currentProduct, size), size, persistPreview);
+        };
+
+        function ensurePreviewModal() {
+            if (document.getElementById('size-preview-popover')) return;
+            const holder = document.querySelector('.available-sizes');
+            if (!holder) return;
+            const popover = document.createElement('div');
+            popover.id = 'size-preview-popover';
+            popover.className = 'floating-preview';
+            popover.innerHTML = `
+                <div class="floating-preview-card" onmouseenter="clearPreviewClose()" onmouseleave="schedulePreviewClose()">
+                    <button class="preview-close" type="button" onclick="closeSizePreview()" aria-label="Close preview"><ion-icon name="close-outline"></ion-icon></button>
+                    <img id="preview-popover-image" src="" alt="Size preview">
+                </div>`;
+            holder.appendChild(popover);
+        }
+
+        window.showSizePreview = function(image, size, persistPreview = false) {
+            ensurePreviewModal();
+            clearPreviewClose();
+            const popover = document.getElementById('size-preview-popover');
+            const imageEl = document.getElementById('preview-popover-image');
+            if (!popover || !imageEl) return;
+            imageEl.src = image;
+            imageEl.alt = `${currentProduct.name} ${size}`;
+            popover.dataset.pinned = persistPreview ? 'true' : 'false';
+            positionSizePreview(popover);
+            popover.classList.add('active');
+        };
+
+        window.schedulePreviewClose = function() {
+            const popover = document.getElementById('size-preview-popover');
+            if (popover && popover.dataset.pinned === 'true') return;
+            clearPreviewClose();
+            hoverPreviewTimer = setTimeout(closeSizePreview, 220);
+        };
+
+        window.clearPreviewClose = function() {
+            clearTimeout(hoverPreviewTimer);
+        };
+
+        window.closeSizePreview = function() {
+            const popover = document.getElementById('size-preview-popover');
+            if (popover) {
+                popover.dataset.pinned = 'false';
+                popover.classList.remove('active');
+            }
+        };
 
         function toggleAccordion(header) {
             const content = header.nextElementSibling;
@@ -351,23 +610,16 @@
             }
         }
 
-        let currentSelectedSize = '10ML';
-        let currentSelectedPrice = 399;
+        let currentSelectedSize = '50ML';
+        let currentSelectedPrice = 0;
 
         window.selectSize = function(size, price, btnElement) {
             currentSelectedSize = size;
             currentSelectedPrice = price;
             
-            // Update UI
             document.getElementById('display-price').textContent = price + ' BDT';
-            
-            // Update active state on buttons
-            document.querySelectorAll('.size-btn').forEach(btn => {
-                btn.classList.remove('active');
-                btn.querySelector('.check-icon').style.display = 'none';
-            });
-            btnElement.classList.add('active');
-            btnElement.querySelector('.check-icon').style.display = 'inline-block';
+            updateProductImage(getSizeImage(currentProduct, size));
+            updateSelectedSizeUI(size);
         };
 
         window.addCurrentSizeToCart = function(productId) {

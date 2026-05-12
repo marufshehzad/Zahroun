@@ -11,7 +11,7 @@
 <body>
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo">ZAHROUN</a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo.png" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html">Shop</a>
@@ -19,6 +19,7 @@
                 <a href="contact.html">Contact</a>
             </nav>
             <div class="nav-icons">
+                <button aria-label="Search" onclick="window.location.href='shop.html'"><ion-icon name="search-outline"></ion-icon></button>
                 <button aria-label="Cart" id="cart-icon">
                     <ion-icon name="bag-outline"></ion-icon>
                     <span class="cart-count" id="cart-count">0</span>
@@ -30,10 +31,10 @@
         </div>
     </header>
 
-    <div style="background: url('assets/Home.jpg') center/cover no-repeat; padding: 10rem 0; text-align: center; position: relative;">
+    <div class="about-hero" style="background: url('assets/Home.jpg') center/cover no-repeat; padding: 10rem 0; text-align: center; position: relative;">
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6));"></div>
         <div class="container fade-in" style="position: relative; z-index: 2; max-width: 800px;">
-            <h1 style="font-size: 4rem; color: white; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 2px;">Our Heritage</h1>
+            <h1 class="about-hero-title" style="font-size: 4rem; color: white; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 2px;">Our Heritage</h1>
             <p style="font-size: 1.2rem; color: rgba(255,255,255,0.85); letter-spacing: 1px;">Crafting memories through the art of perfumery.</p>
         </div>
     </div>
@@ -50,12 +51,12 @@
     </section>
 
     <section class="container py-8 fade-in">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 4rem; align-items: center;">
-            <div style="border-radius: 12px; overflow: hidden; height: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.12);">
+        <div class="about-story-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 4rem; align-items: center;">
+            <div class="about-image-frame" style="border-radius: 12px; overflow: hidden; height: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.12);">
                  <img src="assets/last.jpeg" alt="Zahroun Philosophy" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div>
-                <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem; color: var(--primary-color);">Mission & Vision</h2>
+                <h2 class="about-section-heading" style="font-size: 2.5rem; margin-bottom: 1.5rem; color: var(--primary-color);">Mission & Vision</h2>
                 <p style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 1.5rem;">
                     <strong>Our Mission:</strong> To democratize luxury perfumery by offering niche, designer-quality fragrances crafted from the finest ingredients, ensuring extraordinary longevity and sillage without the traditional luxury markup.
                 </p>
@@ -69,7 +70,7 @@
     <section style="background-color: var(--primary-color); color: white; padding: 6rem 0; margin-top: 100px;" class="fade-in">
         <div class="container text-center" style="max-width: 800px;">
             <ion-icon name="flower-outline" style="font-size: 3rem; margin-bottom: 1rem; color: var(--accent-color);"></ion-icon>
-            <p style="font-family: var(--font-serif); font-size: 2rem; font-style: italic; line-height: 1.6; margin-bottom: 2rem;">
+            <p class="about-quote-text" style="font-family: var(--font-serif); font-size: 2rem; font-style: italic; line-height: 1.6; margin-bottom: 2rem;">
                 "A signature scent should arrive before you do, and stay long after you leave."
             </p>
             <p style="font-size: 1rem; letter-spacing: 2px; text-transform: uppercase;">— The Master Perfumer</p>

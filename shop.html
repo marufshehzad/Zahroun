@@ -54,11 +54,41 @@
             margin-bottom: 1rem;
         }
         @media (max-width: 768px) {
+            .shop-header {
+                padding: 3rem 0;
+            }
             .shop-container {
                 flex-direction: column;
+                gap: 1.5rem;
             }
             .sidebar {
                 width: 100%;
+                text-align: center;
+                max-width: 340px;
+                margin: 0 auto;
+            }
+            .filter-list {
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 0.65rem 1rem;
+                margin-bottom: 1.5rem;
+            }
+            .filter-list li {
+                margin-bottom: 0;
+            }
+            #shop-products {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 1.5rem;
+            }
+            #shop-products .product-card {
+                max-width: 320px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .container.py-4 {
+                padding-left: 18px;
+                padding-right: 18px;
             }
         }
     </style>
@@ -67,7 +97,7 @@
     <!-- Header -->
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo">ZAHROUN</a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo.png" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html" class="active">Shop</a>
@@ -250,12 +280,12 @@
                 }
 
                 grid.innerHTML = filtered.map(p => {
-                    const defaultPrice = (p.prices && p.prices['10ML']) ? p.prices['10ML'] : 399;
+                    const defaultPrice = (p.prices && p.prices['50ML']) ? p.prices['50ML'] : p.price;
                     return `
                     <div class="product-card">
                         <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
                             <img src="${p.image}" alt="${p.name}" class="product-img" style="background-color:#FFFFFF;">
-                            <button class="add-to-cart-quick" onclick="event.stopPropagation(); addToCart(${p.id}, '10ML', ${defaultPrice}); showAddedToast('${p.name}')">Add to Cart</button>
+                            <button class="add-to-cart-quick" onclick="event.stopPropagation(); addToCart(${p.id}, '50ML', ${defaultPrice}); showAddedToast('${p.name}')">Add to Cart</button>
                         </div>
                         <div class="product-info">
                             <span class="product-category">${p.category}</span>

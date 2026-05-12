@@ -1,20 +1,20 @@
 let cart = JSON.parse(localStorage.getItem('zahroun_cart')) || [];
 
-// Legacy data migration for NaN/undefined bug
-cart = cart.map(item => {
+// Keep older carts compatible after replacing the demo collection.
+cart = cart.filter(item => typeof products !== 'undefined' && products.some(p => p.id === item.id)).map(item => {
+    const prod = products.find(p => p.id === item.id);
     if (!item.size || item.size === 'undefined') {
-        item.size = '10ML';
+        item.size = '50ML';
     }
-    if (item.selectedPrice === undefined || isNaN(item.selectedPrice) || item.selectedPrice === null) {
-        // Find current product schema
-        const prod = typeof products !== 'undefined' ? products.find(p => p.id === item.id) : null;
-        if (prod && prod.prices && prod.prices[item.size]) {
-            item.selectedPrice = prod.prices[item.size];
-        } else {
-            item.selectedPrice = 399; // Final fallback to avoid NaN
-        }
+    if (!prod.prices[item.size] && prod.prices['50ML']) {
+        item.size = '50ML';
     }
-    return item;
+    if (prod && prod.prices && prod.prices[item.size]) {
+        item.selectedPrice = prod.prices[item.size];
+    } else if (item.selectedPrice === undefined || isNaN(item.selectedPrice) || item.selectedPrice === null) {
+        item.selectedPrice = prod.price;
+    }
+    return { ...prod, size: item.size, selectedPrice: item.selectedPrice, quantity: item.quantity || 1 };
 });
 
 let discountMultiplier = 1;
@@ -24,13 +24,13 @@ function saveCart() {
     updateCartUI();
 }
 
-window.addToCart = function(productId, size = '10ML', price = null) {
+window.addToCart = function(productId, size = '50ML', price = null) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
     let itemPrice = price;
     if (itemPrice === null || isNaN(itemPrice)) {
-        itemPrice = (product.prices && product.prices[size]) ? product.prices[size] : 399;
+        itemPrice = (product.prices && product.prices[size]) ? product.prices[size] : product.price;
     }
     
     // Check if same product AND size exists
