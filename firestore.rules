@@ -1,0 +1,95 @@
+rules_version = '2';
+
+/* =========================================================================
+   ZAHROUN — Firestore Security Rules
+   =========================================================================
+   HOW TO PUBLISH:
+   1. Firebase Console -> Build -> Firestore Database -> "Rules" tab
+   2. Replace everything there with the contents of this file
+   3. Click "Publish"
+
+   Model:
+   - Public can READ products / categories / coupons / reviews (storefront)
+   - Only signed-in users can place orders & manage their own data
+   - Only ADMINS (users/{uid}.role == "admin") can manage the catalog & orders
+   ========================================================================= */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Reads the signed-in user's own profile to check their role.
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ---- User profiles -------------------------------------------------
+    match /users/{uid} {
+      allow read:   if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid);
+      // A user may update their own profile but must NOT escalate their role.
+      allow update: if (isOwner(uid) && request.resource.data.role == resource.data.role)
+                    || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ---- Catalog (public read, admin write) ----------------------------
+    match /products/{id} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+    match /categories/{id} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+    match /coupons/{id} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- Orders --------------------------------------------------------
+    match /orders/{id} {
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read:   if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    // ---- Reviews -------------------------------------------------------
+    match /reviews/{id} {
+      allow read:   if true;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin()
+                    || (isSignedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    // ---- Wishlist (one doc per user) -----------------------------------
+    match /wishlist/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // ---- Site settings (homepage, banners) -----------------------------
+    match /settings/{id} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- Newsletter / contact submissions ------------------------------
+    match /newsletter/{id} {
+      allow create: if true;          // anyone can subscribe
+      allow read, update, delete: if isAdmin();
+    }
+    match /messages/{id} {
+      allow create: if true;          // anyone can send a contact message
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}
