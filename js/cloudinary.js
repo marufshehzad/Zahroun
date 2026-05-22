@@ -20,8 +20,8 @@
    via a Netlify Function.
    ========================================================================= */
 
-const CLOUDINARY_CLOUD_NAME = "YOUR_CLOUD_NAME";      // <-- paste your cloud name
-const CLOUDINARY_UPLOAD_PRESET = "YOUR_UNSIGNED_PRESET"; // <-- paste your preset name
+const CLOUDINARY_CLOUD_NAME = "dj3nmxfj0";       // Zahroun Cloudinary cloud name
+const CLOUDINARY_UPLOAD_PRESET = "zahroun_upload"; // unsigned upload preset
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
