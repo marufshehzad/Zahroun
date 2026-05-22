@@ -68,8 +68,10 @@ function showToast(message, type = "success") {
 }
 window.showToast = showToast;
 
-/* Convert Firebase error codes into friendly messages. */
-function friendlyError(code) {
+/* Convert Firebase errors into friendly messages (and log the raw error). */
+function friendlyError(err) {
+  const code = (err && err.code) || "";
+  console.error("[Zahroun Auth] error:", code || err, err); // open F12 Console to see this
   const map = {
     "auth/email-already-in-use": "This email is already registered. Try logging in.",
     "auth/invalid-email": "Please enter a valid email address.",
@@ -79,9 +81,14 @@ function friendlyError(code) {
     "auth/invalid-credential": "Invalid email or password.",
     "auth/too-many-requests": "Too many attempts. Please wait a moment.",
     "auth/popup-closed-by-user": "Google sign-in was cancelled.",
-    "auth/network-request-failed": "Network error. Check your connection."
+    "auth/popup-blocked": "Popup blocked — allow popups, then try again.",
+    "auth/network-request-failed": "Network error. Check your connection.",
+    "auth/operation-not-allowed": "This sign-in method is NOT enabled in Firebase Console.",
+    "auth/unauthorized-domain": "This domain isn't authorized in Firebase Auth settings.",
+    "permission-denied": "Database blocked the write — publish your Firestore rules.",
+    "unavailable": "Firestore unavailable — make sure the database is created."
   };
-  return map[code] || "Something went wrong. Please try again.";
+  return map[code] || `Error: ${code || "unknown"} — please try again.`;
 }
 
 /* ---------------------------------------------------------------------------
@@ -229,7 +236,7 @@ function wireModal(modal) {
     try {
       await signInWithEmailAndPassword(auth, f.get("email").trim(), f.get("password"));
       showToast("Welcome back!"); closeAuthModal();
-    } catch (err) { showToast(friendlyError(err.code), "error"); }
+    } catch (err) { showToast(friendlyError(err), "error"); }
     finally { btn.disabled = false; btn.textContent = "Login"; }
   });
 
@@ -242,7 +249,7 @@ function wireModal(modal) {
       await updateProfile(cred.user, { displayName: f.get("name").trim() });
       await createUserProfile(cred.user, f.get("name").trim());
       showToast("Account created. Welcome to Zahroun!"); closeAuthModal();
-    } catch (err) { showToast(friendlyError(err.code), "error"); }
+    } catch (err) { showToast(friendlyError(err), "error"); }
     finally { btn.disabled = false; btn.textContent = "Create Account"; }
   });
 
@@ -254,7 +261,7 @@ function wireModal(modal) {
       await sendPasswordResetEmail(auth, f.get("email").trim());
       showToast("Reset link sent. Check your email.");
       setView("auth");
-    } catch (err) { showToast(friendlyError(err.code), "error"); }
+    } catch (err) { showToast(friendlyError(err), "error"); }
     finally { btn.disabled = false; btn.textContent = "Send Reset Link"; }
   });
 }
@@ -274,7 +281,7 @@ async function handleGoogle() {
     const cred = await signInWithPopup(auth, provider);
     await createUserProfile(cred.user, cred.user.displayName || "");
     showToast("Signed in with Google!"); closeAuthModal();
-  } catch (err) { showToast(friendlyError(err.code), "error"); }
+  } catch (err) { showToast(friendlyError(err), "error"); }
 }
 
 /* ---------------------------------------------------------------------------
