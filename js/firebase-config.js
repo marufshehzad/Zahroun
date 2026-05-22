@@ -22,7 +22,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA8D5-muT5d_kFekNU1lSSYtgZGJI5_OZA",
@@ -36,6 +36,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Force long-polling: Firestore's default streaming (WebChannel) connection
+// is blocked/stalled on some networks & browser extensions, which made reads
+// hang. Long-polling connects reliably everywhere.
+export const db = initializeFirestore(app, { experimentalForceLongPolling: true });
 export default app;
 /* Image uploads use Cloudinary (js/cloudinary.js), not Firebase Storage. */
