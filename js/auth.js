@@ -353,7 +353,6 @@ function renderAccount(user) {
     <div class="za-menu">
       <div class="za-user"><strong>${escapeHtml(name)}</strong><span>${escapeHtml(user.email || "")}</span></div>
       <a href="account.html"><ion-icon name="bag-handle-outline"></ion-icon> My Orders</a>
-      <a href="wishlist.html"><ion-icon name="heart-outline"></ion-icon> Wishlist</a>
       ${isAdmin ? `<a href="admin.html"><ion-icon name="speedometer-outline"></ion-icon> Admin Panel</a>` : ``}
       <button data-za-logout><ion-icon name="log-out-outline"></ion-icon> Logout</button>
     </div>`;
