@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Zahroun</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        body { background: var(--bg-color); }
+        /* Gate: hidden until admin confirmed */
+        #admin-app { display: none; }
+        #admin-gate { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 1rem; color: var(--text-muted); text-align: center; padding: 2rem; }
+
+        .admin-layout { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+        .admin-side { background: var(--primary-color); color: #fff; padding: 1.5rem 1rem; position: sticky; top: 0; height: 100vh; }
+        .admin-side .brand { font-family: var(--font-serif); font-size: 1.4rem; color: #fff; margin-bottom: 2rem; padding: 0 .5rem; letter-spacing: 1px; }
+        .admin-nav button { display: flex; align-items: center; gap: .75rem; width: 100%; text-align: left;
+            background: none; border: none; color: #cdd9d3; padding: .8rem .9rem; border-radius: 8px; cursor: pointer;
+            font-family: var(--font-sans); font-size: .95rem; margin-bottom: .25rem; transition: all .2s; }
+        .admin-nav button:hover { background: rgba(255,255,255,.08); color: #fff; }
+        .admin-nav button.active { background: rgba(255,255,255,.16); color: #fff; font-weight: 600; }
+        .admin-nav ion-icon { font-size: 1.2rem; }
+
+        .admin-main { padding: 1.5rem 2rem; max-width: 100%; overflow-x: hidden; }
+        .admin-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .admin-top h1 { font-size: 1.6rem; }
+        .admin-top .who { color: var(--text-muted); font-size: .9rem; }
+        .admin-top a, .admin-top button { font-size: .85rem; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+        .stat-card { background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+        .stat-card .num { font-size: 2rem; font-family: var(--font-serif); color: var(--primary-color); }
+        .stat-card .lbl { color: var(--text-muted); font-size: .85rem; text-transform: uppercase; letter-spacing: .05em; }
+
+        .panel { background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+        .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+        table.admin-table { width: 100%; border-collapse: collapse; }
+        .admin-table th { text-align: left; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: .6rem; border-bottom: 1px solid var(--border-color); }
+        .admin-table td { padding: .6rem; border-bottom: 1px solid var(--border-color); font-size: .9rem; vertical-align: middle; }
+        .admin-table img { width: 44px; height: 44px; object-fit: contain; background: var(--bg-color); border-radius: 6px; }
+        .badge { font-size: .72rem; padding: .15rem .5rem; border-radius: 20px; background: var(--accent-color); color: var(--text-main); }
+        .badge.green { background: #e6f4ea; color: #1e7e34; }
+        .icon-btn { background: none; border: 1px solid var(--border-color); border-radius: 6px; padding: .35rem .55rem; cursor: pointer; color: var(--text-main); }
+        .icon-btn.danger:hover { background: #fdecea; border-color: #9b2226; color: #9b2226; }
+
+        /* Modal form */
+        .admin-modal { position: fixed; inset: 0; background: rgba(15,46,39,.5); display: none; align-items: flex-start; justify-content: center; z-index: 5000; padding: 2rem 1rem; overflow-y: auto; }
+        .admin-modal.open { display: flex; }
+        .admin-form { background: #fff; border-radius: 14px; width: 100%; max-width: 640px; padding: 2rem; }
+        .admin-form h2 { font-size: 1.4rem; color: var(--primary-color); margin-bottom: 1.25rem; }
+        .fg { margin-bottom: 1rem; }
+        .fg label { display: block; font-size: .82rem; color: var(--text-muted); margin-bottom: .35rem; }
+        .fg input, .fg select, .fg textarea { width: 100%; padding: .65rem .8rem; border: 1px solid var(--border-color);
+            border-radius: 8px; font-family: var(--font-sans); font-size: .92rem; background: var(--bg-color); }
+        .fg input:focus, .fg select:focus, .fg textarea:focus { outline: none; border-color: var(--primary-color); background: #fff; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: .75rem; }
+        .checks { display: flex; flex-wrap: wrap; gap: 1.25rem; margin: .5rem 0 1rem; }
+        .checks label { display: flex; align-items: center; gap: .4rem; font-size: .9rem; color: var(--text-main); }
+        .checks input { width: auto; }
+        .img-up { display: flex; align-items: center; gap: 1rem; }
+        .img-up img { width: 70px; height: 70px; object-fit: contain; background: var(--bg-color); border-radius: 8px; border: 1px solid var(--border-color); }
+        .form-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem; }
+        .muted-note { color: var(--text-muted); font-size: .8rem; }
+
+        @media (max-width: 820px) {
+            .admin-layout { grid-template-columns: 1fr; }
+            .admin-side { position: relative; height: auto; display: flex; flex-direction: column; }
+            .admin-nav { display: flex; flex-wrap: wrap; gap: .25rem; }
+            .admin-nav button { width: auto; }
+            .grid2, .grid4 { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Gate shown while verifying admin access -->
+    <div id="admin-gate">
+        <ion-icon name="lock-closed-outline" style="font-size:2.5rem;color:var(--primary-color);"></ion-icon>
+        <p id="gate-msg">Verifying admin access…</p>
+    </div>
+
+    <!-- Admin app (revealed only for admins) -->
+    <div id="admin-app">
+        <div class="admin-layout">
+            <aside class="admin-side">
+                <div class="brand">ZAHROUN<br><span style="font-size:.7rem;letter-spacing:3px;color:#9fb3aa;">ADMIN</span></div>
+                <nav class="admin-nav" id="admin-nav">
+                    <button class="active" data-section="dashboard"><ion-icon name="grid-outline"></ion-icon> Dashboard</button>
+                    <button data-section="products"><ion-icon name="pricetags-outline"></ion-icon> Products</button>
+                    <button data-section="orders"><ion-icon name="receipt-outline"></ion-icon> Orders</button>
+                    <button data-section="customers"><ion-icon name="people-outline"></ion-icon> Customers</button>
+                    <button data-section="categories"><ion-icon name="albums-outline"></ion-icon> Categories</button>
+                    <button data-section="coupons"><ion-icon name="ticket-outline"></ion-icon> Coupons</button>
+                    <button data-section="reviews"><ion-icon name="star-outline"></ion-icon> Reviews</button>
+                </nav>
+            </aside>
+
+            <main class="admin-main">
+                <div class="admin-top">
+                    <h1 id="section-title">Dashboard</h1>
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <span class="who" id="admin-who"></span>
+                        <a href="index.html" class="btn btn-outline" style="padding:.4rem .9rem;">View Site</a>
+                        <button class="btn" id="admin-logout" style="padding:.4rem .9rem;">Logout</button>
+                    </div>
+                </div>
+
+                <!-- DASHBOARD -->
+                <section data-panel="dashboard">
+                    <div class="stat-grid">
+                        <div class="stat-card"><div class="num" id="stat-products">—</div><div class="lbl">Products</div></div>
+                        <div class="stat-card"><div class="num" id="stat-orders">0</div><div class="lbl">Orders</div></div>
+                        <div class="stat-card"><div class="num" id="stat-revenue">৳0</div><div class="lbl">Revenue</div></div>
+                        <div class="stat-card"><div class="num" id="stat-customers">—</div><div class="lbl">Customers</div></div>
+                    </div>
+                    <div class="panel"><p class="muted-note">Welcome to your Zahroun admin dashboard. Use <strong>Products</strong> to manage your catalogue. Orders, coupons and analytics sections are being added next.</p></div>
+                </section>
+
+                <!-- PRODUCTS -->
+                <section data-panel="products" style="display:none;">
+                    <div class="panel">
+                        <div class="panel-head">
+                            <h3>All Products</h3>
+                            <button class="btn" id="add-product-btn"><ion-icon name="add-outline"></ion-icon> Add Product</button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead><tr><th></th><th>Name</th><th>Category</th><th>50ML Price</th><th>Stock</th><th>Flags</th><th></th></tr></thead>
+                                <tbody id="product-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Placeholder sections -->
+                <section data-panel="orders" style="display:none;"><div class="panel"><p class="muted-note">Order management — coming in the next step.</p></div></section>
+                <section data-panel="customers" style="display:none;"><div class="panel"><p class="muted-note">Customer management — coming soon.</p></div></section>
+                <section data-panel="categories" style="display:none;"><div class="panel"><p class="muted-note">Category management — coming soon.</p></div></section>
+                <section data-panel="coupons" style="display:none;"><div class="panel"><p class="muted-note">Coupon management — coming soon.</p></div></section>
+                <section data-panel="reviews" style="display:none;"><div class="panel"><p class="muted-note">Review moderation — coming soon.</p></div></section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Product add/edit modal -->
+    <div class="admin-modal" id="product-modal">
+        <form class="admin-form" id="product-form">
+            <h2 id="product-form-title">Add Product</h2>
+            <input type="hidden" name="id">
+            <input type="hidden" name="image">
+
+            <div class="fg">
+                <label>Product Image</label>
+                <div class="img-up">
+                    <img id="img-preview" src="" alt="" style="display:none;">
+                    <div>
+                        <input type="file" id="img-file" accept="image/*">
+                        <p class="muted-note" id="img-status">Upload to Cloudinary (max 10MB).</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid2">
+                <div class="fg"><label>Name</label><input type="text" name="name" required></div>
+                <div class="fg"><label>Category</label>
+                    <select name="category" required>
+                        <option value="Men">Men</option>
+                        <option value="Women">Women</option>
+                        <option value="Unisex">Unisex</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="fg"><label>Description</label><textarea name="description" rows="2"></textarea></div>
+            <div class="fg"><label>Ingredients</label><textarea name="ingredients" rows="2"></textarea></div>
+
+            <label class="muted-note" style="display:block;margin-bottom:.4rem;">Prices (BDT)</label>
+            <div class="grid4">
+                <div class="fg"><label>6ML</label><input type="number" name="price6" min="0"></div>
+                <div class="fg"><label>15ML</label><input type="number" name="price15" min="0"></div>
+                <div class="fg"><label>30ML</label><input type="number" name="price30" min="0"></div>
+                <div class="fg"><label>50ML</label><input type="number" name="price50" min="0" required></div>
+            </div>
+
+            <div class="grid2">
+                <div class="fg"><label>Stock quantity</label><input type="number" name="stock" min="0" value="100"></div>
+                <div class="fg"><label>Concentration</label><input type="text" name="concentration" placeholder="Eau de parfum"></div>
+            </div>
+            <div class="grid2">
+                <div class="fg"><label>Gender tag</label><input type="text" name="gender" placeholder="For him / For her / Unisex"></div>
+                <div class="fg"><label>Type</label><input type="text" name="type" placeholder="Spray"></div>
+            </div>
+
+            <div class="fg"><label>Fragrance Notes (comma separated)</label><input type="text" name="fragrance_notes" placeholder="Oud, Rose, Musk"></div>
+            <div class="grid2">
+                <div class="fg"><label>Seasons (comma separated)</label><input type="text" name="seasons" placeholder="Fall, Winter"></div>
+                <div class="fg"><label>Occasions (comma separated)</label><input type="text" name="occasions" placeholder="Evening, Formal"></div>
+            </div>
+
+            <div class="checks">
+                <label><input type="checkbox" name="featured"> Featured</label>
+                <label><input type="checkbox" name="bestseller"> Bestseller</label>
+                <label><input type="checkbox" name="newArrival"> New Arrival</label>
+                <label><input type="checkbox" name="hidden"> Hidden</label>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" id="cancel-product">Cancel</button>
+                <button type="submit" class="btn" id="save-product">Save Product</button>
+            </div>
+        </form>
+    </div>
+
+    <script type="module" src="js/admin.js"></script>
+</body>
+</html>
