@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop | Zahroun</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .shop-header {
+            background-color: var(--accent-color);
+            padding: 4rem 0;
+            text-align: center;
+        }
+        .shop-container {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .sidebar {
+            width: 250px;
+            flex-shrink: 0;
+        }
+        .sidebar h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        .filter-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+        .filter-list li {
+            margin-bottom: 0.5rem;
+        }
+        .filter-list button {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: var(--font-sans);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        .filter-list button:hover, .filter-list button.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        @media (max-width: 768px) {
+            .shop-header {
+                padding: 3rem 0;
+            }
+            .shop-container {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .sidebar {
+                width: 100%;
+                text-align: center;
+                max-width: 340px;
+                margin: 0 auto;
+            }
+            .filter-list {
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 0.65rem 1rem;
+                margin-bottom: 1.5rem;
+            }
+            .filter-list li {
+                margin-bottom: 0;
+            }
+            #shop-products {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 1.5rem;
+            }
+            #shop-products .product-card {
+                max-width: 320px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .container.py-4 {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container nav-container">
+            <a href="index.html" class="logo"><img src="product pictures/main logo.png" alt="Zahroun"></a>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="shop.html" class="active">Shop</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="nav-icons">
+                <button aria-label="Search" onclick="document.getElementById('search-input').focus()"><ion-icon name="search-outline"></ion-icon></button>
+                <button aria-label="Cart" id="cart-icon">
+                    <ion-icon name="bag-outline"></ion-icon>
+                    <span class="cart-count" id="cart-count">0</span>
+                </button>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="shop-header">
+        <div class="container">
+            <h1>All Products</h1>
+            <p>Elevate your routine with our natural formulations.</p>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <div class="shop-container">
+            <aside class="sidebar">
+                <input type="text" id="search-input" class="search-box" placeholder="Search products...">
+                
+                <h3>Categories</h3>
+                <ul class="filter-list" id="category-filter">
+                    <li><button class="active" data-filter="all">All</button></li>
+                    <li><button data-filter="Men">Men</button></li>
+                    <li><button data-filter="Women">Women</button></li>
+                    <li><button data-filter="Unisex">Unisex</button></li>
+                </ul>
+            </aside>
+            
+            <div style="flex: 1;">
+                <div class="product-grid" id="shop-products">
+                    <!-- Products injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Why Choose Zahroun -->
+    <section class="container py-8 fade-in" style="margin-top: 80px;">
+        <div class="section-title">
+            <h2 style="font-size: 2.5rem; color: var(--primary-color);">Why Choose Zahroun</h2>
+            <p>Experience the pinnacle of fine fragrance</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem; text-align: center;">
+            <div style="padding: 2rem; background: var(--surface-color); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
+                <ion-icon name="leaf-outline" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></ion-icon>
+                <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Organic Ingredients</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Sourced from the finest botanical gardens around the globe for a pure, clean scent.</p>
+            </div>
+            <div style="padding: 2rem; background: var(--surface-color); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
+                <ion-icon name="time-outline" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></ion-icon>
+                <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Extreme Longevity</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">High concentration Extrait de Parfum guarantees an invisible signature all day.</p>
+            </div>
+            <div style="padding: 2rem; background: var(--surface-color); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
+                <ion-icon name="flask-outline" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></ion-icon>
+                <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Cruelty Free</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Ethically crafted without animal testing, so you can wear your luxury with pride.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="massive-footer">
+        <div class="footer-massive-brand">ZAHROUN</div>
+        <div class="container footer-grid-new">
+            <div class="footer-col-1">
+                <h4 style="font-size: 1.5rem; color: white; margin-bottom: 1rem;">Stay in the Loop</h4>
+                <p style="color: #999; font-size: 1rem; margin-bottom: 1.5rem;">Be the first to know about new arrivals, exclusive offers, and behind-the-scenes stories.</p>
+                <form style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <input type="email" placeholder="Enter your email" style="background: #222; border: none; padding: 1rem; color: white; flex: 1; border-radius: 4px;">
+                    <button type="submit" class="btn" style="background: white; color: black;">Subscribe &rarr;</button>
+                </form>
+                <p style="color: #666; font-size: 0.95rem;">By subscribing, you agree to our Privacy Policy. Unsubscribe anytime.</p>
+            </div>
+            
+            <div class="footer-col-2">
+                <p style="font-family: var(--font-serif); font-size: 1.2rem; line-height: 1.6;">The finest fragrances in the world. By the ml. For you.</p>
+            </div>
+
+            <div class="footer-col-3">
+                <h5 style="color: #666; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;">Shop</h5>
+                <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
+                    <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Explore Fragrance DNAs</a></li>
+                    <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Best Sellers</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 1rem;">Blog</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 1rem;">Reviews</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col-4">
+                <h5 style="color: #666; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;">Connect</h5>
+                <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
+                    <li><a href="about.html" style="color: #ccc; font-size: 1rem;">How It Works</a></li>
+                    <li><a href="contact.html" style="color: #ccc; font-size: 1rem;">Contact Us</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 1rem;">Shipping</a></li>
+                    <li><a href="#" style="color: #ccc; font-size: 1rem;">Payment Methods</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom-new" style="border-top: 1px solid #222; margin-top: 4rem; padding-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+            <div style="display: flex; gap: 1.5rem; color: white; font-size: 1.2rem;">
+                <a href="#"><ion-icon name="logo-facebook"></ion-icon></a>
+                <a href="#"><ion-icon name="logo-instagram"></ion-icon></a>
+                <a href="#"><ion-icon name="logo-youtube"></ion-icon></a>
+            </div>
+            <p style="color: #666; font-size: 0.95rem;">Dhanmondi, Dhaka, Bangladesh, 1205 | WhatsApp: +880 1886-936581</p>
+            <p style="color: #666; font-size: 0.95rem;">&copy; 2026 Zahroun. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h3>Your Cart</h3>
+                <button id="close-cart" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div id="cart-items" style="flex: 1; overflow-y: auto;"></div>
+            <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
+                    <span>Total</span>
+                    <span id="cart-total">0 BDT</span>
+                </div>
+                <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/products.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('shop-products');
+            const filterBtns = document.querySelectorAll('#category-filter button');
+            const searchInput = document.getElementById('search-input');
+            
+            // Check URL for category parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const categoryParam = urlParams.get('category');
+            
+            let currentFilter = 'all';
+            let searchQuery = '';
+
+            if(categoryParam) {
+                // simple mapping e.g., 'skincare' to 'Skincare'
+                const map = {
+                    'men': 'Men',
+                    'women': 'Women',
+                    'unisex': 'Unisex'
+                };
+                currentFilter = map[categoryParam.toLowerCase()] || 'all';
+                filterBtns.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.filter === currentFilter);
+                });
+            }
+
+            function renderProducts() {
+                const filtered = products.filter(p => {
+                    const matchCategory = currentFilter === 'all' || p.category === currentFilter;
+                    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+                    return matchCategory && matchSearch;
+                });
+
+                if (filtered.length === 0) {
+                    grid.innerHTML = '<p>No products found.</p>';
+                    return;
+                }
+
+                grid.innerHTML = filtered.map(p => {
+                    const defaultPrice = (p.prices && p.prices['50ML']) ? p.prices['50ML'] : p.price;
+                    return `
+                    <div class="product-card">
+                        <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
+                            <img src="${p.image}" alt="${p.name}" class="product-img" style="background-color:#FFFFFF;">
+                            <button class="add-to-cart-quick" onclick="event.stopPropagation(); addToCart(${p.id}, '50ML', ${defaultPrice}); showAddedToast('${p.name}')">Add to Cart</button>
+                        </div>
+                        <div class="product-info">
+                            <span class="product-category">${p.category}</span>
+                            <h3 class="product-title"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+                            <div class="product-price">${defaultPrice} BDT</div>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.filter;
+                    renderProducts();
+                });
+            });
+
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value;
+                renderProducts();
+            });
+
+            renderProducts();
+        });
+
+        function showAddedToast(name) {
+            let toast = document.getElementById('cart-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'cart-toast';
+                toast.style.cssText = `
+                    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+                    background: var(--primary-color, #2d6a4f); color: white;
+                    padding: 0.8rem 2rem; border-radius: 50px; font-size: 0.9rem;
+                    font-family: var(--font-sans); z-index: 9999;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.2); opacity: 0;
+                    transition: opacity 0.3s ease;
+                `;
+                document.body.appendChild(toast);
+            }
+            toast.textContent = '✓ ' + name + ' added to cart';
+            toast.style.opacity = '1';
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+        }
+    </script>
+</body>
+</html>

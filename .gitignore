@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Secrets / environment (NEVER commit these)
+.env
+.env.*
+*.key
+serviceAccountKey.json
+
+# Netlify
+.netlify/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
