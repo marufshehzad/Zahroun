@@ -1,0 +1,41 @@
+/* =========================================================================
+   ZAHROUN — Firebase configuration & initialization
+   =========================================================================
+   HOW TO ACTIVATE:
+   1. Go to https://console.firebase.google.com  ->  Add project (name: "zahroun")
+   2. Inside the project: click the Web icon  </>  to "Add app".
+   3. Register the app (nickname: "Zahroun Web"). Firebase shows a
+      `firebaseConfig` object — copy its values into the object below.
+   4. In the left menu, enable these products (free Spark plan):
+        - Build > Authentication  (Email/Password + Google sign-in)
+        - Build > Firestore Database  (Start in *production* mode)
+        - Build > Storage
+
+   NOTE: These config values are NOT secrets. They are public client
+   identifiers and are safe to commit. Real security comes from the
+   Firestore/Storage Security Rules (added in a later phase).
+
+   This uses the modular Firebase SDK (v10) loaded from the official CDN,
+   so no build step / npm install is required for the static site.
+   ========================================================================= */
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "PASTE_YOUR_API_KEY",
+  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
+  projectId: "PASTE_YOUR_PROJECT_ID",
+  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
+  messagingSenderId: "PASTE_YOUR_SENDER_ID",
+  appId: "PASTE_YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export default app;
