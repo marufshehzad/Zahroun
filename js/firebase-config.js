@@ -9,7 +9,8 @@
    4. In the left menu, enable these products (free Spark plan):
         - Build > Authentication  (Email/Password + Google sign-in)
         - Build > Firestore Database  (Start in *production* mode)
-        - Build > Storage
+   NOTE: Firebase Storage now requires the paid Blaze plan, so image
+   uploads use Cloudinary's free tier instead (see js/cloudinary.js).
 
    NOTE: These config values are NOT secrets. They are public client
    identifiers and are safe to commit. Real security comes from the
@@ -22,7 +23,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA8D5-muT5d_kFekNU1lSSYtgZGJI5_OZA",
@@ -37,5 +37,5 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
 export default app;
+/* Image uploads use Cloudinary (js/cloudinary.js), not Firebase Storage. */
