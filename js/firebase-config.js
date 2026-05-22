@@ -25,12 +25,12 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY",
-  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-  projectId: "PASTE_YOUR_PROJECT_ID",
-  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
-  messagingSenderId: "PASTE_YOUR_SENDER_ID",
-  appId: "PASTE_YOUR_APP_ID"
+  apiKey: "AIzaSyA8D5-muT5d_kFekNU1lSSYtgZGJI5_OZA",
+  authDomain: "zahroun.firebaseapp.com",
+  projectId: "zahroun",
+  storageBucket: "zahroun.firebasestorage.app",
+  messagingSenderId: "923370845185",
+  appId: "1:923370845185:web:6fd1c3f3c1e235b255bc00"
 };
 
 const app = initializeApp(firebaseConfig);

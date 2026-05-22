@@ -11,7 +11,7 @@
    no slowdown, no effect on the live site. Safe to deploy as-is.
    ========================================================================= */
 
-const GA_MEASUREMENT_ID = "G-XXXXXXXXXX"; // <-- paste your GA4 ID here
+const GA_MEASUREMENT_ID = "G-RQQ5NDW51V"; // <-- paste your GA4 ID here
 
 (function loadGoogleAnalytics() {
   // Guard: stay completely inactive until a real ID is configured.
