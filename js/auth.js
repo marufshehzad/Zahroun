@@ -305,8 +305,17 @@ async function createUserProfile(user, name) {
 
 async function loadProfile(user) {
   try {
-    const snap = await getDoc(doc(db, "users", user.uid));
-    currentProfile = snap.exists() ? snap.data() : null;
+    const ref = doc(db, "users", user.uid);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      currentProfile = snap.data();
+    } else {
+      // Self-heal: create a profile if it's missing (e.g. account was made
+      // before the Firestore rules allowed the write).
+      await createUserProfile(user, user.displayName || "");
+      const again = await getDoc(ref);
+      currentProfile = again.exists() ? again.data() : null;
+    }
   } catch { currentProfile = null; }
   return currentProfile;
 }
