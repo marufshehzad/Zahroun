@@ -240,11 +240,11 @@
         </div>
     </div>
 
-    <script src="js/products.js"></script>
+    <script type="module" src="js/store.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('products-ready', () => {
             const grid = document.getElementById('shop-products');
             const filterBtns = document.querySelectorAll('#category-filter button');
             const searchInput = document.getElementById('search-input');

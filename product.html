@@ -345,7 +345,7 @@
         </div>
     </div>
 
-    <script src="js/products.js"></script>
+    <script type="module" src="js/store.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
     <script>
@@ -353,7 +353,7 @@
         let currentProduct = null;
         let hoverPreviewTimer = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('products-ready', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const productId = parseInt(urlParams.get('id'));
             

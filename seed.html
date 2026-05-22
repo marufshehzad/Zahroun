@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Seeder | Zahroun Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .seed-wrap { max-width: 720px; margin: 4rem auto; padding: 0 20px; }
+        .seed-card { background: var(--surface-color); border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 2.5rem; box-shadow: var(--shadow-md); }
+        #seed-log { background: var(--bg-color); border-radius: 8px; padding: 1rem;
+            font-family: monospace; font-size: 0.85rem; white-space: pre-wrap;
+            margin-top: 1.5rem; max-height: 320px; overflow-y: auto; }
+        #seed-status { padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.95rem; }
+        .ok { background: #e6f4ea; color: #1e7e34; }
+        .warn { background: #fdecea; color: #9b2226; }
+    </style>
+</head>
+<body>
+    <div class="seed-wrap">
+        <div class="seed-card">
+            <h1 style="color: var(--primary-color); font-size: 1.8rem; margin-bottom: 0.5rem;">Product Seeder</h1>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                One-time tool: uploads the bundled perfumes into the Firestore
+                <strong>products</strong> collection. Run this once as an admin.
+                Existing products with the same ID will be overwritten.
+            </p>
+            <div id="seed-status" class="warn">Checking your access…</div>
+            <button id="seed-btn" class="btn" style="width:100%;" disabled>Upload products to Firestore</button>
+            <div id="seed-log" style="display:none;"></div>
+            <p style="margin-top:1.5rem;"><a href="index.html" style="color:var(--primary-color);">&larr; Back to site</a></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, auth } from "./js/firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { seedProducts } from "./js/products.js";
+
+        const statusEl = document.getElementById("seed-status");
+        const btn = document.getElementById("seed-btn");
+        const logEl = document.getElementById("seed-log");
+        const log = (m) => { logEl.style.display = "block"; logEl.textContent += m + "\n"; logEl.scrollTop = logEl.scrollHeight; };
+
+        function setStatus(msg, ok) {
+            statusEl.textContent = msg;
+            statusEl.className = ok ? "ok" : "warn";
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                setStatus("You are not logged in. Open the site, log in as admin, then come back.", false);
+                btn.disabled = true;
+                return;
+            }
+            try {
+                const snap = await getDoc(doc(db, "users", user.uid));
+                const role = snap.exists() ? snap.data().role : null;
+                if (role === "admin") {
+                    setStatus(`Signed in as admin (${user.email}). Ready to seed.`, true);
+                    btn.disabled = false;
+                } else {
+                    setStatus(`Signed in as ${user.email}, but you are not an admin. Set your role to "admin" in Firestore first.`, false);
+                    btn.disabled = true;
+                }
+            } catch (e) {
+                setStatus("Could not verify your role: " + (e.code || e.message), false);
+            }
+        });
+
+        btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            btn.textContent = "Uploading…";
+            let done = 0;
+            for (let i = 0; i < seedProducts.length; i++) {
+                const p = seedProducts[i];
+                try {
+                    await setDoc(doc(db, "products", String(p.id)), {
+                        ...p,
+                        id: Number(p.id),
+                        stock: typeof p.stock === "number" ? p.stock : 100,
+                        featured: i < 4,
+                        bestseller: i < 4,
+                        newArrival: false,
+                        hidden: false,
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                    done++;
+                    log(`✓ ${p.name} (id ${p.id})`);
+                } catch (e) {
+                    log(`✗ ${p.name}: ${e.code || e.message}`);
+                }
+            }
+            setStatus(`Done. ${done}/${seedProducts.length} products uploaded to Firestore.`, done === seedProducts.length);
+            btn.textContent = "Seed again";
+            btn.disabled = false;
+        });
+    </script>
+</body>
+</html>

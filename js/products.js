@@ -230,3 +230,7 @@ const products = [
         occasions: ["Daytime", "Casual", "Date Night"]
     }
 ];
+
+/* Exported for js/store.js: used to seed Firestore and as an offline
+   fallback so the storefront never renders empty. */
+export { products as seedProducts };

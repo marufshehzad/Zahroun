@@ -286,12 +286,12 @@
         </div>
     </div>
 
-    <script src="js/products.js"></script>
+    <script type="module" src="js/store.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
     <script>
-        // Load featured products
-        document.addEventListener('DOMContentLoaded', () => {
+        // Load featured products (waits for Firestore/store.js to be ready)
+        document.addEventListener('products-ready', () => {
             const grid = document.getElementById('featured-products');
             const featured = products.slice(0, 4); // First 4 products
             
