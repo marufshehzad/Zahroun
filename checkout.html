@@ -198,7 +198,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn" style="width: 100%; margin-top: 2rem; font-size: 1.2rem; padding: 1rem;">Place Order via WhatsApp</button>
+                    <button type="submit" class="btn" style="width: 100%; margin-top: 2rem; font-size: 1.2rem; padding: 1rem;">Place Order</button>
                 </div>
             </div>
         </form>
@@ -223,6 +223,7 @@
     </div>
 
     <script type="module" src="js/store.js"></script>
+    <script type="module" src="js/orders.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
     <script>
@@ -318,11 +319,19 @@
             }
         }
 
-        function handleCheckout(e) {
+        async function handleCheckout(e) {
             e.preventDefault();
 
             if (cart.length === 0) {
                 alert('Your cart is empty! Add products to proceed.');
+                return;
+            }
+
+            // Orders require a logged-in account (for order history + admin tracking).
+            const user = window.getCurrentUser && window.getCurrentUser();
+            if (!user) {
+                if (window.showToast) window.showToast('Please log in to place your order', 'error');
+                if (window.zahrounAuth) window.zahrounAuth.openModal();
                 return;
             }
 
@@ -349,40 +358,69 @@
             
             const total = (subtotal - discount) + deliveryCharge;
 
-            // Build Item List
+            // Build the order items snapshot
+            const items = cart.map(item => ({
+                id: item.id,
+                name: item.name,
+                size: item.size,
+                price: parseFloat(item.selectedPrice),
+                quantity: item.quantity,
+                image: item.image || ''
+            }));
+
+            // WhatsApp notification message (offered after the order is saved)
             let itemList = '';
             cart.forEach(item => {
                 itemList += `- ${item.name} (${item.size}) (x${item.quantity}) : ${(parseFloat(item.selectedPrice) * item.quantity).toFixed(2)} BDT\n`;
             });
+            let message = `*New Order for Zahroun*\n------------------------\n*Customer Details:*\n`;
+            message += `Name: ${name}\nMobile: ${mobile}\nAddress: ${address}\nDelivery Area: ${deliveryAreaText}\n\n`;
+            message += `*Items:*\n${itemList}\nSubtotal: ${subtotal.toFixed(2)} BDT\n`;
+            if (discount > 0) message += `Discount (10%): -${discount.toFixed(2)} BDT\n`;
+            message += `Delivery: ${deliveryCharge} BDT\n*Total:* ${total.toFixed(2)} BDT\n\n*Payment Method:* ${paymentMethod}\n`;
+            if (txnId) message += `*Transaction ID:* ${txnId}\n`;
+            const whatsappUrl = `https://wa.me/8801886936581?text=${encodeURIComponent(message)}`;
 
-            // Construct WhatsApp Message
-            let message = `*New Order for Zahroun*\n`;
-            message += `------------------------\n`;
-            message += `*Customer Details:*\n`;
-            message += `Name: ${name}\n`;
-            message += `Mobile: ${mobile}\n`;
-            message += `Address: ${address}\n`;
-            message += `Delivery Area: ${deliveryAreaText}\n\n`;
-            
-            message += `*Items:*\n${itemList}\n`;
-            
-            message += `Subtotal: ${subtotal.toFixed(2)} BDT\n`;
-            if (discount > 0) {
-                message += `Discount (10%): -${discount.toFixed(2)} BDT\n`;
-            }
-            message += `Delivery: ${deliveryCharge} BDT\n`;
-            message += `*Total:* ${total.toFixed(2)} BDT\n\n`;
-            
-            message += `*Payment Method:* ${paymentMethod}\n`;
-            if (txnId) {
-                message += `*Transaction ID:* ${txnId}\n`;
-            }
+            // Save the order to Firestore
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Placing order...';
+            try {
+                const orderId = await window.saveOrder({
+                    customer: { name, mobile, address, area: deliveryAreaText },
+                    items,
+                    subtotal: +subtotal.toFixed(2),
+                    discount: +discount.toFixed(2),
+                    delivery: deliveryCharge,
+                    total: +total.toFixed(2),
+                    payment: { method: paymentMethod, txnId: txnId || null }
+                });
 
-            const whatsappNumber = "8801886936581";
-            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-            
-            // Redirect to WhatsApp
-            window.open(whatsappUrl, '_blank');
+                // Clear the cart
+                localStorage.removeItem('zahroun_cart');
+                localStorage.removeItem('zahroun_voucher');
+                cart = [];
+                if (typeof updateCartUI === 'function') updateCartUI();
+
+                // Success screen
+                document.querySelector('.checkout-container').innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem;">
+                        <ion-icon name="checkmark-circle" style="font-size: 4rem; color: #1e7e34;"></ion-icon>
+                        <h2 style="margin: 1rem 0 0.5rem;">Order Placed!</h2>
+                        <p style="color: var(--text-muted); margin-bottom: 0.4rem;">Your order <strong>#${orderId.slice(0,8).toUpperCase()}</strong> has been received.</p>
+                        <p style="color: var(--text-muted); margin-bottom: 2rem;">We'll contact you on ${mobile} to confirm delivery.</p>
+                        <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+                            <a href="index.html" class="btn">Continue Shopping</a>
+                            <a href="${whatsappUrl}" target="_blank" class="btn btn-outline" style="display:inline-flex;align-items:center;gap:.5rem;"><ion-icon name="logo-whatsapp"></ion-icon> Notify us on WhatsApp</a>
+                        </div>
+                    </div>`;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (err) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Place Order';
+                const msg = err.message === 'not-logged-in' ? 'Please log in to place your order' : ('Could not place order: ' + (err.code || err.message));
+                if (window.showToast) window.showToast(msg, 'error'); else alert(msg);
+            }
         }
     </script>
 </body>

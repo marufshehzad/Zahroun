@@ -9,7 +9,7 @@
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  collection, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp
+  collection, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { uploadImage, optimizedUrl } from "./cloudinary.js";
 
@@ -63,7 +63,8 @@ function initAdmin(user, profile) {
   $("#product-form").addEventListener("submit", saveProduct);
 
   loadProducts();
-  loadStats();
+  loadOrders();
+  loadCustomers();
 }
 
 function switchSection(name) {
@@ -72,12 +73,75 @@ function switchSection(name) {
   $("#section-title").textContent = name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-/* ---- Dashboard stats --------------------------------------------------- */
-async function loadStats() {
+/* ---- Orders ------------------------------------------------------------ */
+const ORDER_STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+
+function fmtDate(ts) {
+  try { return ts && ts.toDate ? ts.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"; }
+  catch { return "—"; }
+}
+
+async function loadOrders() {
+  const tbody = $("#order-rows");
   try {
-    const usersSnap = await getDocs(collection(db, "users"));
-    $("#stat-customers").textContent = usersSnap.size;
-  } catch { /* ignore */ }
+    const snap = await getDocs(collection(db, "orders"));
+    const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+    // Dashboard stats
+    $("#stat-orders").textContent = orders.length;
+    const revenue = orders.filter(o => o.status !== "cancelled").reduce((s, o) => s + (o.total || 0), 0);
+    $("#stat-revenue").textContent = "৳" + revenue.toLocaleString();
+    $("#orders-count").textContent = `${orders.length} order(s)`;
+
+    if (!orders.length) {
+      tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No orders yet.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = orders.map(o => {
+      const c = o.customer || {};
+      const items = (o.items || []).map(i => `${escapeHtml(i.name)} (${i.size}) ×${i.quantity}`).join("<br>");
+      const opts = ORDER_STATUSES.map(s => `<option value="${s}" ${o.status === s ? "selected" : ""}>${s}</option>`).join("");
+      return `<tr>
+        <td><strong>#${o.id.slice(0,8).toUpperCase()}</strong></td>
+        <td>${escapeHtml(c.name || "")}<br><span class="muted-note">${escapeHtml(c.mobile || "")}</span><br><span class="muted-note">${escapeHtml(c.address || "")}</span></td>
+        <td style="font-size:.82rem;">${items}</td>
+        <td>৳${o.total || 0}</td>
+        <td>${escapeHtml(o.payment?.method || "")}${o.payment?.txnId ? `<br><span class="muted-note">${escapeHtml(o.payment.txnId)}</span>` : ""}</td>
+        <td><select class="fg" data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);">${opts}</select></td>
+        <td class="muted-note">${fmtDate(o.createdAt)}</td>
+      </tr>`;
+    }).join("");
+
+    tbody.querySelectorAll("select[data-order]").forEach(sel => {
+      sel.addEventListener("change", async () => {
+        sel.disabled = true;
+        try { await updateDoc(doc(db, "orders", sel.dataset.order), { status: sel.value }); loadOrders(); }
+        catch (e) { alert("Update failed: " + (e.code || e.message)); sel.disabled = false; }
+      });
+    });
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" class="warn" style="padding:1rem;">Failed to load orders: ${e.code || e.message}</td></tr>`;
+  }
+}
+
+/* ---- Customers --------------------------------------------------------- */
+async function loadCustomers() {
+  const tbody = $("#customer-rows");
+  try {
+    const snap = await getDocs(collection(db, "users"));
+    const users = snap.docs.map(d => d.data());
+    $("#stat-customers").textContent = users.length;
+    $("#customers-count").textContent = `${users.length} user(s)`;
+    tbody.innerHTML = users.map(u => `<tr>
+      <td>${escapeHtml(u.name || "—")}</td>
+      <td>${escapeHtml(u.email || "—")}</td>
+      <td><span class="badge ${u.role === "admin" ? "green" : ""}">${escapeHtml(u.role || "customer")}</span></td>
+      <td class="muted-note">${fmtDate(u.createdAt)}</td>
+    </tr>`).join("") || `<tr><td colspan="4" class="muted-note" style="padding:2rem;text-align:center;">No users.</td></tr>`;
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="4" class="warn" style="padding:1rem;">Failed to load: ${e.code || e.message}</td></tr>`;
+  }
 }
 
 /* ---- Products: list ---------------------------------------------------- */

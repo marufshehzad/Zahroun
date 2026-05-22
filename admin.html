@@ -135,9 +135,32 @@
                     </div>
                 </section>
 
-                <!-- Placeholder sections -->
-                <section data-panel="orders" style="display:none;"><div class="panel"><p class="muted-note">Order management — coming in the next step.</p></div></section>
-                <section data-panel="customers" style="display:none;"><div class="panel"><p class="muted-note">Customer management — coming soon.</p></div></section>
+                <!-- ORDERS -->
+                <section data-panel="orders" style="display:none;">
+                    <div class="panel">
+                        <div class="panel-head"><h3>Orders</h3><span class="muted-note" id="orders-count"></span></div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead>
+                                <tbody id="order-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CUSTOMERS -->
+                <section data-panel="customers" style="display:none;">
+                    <div class="panel">
+                        <div class="panel-head"><h3>Customers</h3><span class="muted-note" id="customers-count"></span></div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+                                <tbody id="customer-rows"><tr><td colspan="4" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
                 <section data-panel="categories" style="display:none;"><div class="panel"><p class="muted-note">Category management — coming soon.</p></div></section>
                 <section data-panel="coupons" style="display:none;"><div class="panel"><p class="muted-note">Coupon management — coming soon.</p></div></section>
                 <section data-panel="reviews" style="display:none;"><div class="panel"><p class="muted-note">Review moderation — coming soon.</p></div></section>
