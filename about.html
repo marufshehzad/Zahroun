@@ -1,9 +1,14 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us | Zahroun</title>
+    <title>Our Story | Zahroun Luxury Perfumes</title>
+    <meta name="description" content="Zahroun was born from a passion for scent and memory. We craft niche luxury fragrances from the rarest organic botanicals, designed to evoke confidence and timeless elegance.">
+    <meta property="og:title" content="Our Story | Zahroun Luxury Perfumes">
+    <meta property="og:description" content="The heritage and philosophy behind Zahroun — luxury perfumery crafted with rare botanical ingredients from around the world.">
+    <meta property="og:type" content="website">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
@@ -33,8 +38,8 @@
         </div>
     </header>
 
-    <div class="about-hero" style="background: url('assets/Home.jpg') center/cover no-repeat; padding: 10rem 0; text-align: center; position: relative;">
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6));"></div>
+    <div class="about-hero" id="about-hero-section" style="background: url('product pictures/New product pic and price/Home.jpg') center/cover no-repeat; padding: 10rem 0; text-align: center; position: relative;">
+        <div id="about-hero-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6));"></div>
         <div class="container fade-in" style="position: relative; z-index: 2; max-width: 800px;">
             <h1 class="about-hero-title" style="font-size: 4rem; color: white; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 2px;">Our Heritage</h1>
             <p style="font-size: 1.2rem; color: rgba(255,255,255,0.85); letter-spacing: 1px;">Crafting memories through the art of perfumery.</p>
@@ -55,7 +60,7 @@
     <section class="container py-8 fade-in">
         <div class="about-story-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 4rem; align-items: center;">
             <div class="about-image-frame" style="border-radius: 12px; overflow: hidden; height: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.12);">
-                 <img src="assets/last.jpeg" alt="Zahroun Philosophy" style="width: 100%; height: 100%; object-fit: cover;">
+                 <img src="product pictures/New product pic and price/last .jpeg" alt="Zahroun Philosophy" id="about-mission-img" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
             </div>
             <div>
                 <h2 class="about-section-heading" style="font-size: 2.5rem; margin-bottom: 1.5rem; color: var(--primary-color);">Mission & Vision</h2>
@@ -103,7 +108,41 @@
     <script type="module" src="js/store.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
+    <script type="module">
+        import { db } from "./js/firebase-config.js";
+        import { getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        function cloudinaryTransform(url, transform) {
+            if (!url || !url.includes("/upload/")) return url;
+            return url.replace("/upload/", `/upload/${transform}/`);
+        }
+
+        try {
+            const snap = await getDoc(doc(db, "settings", "about"));
+            if (snap.exists()) {
+                const d = snap.data();
+                if (d.heroImage) {
+                    const heroSection = document.getElementById("about-hero-section");
+                    if (heroSection) {
+                        heroSection.style.background = `url('${cloudinaryTransform(d.heroImage, "w_1400,f_auto,q_auto")}') center/cover no-repeat`;
+                    }
+                }
+                if (d.heroOpacity !== undefined) {
+                    const overlay = document.getElementById("about-hero-overlay");
+                    if (overlay) {
+                        const op = parseFloat(d.heroOpacity);
+                        overlay.style.background = `linear-gradient(rgba(0,0,0,${op * 0.7}), rgba(0,0,0,${op}))`;
+                    }
+                }
+                if (d.missionImage) {
+                    const img = document.getElementById("about-mission-img");
+                    if (img) img.src = cloudinaryTransform(d.missionImage, "w_600,f_auto,q_auto");
+                }
+            }
+        } catch (e) { /* silently use hardcoded fallback */ }
+    </script>
 </body>
 </html>
+
 
 

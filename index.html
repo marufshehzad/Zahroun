@@ -1,10 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zahroun | Nature meets care</title>
-    <meta name="description" content="Zahroun offers premium, natural skincare and haircare products. Experience luxury organic care.">
+    <title>Zahroun | Luxury Fragrances & Perfumes</title>
+    <meta name="description" content="Zahroun crafts niche, luxury fragrances for men and women. Discover long-lasting, premium perfumes with rare botanical ingredients — shop online in Bangladesh.">
+    <meta name="keywords" content="zahroun, luxury perfume bangladesh, niche fragrance, perfume for women, perfume for men, unisex perfume, long lasting perfume dhaka">
+    <meta property="og:title" content="Zahroun | Luxury Fragrances & Perfumes">
+    <meta property="og:description" content="Niche, designer-quality fragrances crafted from the finest ingredients. Long-lasting sillage, premium quality. Shop Zahroun perfumes online.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://zahroun.com">
     <link rel="stylesheet" href="css/style.css">
     <!-- Google Analytics 4 (configure your ID in js/analytics.js) -->
     <script src="js/analytics.js"></script>
@@ -43,11 +49,11 @@
 
     <!-- Hero Section -->
     <section class="hero">
-        <img src="assets/Home.jpg" alt="Zahroun Premium Fragrances" class="hero-bg">
+        <img src="product pictures/New product pic and price/Home.jpg" alt="Zahroun Premium Fragrances" class="hero-bg" id="hero-bg-img" loading="eager">
         <div class="container">
             <div class="hero-content">
-                <p class="hero-subtitle">Perfumery</p>
-                <h1 class="hero-title">Zahroun Perfumes</h1>
+                <p class="hero-subtitle" id="hero-subtitle">Perfumery</p>
+                <h1 class="hero-title" id="hero-title">Zahroun Perfumes</h1>
                 <p class="hero-desc">Zahroun Perfumes — where every scent tells a story of confidence, beauty, and unforgettable moments.</p>
                 <a href="shop.html" class="btn hero-btn">Explore Collection</a>
             </div>
@@ -83,23 +89,23 @@
                 <h2>Shop by Category</h2>
                 <p>Curated essentials for your natural beauty routine.</p>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+            <div id="home-category-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
                 <div style="position: relative; height: 400px; overflow: hidden; border-radius: 4px; cursor: pointer;" onclick="window.location.href='shop.html?category=women'">
-                    <img src="product pictures/New product pic and price/women Rosy Diva 50ml.PNG" alt="Women" style="width: 100%; height: 100%; object-fit: contain; background-color: var(--surface-color); transition: transform 0.5s; padding: 1rem;">
+                    <img src="product pictures/New product pic and price/women Rosy Diva 50ml.PNG" alt="Women" id="cat-img-forher" style="width: 100%; height: 100%; object-fit: contain; background-color: var(--surface-color); transition: transform 0.5s; padding: 1rem;" loading="lazy">
                     <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 2rem; color: white;">
                         <h3 style="color: white; font-size: 1.5rem;">For Her</h3>
                         <p style="color: #eee;">Elegant and radiant</p>
                     </div>
                 </div>
                 <div style="position: relative; height: 400px; overflow: hidden; border-radius: 4px; cursor: pointer;" onclick="window.location.href='shop.html?category=unisex'">
-                    <img src="product pictures/New product pic and price/Unisex.PNG" alt="Unisex" style="width: 100%; height: 100%; object-fit: contain; background-color: var(--surface-color); transition: transform 0.5s; padding: 1rem;">
+                    <img src="product pictures/New product pic and price/Unisex.PNG" alt="Unisex" id="cat-img-unisex" style="width: 100%; height: 100%; object-fit: contain; background-color: var(--surface-color); transition: transform 0.5s; padding: 1rem;" loading="lazy">
                     <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 2rem; color: white;">
                         <h3 style="color: white; font-size: 1.5rem;">Unisex</h3>
                         <p style="color: #eee;">Versatile and balanced</p>
                     </div>
                 </div>
                 <div style="position: relative; height: 400px; overflow: hidden; border-radius: 4px; cursor: pointer;" onclick="window.location.href='shop.html?category=men'">
-                      <img src="product pictures/New product pic and price/FOR men.PNG" alt="For Him" style="width: 100%; height: 100%; object-fit: contain; background-color: #FFFFFF; transition: transform 0.5s; padding: 1rem; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.12));">
+                    <img src="product pictures/New product pic and price/FOR men.PNG" alt="For Him" id="cat-img-forhim" style="width: 100%; height: 100%; object-fit: contain; background-color: #FFFFFF; transition: transform 0.5s; padding: 1rem; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.12));" loading="lazy">
                     <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 2rem; color: white;">
                         <h3 style="color: white; font-size: 1.5rem;">For Him</h3>
                         <p style="color: #eee;">Bold and refined</p>
@@ -133,17 +139,17 @@
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem; text-align: center;">
             <div style="padding: 2rem; background: var(--surface-color); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
-                <ion-icon name="leaf-outline" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></ion-icon>
+                <div id="why-icon-0" style="display:flex;align-items:center;justify-content:center;margin-bottom:1rem;"><ion-icon name="leaf-outline" style="font-size: 3rem; color: var(--primary-color);"></ion-icon></div>
                 <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Organic Ingredients</h3>
                 <p style="color: var(--text-muted); font-size: 0.95rem;">Sourced from the finest botanical gardens around the globe for a pure, clean scent.</p>
             </div>
             <div style="padding: 2rem; background: var(--surface-color); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
-                <ion-icon name="time-outline" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></ion-icon>
+                <div id="why-icon-1" style="display:flex;align-items:center;justify-content:center;margin-bottom:1rem;"><ion-icon name="time-outline" style="font-size: 3rem; color: var(--primary-color);"></ion-icon></div>
                 <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Extreme Longevity</h3>
                 <p style="color: var(--text-muted); font-size: 0.95rem;">High concentration Extrait de Parfum guarantees an invisible signature all day.</p>
             </div>
             <div style="padding: 2rem; background: var(--surface-color); border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
-                <ion-icon name="flask-outline" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></ion-icon>
+                <div id="why-icon-2" style="display:flex;align-items:center;justify-content:center;margin-bottom:1rem;"><ion-icon name="flask-outline" style="font-size: 3rem; color: var(--primary-color);"></ion-icon></div>
                 <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Cruelty Free</h3>
                 <p style="color: var(--text-muted); font-size: 0.95rem;">Ethically crafted without animal testing, so you can wear your luxury with pride.</p>
             </div>
@@ -186,27 +192,27 @@
             <h2 style="font-size: 2.5rem; color: var(--primary-color);">#ZahrounPerfumes</h2>
             <p>Join our fragrant community</p>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div id="gallery-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
             <a href="#" style="display: block; position: relative; overflow: hidden; border-radius: 8px; aspect-ratio: 1/1;" class="product-card">
-                <img src="product pictures/New product pic and price/Sahraa Oudh 50ml.PNG" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img">
+                <img src="product pictures/New product pic and price/Sahraa Oudh 50ml.PNG" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
                 <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(22, 62, 52, 0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
                     <ion-icon name="logo-instagram" style="color: white; font-size: 2.5rem;"></ion-icon>
                 </div>
             </a>
             <a href="#" style="display: block; position: relative; overflow: hidden; border-radius: 8px; aspect-ratio: 1/1;" class="product-card">
-                <img src="product pictures/New product pic and price/Dulce Oud 50ml.PNG" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img">
+                <img src="product pictures/New product pic and price/Dulce Oud 50ml.PNG" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
                 <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(22, 62, 52, 0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
                     <ion-icon name="logo-instagram" style="color: white; font-size: 2.5rem;"></ion-icon>
                 </div>
             </a>
             <a href="#" style="display: block; position: relative; overflow: hidden; border-radius: 8px; aspect-ratio: 1/1;" class="product-card">
-                <img src="product pictures/New product pic and price/women Rosy Diva 50ml.PNG" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img">
+                <img src="product pictures/New product pic and price/women Rosy Diva 50ml.PNG" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
                 <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(22, 62, 52, 0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
                     <ion-icon name="logo-instagram" style="color: white; font-size: 2.5rem;"></ion-icon>
                 </div>
             </a>
             <a href="#" style="display: block; position: relative; overflow: hidden; border-radius: 8px; aspect-ratio: 1/1;" class="product-card">
-                <img src="product pictures/New product pic and price/AL Khayran 50ml.PNG" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img">
+                <img src="product pictures/New product pic and price/AL Khayran 50ml.PNG" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
                 <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(22, 62, 52, 0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
                     <ion-icon name="logo-instagram" style="color: white; font-size: 2.5rem;"></ion-icon>
                 </div>
@@ -224,8 +230,8 @@
             <div class="footer-col-1">
                 <h4 style="font-size: 1.5rem; color: white; margin-bottom: 1rem;">Stay in the Loop</h4>
                 <p style="color: #999; font-size: 1rem; margin-bottom: 1.5rem;">Be the first to know about new arrivals, exclusive offers, and behind-the-scenes stories.</p>
-                <form style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
-                    <input type="email" placeholder="Enter your email" style="background: #222; border: none; padding: 1rem; color: white; flex: 1; border-radius: 4px;">
+                <form id="newsletter-form" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <input type="email" id="newsletter-email" placeholder="Enter your email" style="background: #222; border: none; padding: 1rem; color: white; flex: 1; border-radius: 4px;" required>
                     <button type="submit" class="btn" style="background: white; color: black;">Subscribe &rarr;</button>
                 </form>
                 <p style="color: #666; font-size: 0.95rem;">By subscribing, you agree to our Privacy Policy. Unsubscribe anytime.</p>
@@ -289,6 +295,87 @@
     <script type="module" src="js/store.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
+    <script type="module">
+        import { db } from "./js/firebase-config.js";
+        import { getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        function cloudinaryTransform(url, transform) {
+            if (!url || !url.includes("/upload/")) return url;
+            return url.replace("/upload/", `/upload/${transform}/`);
+        }
+
+        try {
+            const snap = await getDoc(doc(db, "settings", "homepage"));
+            if (snap.exists()) {
+                const d = snap.data();
+                const isMobile = window.innerWidth <= 768;
+
+                if (isMobile && d.heroMobile) {
+                    document.getElementById("hero-bg-img").src = cloudinaryTransform(d.heroMobile, "w_768,f_auto,q_auto");
+                } else if (!isMobile && d.heroDesktop) {
+                    document.getElementById("hero-bg-img").src = cloudinaryTransform(d.heroDesktop, "w_1400,f_auto,q_auto");
+                }
+
+                if (d.catImages?.forHer) {
+                    const el = document.getElementById("cat-img-forher");
+                    if (el) el.src = cloudinaryTransform(d.catImages.forHer, "w_400,h_400,c_fill,f_auto,q_auto");
+                }
+                if (d.catImages?.unisex) {
+                    const el = document.getElementById("cat-img-unisex");
+                    if (el) el.src = cloudinaryTransform(d.catImages.unisex, "w_400,h_400,c_fill,f_auto,q_auto");
+                }
+                if (d.catImages?.forHim) {
+                    const el = document.getElementById("cat-img-forhim");
+                    if (el) el.src = cloudinaryTransform(d.catImages.forHim, "w_400,h_400,c_fill,f_auto,q_auto");
+                }
+
+                const why = d.whyChoose || [];
+                [0, 1, 2].forEach(i => {
+                    if (why[i]?.icon) {
+                        const el = document.getElementById(`why-icon-${i}`);
+                        if (el) el.innerHTML = `<img src="${cloudinaryTransform(why[i].icon, "w_96,h_96,c_fill,f_auto,q_auto")}" alt="" style="width:3rem;height:3rem;object-fit:contain;" loading="lazy">`;
+                    }
+                });
+
+                if (d.gallery && d.gallery.length) {
+                    const grid = document.getElementById("gallery-grid");
+                    if (grid) {
+                        grid.innerHTML = d.gallery.slice(0, 4).map(url => `
+                            <a href="#" style="display: block; position: relative; overflow: hidden; border-radius: 8px; aspect-ratio: 1/1;" class="product-card">
+                                <img src="${cloudinaryTransform(url, "w_600,h_600,c_fill,f_auto,q_auto")}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(22, 62, 52, 0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+                                    <ion-icon name="logo-instagram" style="color: white; font-size: 2.5rem;"></ion-icon>
+                                </div>
+                            </a>`).join("");
+                    }
+                }
+            }
+        } catch (e) { /* silently use hardcoded fallback */ }
+    </script>
+    <script type="module">
+        import { db } from "./js/firebase-config.js";
+        import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        const nlForm = document.getElementById("newsletter-form");
+        if (nlForm) {
+            nlForm.addEventListener("submit", async e => {
+                e.preventDefault();
+                const emailInput = document.getElementById("newsletter-email");
+                const email = emailInput.value.trim();
+                if (!email) return;
+                const btn = nlForm.querySelector("button");
+                btn.disabled = true; btn.textContent = "Subscribing…";
+                try {
+                    await addDoc(collection(db, "newsletter"), { email, subscribedAt: serverTimestamp() });
+                    if (window.showToast) window.showToast("Subscribed! Thank you.");
+                    if (window.zahrounGA) window.zahrounGA.trackNewsletterSubscribe(email);
+                    emailInput.value = "";
+                } catch {
+                    if (window.showToast) window.showToast("Could not subscribe. Try again.", "error");
+                }
+                btn.disabled = false; btn.textContent = "Subscribe →";
+            });
+        }
+    </script>
     <script>
         // Load featured products (waits for Firestore/store.js to be ready)
         document.addEventListener('products-ready', () => {
@@ -335,4 +422,5 @@
     </script>
 </body>
 </html>
+
 

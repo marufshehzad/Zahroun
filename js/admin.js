@@ -18,8 +18,12 @@ const app = $("#admin-app");
 let products = [], orders = [], customers = [], categories = [], coupons = [], reviews = [], messages = [], newsletter = [];
 let settings = {};
 let editing = null, editingCat = null, editingCoupon = null;
+const SIZE_KEYS = ["6ML", "15ML", "30ML", "50ML"];
+let sizeImagesMap = { "6ML": "", "15ML": "", "30ML": "", "50ML": "" };
 let revenueChart = null, statusChart = null, anRevChart = null, anStatusChart = null;
 let anDays = 30;
+let anCustomFrom = null;
+let anCustomTo = null;
 let pfSearch = "", pfCategory = "", pfSort = "default";
 const pfFlags = new Set();
 const sectionLoaded = new Set();
@@ -27,6 +31,91 @@ let galleryImages = [];
 let galleryDragSrc = null;
 let ofSearch = "";
 let currentDetailOrder = null;
+let _cropResolve = null;
+let _cropReject = null;
+let _cropPanX = 0, _cropPanY = 0, _cropScale = 1;
+let _cropNatW = 0, _cropNatH = 0, _cropFrameW = 0, _cropFrameH = 0;
+let _cropDragging = false, _cropSX = 0, _cropSY = 0, _cropSPX = 0, _cropSPY = 0;
+let _cropMM = null, _cropMU = null, _cropTM = null, _cropTU = null;
+
+function _cropApply() {
+  const img = document.getElementById("crop-img");
+  if (!img) return;
+  img.style.width  = (_cropNatW * _cropScale) + "px";
+  img.style.height = (_cropNatH * _cropScale) + "px";
+  img.style.transform = `translate(${_cropPanX}px,${_cropPanY}px)`;
+}
+
+function _cropClamp(x, y) {
+  const maxX = 0, minX = _cropFrameW - _cropNatW * _cropScale;
+  const maxY = 0, minY = _cropFrameH - _cropNatH * _cropScale;
+  return [Math.min(maxX, Math.max(minX, x)), Math.min(maxY, Math.max(minY, y))];
+}
+
+function openCropModal(file, { aspectRatio = NaN } = {}) {
+  return new Promise((resolve, reject) => {
+    _cropResolve = resolve;
+    _cropReject = reject;
+    const modal = document.getElementById("crop-modal");
+    const frame = document.getElementById("crop-wrap");
+    const img   = document.getElementById("crop-img");
+
+    const objUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objUrl);
+      _cropNatW = img.naturalWidth;
+      _cropNatH = img.naturalHeight;
+      _cropFrameW = frame.offsetWidth;
+      _cropFrameH = frame.offsetHeight;
+      _cropScale = Math.max(_cropFrameW / _cropNatW, _cropFrameH / _cropNatH);
+      _cropPanX = (_cropFrameW - _cropNatW * _cropScale) / 2;
+      _cropPanY = (_cropFrameH - _cropNatH * _cropScale) / 2;
+      _cropApply();
+    };
+    img.src = objUrl;
+
+    if (_cropMM) { document.removeEventListener("mousemove", _cropMM); document.removeEventListener("mouseup", _cropMU); }
+    if (_cropTM) { document.removeEventListener("touchmove", _cropTM); document.removeEventListener("touchend", _cropTU); }
+
+    frame.onmousedown = e => {
+      _cropDragging = true; _cropSX = e.clientX; _cropSY = e.clientY;
+      _cropSPX = _cropPanX; _cropSPY = _cropPanY; e.preventDefault();
+    };
+    frame.ontouchstart = e => {
+      _cropDragging = true; _cropSX = e.touches[0].clientX; _cropSY = e.touches[0].clientY;
+      _cropSPX = _cropPanX; _cropSPY = _cropPanY; e.preventDefault();
+    };
+
+    _cropMM = e => {
+      if (!_cropDragging) return;
+      [_cropPanX, _cropPanY] = _cropClamp(_cropSPX + e.clientX - _cropSX, _cropSPY + e.clientY - _cropSY);
+      _cropApply();
+    };
+    _cropMU = () => { _cropDragging = false; };
+    _cropTM = e => {
+      if (!_cropDragging) return;
+      [_cropPanX, _cropPanY] = _cropClamp(_cropSPX + e.touches[0].clientX - _cropSX, _cropSPY + e.touches[0].clientY - _cropSY);
+      _cropApply(); e.preventDefault();
+    };
+    _cropTU = () => { _cropDragging = false; };
+
+    document.addEventListener("mousemove", _cropMM);
+    document.addEventListener("mouseup",   _cropMU);
+    document.addEventListener("touchmove", _cropTM, { passive: false });
+    document.addEventListener("touchend",  _cropTU);
+
+    modal.classList.add("open");
+  });
+}
+
+function closeCropModal() {
+  document.getElementById("crop-modal").classList.remove("open");
+  if (_cropMM) { document.removeEventListener("mousemove", _cropMM); document.removeEventListener("mouseup", _cropMU); _cropMM = _cropMU = null; }
+  if (_cropTM) { document.removeEventListener("touchmove", _cropTM); document.removeEventListener("touchend", _cropTU); _cropTM = _cropTU = null; }
+  const frame = document.getElementById("crop-wrap");
+  if (frame) { frame.onmousedown = null; frame.ontouchstart = null; }
+  _cropResolve = null; _cropReject = null;
+}
 
 const SUBTITLES = {
   dashboard: "Overview of your store performance",
@@ -38,6 +127,7 @@ const SUBTITLES = {
   reviews: "Moderate customer reviews",
   messages: "Contact form submissions",
   analytics: "Traffic & sales insights",
+  pages: "Manage hero banners, category cards & gallery images",
   settings: "Store configuration"
 };
 const ORDER_STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
@@ -68,7 +158,7 @@ async function initAdmin(user, profile) {
   const name = profile.name || user.email;
   $("#admin-who").textContent = name + " · admin";
   $("#side-av").textContent = (name[0] || "A").toUpperCase();
-  $("#side-nm").innerHTML = `${escapeHtml(name)}<small>Administrator</small>`;
+  $("#side-nm").innerHTML = `${escapeHtml(name)}<small>Admin</small>`;
 
   $("#admin-logout").addEventListener("click", async () => { await signOut(auth); window.location.href = "index.html"; });
   document.querySelectorAll("#admin-nav button").forEach(btn => btn.addEventListener("click", () => switchSection(btn.dataset.section)));
@@ -83,6 +173,12 @@ async function initAdmin(user, profile) {
   $("#cancel-product").addEventListener("click", closeForm);
   $("#product-modal").addEventListener("click", (e) => { if (e.target.id === "product-modal") closeForm(); });
   document.getElementById("img-file-multi").addEventListener("change", handleMultiImageUpload);
+  document.getElementById("si-sync-btn")?.addEventListener("click", () => {
+    const mainImg = galleryImages[0] || "";
+    if (!mainImg) { if (window.showToast) window.showToast("Add a main image first.", "error"); return; }
+    SIZE_KEYS.forEach(k => { sizeImagesMap[k] = mainImg; });
+    renderSizeImageGrid();
+  });
   $("#product-form").addEventListener("submit", saveProduct);
 
   // Notification bell
@@ -104,6 +200,26 @@ async function initAdmin(user, profile) {
   document.getElementById("od-close")?.addEventListener("click", () => document.getElementById("order-detail-modal")?.classList.remove("open"));
   document.getElementById("order-detail-modal")?.addEventListener("click", e => { if (e.target.id === "order-detail-modal") e.target.classList.remove("open"); });
   document.getElementById("od-print")?.addEventListener("click", () => { if (currentDetailOrder) printOrderInvoice(currentDetailOrder); });
+
+  // Crop modal buttons
+  document.getElementById("crop-cancel")?.addEventListener("click", () => {
+    closeCropModal();
+    if (_cropReject) _cropReject(new Error("cancelled"));
+  });
+  document.getElementById("crop-ok")?.addEventListener("click", () => {
+    const img = document.getElementById("crop-img");
+    if (!img || !_cropNatW) return;
+    const cropX = -_cropPanX / _cropScale;
+    const cropY = -_cropPanY / _cropScale;
+    const cropW = _cropFrameW / _cropScale;
+    const cropH = _cropFrameH / _cropScale;
+    const outW = Math.min(Math.round(cropW * 2), 1800);
+    const outH = Math.min(Math.round(cropH * 2), 1800);
+    const canvas = document.createElement("canvas");
+    canvas.width = outW; canvas.height = outH;
+    canvas.getContext("2d").drawImage(img, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
+    canvas.toBlob(blob => { const res = _cropResolve; closeCropModal(); if (res) res(blob); }, "image/jpeg", 0.88);
+  });
 
   // Fetch all data once at startup (needed for dashboard stats)
   await Promise.all([fetchProducts(), fetchOrders(), fetchCustomers()]);
@@ -139,6 +255,7 @@ function switchSection(name) {
     else if (name === "reviews") fetchReviews().then(renderReviewTable);
     else if (name === "messages") fetchMessages().then(renderMessagesTable);
     else if (name === "settings") fetchSettings().then(renderSettingsForm);
+    else if (name === "pages") fetchPageSettings().then(renderPagesSection);
   }
 }
 
@@ -175,6 +292,8 @@ function setupSection(name) {
     if (ofInput) ofInput.addEventListener("input", e => { ofSearch = e.target.value; renderOrderTable(); });
   } else if (name === "settings") {
     $("#settings-form").addEventListener("submit", saveSettings);
+  } else if (name === "pages") {
+    setupPagesSection();
   }
 }
 
@@ -767,7 +886,9 @@ function openForm(product) {
   $("#product-form-title").textContent = product ? "Edit Product" : "Add Product";
   galleryImages = product?.images ? [...product.images] : (product?.image ? [product.image] : []);
   f.image.value = galleryImages[0] || "";
+  sizeImagesMap = product?.sizeImages ? { ...product.sizeImages } : { "6ML": "", "15ML": "", "30ML": "", "50ML": "" };
   renderGalleryThumbs();
+  renderSizeImageGrid();
   document.getElementById("img-status").textContent = "";
   if (product) {
     f.id.value = product.id;
@@ -798,20 +919,22 @@ async function handleMultiImageUpload(e) {
   const files = Array.from(e.target.files);
   if (!files.length) return;
   const statusEl = document.getElementById("img-status");
-  const total = files.length;
   let uploaded = 0;
-  statusEl.textContent = `Uploading 0/${total}…`;
-  try {
-    for (const file of files) {
-      const { url } = await uploadImage(file, { onProgress: (p) => { statusEl.textContent = `Uploading ${uploaded + 1}/${total} (${p}%)…`; } });
+  for (const file of files) {
+    let blob;
+    try {
+      blob = await openCropModal(file, { aspectRatio: 3 / 4 });
+    } catch { e.target.value = ""; continue; }
+    statusEl.textContent = `Uploading…`;
+    try {
+      const { url } = await uploadImage(blob, { onProgress: p => { statusEl.textContent = `Uploading ${p}%…`; } });
       galleryImages.push(url);
       uploaded++;
       renderGalleryThumbs();
-      statusEl.textContent = `${uploaded}/${total} uploaded.`;
-    }
-    document.getElementById("product-form").image.value = galleryImages[0] || "";
-    statusEl.textContent = `✓ ${uploaded} image${uploaded > 1 ? "s" : ""} added.`;
-  } catch (err) { statusEl.textContent = "⚠ " + err.message; }
+    } catch (err) { statusEl.textContent = "⚠ " + err.message; break; }
+  }
+  document.getElementById("product-form").image.value = galleryImages[0] || "";
+  if (uploaded > 0) statusEl.textContent = `✓ ${uploaded} image${uploaded > 1 ? "s" : ""} added.`;
   e.target.value = "";
 }
 
@@ -852,6 +975,56 @@ function renderGalleryThumbs() {
   });
 }
 
+function renderSizeImageGrid() {
+  const grid = document.getElementById("size-img-grid");
+  if (!grid) return;
+  grid.innerHTML = SIZE_KEYS.map(size => {
+    const url = sizeImagesMap[size] || "";
+    const thumb = url
+      ? `<img src="${optimizedUrl(url, 120)}" style="width:100%;height:100%;object-fit:contain;">`
+      : `<ion-icon name="image-outline" style="font-size:1.6rem;color:#bbb;"></ion-icon>`;
+    const clearBtn = url
+      ? `<button type="button" class="si-clear" data-size="${size}" style="font-size:.7rem;color:#9b2226;background:none;border:none;cursor:pointer;margin-top:.2rem;">✕ Remove</button>`
+      : "";
+    return `
+      <div style="text-align:center;">
+        <div style="font-size:.78rem;font-weight:600;margin-bottom:.35rem;color:var(--text-main);">${size}</div>
+        <div style="width:100%;aspect-ratio:3/4;border:1px solid var(--border-color);border-radius:6px;overflow:hidden;background:var(--surface-color);display:flex;align-items:center;justify-content:center;margin-bottom:.35rem;">
+          ${thumb}
+        </div>
+        <label class="btn btn-outline" style="font-size:.72rem;padding:.3rem .55rem;cursor:pointer;display:inline-block;" for="si-file-${size}">Upload</label>
+        <input type="file" id="si-file-${size}" accept="image/*" data-size="${size}" style="display:none;" class="si-file-input">
+        ${clearBtn}
+      </div>`;
+  }).join("");
+  grid.querySelectorAll(".si-file-input").forEach(input => {
+    input.addEventListener("change", handleSizeImageUpload);
+  });
+  grid.querySelectorAll(".si-clear").forEach(btn => {
+    btn.addEventListener("click", () => {
+      sizeImagesMap[btn.dataset.size] = "";
+      renderSizeImageGrid();
+    });
+  });
+}
+
+async function handleSizeImageUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const size = e.target.dataset.size;
+  let blob;
+  try { blob = await openCropModal(file); } catch { e.target.value = ""; return; }
+  const statusEl = document.getElementById("img-status");
+  statusEl.textContent = `Uploading ${size}…`;
+  try {
+    const { url } = await uploadImage(blob, { onProgress: p => { statusEl.textContent = `Uploading ${size} ${p}%…`; } });
+    sizeImagesMap[size] = url;
+    renderSizeImageGrid();
+    statusEl.textContent = `✓ ${size} image updated.`;
+  } catch (err) { statusEl.textContent = "⚠ " + err.message; }
+  e.target.value = "";
+}
+
 function csv(v) { return v.split(",").map(s => s.trim()).filter(Boolean); }
 function numOrNull(v) { const n = parseInt(v, 10); return isNaN(n) ? null : n; }
 
@@ -869,8 +1042,8 @@ async function saveProduct(e) {
     .forEach(([k, v]) => { const n = numOrNull(v); if (n !== null) prices[k] = n; });
   const image = galleryImages[0] || (editing && editing.image) || "";
   const images = galleryImages.length ? [...galleryImages] : (editing?.images ? [...editing.images] : (image ? [image] : []));
-  let sizeImages = (editing && editing.sizeImages) ? editing.sizeImages : null;
-  if (!sizeImages && image) sizeImages = { "6ML": image, "15ML": image, "30ML": image, "50ML": image };
+  const sizeImages = {};
+  SIZE_KEYS.forEach(k => { sizeImages[k] = sizeImagesMap[k] || image; });
   const data = {
     id, name: f.name.value.trim(), category: f.category.value, price: price50, prices, image, images, sizeImages: sizeImages || {},
     description: f.description.value.trim(), ingredients: f.ingredients.value.trim(),
@@ -996,19 +1169,34 @@ function setupAnalyticsControls() {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".an-period").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      anDays = parseInt(btn.dataset.days) || 0;
-      renderAnalytics();
+      anDays = parseInt(btn.dataset.days);
+      if (isNaN(anDays)) anDays = 0;
+      const customRange = document.getElementById("an-custom-range");
+      if (customRange) customRange.style.display = anDays === -1 ? "flex" : "none";
+      if (anDays !== -1) renderAnalytics();
     });
+  });
+  document.getElementById("an-custom-apply")?.addEventListener("click", () => {
+    const from = document.getElementById("an-date-from")?.value;
+    const to = document.getElementById("an-date-to")?.value;
+    if (!from || !to) return;
+    anCustomFrom = new Date(from).getTime() / 1000;
+    anCustomTo = new Date(to).getTime() / 1000 + 86399;
+    renderAnalytics();
   });
 }
 
 function anFilterOrders(days) {
+  if (days === -1 && anCustomFrom && anCustomTo)
+    return orders.filter(o => o.createdAt && o.createdAt.seconds >= anCustomFrom && o.createdAt.seconds <= anCustomTo);
   if (!days) return orders;
   const cutoff = Date.now() / 1000 - days * 86400;
   return orders.filter(o => o.createdAt && o.createdAt.seconds >= cutoff);
 }
 
 function anFilterCustomers(days) {
+  if (days === -1 && anCustomFrom && anCustomTo)
+    return customers.filter(u => u.createdAt && u.createdAt.seconds >= anCustomFrom && u.createdAt.seconds <= anCustomTo);
   if (!days) return customers;
   const cutoff = Date.now() / 1000 - days * 86400;
   return customers.filter(u => u.createdAt && u.createdAt.seconds >= cutoff);
@@ -1030,9 +1218,9 @@ async function renderAnalytics() {
   $("#an-customers").textContent = newCusts;
   $("#an-newsletter").textContent = newsletter.length;
 
-  const labelMap = { 7: "Last 7 days", 30: "Last 30 days", 90: "Last 90 days", 0: "All time" };
+  const labelMap = { 7: "Last 7 days", 30: "Last 30 days", 90: "Last 90 days", 0: "All time", "-1": "Custom range" };
   const labelEl = $("#an-chart-label");
-  if (labelEl) labelEl.textContent = labelMap[anDays] || "";
+  if (labelEl) labelEl.textContent = labelMap[String(anDays)] || "";
 
   renderAnRevenueChart(active);
   renderAnStatusChart(filtered);
@@ -1128,7 +1316,7 @@ function renderAnFunnel(filtered, active, newCusts) {
     { label: "Confirmed/Shipped", val: filtered.filter(o => ["confirmed", "shipped", "delivered"].includes(o.status)).length },
     { label: "Delivered", val: filtered.filter(o => o.status === "delivered").length }
   ];
-  const max = steps[0].val || steps[1].val || 1;
+  const max = Math.max(...steps.map(s => s.val), 1);
   el.innerHTML = steps.map(s => `
     <div class="an-funnel-row">
       <div style="flex:1;">
@@ -1219,6 +1407,7 @@ function printOrderInvoice(order) {
   const couponCode = typeof order.coupon === "string" ? order.coupon : (order.coupon?.id || order.coupon?.code || "");
   const dateStr = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "";
   const orderNumDisplay = order.orderNum ? `#${order.orderNum}` : `#${order.id.slice(0, 8).toUpperCase()}`;
+  const logoUrl = window.location.origin + "/product%20pictures/main%20logo.png";
   const statusColor = STATUS_COLORS[order.status || "pending"] || "#888";
 
   const itemRows = items.map((item, idx) => `<tr>
@@ -1245,12 +1434,11 @@ function printOrderInvoice(order) {
   /* Header */
   .hdr{text-align:center;padding-bottom:1.4rem;margin-bottom:1.8rem;position:relative;}
   .hdr::after{content:'';display:block;margin:1.2rem auto 0;width:60px;height:1.5px;background:#163E34;}
-  .brand{font-family:'Cormorant Garamond',serif;font-size:2.6rem;font-weight:300;letter-spacing:10px;color:#163E34;text-transform:uppercase;}
-  .brand-sub{font-family:'Inter',sans-serif;font-size:.58rem;letter-spacing:7px;color:#aaa;margin-top:5px;text-transform:uppercase;font-weight:500;}
-  .inv-tag{font-family:'Inter',sans-serif;font-size:.68rem;letter-spacing:3px;color:#b0a090;margin-top:1rem;text-transform:uppercase;font-weight:400;}
+  .logo-img{height:180px;max-width:340px;object-fit:contain;display:block;margin:0 auto;}
+  .inv-tag{font-family:'Inter',sans-serif;font-size:.68rem;letter-spacing:3px;color:#b0a090;margin-top:.2rem;text-transform:uppercase;font-weight:400;}
   /* Order meta */
   .inv-meta{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.8rem;padding-bottom:1.2rem;border-bottom:1px solid #e8e4dc;}
-  .inv-num{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;color:#163E34;letter-spacing:1px;line-height:1.1;}
+  .inv-num{font-family:'Inter',sans-serif;font-size:1.5rem;font-weight:700;color:#163E34;letter-spacing:4px;line-height:1.1;}
   .inv-num-lbl{font-size:.58rem;letter-spacing:4px;text-transform:uppercase;color:#aaa;margin-bottom:.3rem;font-weight:500;}
   .status-badge{display:inline-block;background:${statusColor};color:#fff;padding:.2rem .65rem;border-radius:3px;font-size:.62rem;font-weight:600;letter-spacing:.06em;margin-top:.5rem;text-transform:uppercase;}
   /* Grid */
@@ -1277,8 +1465,7 @@ function printOrderInvoice(order) {
   @media print{.print-btn{display:none;}body{padding:1.5cm;}}
 </style></head><body>
 <div class="hdr">
-  <div class="brand">Zahroun</div>
-  <div class="brand-sub">Luxury Fragrances</div>
+  <img src="${logoUrl}" class="logo-img" alt="Zahroun">
   <div class="inv-tag">Tax Invoice &nbsp;·&nbsp; Order Confirmation</div>
 </div>
 
@@ -1398,6 +1585,327 @@ function exportCustomersCSV() {
   const rows = customers.map(u => [u.name || "", u.email || "", u.role || "customer", fmtDate(u.createdAt)]);
   downloadCSV("zahroun_customers.csv", headers, rows);
   adminToast(`Exported ${customers.length} customers.`);
+}
+
+/* =========================================================================
+   PAGES SECTION — dynamic image management
+   ========================================================================= */
+
+let pageSettings = { homepage: {}, about: {}, contact: {} };
+let galleryPageImages = [];
+let galleryPageDragSrc = null;
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
+async function fetchPageSettings() {
+  try {
+    const [hSnap, aSnap, cSnap] = await Promise.all([
+      getDoc(doc(db, "settings", "homepage")),
+      getDoc(doc(db, "settings", "about")),
+      getDoc(doc(db, "settings", "contact"))
+    ]);
+    pageSettings.homepage = hSnap.exists() ? hSnap.data() : {};
+    pageSettings.about = aSnap.exists() ? aSnap.data() : {};
+    pageSettings.contact = cSnap.exists() ? cSnap.data() : {};
+  } catch (e) { console.error("fetchPageSettings:", e); }
+}
+
+function setupPagesSection() {
+  document.querySelectorAll(".pages-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".pages-tab").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".pages-sub").forEach(s => s.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelector(`.pages-sub[data-sub="${btn.dataset.tab}"]`)?.classList.add("active");
+    });
+  });
+
+  bindPageUpload("file-hero-desktop",   "prev-hero-desktop",   "status-hero-desktop",   "del-hero-desktop",   { aspectRatio: 16/9 });
+  bindPageUpload("file-hero-mobile",    "prev-hero-mobile",    "status-hero-mobile",    "del-hero-mobile",    { aspectRatio: 9/16 });
+  bindPageUpload("file-cat-forher",     "prev-cat-forher",     "status-cat-forher",     "del-cat-forher",     { aspectRatio: 1 });
+  bindPageUpload("file-cat-unisex",     "prev-cat-unisex",     "status-cat-unisex",     "del-cat-unisex",     { aspectRatio: 1 });
+  bindPageUpload("file-cat-forhim",     "prev-cat-forhim",     "status-cat-forhim",     "del-cat-forhim",     { aspectRatio: 1 });
+  bindPageUpload("file-why-0",          "prev-why-0",          "status-why-0",          "del-why-0",          { aspectRatio: 1 });
+  bindPageUpload("file-why-1",          "prev-why-1",          "status-why-1",          "del-why-1",          { aspectRatio: 1 });
+  bindPageUpload("file-why-2",          "prev-why-2",          "status-why-2",          "del-why-2",          { aspectRatio: 1 });
+  bindPageUpload("file-about-hero",     "prev-about-hero",     "status-about-hero",     "del-about-hero",     { aspectRatio: 16/9 });
+  bindPageUpload("file-about-mission",  "prev-about-mission",  "status-about-mission",  "del-about-mission");
+  bindPageUpload("file-contact-hero",   "prev-contact-hero",   "status-contact-hero",   "del-contact-hero",   { aspectRatio: 16/9 });
+  bindPageUpload("file-contact-map",    "prev-contact-map",    "status-contact-map",    "del-contact-map");
+
+  document.getElementById("file-gallery-multi").addEventListener("change", handleGalleryPageUpload);
+
+  const opacityInput = document.getElementById("about-hero-opacity");
+  const opacityVal = document.getElementById("about-hero-opacity-val");
+  if (opacityInput) {
+    opacityInput.addEventListener("input", () => {
+      opacityVal.textContent = parseFloat(opacityInput.value).toFixed(2);
+    });
+  }
+
+  document.querySelectorAll(".map-toggle button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".map-toggle button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      const mode = btn.dataset.mapmode;
+      document.getElementById("map-sub-iframe").style.display = mode === "iframe" ? "" : "none";
+      document.getElementById("map-sub-image").style.display = mode === "image" ? "" : "none";
+    });
+  });
+
+  document.getElementById("save-pages-homepage").addEventListener("click", savePagesHomepage);
+  document.getElementById("save-pages-about").addEventListener("click", savePagesAbout);
+  document.getElementById("save-pages-contact").addEventListener("click", savePagesContact);
+}
+
+function bindPageUpload(fileId, previewId, statusId, delId, { aspectRatio = NaN } = {}) {
+  const fileInput = document.getElementById(fileId);
+  const preview = document.getElementById(previewId);
+  const statusEl = document.getElementById(statusId);
+  const delBtn = document.getElementById(delId);
+  if (!fileInput) return;
+
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) {
+      statusEl.textContent = "File exceeds 5MB limit.";
+      statusEl.style.color = "#9b2226";
+      fileInput.value = "";
+      return;
+    }
+    let blob;
+    try { blob = await openCropModal(file, { aspectRatio }); }
+    catch { fileInput.value = ""; return; }
+    statusEl.style.color = "";
+    statusEl.textContent = "Uploading…";
+    try {
+      const { url } = await uploadImage(blob, { onProgress: p => { statusEl.textContent = `Uploading ${p}%…`; } });
+      preview.src = optimizedUrl(url, 600);
+      preview.classList.add("has-img");
+      if (delBtn) delBtn.style.display = "";
+      statusEl.textContent = "Uploaded.";
+      fileInput._uploadedUrl = url;
+    } catch (err) {
+      statusEl.textContent = err.message;
+      statusEl.style.color = "#9b2226";
+    }
+    fileInput.value = "";
+  });
+
+  if (delBtn) {
+    delBtn.addEventListener("click", () => {
+      preview.src = "";
+      preview.classList.remove("has-img");
+      delBtn.style.display = "none";
+      if (fileInput._uploadedUrl) fileInput._uploadedUrl = null;
+      statusEl.textContent = "";
+    });
+  }
+}
+
+function setPagePreview(previewId, delId, url) {
+  if (!url) return;
+  const el = document.getElementById(previewId);
+  const del = document.getElementById(delId);
+  if (el) { el.src = optimizedUrl(url, 800); el.classList.add("has-img"); }
+  if (del) del.style.display = "";
+  const fileInput = document.getElementById(previewId.replace("prev-", "file-"));
+  if (fileInput) fileInput._uploadedUrl = url;
+}
+
+function getPageUrl(previewId) {
+  const fileInput = document.getElementById(previewId.replace("prev-", "file-"));
+  return fileInput?._uploadedUrl || null;
+}
+
+async function handleGalleryPageUpload(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  const statusEl = document.getElementById("status-gallery-multi");
+  for (const file of files) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      statusEl.textContent = `"${file.name}" exceeds 5MB limit. Skipped.`;
+      statusEl.style.color = "#9b2226";
+      continue;
+    }
+    let blob;
+    try { blob = await openCropModal(file, { aspectRatio: 1 }); }
+    catch { continue; }
+    statusEl.style.color = "";
+    statusEl.textContent = "Uploading…";
+    try {
+      const { url } = await uploadImage(blob, { onProgress: p => { statusEl.textContent = `Uploading ${p}%…`; } });
+      galleryPageImages.push(url);
+      renderGalleryPageThumbs();
+      statusEl.textContent = `${galleryPageImages.length} image${galleryPageImages.length > 1 ? "s" : ""} in gallery.`;
+    } catch (err) {
+      statusEl.textContent = err.message;
+      statusEl.style.color = "#9b2226";
+    }
+  }
+  e.target.value = "";
+}
+
+function renderGalleryPageThumbs() {
+  const el = document.getElementById("gallery-page-thumbs");
+  if (!el) return;
+  if (!galleryPageImages.length) {
+    el.innerHTML = `<span class="muted-note" style="font-size:.78rem;line-height:2.5rem;">No gallery images yet.</span>`;
+    return;
+  }
+  el.innerHTML = galleryPageImages.map((url, i) => `
+    <div class="gallery-page-thumb" draggable="true" data-gpi="${i}" style="width:80px;">
+      <img src="${optimizedUrl(url, 160)}" alt="">
+      <button type="button" class="th-del" data-gpi="${i}" title="Remove">&times;</button>
+    </div>`).join("");
+  el.querySelectorAll(".th-del").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      galleryPageImages.splice(Number(btn.dataset.gpi), 1);
+      renderGalleryPageThumbs();
+    });
+  });
+  el.querySelectorAll(".gallery-page-thumb").forEach(th => {
+    th.addEventListener("dragstart", () => { galleryPageDragSrc = Number(th.dataset.gpi); });
+    th.addEventListener("dragover", e => { e.preventDefault(); th.classList.add("drag-over"); });
+    th.addEventListener("dragleave", () => { th.classList.remove("drag-over"); });
+    th.addEventListener("drop", e => {
+      e.preventDefault(); th.classList.remove("drag-over");
+      const src = galleryPageDragSrc, dest = Number(th.dataset.gpi);
+      if (src === null || src === dest) return;
+      const moved = galleryPageImages.splice(src, 1)[0];
+      galleryPageImages.splice(dest, 0, moved);
+      renderGalleryPageThumbs();
+    });
+    th.addEventListener("dragend", () => { el.querySelectorAll(".gallery-page-thumb").forEach(t => t.classList.remove("drag-over")); });
+  });
+}
+
+function renderPagesSection() {
+  const hp = pageSettings.homepage;
+  const ab = pageSettings.about;
+  const ct = pageSettings.contact;
+
+  setPagePreview("prev-hero-desktop", "del-hero-desktop", hp.heroDesktop);
+  setPagePreview("prev-hero-mobile", "del-hero-mobile", hp.heroMobile);
+  setPagePreview("prev-cat-forher", "del-cat-forher", hp.catImages?.forHer);
+  setPagePreview("prev-cat-unisex", "del-cat-unisex", hp.catImages?.unisex);
+  setPagePreview("prev-cat-forhim", "del-cat-forhim", hp.catImages?.forHim);
+  const why = hp.whyChoose || [];
+  [0, 1, 2].forEach(i => setPagePreview(`prev-why-${i}`, `del-why-${i}`, why[i]?.icon));
+
+  galleryPageImages = hp.gallery ? [...hp.gallery] : [];
+  renderGalleryPageThumbs();
+
+  setPagePreview("prev-about-hero", "del-about-hero", ab.heroImage);
+  const opacityInput = document.getElementById("about-hero-opacity");
+  const opacityVal = document.getElementById("about-hero-opacity-val");
+  if (opacityInput) {
+    const val = ab.heroOpacity !== undefined ? ab.heroOpacity : 0.5;
+    opacityInput.value = val;
+    if (opacityVal) opacityVal.textContent = parseFloat(val).toFixed(2);
+  }
+  setPagePreview("prev-about-mission", "del-about-mission", ab.missionImage);
+
+  setPagePreview("prev-contact-hero", "del-contact-hero", ct.heroImage);
+  if (ct.mapEmbed) {
+    const mapInput = document.getElementById("contact-map-embed");
+    if (mapInput) mapInput.value = ct.mapEmbed;
+    document.getElementById("map-mode-iframe")?.classList.add("active");
+    document.getElementById("map-mode-image")?.classList.remove("active");
+    document.getElementById("map-sub-iframe").style.display = "";
+    document.getElementById("map-sub-image").style.display = "none";
+  } else if (ct.mapImage) {
+    setPagePreview("prev-contact-map", "del-contact-map", ct.mapImage);
+    document.getElementById("map-mode-iframe")?.classList.remove("active");
+    document.getElementById("map-mode-image")?.classList.add("active");
+    document.getElementById("map-sub-iframe").style.display = "none";
+    document.getElementById("map-sub-image").style.display = "";
+  }
+}
+
+async function savePagesHomepage() {
+  const btn = document.getElementById("save-pages-homepage");
+  const statusEl = document.getElementById("status-pages-homepage");
+  btn.disabled = true; btn.textContent = "Saving…";
+  statusEl.textContent = "";
+  try {
+    const hp = pageSettings.homepage;
+    const heroDesktop = getPageUrl("prev-hero-desktop") || hp.heroDesktop || null;
+    const heroMobile = getPageUrl("prev-hero-mobile") || hp.heroMobile || null;
+    const catForHer = getPageUrl("prev-cat-forher") || hp.catImages?.forHer || null;
+    const catUnisex = getPageUrl("prev-cat-unisex") || hp.catImages?.unisex || null;
+    const catForHim = getPageUrl("prev-cat-forhim") || hp.catImages?.forHim || null;
+    const prevWhy = hp.whyChoose || [];
+    const whyChoose = [0, 1, 2].map(i => ({
+      icon: getPageUrl(`prev-why-${i}`) || prevWhy[i]?.icon || null
+    }));
+    const data = {
+      heroDesktop,
+      heroMobile,
+      catImages: { forHer: catForHer, unisex: catUnisex, forHim: catForHim },
+      whyChoose,
+      gallery: galleryPageImages,
+      updatedAt: serverTimestamp()
+    };
+    await setDoc(doc(db, "settings", "homepage"), data, { merge: true });
+    pageSettings.homepage = { ...hp, ...data };
+    statusEl.textContent = "Saved.";
+    adminToast("Homepage images saved.");
+  } catch (err) {
+    statusEl.textContent = "Failed: " + (err.code || err.message);
+    statusEl.style.color = "#9b2226";
+  }
+  btn.disabled = false; btn.textContent = "Save Homepage Images";
+}
+
+async function savePagesAbout() {
+  const btn = document.getElementById("save-pages-about");
+  const statusEl = document.getElementById("status-pages-about");
+  btn.disabled = true; btn.textContent = "Saving…";
+  statusEl.textContent = "";
+  try {
+    const ab = pageSettings.about;
+    const heroImage = getPageUrl("prev-about-hero") || ab.heroImage || null;
+    const heroOpacity = parseFloat(document.getElementById("about-hero-opacity")?.value) || 0.5;
+    const missionImage = getPageUrl("prev-about-mission") || ab.missionImage || null;
+    const data = { heroImage, heroOpacity, missionImage, updatedAt: serverTimestamp() };
+    await setDoc(doc(db, "settings", "about"), data, { merge: true });
+    pageSettings.about = { ...ab, ...data };
+    statusEl.textContent = "Saved.";
+    adminToast("About page images saved.");
+  } catch (err) {
+    statusEl.textContent = "Failed: " + (err.code || err.message);
+    statusEl.style.color = "#9b2226";
+  }
+  btn.disabled = false; btn.textContent = "Save About Images";
+}
+
+async function savePagesContact() {
+  const btn = document.getElementById("save-pages-contact");
+  const statusEl = document.getElementById("status-pages-contact");
+  btn.disabled = true; btn.textContent = "Saving…";
+  statusEl.textContent = "";
+  try {
+    const ct = pageSettings.contact;
+    const heroImage = getPageUrl("prev-contact-hero") || ct.heroImage || null;
+    const activeMode = document.querySelector(".map-toggle button.active")?.dataset.mapmode || "iframe";
+    let mapEmbed = null, mapImage = null;
+    if (activeMode === "iframe") {
+      mapEmbed = document.getElementById("contact-map-embed")?.value.trim() || null;
+    } else {
+      mapImage = getPageUrl("prev-contact-map") || ct.mapImage || null;
+    }
+    const data = { heroImage, mapEmbed, mapImage, updatedAt: serverTimestamp() };
+    await setDoc(doc(db, "settings", "contact"), data, { merge: true });
+    pageSettings.contact = { ...ct, ...data };
+    statusEl.textContent = "Saved.";
+    adminToast("Contact page images saved.");
+  } catch (err) {
+    statusEl.textContent = "Failed: " + (err.code || err.message);
+    statusEl.style.color = "#9b2226";
+  }
+  btn.disabled = false; btn.textContent = "Save Contact Images";
 }
 
 /* ---- Helpers ----------------------------------------------------------- */

@@ -1,24 +1,27 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Zahroun</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
     <style>
         body { background: #f4f6f5; }
         #admin-app { display: none; }
         #admin-gate { min-height: 100vh; display: flex; align-items: center; justify-content: center;
             flex-direction: column; gap: 1rem; color: var(--text-muted); text-align: center; padding: 2rem; }
 
-        .admin-layout { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+        .admin-layout { display: block; min-height: 100vh; }
 
         /* Sidebar */
-        .admin-side { background: var(--primary-color); color: #fff; padding: 1.5rem 1rem; position: sticky; top: 0;
-            height: 100vh; display: flex; flex-direction: column; }
+        .admin-side { background: var(--primary-color); color: #fff; padding: 1.5rem 1rem; position: fixed; left: 0; top: 0;
+            width: 250px; height: 100vh; display: flex; flex-direction: column; overflow-y: auto; z-index: 200; }
         .admin-side .brand { font-family: var(--font-serif); font-size: 1.5rem; color: #fff; letter-spacing: 1px; padding: 0 .5rem; }
         .admin-side .brand small { display: block; font-family: var(--font-sans); font-size: .6rem; letter-spacing: 4px; color: #9fb3aa; margin-top: 2px; }
         .admin-nav { margin-top: 2rem; flex: 1; }
@@ -33,11 +36,11 @@
         .side-user { display: flex; align-items: center; gap: .65rem; padding: .75rem; border-top: 1px solid rgba(255,255,255,.12); margin-top: 1rem; }
         .side-user .av { width: 38px; height: 38px; border-radius: 50%; background: #d4af37; color: #1a1a1a; font-weight: 700;
             display: flex; align-items: center; justify-content: center; font-size: .9rem; }
-        .side-user .nm { font-size: .85rem; color: #fff; line-height: 1.2; }
-        .side-user .nm small { color: #9fb3aa; font-size: .72rem; }
+        .side-user .nm { font-size: .85rem; color: #fff; line-height: 1.3; }
+        .side-user .nm small { display: block; color: #9fb3aa; font-size: .72rem; margin-top: 1px; }
 
         /* Main */
-        .admin-main { padding: 1.5rem 2rem; max-width: 100%; overflow-x: hidden; }
+        .admin-main { margin-left: 250px; padding: 1.5rem 2rem; max-width: 100%; overflow-x: hidden; }
         .admin-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem; }
         .admin-top h1 { font-size: 1.7rem; margin-bottom: .15rem; }
         .admin-top .subtitle { color: var(--text-muted); font-size: .9rem; }
@@ -156,12 +159,159 @@
         .form-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem; }
         .muted-note { color: var(--text-muted); font-size: .8rem; }
 
+        /* Pages section */
+        .pages-tabs { display: flex; gap: .5rem; margin-bottom: 1.5rem; flex-wrap: wrap; border-bottom: 2px solid var(--border-color); padding-bottom: .75rem; }
+        .pages-tab { padding: .45rem 1.1rem; border: 1px solid var(--border-color); border-radius: 8px; background: none; cursor: pointer; font-size: .85rem; font-family: var(--font-sans); color: var(--text-muted); transition: all .15s; }
+        .pages-tab:hover { background: var(--bg-color); color: var(--text-main); }
+        .pages-tab.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); font-weight: 600; }
+        .pages-sub { display: none; }
+        .pages-sub.active { display: block; }
+        .img-field-wrap { margin-bottom: 1.25rem; }
+        .img-field-wrap .img-preview { width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: .5rem; display: none; background: var(--bg-color); }
+        .img-field-wrap .img-preview.has-img { display: block; }
+        .img-hint { font-size: .74rem; color: var(--text-muted); margin-top: .3rem; line-height: 1.5; background: var(--bg-color); border-radius: 6px; padding: .45rem .65rem; border-left: 2px solid var(--border-color); }
+        .pages-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.25rem; }
+        @media (max-width: 900px) { .pages-row { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 600px) { .pages-row { grid-template-columns: 1fr; } }
+        .gallery-page-thumb { position: relative; border-radius: 8px; overflow: hidden; border: 2px solid var(--border-color); background: var(--bg-color); aspect-ratio: 1/1; }
+        .gallery-page-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .gallery-page-thumb .th-del { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,.7); border: none; border-radius: 50%; width: 22px; height: 22px; color: #fff; font-size: .8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .gallery-page-thumb .th-del:hover { background: rgba(155,34,38,.9); }
+        .gallery-page-thumb.drag-over { outline: 2px solid var(--primary-color); }
+        .opacity-row { display: flex; align-items: center; gap: .85rem; }
+        .opacity-row input[type=range] { flex: 1; accent-color: var(--primary-color); }
+        .opacity-row .opacity-val { min-width: 2.5rem; font-size: .85rem; text-align: right; color: var(--text-main); font-weight: 500; }
+        .map-toggle { display: flex; gap: .5rem; margin-bottom: .75rem; }
+        .map-toggle button { padding: .35rem .9rem; border: 1px solid var(--border-color); border-radius: 7px; background: none; cursor: pointer; font-size: .8rem; font-family: var(--font-sans); color: var(--text-muted); }
+        .map-toggle button.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+        .pages-save-row { display: flex; align-items: center; gap: 1rem; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); }
+
+        /* Crop modal */
+        #crop-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.78); z-index:9999; align-items:center; justify-content:center; padding:1rem; }
+        #crop-modal.open { display:flex; }
+        #crop-modal-box { background:#fff; border-radius:14px; overflow:hidden; width:100%; max-width:700px; display:flex; flex-direction:column; max-height:92vh; box-shadow:0 24px 64px rgba(0,0,0,.45); }
+        #crop-modal-hdr { display:flex; align-items:center; justify-content:space-between; padding:.85rem 1.2rem; border-bottom:1px solid var(--border-color); flex-wrap:wrap; gap:.5rem; flex-shrink:0; }
+        #crop-modal-hdr h4 { font-size:.95rem; margin:0; color:var(--primary-color); }
+        #crop-wrap { flex:1; position:relative; overflow:hidden; background:#111; min-height:300px; max-height:62vh; cursor:grab; user-select:none; }
+        #crop-wrap:active { cursor:grabbing; }
+        #crop-img { position:absolute; top:0; left:0; display:block; max-width:none; max-height:none; user-select:none; pointer-events:none; }
+        #crop-modal-ftr { display:flex; align-items:center; justify-content:flex-end; gap:.6rem; padding:.85rem 1.2rem; border-top:1px solid var(--border-color); flex-shrink:0; }
+        #crop-ok { background:var(--primary-color); color:#fff; border:none; padding:.45rem 1.5rem; border-radius:7px; font-size:.88rem; font-weight:600; cursor:pointer; font-family:var(--font-sans); }
+        #crop-ok:hover { background:#0f2820; }
+        #crop-cancel { background:none; border:1px solid var(--border-color); padding:.45rem 1rem; border-radius:7px; font-size:.88rem; cursor:pointer; font-family:var(--font-sans); }
+
+        /* Mobile hamburger */
+        #admin-menu-toggle { display:none; background:none; border:1px solid var(--border-color); border-radius:8px; padding:.35rem .55rem; font-size:1.4rem; cursor:pointer; color:var(--primary-color); align-items:center; line-height:1; flex-shrink:0; }
+        #admin-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:199; }
+        #admin-overlay.open { display:block; }
+
         @media (max-width: 820px) {
-            .admin-layout { grid-template-columns: 1fr; }
-            .admin-side { position: relative; height: auto; }
-            .admin-nav { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: 1rem; }
-            .admin-nav button { width: auto; }
-            .qa-grid, .grid2, .grid4 { grid-template-columns: 1fr 1fr; }
+            .admin-side { transform:translateX(-100%); transition:transform .28s ease; z-index:300; width:260px; }
+            .admin-side.open { transform:translateX(0); }
+            .admin-main { margin-left:0; padding:1.25rem 1rem; }
+            #admin-menu-toggle { display:flex; }
+            .qa-grid, .grid2, .grid4 { grid-template-columns:1fr 1fr; }
+            .admin-top .actions a[href="index.html"], .admin-top .who { display:none; }
+            .panel { overflow-x:auto; }
+            .admin-top h1 { font-size:1.3rem; }
+        }
+        @media (max-width: 480px) {
+            .grid2, .grid4 { grid-template-columns:1fr; }
+            .qa-grid { grid-template-columns:1fr 1fr; }
+            .dash-row-2, .dash-row-3 { grid-template-columns:1fr; }
+            .stat-grid { grid-template-columns:1fr 1fr; }
+            .admin-top { margin-bottom:.75rem; }
+            .admin-form { padding:1.25rem; }
+        }
+
+        /* === MOBILE TABLE OPTIMISATIONS (≤620px) === */
+        @media (max-width: 620px) {
+            /* Smaller table text + bigger touch targets */
+            .admin-table td, .admin-table th { padding:.45rem .4rem; font-size:.8rem; }
+            .icon-btn { padding:.45rem .5rem; min-height:36px; }
+
+            /* Orders: hide Items(3), Payment(5), Date(7) — show Order,Customer,Total,Status */
+            [data-panel="orders"] thead th:nth-child(3),
+            [data-panel="orders"] thead th:nth-child(5),
+            [data-panel="orders"] thead th:nth-child(7),
+            #order-rows td:nth-child(3),
+            #order-rows td:nth-child(5),
+            #order-rows td:nth-child(7) { display:none; }
+            #order-rows select { font-size:.76rem; padding:.22rem .3rem; max-width:88px; }
+
+            /* Products: hide #(1), Category(4), Flags(7) — show img,Name,Price,Stock,Actions */
+            [data-panel="products"] thead th:nth-child(1),
+            [data-panel="products"] thead th:nth-child(4),
+            [data-panel="products"] thead th:nth-child(7),
+            #product-rows td:nth-child(1),
+            #product-rows td:nth-child(4),
+            #product-rows td:nth-child(7) { display:none; }
+
+            /* Customers: hide Email(2) */
+            [data-panel="customers"] thead th:nth-child(2),
+            #customer-rows td:nth-child(2) { display:none; }
+
+            /* Categories: hide Slug(2), Order(3) */
+            [data-panel="categories"] thead th:nth-child(2),
+            [data-panel="categories"] thead th:nth-child(3),
+            #cat-rows td:nth-child(2),
+            #cat-rows td:nth-child(3) { display:none; }
+
+            /* Coupons: hide Min Order(3), Expires(5) */
+            [data-panel="coupons"] thead th:nth-child(3),
+            [data-panel="coupons"] thead th:nth-child(5),
+            #coupon-rows td:nth-child(3),
+            #coupon-rows td:nth-child(5) { display:none; }
+
+            /* Reviews: hide Customer(2), Date(6) */
+            [data-panel="reviews"] thead th:nth-child(2),
+            [data-panel="reviews"] thead th:nth-child(6),
+            #review-rows td:nth-child(2),
+            #review-rows td:nth-child(6) { display:none; }
+
+            /* Messages: hide Email(2), Date(5) */
+            [data-panel="messages"] thead th:nth-child(2),
+            [data-panel="messages"] thead th:nth-child(5),
+            #message-rows td:nth-child(2),
+            #message-rows td:nth-child(5) { display:none; }
+
+            /* Modals: bottom-sheet style on small phones */
+            .admin-modal { padding:.4rem; align-items:flex-end; overflow-y:hidden; }
+            .admin-form { border-radius:14px 14px 0 0; max-height:92vh; overflow-y:auto; padding:1.25rem; }
+
+            /* panel-head wrap */
+            .panel-head { flex-wrap:wrap; gap:.5rem; }
+            .panel-head .btn, .panel-head .link-btn { font-size:.78rem; padding:.3rem .65rem; }
+
+            /* Analytics period buttons */
+            .an-period { font-size:.76rem; padding:.25rem .55rem; }
+            #an-custom-range input[type=date] { flex:1; min-width:0; }
+
+            /* Order/product search */
+            #of-search, #pf-search { max-width:100% !important; }
+
+            /* Product filter stack */
+            #product-filters { gap:.45rem; }
+            #product-filters select { flex:1; }
+
+            /* Pages section grids already responsive via .pages-row */
+            .pages-save-row { flex-direction:column; align-items:flex-start; }
+
+            /* Settings form full-width */
+            [data-panel="settings"] .panel { max-width:100%; }
+
+            /* Stat cards smaller text on tiny screen */
+            .stat-card .num { font-size:1.35rem; }
+            .stat-card .lbl { font-size:.68rem; }
+            .stat-icon { width:44px; height:44px; font-size:1.3rem; }
+
+            /* Dashboard recent orders mini-list: hide Customer(2), show Order+Amount+Status */
+            .ro-row { grid-template-columns:1.2fr .7fr .85fr; font-size:.78rem; }
+            .ro-row > span:nth-child(2) { display:none; }
+
+            /* Crop modal on mobile */
+            #crop-modal-box { border-radius:10px; }
+            #crop-wrap { min-height:220px; max-height:50vh; }
         }
     </style>
 </head>
@@ -171,10 +321,12 @@
         <p id="gate-msg">Verifying admin access…</p>
     </div>
 
+    <div id="admin-overlay"></div>
+
     <div id="admin-app">
         <div class="admin-layout">
             <aside class="admin-side">
-                <div class="brand">ZAHROUN<small>LUXURY PERFUMES</small></div>
+                <button class="brand" data-section="dashboard" style="background:none;border:none;cursor:pointer;text-align:left;width:100%;padding:0 .5rem;">ZAHROUN<small>LUXURY PERFUMES</small></button>
                 <nav class="admin-nav" id="admin-nav">
                     <button class="active" data-section="dashboard"><ion-icon name="grid-outline"></ion-icon> Dashboard</button>
                     <button data-section="products"><ion-icon name="pricetags-outline"></ion-icon> Products</button>
@@ -185,19 +337,23 @@
                     <button data-section="reviews"><ion-icon name="star-outline"></ion-icon> Reviews</button>
                     <button data-section="messages"><ion-icon name="mail-outline"></ion-icon> Messages <span class="nav-badge" id="nav-messages-badge" style="display:none;"></span></button>
                     <button data-section="analytics"><ion-icon name="bar-chart-outline"></ion-icon> Analytics</button>
+                    <button data-section="pages"><ion-icon name="image-outline"></ion-icon> Pages</button>
                     <button data-section="settings"><ion-icon name="settings-outline"></ion-icon> Settings</button>
                 </nav>
                 <div class="side-user">
                     <div class="av" id="side-av">A</div>
-                    <div class="nm" id="side-nm">Admin<small>Administrator</small></div>
+                    <div class="nm" id="side-nm">Admin<small>Admin</small></div>
                 </div>
             </aside>
 
             <main class="admin-main">
                 <div class="admin-top">
-                    <div>
-                        <h1 id="section-title">Dashboard</h1>
-                        <div class="subtitle" id="section-subtitle">Overview of your store performance</div>
+                    <div style="display:flex;align-items:center;gap:.75rem;">
+                        <button id="admin-menu-toggle" aria-label="Menu"><ion-icon name="menu-outline"></ion-icon></button>
+                        <div>
+                            <h1 id="section-title">Dashboard</h1>
+                            <div class="subtitle" id="section-subtitle">Overview of your store performance</div>
+                        </div>
                     </div>
                     <div class="actions">
                         <span class="who" id="admin-who"></span>
@@ -231,7 +387,7 @@
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon revenue"><ion-icon name="cash-outline"></ion-icon></div>
-                            <div><div class="lbl">Total Revenue</div><div class="num" id="stat-revenue">৳0</div><div class="delta" id="delta-revenue">&nbsp;</div></div>
+                            <div><div class="lbl">Total Sales</div><div class="num" id="stat-revenue">৳0</div><div class="delta" id="delta-revenue">&nbsp;</div></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon customers"><ion-icon name="people-outline"></ion-icon></div>
@@ -243,7 +399,7 @@
 
                     <div class="dash-row-2">
                         <div class="panel">
-                            <div class="panel-head"><h3>Revenue Overview</h3><span class="muted-note">Last 7 days</span></div>
+                            <div class="panel-head"><h3>Sales Overview</h3><span class="muted-note">Last 7 days</span></div>
                             <div style="position:relative;height:220px;"><canvas id="revenue-chart"></canvas></div>
                         </div>
                         <div class="panel">
@@ -424,11 +580,18 @@
                 <section data-panel="analytics" style="display:none;">
                     <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:1.25rem;flex-wrap:wrap;">
                         <span style="font-size:.83rem;color:var(--text-muted);font-weight:500;">Period:</span>
-                        <div id="analytics-period" style="display:flex;gap:.4rem;">
+                        <div id="analytics-period" style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;">
                             <button class="an-period" data-days="7">7 Days</button>
                             <button class="an-period active" data-days="30">30 Days</button>
                             <button class="an-period" data-days="90">90 Days</button>
                             <button class="an-period" data-days="0">All Time</button>
+                            <button class="an-period" data-days="-1">Custom</button>
+                        </div>
+                        <div id="an-custom-range" style="display:none;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;width:100%;">
+                            <input type="date" id="an-date-from" style="padding:.32rem .65rem;border:1px solid var(--border-color);border-radius:7px;font-size:.82rem;font-family:var(--font-sans);background:var(--bg-color);">
+                            <span style="color:var(--text-muted);font-size:.82rem;">to</span>
+                            <input type="date" id="an-date-to" style="padding:.32rem .65rem;border:1px solid var(--border-color);border-radius:7px;font-size:.82rem;font-family:var(--font-sans);background:var(--bg-color);">
+                            <button id="an-custom-apply" class="btn" style="padding:.35rem .9rem;font-size:.82rem;">Apply</button>
                         </div>
                         <a href="https://analytics.google.com" target="_blank" rel="noopener" class="link-btn" style="margin-left:auto;display:flex;align-items:center;gap:.4rem;">
                             <ion-icon name="open-outline"></ion-icon> Google Analytics
@@ -438,7 +601,7 @@
                     <div class="stat-grid" style="margin-bottom:1.25rem;">
                         <div class="stat-card">
                             <div class="stat-icon revenue"><ion-icon name="cash-outline"></ion-icon></div>
-                            <div><div class="lbl">Revenue</div><div class="num" id="an-revenue">—</div><div class="delta flat" id="an-avg-val">&nbsp;</div></div>
+                            <div><div class="lbl">Sales</div><div class="num" id="an-revenue">—</div><div class="delta flat" id="an-avg-val">&nbsp;</div></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon orders"><ion-icon name="cart-outline"></ion-icon></div>
@@ -456,11 +619,11 @@
 
                     <div class="dash-row-2" style="margin-bottom:1.25rem;">
                         <div class="panel">
-                            <div class="panel-head"><h3>Revenue Trend</h3><span class="muted-note" id="an-chart-label"></span></div>
+                            <div class="panel-head"><h3>Sales Trend</h3><span class="muted-note" id="an-chart-label"></span></div>
                             <div style="position:relative;height:220px;"><canvas id="an-revenue-chart"></canvas></div>
                         </div>
                         <div class="panel">
-                            <div class="panel-head"><h3>Top Products by Revenue</h3></div>
+                            <div class="panel-head"><h3>Top Products by Sales</h3></div>
                             <div id="an-top-products"><p class="muted-note">Loading…</p></div>
                         </div>
                     </div>
@@ -480,6 +643,228 @@
                             <h3>Visitor Analytics</h3>
                             <p>Page views, traffic sources, devices &amp; real-time users are in Google Analytics (GA4 ID: G-DWXJFVRHFE).</p>
                             <a href="https://analytics.google.com" target="_blank" rel="noopener" class="btn">Open Google Analytics →</a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGES -->
+                <section data-panel="pages" style="display:none;">
+                    <div class="panel">
+                        <div class="panel-head"><h3>Page Image Management</h3></div>
+                        <div class="pages-tabs">
+                            <button class="pages-tab active" data-tab="homepage">Homepage</button>
+                            <button class="pages-tab" data-tab="about">About</button>
+                            <button class="pages-tab" data-tab="contact">Contact</button>
+                        </div>
+
+                        <!-- HOMEPAGE -->
+                        <div class="pages-sub active" data-sub="homepage">
+                            <div class="panel" style="background:var(--bg-color);border:none;padding:0;box-shadow:none;">
+                                <h4 style="font-size:1rem;margin-bottom:1.25rem;color:var(--primary-color);">Hero Banner</h4>
+                                <div class="grid2" style="margin-bottom:1.5rem;">
+                                    <div class="img-field-wrap">
+                                        <label class="fg" style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Desktop Hero Image</label>
+                                        <img class="img-preview" id="prev-hero-desktop" alt="Hero desktop preview">
+                                        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+                                            <label class="btn btn-outline" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;" for="file-hero-desktop"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;font-size:.9rem;"></ion-icon>Upload</label>
+                                            <input type="file" id="file-hero-desktop" accept="image/*" style="display:none;">
+                                            <button class="icon-btn danger" id="del-hero-desktop" title="Remove image" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
+                                            <span class="muted-note" id="status-hero-desktop"></span>
+                                        </div>
+                                        <div class="img-hint">Recommended: 1400×800px &middot; Ratio 16:9 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    </div>
+                                    <div class="img-field-wrap">
+                                        <label class="fg" style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Mobile Hero Image</label>
+                                        <img class="img-preview" id="prev-hero-mobile" alt="Hero mobile preview">
+                                        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+                                            <label class="btn btn-outline" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;" for="file-hero-mobile"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;font-size:.9rem;"></ion-icon>Upload</label>
+                                            <input type="file" id="file-hero-mobile" accept="image/*" style="display:none;">
+                                            <button class="icon-btn danger" id="del-hero-mobile" title="Remove image" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
+                                            <span class="muted-note" id="status-hero-mobile"></span>
+                                        </div>
+                                        <div class="img-hint">Recommended: 768×900px &middot; Ratio 5:6 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    </div>
+                                </div>
+
+                                <h4 style="font-size:1rem;margin-bottom:1.25rem;color:var(--primary-color);">Category Cards</h4>
+                                <div class="pages-row" style="margin-bottom:1.5rem;">
+                                    <div class="img-field-wrap">
+                                        <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">For Her</label>
+                                        <img class="img-preview" id="prev-cat-forher" alt="">
+                                        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+                                            <label class="btn btn-outline" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;" for="file-cat-forher"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;font-size:.9rem;"></ion-icon>Upload</label>
+                                            <input type="file" id="file-cat-forher" accept="image/*" style="display:none;">
+                                            <button class="icon-btn danger" id="del-cat-forher" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
+                                            <span class="muted-note" id="status-cat-forher"></span>
+                                        </div>
+                                        <div class="img-hint">Recommended: 380×400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    </div>
+                                    <div class="img-field-wrap">
+                                        <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Unisex</label>
+                                        <img class="img-preview" id="prev-cat-unisex" alt="">
+                                        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+                                            <label class="btn btn-outline" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;" for="file-cat-unisex"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;font-size:.9rem;"></ion-icon>Upload</label>
+                                            <input type="file" id="file-cat-unisex" accept="image/*" style="display:none;">
+                                            <button class="icon-btn danger" id="del-cat-unisex" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
+                                            <span class="muted-note" id="status-cat-unisex"></span>
+                                        </div>
+                                        <div class="img-hint">Recommended: 380×400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    </div>
+                                    <div class="img-field-wrap">
+                                        <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">For Him</label>
+                                        <img class="img-preview" id="prev-cat-forhim" alt="">
+                                        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+                                            <label class="btn btn-outline" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;" for="file-cat-forhim"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;font-size:.9rem;"></ion-icon>Upload</label>
+                                            <input type="file" id="file-cat-forhim" accept="image/*" style="display:none;">
+                                            <button class="icon-btn danger" id="del-cat-forhim" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
+                                            <span class="muted-note" id="status-cat-forhim"></span>
+                                        </div>
+                                        <div class="img-hint">Recommended: 380×400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    </div>
+                                </div>
+
+                                <h4 style="font-size:1rem;margin-bottom:1.25rem;color:var(--primary-color);">Why Choose Icons</h4>
+                                <div class="pages-row" style="margin-bottom:1.5rem;">
+                                    <div class="img-field-wrap">
+                                        <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Organic Ingredients Icon</label>
+                                        <img class="img-preview" id="prev-why-0" alt="">
+                                        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+                                            <label class="btn btn-outline" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;" for="file-why-0"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;font-size:.9rem;"></ion-icon>Upload</label>
+                                            <input type="file" id="file-why-0" accept="image/*" style="display:none;">
+                                            <button class="icon-btn danger" id="del-why-0" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
+                                            <span class="muted-note" id="status-why-0"></span>
+                                        </div>
+                                        <div class="img-hint">Recommended: 96×96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    </div>
+                                    <div class="img-field-wrap">
+                                        <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Extreme Longevity Icon</label>
+                                        <img class="img-preview" id="prev-why-1" alt="">
+                                        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+                                            <label class="btn btn-outline" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;" for="file-why-1"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;font-size:.9rem;"></ion-icon>Upload</label>
+                                            <input type="file" id="file-why-1" accept="image/*" style="display:none;">
+                                            <button class="icon-btn danger" id="del-why-1" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
+                                            <span class="muted-note" id="status-why-1"></span>
+                                        </div>
+                                        <div class="img-hint">Recommended: 96×96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    </div>
+                                    <div class="img-field-wrap">
+                                        <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Cruelty Free Icon</label>
+                                        <img class="img-preview" id="prev-why-2" alt="">
+                                        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+                                            <label class="btn btn-outline" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;" for="file-why-2"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;font-size:.9rem;"></ion-icon>Upload</label>
+                                            <input type="file" id="file-why-2" accept="image/*" style="display:none;">
+                                            <button class="icon-btn danger" id="del-why-2" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
+                                            <span class="muted-note" id="status-why-2"></span>
+                                        </div>
+                                        <div class="img-hint">Recommended: 96×96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    </div>
+                                </div>
+
+                                <h4 style="font-size:1rem;margin-bottom:.75rem;color:var(--primary-color);">Instagram / Gallery Section</h4>
+                                <p class="muted-note" style="margin-bottom:1rem;">Drag to reorder. Click &times; to remove. First 4 shown on homepage.</p>
+                                <div id="gallery-page-thumbs" style="display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:.75rem;min-height:1rem;"></div>
+                                <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+                                    <label class="btn btn-outline" style="cursor:pointer;font-size:.82rem;padding:.4rem .9rem;" for="file-gallery-multi"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.3rem;font-size:.95rem;"></ion-icon>Add Images</label>
+                                    <input type="file" id="file-gallery-multi" accept="image/*" multiple style="display:none;">
+                                    <span class="muted-note" id="status-gallery-multi"></span>
+                                </div>
+                                <div class="img-hint" style="margin-top:.5rem;">Recommended: 600×600px &middot; Ratio 1:1 &middot; JPG/PNG/WebP &middot; Max 5MB each<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+
+                                <div class="pages-save-row">
+                                    <button class="btn" id="save-pages-homepage">Save Homepage Images</button>
+                                    <span class="muted-note" id="status-pages-homepage"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ABOUT -->
+                        <div class="pages-sub" data-sub="about">
+                            <div class="panel" style="background:var(--bg-color);border:none;padding:0;box-shadow:none;">
+                                <h4 style="font-size:1rem;margin-bottom:1.25rem;color:var(--primary-color);">Hero Banner</h4>
+                                <div class="img-field-wrap" style="margin-bottom:1.5rem;">
+                                    <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Background Image</label>
+                                    <img class="img-preview" id="prev-about-hero" alt="">
+                                    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.5rem;">
+                                        <label class="btn btn-outline" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;" for="file-about-hero"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;font-size:.9rem;"></ion-icon>Upload</label>
+                                        <input type="file" id="file-about-hero" accept="image/*" style="display:none;">
+                                        <button class="icon-btn danger" id="del-about-hero" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
+                                        <span class="muted-note" id="status-about-hero"></span>
+                                    </div>
+                                    <div class="img-hint">Recommended: 1400×600px &middot; Ratio 7:3 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    <div style="margin-top:1rem;">
+                                        <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.5rem;">Overlay Opacity</label>
+                                        <div class="opacity-row">
+                                            <input type="range" id="about-hero-opacity" min="0" max="1" step="0.05" value="0.5">
+                                            <span class="opacity-val" id="about-hero-opacity-val">0.50</span>
+                                        </div>
+                                        <div class="img-hint" style="margin-top:.35rem;">Controls the dark overlay on the hero. 0 = transparent, 1 = fully black.</div>
+                                    </div>
+                                </div>
+
+                                <h4 style="font-size:1rem;margin-bottom:1.25rem;color:var(--primary-color);">Mission &amp; Vision Image</h4>
+                                <div class="img-field-wrap" style="margin-bottom:1rem;">
+                                    <img class="img-preview" id="prev-about-mission" alt="">
+                                    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+                                        <label class="btn btn-outline" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;" for="file-about-mission"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;font-size:.9rem;"></ion-icon>Upload</label>
+                                        <input type="file" id="file-about-mission" accept="image/*" style="display:none;">
+                                        <button class="icon-btn danger" id="del-about-mission" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
+                                        <span class="muted-note" id="status-about-mission"></span>
+                                    </div>
+                                    <div class="img-hint">Recommended: 560×500px &middot; Ratio 14:12.5 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                </div>
+
+                                <div class="pages-save-row">
+                                    <button class="btn" id="save-pages-about">Save About Images</button>
+                                    <span class="muted-note" id="status-pages-about"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CONTACT -->
+                        <div class="pages-sub" data-sub="contact">
+                            <div class="panel" style="background:var(--bg-color);border:none;padding:0;box-shadow:none;">
+                                <h4 style="font-size:1rem;margin-bottom:1.25rem;color:var(--primary-color);">Hero Banner</h4>
+                                <div class="img-field-wrap" style="margin-bottom:1.5rem;">
+                                    <img class="img-preview" id="prev-contact-hero" alt="">
+                                    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+                                        <label class="btn btn-outline" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;" for="file-contact-hero"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;font-size:.9rem;"></ion-icon>Upload</label>
+                                        <input type="file" id="file-contact-hero" accept="image/*" style="display:none;">
+                                        <button class="icon-btn danger" id="del-contact-hero" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
+                                        <span class="muted-note" id="status-contact-hero"></span>
+                                    </div>
+                                    <div class="img-hint">Recommended: 1400×500px &middot; Ratio 14:5 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                </div>
+
+                                <h4 style="font-size:1rem;margin-bottom:1rem;color:var(--primary-color);">Map</h4>
+                                <div class="map-toggle">
+                                    <button id="map-mode-iframe" class="active" data-mapmode="iframe">Google Maps Embed</button>
+                                    <button id="map-mode-image" data-mapmode="image">Static Image</button>
+                                </div>
+                                <div id="map-sub-iframe">
+                                    <div class="fg">
+                                        <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Google Maps iframe src URL</label>
+                                        <input type="url" id="contact-map-embed" placeholder="Paste the src= value from a Google Maps embed iframe" style="width:100%;padding:.65rem .8rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.85rem;background:var(--bg-color);">
+                                        <div class="img-hint" style="margin-top:.35rem;">Go to maps.google.com &rarr; Share &rarr; Embed a map &rarr; copy only the src="…" URL value.</div>
+                                    </div>
+                                </div>
+                                <div id="map-sub-image" style="display:none;">
+                                    <div class="img-field-wrap">
+                                        <img class="img-preview" id="prev-contact-map" alt="">
+                                        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+                                            <label class="btn btn-outline" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;" for="file-contact-map"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;font-size:.9rem;"></ion-icon>Upload</label>
+                                            <input type="file" id="file-contact-map" accept="image/*" style="display:none;">
+                                            <button class="icon-btn danger" id="del-contact-map" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
+                                            <span class="muted-note" id="status-contact-map"></span>
+                                        </div>
+                                        <div class="img-hint">Recommended: 560×300px &middot; Ratio 28:15 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    </div>
+                                </div>
+
+                                <div class="pages-save-row">
+                                    <button class="btn" id="save-pages-contact">Save Contact Images</button>
+                                    <span class="muted-note" id="status-pages-contact"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -536,6 +921,17 @@
                     <input type="file" id="img-file-multi" accept="image/*" multiple style="display:none;">
                     <span class="muted-note" id="img-status" style="font-size:.78rem;"></span>
                 </div>
+                <p class="muted-note" style="margin-top:.45rem;font-size:.75rem;">
+                    <strong>Best size: 3:4 ratio (e.g. 600×800px)</strong>
+                </p>
+            </div>
+
+            <div class="fg" style="margin-top:.75rem;">
+                <label>Per-Size Images <span class="muted-note" style="font-weight:normal;font-size:.76rem;">Different bottle image per size · Empty = uses main image</span></label>
+                <div id="size-img-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-top:.5rem;"></div>
+                <button type="button" id="si-sync-btn" class="btn btn-outline" style="margin-top:.5rem;font-size:.78rem;padding:.35rem .8rem;">
+                    <ion-icon name="sync-outline" style="vertical-align:middle;font-size:.9rem;margin-right:.25rem;"></ion-icon>Use main image for all sizes
+                </button>
             </div>
 
             <div class="grid2">
@@ -634,6 +1030,37 @@
         </form>
     </div>
 
+    <!-- Crop Modal -->
+    <div id="crop-modal">
+        <div id="crop-modal-box">
+            <div id="crop-modal-hdr">
+                <h4>Position Image</h4>
+                <span style="font-size:.78rem;color:var(--text-muted);">Drag to reposition</span>
+            </div>
+            <div id="crop-wrap"><img id="crop-img" alt=""></div>
+            <div id="crop-modal-ftr">
+                <button id="crop-cancel">Cancel</button>
+                <button id="crop-ok">Upload</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="js/admin.js"></script>
+    <script>
+    (function(){
+        const toggle = document.getElementById('admin-menu-toggle');
+        const side = document.querySelector('.admin-side');
+        const overlay = document.getElementById('admin-overlay');
+        if(!toggle||!side||!overlay) return;
+        function openMenu(){ side.classList.add('open'); overlay.classList.add('open'); toggle.innerHTML='<ion-icon name="close-outline"></ion-icon>'; }
+        function closeMenu(){ side.classList.remove('open'); overlay.classList.remove('open'); toggle.innerHTML='<ion-icon name="menu-outline"></ion-icon>'; }
+        toggle.addEventListener('click', ()=> side.classList.contains('open') ? closeMenu() : openMenu());
+        overlay.addEventListener('click', closeMenu);
+        document.getElementById('admin-nav')?.addEventListener('click', e=>{
+            if(e.target.closest('button[data-section]') && window.innerWidth<=820) closeMenu();
+        });
+    })();
+    </script>
 </body>
 </html>
+

@@ -353,6 +353,7 @@ function renderAccount(user) {
     <div class="za-menu">
       <div class="za-user"><strong>${escapeHtml(name)}</strong><span>${escapeHtml(user.email || "")}</span></div>
       <a href="account.html"><ion-icon name="bag-handle-outline"></ion-icon> My Orders</a>
+      <a href="wishlist.html"><ion-icon name="heart-outline"></ion-icon> Wishlist</a>
       ${isAdmin ? `<a href="admin.html"><ion-icon name="speedometer-outline"></ion-icon> Admin Panel</a>` : ``}
       <button data-za-logout><ion-icon name="log-out-outline"></ion-icon> Logout</button>
     </div>`;
@@ -404,6 +405,40 @@ window.zahrounAuth = {
   isAdmin: () => !!(currentProfile && currentProfile.role === "admin"),
   requireLogin: () => { if (!auth.currentUser) { openAuthModal(); return false; } return true; }
 };
+
+/* Site-wide settings: announcement bar, hero text override, WhatsApp link. */
+async function loadSiteSettings() {
+  try {
+    const snap = await getDoc(doc(db, "settings", "store"));
+    if (!snap.exists()) return;
+    const s = snap.data();
+    window.zahSettings = s;
+
+    if (s.announcementActive && s.announcement) {
+      const bar = document.createElement("div");
+      bar.id = "za-announcement";
+      bar.style.cssText = "background:var(--primary-color,#163E34);color:#fff;text-align:center;padding:.55rem 3rem;font-size:.88rem;font-family:var(--font-sans,sans-serif);position:relative;z-index:1000;";
+      bar.innerHTML = `${escapeHtml(s.announcement)}<button onclick="this.parentElement.remove()" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;cursor:pointer;font-size:1.3rem;line-height:1;">×</button>`;
+      document.body.insertBefore(bar, document.body.firstChild);
+    }
+
+    if (s.heroTitle) {
+      const el = document.getElementById("hero-title");
+      if (el) el.textContent = s.heroTitle;
+    }
+    if (s.heroSubtitle) {
+      const el = document.getElementById("hero-subtitle");
+      if (el) el.textContent = s.heroSubtitle;
+    }
+    if (s.whatsapp) {
+      const link = document.getElementById("whatsapp-link");
+      if (link) link.href = `https://wa.me/${s.whatsapp.replace(/\D/g, "")}`;
+    }
+  } catch (e) {
+    console.warn("[Zahroun] settings load failed:", e);
+  }
+}
+loadSiteSettings();
 
 /* Boot: inject styles + account button immediately (logged-out state),
    onAuthStateChanged will refresh it once Firebase resolves. */

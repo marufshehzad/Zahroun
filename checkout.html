@@ -1,7 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | Zahroun</title>
     <link rel="stylesheet" href="css/style.css">
@@ -96,8 +97,13 @@
         @media (max-width: 768px) {
             .checkout-container {
                 grid-template-columns: 1fr;
-                gap: 2rem;
+                gap: 1.25rem;
+                margin: 1.25rem auto !important;
             }
+            /* Order summary appears first on mobile */
+            .checkout-container > div:last-child { order: -1; }
+            .checkout-section { padding: 1.25rem !important; }
+            .checkout-section h2 { font-size: 1.3rem; }
         }
     </style>
 </head>
@@ -496,4 +502,5 @@
     </script>
 </body>
 </html>
+
 

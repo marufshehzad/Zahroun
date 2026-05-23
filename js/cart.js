@@ -48,11 +48,12 @@ window.addToCart = function(productId, size = '50ML', price = null) {
     
     saveCart();
     openCart();
-    
-    // Optional: show a small toast notification here
+    if (window.zahrounGA) window.zahrounGA.trackAddToCart(product, size, itemPrice);
 }
 
 window.removeFromCart = function(productId, size) {
+    const item = cart.find(i => i.id === productId && i.size === size);
+    if (item && window.zahrounGA) window.zahrounGA.trackRemoveFromCart(item, size, item.selectedPrice);
     cart = cart.filter(item => !(item.id === productId && item.size === size));
     saveCart();
 }
@@ -94,6 +95,7 @@ window.applyVoucher = function() {
             localStorage.setItem('zahroun_voucher', 'myzahroun10');
             msg.textContent = 'Voucher Applied! You got 10% off.';
             msg.style.color = '#27ae60';
+            if (window.zahrounGA) window.zahrounGA.trackCouponApply('myzahroun10', subtotal * 0.1);
         } else {
             appliedVoucher = null;
             localStorage.removeItem('zahroun_voucher');

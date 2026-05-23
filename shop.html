@@ -1,9 +1,14 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop | Zahroun</title>
+    <title>Shop Perfumes | Zahroun Luxury Fragrances</title>
+    <meta name="description" content="Browse Zahroun's collection of luxury perfumes for her, him, and unisex. Premium niche fragrances with extraordinary longevity. Order online in Bangladesh.">
+    <meta property="og:title" content="Shop Perfumes | Zahroun Luxury Fragrances">
+    <meta property="og:description" content="Luxury niche perfumes for men and women. Long-lasting premium fragrances crafted from rare botanicals. Shop online.">
+    <meta property="og:type" content="website">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
@@ -58,40 +63,62 @@
         .product-img { transition: opacity .15s ease; }
         @media (max-width: 768px) {
             .shop-header {
-                padding: 3rem 0;
+                padding: 2rem 0;
             }
             .shop-container {
                 flex-direction: column;
-                gap: 1.5rem;
+                gap: 1rem;
+                margin-top: 1rem;
             }
             .sidebar {
                 width: 100%;
-                text-align: center;
-                max-width: 340px;
-                margin: 0 auto;
+                text-align: left;
+                max-width: 100%;
+                margin: 0;
+                background: var(--surface-color);
+                border-radius: 10px;
+                padding: .75rem 1rem;
+            }
+            .sidebar h3 {
+                font-size: 1rem;
+                margin-bottom: .5rem;
             }
             .filter-list {
                 display: flex;
-                justify-content: center;
                 flex-wrap: wrap;
-                gap: 0.65rem 1rem;
-                margin-bottom: 1.5rem;
+                gap: .4rem .75rem;
+                margin-bottom: .5rem;
             }
             .filter-list li {
                 margin-bottom: 0;
             }
+            .filter-list button {
+                background: var(--accent-color);
+                border-radius: 20px;
+                padding: .3rem .85rem;
+                font-size: .85rem;
+                border: 1px solid transparent;
+            }
+            .filter-list button.active {
+                background: var(--primary-color);
+                color: white;
+                border-color: var(--primary-color);
+            }
+            .search-box {
+                margin-bottom: .75rem;
+                font-size: .9rem;
+            }
             #shop-products {
-                grid-template-columns: minmax(0, 1fr);
-                gap: 1.5rem;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: .75rem;
             }
             #shop-products .product-card {
-                max-width: 320px;
-                margin-left: auto;
-                margin-right: auto;
+                max-width: none;
+                margin: 0;
             }
             .container.py-4 {
-                padding-left: 18px;
-                padding-right: 18px;
+                padding-left: 12px;
+                padding-right: 12px;
             }
         }
     </style>
@@ -278,6 +305,11 @@
         let catsReady = false;
         let productsReady = typeof products !== "undefined" && products.length > 0;
 
+        function cardImg(url) {
+            if (!url || !url.includes("/upload/")) return url || "";
+            return url.replace("/upload/", "/upload/w_400,h_533,c_fill,f_auto,q_auto/");
+        }
+
         function renderProducts() {
             if (typeof products === "undefined" || !products.length) return;
             const filtered = products.filter(p =>
@@ -292,11 +324,12 @@
                 const cartBtn = outOfStock
                     ? `<button class="add-to-cart-quick" disabled style="cursor:not-allowed;opacity:.7;background:#aaa;">Out of Stock</button>`
                     : `<button class="add-to-cart-quick" onclick="event.stopPropagation();addToCart(${p.id},'50ML',${price});window.showAddedToast&&window.showAddedToast('${esc(p.name)}')">Add to Cart</button>`;
-                const img2 = (p.images && p.images.length > 1) ? esc(p.images[1]) : "";
-                const wrapAttrs = img2 ? ` data-img1="${esc(p.image)}" data-img2="${img2}"` : "";
+                const src1 = cardImg(p.image);
+                const img2 = (p.images && p.images.length > 1) ? cardImg(p.images[1]) : "";
+                const wrapAttrs = img2 ? ` data-img1="${esc(src1)}" data-img2="${esc(img2)}"` : "";
                 return `<div class="product-card">
                     <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;position:relative;"${wrapAttrs}>
-                        <img src="${esc(p.image)}" alt="${esc(p.name)}" class="product-img" style="background-color:#FFFFFF;${outOfStock ? "opacity:.75;" : ""}">
+                        <img src="${esc(src1)}" alt="${esc(p.name)}" class="product-img" style="background-color:#FFFFFF;${outOfStock ? "opacity:.75;" : ""}">
                         ${oosBadge}
                         ${cartBtn}
                     </div>
@@ -391,3 +424,4 @@
     </script>
 </body>
 </html>
+

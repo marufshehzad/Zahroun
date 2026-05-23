@@ -7,6 +7,10 @@ node_modules/
 *.key
 serviceAccountKey.json
 
+# Dev-only pages (not for production)
+seed.html
+test_images.html
+
 # Netlify
 .netlify/
 

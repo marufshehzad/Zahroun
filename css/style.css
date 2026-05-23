@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&display=swap');
 
 :root {
+  color-scheme: only light;
   --primary-color: #163E34; /* Premium Deep Green */
   --primary-hover: #0F2E27;
   --bg-color: #F5F3EF; /* Soft Cream */
@@ -382,7 +383,7 @@ section:not(.hero) {
 
 .product-img-wrapper {
   position: relative;
-  padding-top: 100%; /* 1:1 Aspect Ratio */
+  padding-top: 133.33%; /* 3:4 Aspect Ratio */
   overflow: hidden;
   background-color: var(--surface-color);
 }
@@ -645,21 +646,30 @@ section:not(.hero) {
   }
   
   .product-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem;
   }
-  
+
   .product-card {
     text-align: center;
-    max-width: 340px;
+    max-width: none;
     width: 100%;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 0;
+    margin-right: 0;
   }
 
   .product-card:hover {
     transform: translateY(-4px);
   }
+
+  /* Square image ratio on mobile — less tall, more products visible */
+  .product-img-wrapper { padding-top: 100% !important; }
+
+  /* Compact product info */
+  .product-info { padding: .75rem .6rem !important; }
+  .product-category { font-size: .7rem; margin-bottom: .25rem; }
+  .product-title { font-size: .88rem; margin-bottom: .3rem; line-height: 1.3; }
+  .product-price { font-size: .85rem; }
   
   .btn {
     width: 100%;
@@ -675,6 +685,17 @@ section:not(.hero) {
   .massive-footer button {
     width: 100%;
   }
+}
+
+@media (max-width: 480px) {
+  #cart-content-wrapper {
+    padding: 1.25rem !important;
+  }
+  .product-grid {
+    gap: .6rem;
+  }
+  /* Even tighter image on very small screens */
+  .product-img-wrapper { padding-top: 90% !important; }
 }
 
 @media (max-width: 380px) {
@@ -911,4 +932,166 @@ section:not(.hero) {
   .hero-glass h1 {
     font-size: 28px !important;
   }
+}
+
+/* ===== MOBILE CUSTOMER EXPERIENCE v2 ===== */
+
+@media (max-width: 768px) {
+  /* Tighter vertical rhythm */
+  section:not(.hero) { margin-top: 36px; }
+  .py-8 { padding: 2rem 0; }
+
+  /* Benefits bar: 2×2 grid instead of row */
+  .benefits-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    justify-items: start;
+    gap: .6rem 1rem;
+  }
+  .benefit-item { font-size: .83rem; }
+
+  /* Shop by Category: 3 cards side by side on mobile */
+  #home-category-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: .5rem !important;
+  }
+  #home-category-grid > div {
+    height: 170px !important;
+    min-height: 0 !important;
+    border-radius: 8px !important;
+  }
+  /* Category overlay: compact text */
+  #home-category-grid > div > div {
+    padding: .6rem .5rem !important;
+  }
+  #home-category-grid > div > div h3 {
+    font-size: .82rem !important;
+    margin-bottom: 0 !important;
+    line-height: 1.2;
+  }
+  #home-category-grid > div > div p { display: none !important; }
+
+  /* Reviews slider: compact */
+  .py-8 p[style*="font-size: 1.5rem"] {
+    font-size: .98rem !important;
+    line-height: 1.55 !important;
+  }
+  .py-8 div[style*="scroll-snap-type"] {
+    padding-bottom: .75rem !important;
+    gap: .5rem !important;
+  }
+
+  /* Instagram gallery: 2×2 grid */
+  #gallery-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: .5rem !important;
+  }
+  #gallery-grid a { border-radius: 6px !important; }
+
+  /* "Why Choose" grid: compact 3-col icon strip on mobile */
+  [style*="minmax(250px, 1fr)"] {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: .6rem !important;
+  }
+  [style*="minmax(250px, 1fr)"] > div {
+    padding: 1rem .5rem !important;
+    box-shadow: none !important;
+  }
+  [style*="minmax(250px, 1fr)"] > div > p { display: none !important; }
+  [style*="minmax(250px, 1fr)"] > div h3 {
+    font-size: .72rem !important;
+    margin-bottom: 0 !important;
+    line-height: 1.3;
+    font-family: var(--font-sans) !important;
+    font-weight: 600;
+  }
+  [style*="minmax(250px, 1fr)"] > div ion-icon {
+    font-size: 1.7rem !important;
+    margin-bottom: .35rem !important;
+  }
+
+  /* Product image-large: shorter on mobile */
+  .product-image-large {
+    min-height: 260px !important;
+    padding: 1rem !important;
+  }
+  .product-image-large img { max-height: 260px; }
+
+  /* Upsell "Frequently Bought" grid: 2-col */
+  #upsell-products {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: .75rem !important;
+  }
+
+  /* Cart modal: full-width on mobile */
+  #cart-content-wrapper {
+    width: 100% !important;
+    border-radius: 0;
+  }
+
+  /* Section titles: tighter */
+  .section-title { margin-bottom: 1.75rem; }
+  .section-title h2 { font-size: 1.7rem; }
+  .section-title p { font-size: .9rem; }
+
+  /* Contact info box */
+  .contact-info { padding: 1.5rem !important; }
+
+  /* Account page */
+  .account-head { padding: 1.75rem 0; }
+  .order-card { padding: 1rem; }
+}
+
+@media (max-width: 600px) {
+  /* Product card: no hover lift on touch */
+  .product-card:hover { transform: none; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+
+  /* Footer brand big text */
+  .footer-massive-brand { font-size: 20vw; }
+  .footer-grid-new { gap: 2rem; }
+
+  /* Form controls: bigger tap targets */
+  .form-control { padding: .9rem .75rem; font-size: 1rem; }
+  .form-group { margin-bottom: 1rem; }
+
+  /* Checkout coupon row */
+  #coupon-code-input { font-size: .9rem; }
+
+  /* Accordion on product page */
+  .accordion-header { font-size: .92rem; padding: 1.1rem 0; }
+
+  /* Product option panel */
+  .product-option-panel { padding: 1rem !important; }
+  .option-label { font-size: .8rem; }
+
+  /* Gallery strip thumbnails: smaller */
+  .gallery-strip .gt { width: 50px; height: 50px; }
+}
+
+@media (max-width: 480px) {
+  /* Nav: tighter */
+  .nav-icons { gap: .6rem; }
+  .nav-icons button ion-icon { font-size: 20px; }
+
+  /* Hero title */
+  .hero-title { font-size: 22px !important; }
+
+  /* Shop header */
+  .shop-header { padding: 1.5rem 0; }
+  .shop-header h1 { font-size: 1.6rem; }
+
+  /* Product price emphasis */
+  .product-meta .price { font-size: 1.3rem; }
+  .product-meta h1 { font-size: 1.6rem; }
+
+  /* Checkout order total */
+  .order-total { font-size: 1.1rem; margin-top: 1.25rem; }
+
+  /* Account order items */
+  .o-item img { width: 38px; height: 38px; }
+  .o-item { gap: .65rem; }
+
+  /* Benefits bar: 1 per row on very small */
+  .benefits-grid { grid-template-columns: 1fr 1fr; gap: .5rem .5rem; }
+  .benefit-item { font-size: .78rem; }
 }
