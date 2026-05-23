@@ -5,48 +5,114 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Zahroun</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <style>
-        body { background: var(--bg-color); }
-        /* Gate: hidden until admin confirmed */
+        body { background: #f4f6f5; }
         #admin-app { display: none; }
         #admin-gate { min-height: 100vh; display: flex; align-items: center; justify-content: center;
             flex-direction: column; gap: 1rem; color: var(--text-muted); text-align: center; padding: 2rem; }
 
         .admin-layout { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
-        .admin-side { background: var(--primary-color); color: #fff; padding: 1.5rem 1rem; position: sticky; top: 0; height: 100vh; }
-        .admin-side .brand { font-family: var(--font-serif); font-size: 1.4rem; color: #fff; margin-bottom: 2rem; padding: 0 .5rem; letter-spacing: 1px; }
+
+        /* Sidebar */
+        .admin-side { background: var(--primary-color); color: #fff; padding: 1.5rem 1rem; position: sticky; top: 0;
+            height: 100vh; display: flex; flex-direction: column; }
+        .admin-side .brand { font-family: var(--font-serif); font-size: 1.5rem; color: #fff; letter-spacing: 1px; padding: 0 .5rem; }
+        .admin-side .brand small { display: block; font-family: var(--font-sans); font-size: .6rem; letter-spacing: 4px; color: #9fb3aa; margin-top: 2px; }
+        .admin-nav { margin-top: 2rem; flex: 1; }
         .admin-nav button { display: flex; align-items: center; gap: .75rem; width: 100%; text-align: left;
-            background: none; border: none; color: #cdd9d3; padding: .8rem .9rem; border-radius: 8px; cursor: pointer;
-            font-family: var(--font-sans); font-size: .95rem; margin-bottom: .25rem; transition: all .2s; }
+            background: none; border: none; color: #cdd9d3; padding: .75rem .9rem; border-radius: 8px; cursor: pointer;
+            font-family: var(--font-sans); font-size: .92rem; margin-bottom: .15rem; transition: all .2s; position: relative; }
         .admin-nav button:hover { background: rgba(255,255,255,.08); color: #fff; }
         .admin-nav button.active { background: rgba(255,255,255,.16); color: #fff; font-weight: 600; }
         .admin-nav ion-icon { font-size: 1.2rem; }
+        .admin-nav .nav-badge { margin-left: auto; background: #d4af37; color: #1a1a1a; font-size: .7rem; font-weight: 700;
+            padding: .05rem .45rem; border-radius: 20px; }
+        .side-user { display: flex; align-items: center; gap: .65rem; padding: .75rem; border-top: 1px solid rgba(255,255,255,.12); margin-top: 1rem; }
+        .side-user .av { width: 38px; height: 38px; border-radius: 50%; background: #d4af37; color: #1a1a1a; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; font-size: .9rem; }
+        .side-user .nm { font-size: .85rem; color: #fff; line-height: 1.2; }
+        .side-user .nm small { color: #9fb3aa; font-size: .72rem; }
 
+        /* Main */
         .admin-main { padding: 1.5rem 2rem; max-width: 100%; overflow-x: hidden; }
-        .admin-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        .admin-top h1 { font-size: 1.6rem; }
-        .admin-top .who { color: var(--text-muted); font-size: .9rem; }
-        .admin-top a, .admin-top button { font-size: .85rem; }
+        .admin-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem; }
+        .admin-top h1 { font-size: 1.7rem; margin-bottom: .15rem; }
+        .admin-top .subtitle { color: var(--text-muted); font-size: .9rem; }
+        .admin-top .who { color: var(--text-main); font-size: .9rem; font-weight: 500; }
+        .admin-top .actions { display: flex; align-items: center; gap: .75rem; }
+        .admin-top a, .admin-top button.btn { font-size: .85rem; }
+        .date-chip { display: inline-flex; align-items: center; gap: .5rem; background: #fff; border: 1px solid var(--border-color);
+            border-radius: 8px; padding: .5rem .85rem; font-size: .85rem; color: var(--text-main); margin-bottom: 1.25rem; }
 
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 1.25rem; margin-bottom: 2rem; }
-        .stat-card { background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
-        .stat-card .num { font-size: 2rem; font-family: var(--font-serif); color: var(--primary-color); }
-        .stat-card .lbl { color: var(--text-muted); font-size: .85rem; text-transform: uppercase; letter-spacing: .05em; }
+        /* Stat cards */
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 1.25rem; margin-bottom: 1.25rem; }
+        .stat-card { background: #fff; border: 1px solid #eceae4; border-radius: 14px; padding: 1.4rem; display: flex; align-items: center; gap: 1.1rem; box-shadow: 0 2px 8px rgba(0,0,0,.03); }
+        .stat-icon { width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
+        .stat-icon.products { background: #e6f4ea; color: #1e7e34; }
+        .stat-icon.orders { background: #e8f0fe; color: #1a56b8; }
+        .stat-icon.revenue { background: #fdf3e3; color: #b8860b; }
+        .stat-icon.customers { background: #f3e8fe; color: #7c3aed; }
+        .stat-card .lbl { color: var(--text-muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
+        .stat-card .num { font-size: 1.7rem; font-weight: 700; color: var(--text-main); line-height: 1.15; }
+        .stat-card .delta { font-size: .76rem; color: #1e7e34; margin-top: .1rem; }
+        .stat-card .delta.flat { color: var(--text-muted); }
 
-        .panel { background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
-        .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+        /* Dashboard rows */
+        .dash-row-2 { display: grid; grid-template-columns: 1.7fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+        .dash-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.25rem; }
+        @media (max-width: 1024px) { .dash-row-2, .dash-row-3 { grid-template-columns: 1fr; } }
+
+        .panel { background: #fff; border: 1px solid #eceae4; border-radius: 14px; padding: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,.03); }
+        .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.1rem; }
+        .panel-head h3 { font-size: 1.05rem; }
+        .link-btn { background: none; border: 1px solid var(--border-color); border-radius: 7px; padding: .3rem .7rem; font-size: .78rem; cursor: pointer; color: var(--text-main); }
+        .link-btn:hover { background: var(--bg-color); }
+
+        /* Recent orders mini list */
+        .ro-row { display: grid; grid-template-columns: 1.3fr 1fr .8fr .9fr; align-items: center; padding: .6rem 0; border-bottom: 1px solid #f0eee8; font-size: .85rem; }
+        .ro-row:last-child { border-bottom: none; }
+        .ro-head { color: var(--text-muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; }
+
+        /* Top selling */
+        .ts-row { display: flex; align-items: center; gap: .9rem; padding: .6rem 0; border-bottom: 1px solid #f0eee8; }
+        .ts-row:last-child { border-bottom: none; }
+        .ts-row img { width: 42px; height: 42px; object-fit: contain; background: var(--bg-color); border-radius: 8px; }
+        .ts-row .nm { flex: 1; font-size: .88rem; }
+        .ts-row .nm small { color: var(--text-muted); display: block; font-size: .75rem; }
+        .ts-row .val { text-align: right; font-size: .82rem; }
+        .ts-row .val strong { color: var(--primary-color); }
+
+        /* Status donut legend */
+        .status-legend { margin-top: 1rem; }
+        .status-legend div { display: flex; align-items: center; gap: .5rem; font-size: .82rem; margin-bottom: .4rem; }
+        .status-legend .dot { width: 11px; height: 11px; border-radius: 3px; }
+        .status-legend .ct { margin-left: auto; color: var(--text-muted); }
+
+        /* Quick actions */
+        .qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .7rem; }
+        .qa-btn { display: flex; flex-direction: column; align-items: center; gap: .45rem; padding: 1rem .4rem; border: 1px solid var(--border-color);
+            border-radius: 11px; background: none; cursor: pointer; font-size: .76rem; color: var(--text-main); text-align: center; transition: all .2s; }
+        .qa-btn ion-icon { font-size: 1.4rem; color: var(--primary-color); }
+        .qa-btn:hover { background: var(--bg-color); border-color: var(--primary-color); transform: translateY(-2px); }
+
+        /* Tables */
         table.admin-table { width: 100%; border-collapse: collapse; }
-        .admin-table th { text-align: left; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: .6rem; border-bottom: 1px solid var(--border-color); }
-        .admin-table td { padding: .6rem; border-bottom: 1px solid var(--border-color); font-size: .9rem; vertical-align: middle; }
+        .admin-table th { text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: .6rem; border-bottom: 1px solid var(--border-color); }
+        .admin-table td { padding: .6rem; border-bottom: 1px solid #f0eee8; font-size: .9rem; vertical-align: middle; }
         .admin-table img { width: 44px; height: 44px; object-fit: contain; background: var(--bg-color); border-radius: 6px; }
-        .badge { font-size: .72rem; padding: .15rem .5rem; border-radius: 20px; background: var(--accent-color); color: var(--text-main); }
+        .badge { font-size: .72rem; padding: .15rem .55rem; border-radius: 20px; background: var(--accent-color); color: var(--text-main); }
         .badge.green { background: #e6f4ea; color: #1e7e34; }
+        .o-status { font-size: .72rem; padding: .2rem .6rem; border-radius: 20px; text-transform: capitalize; background: #fdf3e3; color: #b8860b; }
+        .o-status.delivered { background: #e6f4ea; color: #1e7e34; }
+        .o-status.cancelled { background: #fdecea; color: #9b2226; }
+        .o-status.confirmed, .o-status.shipped { background: #e8f0fe; color: #1a56b8; }
         .icon-btn { background: none; border: 1px solid var(--border-color); border-radius: 6px; padding: .35rem .55rem; cursor: pointer; color: var(--text-main); }
         .icon-btn.danger:hover { background: #fdecea; border-color: #9b2226; color: #9b2226; }
 
-        /* Modal form */
+        /* Product modal */
         .admin-modal { position: fixed; inset: 0; background: rgba(15,46,39,.5); display: none; align-items: flex-start; justify-content: center; z-index: 5000; padding: 2rem 1rem; overflow-y: auto; }
         .admin-modal.open { display: flex; }
         .admin-form { background: #fff; border-radius: 14px; width: 100%; max-width: 640px; padding: 2rem; }
@@ -68,55 +134,109 @@
 
         @media (max-width: 820px) {
             .admin-layout { grid-template-columns: 1fr; }
-            .admin-side { position: relative; height: auto; display: flex; flex-direction: column; }
-            .admin-nav { display: flex; flex-wrap: wrap; gap: .25rem; }
+            .admin-side { position: relative; height: auto; }
+            .admin-nav { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: 1rem; }
             .admin-nav button { width: auto; }
-            .grid2, .grid4 { grid-template-columns: 1fr 1fr; }
+            .qa-grid, .grid2, .grid4 { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
 <body>
-    <!-- Gate shown while verifying admin access -->
     <div id="admin-gate">
         <ion-icon name="lock-closed-outline" style="font-size:2.5rem;color:var(--primary-color);"></ion-icon>
         <p id="gate-msg">Verifying admin access…</p>
     </div>
 
-    <!-- Admin app (revealed only for admins) -->
     <div id="admin-app">
         <div class="admin-layout">
             <aside class="admin-side">
-                <div class="brand">ZAHROUN<br><span style="font-size:.7rem;letter-spacing:3px;color:#9fb3aa;">ADMIN</span></div>
+                <div class="brand">ZAHROUN<small>LUXURY PERFUMES</small></div>
                 <nav class="admin-nav" id="admin-nav">
                     <button class="active" data-section="dashboard"><ion-icon name="grid-outline"></ion-icon> Dashboard</button>
                     <button data-section="products"><ion-icon name="pricetags-outline"></ion-icon> Products</button>
-                    <button data-section="orders"><ion-icon name="receipt-outline"></ion-icon> Orders</button>
+                    <button data-section="orders"><ion-icon name="receipt-outline"></ion-icon> Orders <span class="nav-badge" id="nav-orders-badge" style="display:none;"></span></button>
                     <button data-section="customers"><ion-icon name="people-outline"></ion-icon> Customers</button>
                     <button data-section="categories"><ion-icon name="albums-outline"></ion-icon> Categories</button>
                     <button data-section="coupons"><ion-icon name="ticket-outline"></ion-icon> Coupons</button>
                     <button data-section="reviews"><ion-icon name="star-outline"></ion-icon> Reviews</button>
+                    <button data-section="analytics"><ion-icon name="bar-chart-outline"></ion-icon> Analytics</button>
+                    <button data-section="settings"><ion-icon name="settings-outline"></ion-icon> Settings</button>
                 </nav>
+                <div class="side-user">
+                    <div class="av" id="side-av">A</div>
+                    <div class="nm" id="side-nm">Admin<small>Administrator</small></div>
+                </div>
             </aside>
 
             <main class="admin-main">
                 <div class="admin-top">
-                    <h1 id="section-title">Dashboard</h1>
-                    <div style="display:flex;align-items:center;gap:1rem;">
+                    <div>
+                        <h1 id="section-title">Dashboard</h1>
+                        <div class="subtitle" id="section-subtitle">Overview of your store performance</div>
+                    </div>
+                    <div class="actions">
                         <span class="who" id="admin-who"></span>
-                        <a href="index.html" class="btn btn-outline" style="padding:.4rem .9rem;">View Site</a>
+                        <a href="index.html" target="_blank" class="btn btn-outline" style="padding:.4rem .9rem;">View Site</a>
                         <button class="btn" id="admin-logout" style="padding:.4rem .9rem;">Logout</button>
                     </div>
                 </div>
 
                 <!-- DASHBOARD -->
                 <section data-panel="dashboard">
+                    <span class="date-chip"><ion-icon name="calendar-outline"></ion-icon> <span id="date-range">Last 7 days</span></span>
+
                     <div class="stat-grid">
-                        <div class="stat-card"><div class="num" id="stat-products">—</div><div class="lbl">Products</div></div>
-                        <div class="stat-card"><div class="num" id="stat-orders">0</div><div class="lbl">Orders</div></div>
-                        <div class="stat-card"><div class="num" id="stat-revenue">৳0</div><div class="lbl">Revenue</div></div>
-                        <div class="stat-card"><div class="num" id="stat-customers">—</div><div class="lbl">Customers</div></div>
+                        <div class="stat-card">
+                            <div class="stat-icon products"><ion-icon name="bag-handle-outline"></ion-icon></div>
+                            <div><div class="lbl">Total Products</div><div class="num" id="stat-products">—</div><div class="delta" id="delta-products">&nbsp;</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon orders"><ion-icon name="cart-outline"></ion-icon></div>
+                            <div><div class="lbl">Total Orders</div><div class="num" id="stat-orders">0</div><div class="delta" id="delta-orders">&nbsp;</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon revenue"><ion-icon name="cash-outline"></ion-icon></div>
+                            <div><div class="lbl">Total Revenue</div><div class="num" id="stat-revenue">৳0</div><div class="delta" id="delta-revenue">&nbsp;</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon customers"><ion-icon name="people-outline"></ion-icon></div>
+                            <div><div class="lbl">Total Customers</div><div class="num" id="stat-customers">—</div><div class="delta" id="delta-customers">&nbsp;</div></div>
+                        </div>
                     </div>
-                    <div class="panel"><p class="muted-note">Welcome to your Zahroun admin dashboard. Use <strong>Products</strong> to manage your catalogue. Orders, coupons and analytics sections are being added next.</p></div>
+
+                    <div class="dash-row-2">
+                        <div class="panel">
+                            <div class="panel-head"><h3>Revenue Overview</h3><span class="muted-note">Last 7 days</span></div>
+                            <canvas id="revenue-chart" height="110"></canvas>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-head"><h3>Recent Orders</h3><button class="link-btn" data-goto="orders">View All</button></div>
+                            <div id="recent-orders"><p class="muted-note">Loading…</p></div>
+                        </div>
+                    </div>
+
+                    <div class="dash-row-3">
+                        <div class="panel">
+                            <div class="panel-head"><h3>Top Selling</h3></div>
+                            <div id="top-selling"><p class="muted-note">Loading…</p></div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-head"><h3>Orders by Status</h3></div>
+                            <canvas id="status-chart" height="150"></canvas>
+                            <div class="status-legend" id="status-legend"></div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-head"><h3>Quick Actions</h3></div>
+                            <div class="qa-grid">
+                                <button class="qa-btn" data-qa="add-product"><ion-icon name="add-circle-outline"></ion-icon> Add Product</button>
+                                <button class="qa-btn" data-qa="categories"><ion-icon name="albums-outline"></ion-icon> Add Category</button>
+                                <button class="qa-btn" data-qa="coupons"><ion-icon name="ticket-outline"></ion-icon> Create Coupon</button>
+                                <button class="qa-btn" data-qa="orders"><ion-icon name="receipt-outline"></ion-icon> View Orders</button>
+                                <button class="qa-btn" data-qa="customers"><ion-icon name="people-outline"></ion-icon> All Customers</button>
+                                <button class="qa-btn" data-qa="settings"><ion-icon name="settings-outline"></ion-icon> Site Settings</button>
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 <!-- PRODUCTS -->
@@ -164,6 +284,8 @@
                 <section data-panel="categories" style="display:none;"><div class="panel"><p class="muted-note">Category management — coming soon.</p></div></section>
                 <section data-panel="coupons" style="display:none;"><div class="panel"><p class="muted-note">Coupon management — coming soon.</p></div></section>
                 <section data-panel="reviews" style="display:none;"><div class="panel"><p class="muted-note">Review moderation — coming soon.</p></div></section>
+                <section data-panel="analytics" style="display:none;"><div class="panel"><p class="muted-note">Detailed analytics — coming soon. Live visitor data is in your Google Analytics dashboard.</p></div></section>
+                <section data-panel="settings" style="display:none;"><div class="panel"><p class="muted-note">Site settings (homepage banner, contact info) — coming soon.</p></div></section>
             </main>
         </div>
     </div>
