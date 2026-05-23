@@ -25,11 +25,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
-    // Reads the signed-in user's own profile to check their role.
+    // Admin check via auth token email — avoids get() calls that can fail on writes.
     function isAdmin() {
       return isSignedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        && request.auth.token.email == "marufshehzad5.00@gmail.com";
     }
 
     // ---- User profiles -------------------------------------------------
@@ -90,6 +89,11 @@ service cloud.firestore {
     match /messages/{id} {
       allow create: if true;          // anyone can send a contact message
       allow read, update, delete: if isAdmin();
+    }
+
+    // ---- Stock history log (admin write, no customer access) ---------------
+    match /stockHistory/{id} {
+      allow read, write: if isAdmin();
     }
   }
 }

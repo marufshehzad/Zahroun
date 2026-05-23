@@ -308,8 +308,8 @@
                         </div>
                         <div style="overflow-x:auto;">
                             <table class="admin-table">
-                                <thead><tr><th></th><th>Name</th><th>Category</th><th>50ML Price</th><th>Stock</th><th>Flags</th><th></th></tr></thead>
-                                <tbody id="product-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                                <thead><tr><th style="width:2.5rem;text-align:center;">#</th><th></th><th>Name</th><th>Category</th><th>50ML Price</th><th>Stock</th><th>Flags</th><th></th></tr></thead>
+                                <tbody id="product-rows"><tr><td colspan="8" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -324,6 +324,9 @@
                                 <span class="muted-note" id="orders-count"></span>
                                 <button class="link-btn" id="export-orders-btn" style="display:flex;align-items:center;gap:.3rem;"><ion-icon name="download-outline"></ion-icon> Export CSV</button>
                             </div>
+                        </div>
+                        <div style="margin-bottom:.75rem;">
+                            <input type="text" id="of-search" placeholder="Search by order # or customer name / phone…" style="width:100%;max-width:380px;padding:.45rem .85rem;border:1px solid var(--border-color);border-radius:7px;font-size:.85rem;font-family:var(--font-sans);background:var(--bg-color);">
                         </div>
                         <div style="overflow-x:auto;">
                             <table class="admin-table">
@@ -507,7 +510,10 @@
         <div class="admin-form" style="max-width:600px;padding:1.75rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--border-color);">
                 <h2 id="od-order-id" style="font-size:1.25rem;color:var(--primary-color);margin:0;"></h2>
-                <button id="od-close" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);padding:0;line-height:1;"><ion-icon name="close-outline"></ion-icon></button>
+                <div style="display:flex;align-items:center;gap:.5rem;">
+                    <button id="od-print" style="display:flex;align-items:center;gap:.3rem;background:none;border:1px solid var(--border-color);border-radius:6px;padding:.3rem .7rem;font-size:.8rem;cursor:pointer;color:var(--text-main);"><ion-icon name="print-outline" style="font-size:.95rem;"></ion-icon>Invoice</button>
+                    <button id="od-close" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);padding:0;line-height:1;"><ion-icon name="close-outline"></ion-icon></button>
+                </div>
             </div>
             <div id="od-content" style="max-height:70vh;overflow-y:auto;padding-right:.25rem;"></div>
         </div>

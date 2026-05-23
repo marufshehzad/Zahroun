@@ -25,6 +25,8 @@ const pfFlags = new Set();
 const sectionLoaded = new Set();
 let galleryImages = [];
 let galleryDragSrc = null;
+let ofSearch = "";
+let currentDetailOrder = null;
 
 const SUBTITLES = {
   dashboard: "Overview of your store performance",
@@ -101,6 +103,7 @@ async function initAdmin(user, profile) {
   // Order detail modal close
   document.getElementById("od-close")?.addEventListener("click", () => document.getElementById("order-detail-modal")?.classList.remove("open"));
   document.getElementById("order-detail-modal")?.addEventListener("click", e => { if (e.target.id === "order-detail-modal") e.target.classList.remove("open"); });
+  document.getElementById("od-print")?.addEventListener("click", () => { if (currentDetailOrder) printOrderInvoice(currentDetailOrder); });
 
   // Fetch all data once at startup (needed for dashboard stats)
   await Promise.all([fetchProducts(), fetchOrders(), fetchCustomers()]);
@@ -167,6 +170,9 @@ function setupSection(name) {
         renderProductTable();
       });
     });
+  } else if (name === "orders") {
+    const ofInput = document.getElementById("of-search");
+    if (ofInput) ofInput.addEventListener("input", e => { ofSearch = e.target.value; renderOrderTable(); });
   } else if (name === "settings") {
     $("#settings-form").addEventListener("submit", saveSettings);
   }
@@ -320,7 +326,7 @@ function renderRecentOrders() {
   if (!orders.length) { el.innerHTML = `<p class="muted-note">No orders yet.</p>`; return; }
   el.innerHTML = `<div class="ro-row ro-head"><span>Order</span><span>Customer</span><span>Amount</span><span>Status</span></div>` +
     orders.slice(0, 5).map(o => `<div class="ro-row">
-      <span><strong>#${o.id.slice(0,6).toUpperCase()}</strong></span>
+      <span><strong>${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</strong></span>
       <span>${escapeHtml(o.customer?.name || "—")}</span>
       <span>৳${o.total || 0}</span>
       <span><span class="o-status ${escapeHtml(o.status || "pending")}">${escapeHtml(o.status || "pending")}</span></span>
@@ -368,13 +374,14 @@ function renderProductTable() {
   const countEl = document.getElementById("pf-count");
   if (countEl) countEl.textContent = filtered.length !== products.length ? `${filtered.length} of ${products.length} products` : `${products.length} product${products.length !== 1 ? "s" : ""}`;
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">${products.length ? "No products match your filters." : "No products yet."}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="muted-note" style="padding:2rem;text-align:center;">${products.length ? "No products match your filters." : "No products yet."}</td></tr>`;
     return;
   }
-  tbody.innerHTML = filtered.map(p => {
+  tbody.innerHTML = filtered.map((p, i) => {
     const price = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : (p.price || 0);
     const flags = [p.featured ? `<span class="badge green">Featured</span>` : "", p.bestseller ? `<span class="badge">Bestseller</span>` : "", p.hidden ? `<span class="badge">Hidden</span>` : ""].join(" ");
     return `<tr>
+      <td style="color:var(--text-muted);font-size:.8rem;text-align:center;width:2.5rem;">${i + 1}</td>
       <td><img src="${optimizedUrl(p.image, 80)}" alt=""></td>
       <td>${escapeHtml(p.name)}</td>
       <td>${escapeHtml(p.category || "")}</td>
@@ -393,14 +400,22 @@ function renderProductTable() {
 
 function renderOrderTable() {
   const tbody = $("#order-rows");
-  $("#orders-count").textContent = `${orders.length} order(s)`;
+  const q = ofSearch.trim().toLowerCase();
+  const visible = q ? orders.filter(o =>
+    String(o.orderNum || "").includes(q) ||
+    o.id.toLowerCase().startsWith(q) ||
+    (o.customer?.name || "").toLowerCase().includes(q) ||
+    (o.customer?.mobile || "").includes(q)
+  ) : orders;
+  $("#orders-count").textContent = q ? `${visible.length} of ${orders.length} order(s)` : `${orders.length} order(s)`;
   if (!orders.length) { tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No orders yet.</td></tr>`; return; }
-  tbody.innerHTML = orders.map(o => {
+  if (!visible.length) { tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No orders match your search.</td></tr>`; return; }
+  tbody.innerHTML = visible.map(o => {
     const c = o.customer || {};
     const items = (o.items || []).map(i => `${escapeHtml(i.name)} (${i.size}) ×${i.quantity}`).join("<br>");
     const opts = ORDER_STATUSES.map(s => `<option value="${s}" ${(o.status || "pending") === s ? "selected" : ""}>${s}</option>`).join("");
     return `<tr data-oid="${o.id}" style="cursor:pointer;" title="Click for order details">
-      <td><strong>#${o.id.slice(0,8).toUpperCase()}</strong></td>
+      <td><strong>${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</strong></td>
       <td>${escapeHtml(c.name || "")}<br><span class="muted-note">${escapeHtml(c.mobile || "")}</span><br><span class="muted-note">${escapeHtml(c.address || "")}</span></td>
       <td style="font-size:.82rem;">${items}</td>
       <td>৳${o.total || 0}</td>
@@ -1130,13 +1145,15 @@ function renderAnFunnel(filtered, active, newCusts) {
 
 /* ---- Order detail modal ----------------------------------------------- */
 function openOrderDetail(order) {
+  currentDetailOrder = order;
   const c = order.customer || {};
   const items = order.items || [];
   const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0);
   const couponCode = typeof order.coupon === "string" ? order.coupon : (order.coupon?.id || order.coupon?.code || "");
   const discount = order.couponDiscount || (typeof order.coupon === "object" ? order.coupon?.discount : 0) || 0;
+  const orderNumDisplay = order.orderNum ? `#${order.orderNum}` : `#${order.id.slice(0, 8).toUpperCase()}`;
 
-  document.getElementById("od-order-id").textContent = `Order #${order.id.slice(0, 8).toUpperCase()}`;
+  document.getElementById("od-order-id").textContent = `Order ${orderNumDisplay}`;
   document.getElementById("od-content").innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;">
       <div>
@@ -1191,6 +1208,111 @@ function openOrderDetail(order) {
       </div>
     </div>`;
   document.getElementById("order-detail-modal").classList.add("open");
+}
+
+/* ---- Order invoice print ---------------------------------------------- */
+function printOrderInvoice(order) {
+  const c = order.customer || {};
+  const items = order.items || [];
+  const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0);
+  const discount = order.couponDiscount || (typeof order.coupon === "object" ? order.coupon?.discount : 0) || 0;
+  const couponCode = typeof order.coupon === "string" ? order.coupon : (order.coupon?.id || order.coupon?.code || "");
+  const dateStr = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "";
+  const orderNumDisplay = order.orderNum ? `#${order.orderNum}` : `#${order.id.slice(0, 8).toUpperCase()}`;
+  const statusColor = STATUS_COLORS[order.status || "pending"] || "#888";
+
+  const itemRows = items.map((item, idx) => `<tr>
+    <td>${idx + 1}</td>
+    <td>${escapeHtml(item.name || "")}</td>
+    <td>${escapeHtml(item.size || "")}</td>
+    <td style="text-align:center;">${item.quantity || 1}</td>
+    <td style="text-align:right;">৳${(item.price || 0).toLocaleString()}</td>
+    <td style="text-align:right;">৳${((item.price || 0) * (item.quantity || 1)).toLocaleString()}</td>
+  </tr>`).join("");
+
+  const discountRow = discount ? `<tr class="tot"><td colspan="5" style="text-align:right;color:#1e7e34;">Discount (${escapeHtml(couponCode)})</td><td style="text-align:right;color:#1e7e34;">−৳${Number(discount).toLocaleString()}</td></tr>` : "";
+  const deliveryRow = order.deliveryCharge ? `<tr class="tot"><td colspan="5" style="text-align:right;color:#555;">Delivery</td><td style="text-align:right;">৳${Number(order.deliveryCharge).toLocaleString()}</td></tr>` : "";
+
+  const win = window.open("", "_blank", "width=720,height=960,scrollbars=yes");
+  win.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>Invoice ${orderNumDisplay} | Zahroun</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Georgia',serif;color:#1a1a1a;background:#fff;padding:2.5cm 2cm;font-size:.9rem;}
+  .hdr{text-align:center;border-bottom:2.5px solid #163E34;padding-bottom:1.2rem;margin-bottom:1.5rem;}
+  .brand{font-size:2.2rem;letter-spacing:5px;color:#163E34;font-weight:700;}
+  .brand-sub{font-size:.62rem;letter-spacing:6px;color:#888;margin-top:3px;text-transform:uppercase;}
+  .inv-meta{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;}
+  .inv-num{font-size:1.5rem;font-weight:700;color:#163E34;}
+  .status-badge{display:inline-block;background:${statusColor};color:#fff;padding:.18rem .6rem;border-radius:4px;font-size:.7rem;font-weight:700;font-family:sans-serif;letter-spacing:.04em;margin-top:.4rem;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;}
+  .lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:#888;margin-bottom:.3rem;font-family:sans-serif;}
+  table{width:100%;border-collapse:collapse;margin-bottom:1.5rem;}
+  thead th{background:#163E34;color:#fff;padding:.45rem .6rem;font-size:.75rem;font-weight:600;font-family:sans-serif;}
+  td{padding:.45rem .6rem;border-bottom:1px solid #eee;font-size:.85rem;}
+  .tot td{border:none;padding:.25rem .6rem;font-size:.85rem;font-family:sans-serif;}
+  .grand td{border-top:2px solid #163E34;padding-top:.5rem;font-weight:700;font-size:1rem;font-family:sans-serif;}
+  .grand td:last-child{color:#163E34;}
+  .footer{text-align:center;font-size:.72rem;color:#888;border-top:1px solid #eee;padding-top:1rem;margin-top:1.5rem;font-family:sans-serif;line-height:1.8;}
+  .print-btn{text-align:center;margin-top:1.5rem;}
+  .print-btn button{background:#163E34;color:#fff;border:none;padding:.6rem 2rem;border-radius:6px;cursor:pointer;font-size:.88rem;font-family:sans-serif;}
+  @media print{.print-btn{display:none;}}
+</style></head><body>
+<div class="hdr">
+  <div class="brand">ZAHROUN</div>
+  <div class="brand-sub">Luxury Fragrances</div>
+  <div style="font-size:.75rem;color:#888;margin-top:.5rem;font-family:sans-serif;">Tax Invoice / Order Confirmation</div>
+</div>
+
+<div class="inv-meta">
+  <div>
+    <div class="lbl">Order Number</div>
+    <div class="inv-num">${orderNumDisplay}</div>
+    <div><span class="status-badge">${(order.status || "pending").toUpperCase()}</span></div>
+  </div>
+  <div style="text-align:right;font-family:sans-serif;font-size:.85rem;">
+    <div class="lbl">Date</div>
+    <div>${dateStr}</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div>
+    <div class="lbl">Bill To</div>
+    <div style="font-size:.88rem;line-height:1.9;">
+      <strong>${escapeHtml(c.name || "—")}</strong><br>
+      ${c.email ? escapeHtml(c.email) + "<br>" : ""}
+      ${c.mobile ? escapeHtml(c.mobile) + "<br>" : ""}
+      ${c.address ? `<span style="color:#555;">${escapeHtml(c.address)}</span>` : ""}
+    </div>
+  </div>
+  <div>
+    <div class="lbl">Payment</div>
+    <div style="font-size:.88rem;line-height:1.9;">
+      <strong>${escapeHtml(order.payment?.method || "—")}</strong><br>
+      ${order.payment?.txnId ? "TxnID: " + escapeHtml(order.payment.txnId) + "<br>" : ""}
+      ${couponCode ? "Coupon: <strong>" + escapeHtml(couponCode) + "</strong>" : ""}
+    </div>
+  </div>
+</div>
+
+<table>
+  <thead><tr><th>#</th><th>Product</th><th>Size</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Unit Price</th><th style="text-align:right;">Amount</th></tr></thead>
+  <tbody>${itemRows}</tbody>
+  <tfoot>
+    <tr class="tot"><td colspan="5" style="text-align:right;color:#555;">Subtotal</td><td style="text-align:right;">৳${subtotal.toLocaleString()}</td></tr>
+    ${discountRow}${deliveryRow}
+    <tr class="grand"><td colspan="5" style="text-align:right;">Total</td><td style="text-align:right;">৳${(order.total || 0).toLocaleString()}</td></tr>
+  </tfoot>
+</table>
+
+<div class="footer">
+  Zahroun · Dhanmondi, Dhaka, Bangladesh, 1205 · WhatsApp: +880 1886-936581<br>
+  Thank you for shopping with us!
+</div>
+<div class="print-btn"><button onclick="window.print()">🖨 Print / Save as PDF</button></div>
+</body></html>`);
+  win.document.close();
 }
 
 /* ---- Notification system ---------------------------------------------- */
