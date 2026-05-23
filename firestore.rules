@@ -25,10 +25,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
-    // Admin check via auth token email — avoids get() calls that can fail on writes.
+    // Admin check via Firestore role field — add new admins by setting users/{uid}.role = "admin"
     function isAdmin() {
       return isSignedIn()
-        && request.auth.token.email == "marufshehzad5.00@gmail.com";
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
     }
 
     // ---- User profiles -------------------------------------------------

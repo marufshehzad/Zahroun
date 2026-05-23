@@ -6,7 +6,7 @@ import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   collection, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, addDoc,
-  serverTimestamp, query, limit
+  serverTimestamp, query, limit, onSnapshot, where, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { uploadImage, optimizedUrl } from "./cloudinary.js";
 
@@ -227,6 +227,65 @@ async function initAdmin(user, profile) {
   updateNotifications();
   // Show unread messages badge without blocking
   fetchMessages().catch(() => {});
+  // Real-time new-order notifications
+  startOrderListener();
+}
+
+/* ---- Real-time order listener + browser notifications ------------------ */
+let _orderListenerUnsub = null;
+let _knownOrderIds = null;
+
+async function requestNotifPermission() {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "default") await Notification.requestPermission();
+}
+
+function playOrderSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.setValueAtTime(880, ctx.currentTime);
+    o.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
+    g.gain.setValueAtTime(0.25, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    o.start(); o.stop(ctx.currentTime + 0.5);
+  } catch (_) {}
+}
+
+function showOrderNotification(order) {
+  playOrderSound();
+  const title = "New Order — Zahroun";
+  const body = `${order.customer?.name || "Customer"} · ৳${order.total}`;
+  if (Notification.permission === "granted") {
+    try { new Notification(title, { body, icon: "product pictures/main logo.png" }); } catch (_) {}
+  }
+  adminToast(`🛒 New order from ${order.customer?.name || "a customer"} — ৳${order.total}`);
+  updateNotifications();
+}
+
+function startOrderListener() {
+  requestNotifPermission();
+  if (_orderListenerUnsub) _orderListenerUnsub();
+
+  // Snapshot to track which order IDs already exist at startup
+  _knownOrderIds = new Set(orders.map(o => o.id));
+
+  const q = query(collection(db, "orders"), orderBy("createdAt", "desc"), limit(50));
+  _orderListenerUnsub = onSnapshot(q, snap => {
+    if (_knownOrderIds === null) return;
+    snap.docChanges().forEach(change => {
+      if (change.type === "added" && !_knownOrderIds.has(change.doc.id)) {
+        const order = { id: change.doc.id, ...change.doc.data() };
+        orders.unshift(order);
+        _knownOrderIds.add(change.doc.id);
+        showOrderNotification(order);
+        if (typeof renderOrderTable === "function") renderOrderTable();
+        renderDashboard();
+      }
+    });
+  }, err => console.warn("Order listener:", err));
 }
 
 /* ---- Section switcher — lazy render ------------------------------------ */
