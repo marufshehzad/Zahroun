@@ -96,7 +96,19 @@
         .qa-btn { display: flex; flex-direction: column; align-items: center; gap: .45rem; padding: 1rem .4rem; border: 1px solid var(--border-color);
             border-radius: 11px; background: none; cursor: pointer; font-size: .76rem; color: var(--text-main); text-align: center; transition: all .2s; }
         .qa-btn ion-icon { font-size: 1.4rem; color: var(--primary-color); }
-        .qa-btn:hover { background: var(--bg-color); border-color: var(--primary-color); transform: translateY(-2px); }
+        .qa-btn:hover { background: var(--bg-color); border-color: var(--primary-color); }
+
+        /* Analytics */
+        .an-period { padding: .35rem .85rem; border: 1px solid var(--border-color); border-radius: 7px; background: none; cursor: pointer; font-size: .8rem; color: var(--text-muted); transition: all .15s; }
+        .an-period:hover { background: var(--bg-color); color: var(--text-main); }
+        .an-period.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); font-weight: 600; }
+        .an-funnel-row { display: flex; align-items: center; gap: .75rem; padding: .6rem 0; border-bottom: 1px solid #f0eee8; font-size: .88rem; }
+        .an-funnel-row:last-child { border-bottom: none; }
+        .an-funnel-bar { height: 8px; border-radius: 4px; background: var(--primary-color); flex-shrink: 0; }
+        .an-ga-card { background: var(--primary-color); border-radius: 14px; padding: 1.6rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: .6rem; }
+        .an-ga-card h3 { color: #fff; font-size: 1.05rem; }
+        .an-ga-card p { color: rgba(255,255,255,.7); font-size: .82rem; line-height: 1.5; }
+        .an-ga-card .btn { background: #fff; color: var(--primary-color); font-size: .82rem; padding: .45rem 1.1rem; }
 
         /* Tables */
         table.admin-table { width: 100%; border-collapse: collapse; }
@@ -111,6 +123,13 @@
         .o-status.confirmed, .o-status.shipped { background: #e8f0fe; color: #1a56b8; }
         .icon-btn { background: none; border: 1px solid var(--border-color); border-radius: 6px; padding: .35rem .55rem; cursor: pointer; color: var(--text-main); }
         .icon-btn.danger:hover { background: #fdecea; border-color: #9b2226; color: #9b2226; }
+
+        /* Product filters */
+        .pf-flag-btn { padding:.3rem .75rem; border:1px solid var(--border-color); border-radius:20px; background:none; cursor:pointer; font-size:.78rem; color:var(--text-muted); transition:all .15s; }
+        .pf-flag-btn:hover { border-color:var(--primary-color); color:var(--primary-color); }
+        .pf-flag-btn.active { background:var(--primary-color); color:#fff; border-color:var(--primary-color); }
+        /* Notifications */
+        .notif-item:hover { background:var(--bg-color); }
 
         /* Product modal */
         .admin-modal { position: fixed; inset: 0; background: rgba(15,46,39,.5); display: none; align-items: flex-start; justify-content: center; z-index: 5000; padding: 2rem 1rem; overflow-y: auto; }
@@ -159,6 +178,7 @@
                     <button data-section="categories"><ion-icon name="albums-outline"></ion-icon> Categories</button>
                     <button data-section="coupons"><ion-icon name="ticket-outline"></ion-icon> Coupons</button>
                     <button data-section="reviews"><ion-icon name="star-outline"></ion-icon> Reviews</button>
+                    <button data-section="messages"><ion-icon name="mail-outline"></ion-icon> Messages <span class="nav-badge" id="nav-messages-badge" style="display:none;"></span></button>
                     <button data-section="analytics"><ion-icon name="bar-chart-outline"></ion-icon> Analytics</button>
                     <button data-section="settings"><ion-icon name="settings-outline"></ion-icon> Settings</button>
                 </nav>
@@ -176,6 +196,16 @@
                     </div>
                     <div class="actions">
                         <span class="who" id="admin-who"></span>
+                        <div style="position:relative;" id="notif-wrap">
+                            <button id="notif-btn" aria-label="Notifications" style="background:#fff;border:1px solid var(--border-color);border-radius:8px;padding:.4rem .65rem;cursor:pointer;position:relative;color:var(--text-main);display:flex;align-items:center;font-size:1.25rem;">
+                                <ion-icon name="notifications-outline"></ion-icon>
+                                <span id="notif-badge" style="display:none;position:absolute;top:-5px;right:-5px;background:#9b2226;color:#fff;font-size:.62rem;font-weight:700;padding:.1rem .35rem;border-radius:20px;min-width:16px;text-align:center;line-height:1.4;"></span>
+                            </button>
+                            <div id="notif-dropdown" style="display:none;position:absolute;right:0;top:calc(100% + .5rem);background:#fff;border:1px solid var(--border-color);border-radius:12px;min-width:270px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9000;overflow:hidden;">
+                                <div style="padding:.65rem 1rem;border-bottom:1px solid #f0eee8;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);">Notifications</div>
+                                <div id="notif-list"></div>
+                            </div>
+                        </div>
                         <a href="index.html" target="_blank" class="btn btn-outline" style="padding:.4rem .9rem;">View Site</a>
                         <button class="btn" id="admin-logout" style="padding:.4rem .9rem;">Logout</button>
                     </div>
@@ -207,7 +237,7 @@
                     <div class="dash-row-2">
                         <div class="panel">
                             <div class="panel-head"><h3>Revenue Overview</h3><span class="muted-note">Last 7 days</span></div>
-                            <canvas id="revenue-chart" height="110"></canvas>
+                            <div style="position:relative;height:220px;"><canvas id="revenue-chart"></canvas></div>
                         </div>
                         <div class="panel">
                             <div class="panel-head"><h3>Recent Orders</h3><button class="link-btn" data-goto="orders">View All</button></div>
@@ -222,7 +252,7 @@
                         </div>
                         <div class="panel">
                             <div class="panel-head"><h3>Orders by Status</h3></div>
-                            <canvas id="status-chart" height="150"></canvas>
+                            <div style="position:relative;height:180px;"><canvas id="status-chart"></canvas></div>
                             <div class="status-legend" id="status-legend"></div>
                         </div>
                         <div class="panel">
@@ -246,6 +276,29 @@
                             <h3>All Products</h3>
                             <button class="btn" id="add-product-btn"><ion-icon name="add-outline"></ion-icon> Add Product</button>
                         </div>
+                        <div id="product-filters" style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;padding:.75rem 0 1rem;border-bottom:1px solid var(--border-color);margin-bottom:.75rem;">
+                            <input type="search" id="pf-search" placeholder="Search products…" style="flex:1;min-width:160px;padding:.45rem .75rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;background:var(--bg-color);">
+                            <select id="pf-category" style="padding:.45rem .6rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;background:var(--bg-color);">
+                                <option value="">All Categories</option>
+                                <option value="Men">Men</option>
+                                <option value="Women">Women</option>
+                                <option value="Unisex">Unisex</option>
+                            </select>
+                            <select id="pf-sort" style="padding:.45rem .6rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;background:var(--bg-color);">
+                                <option value="default">Sort: Default</option>
+                                <option value="name">Name A–Z</option>
+                                <option value="price-asc">Price ↑</option>
+                                <option value="price-desc">Price ↓</option>
+                                <option value="stock-asc">Stock ↑</option>
+                            </select>
+                            <div style="display:flex;gap:.35rem;flex-wrap:wrap;">
+                                <button class="pf-flag-btn" data-flag="featured">Featured</button>
+                                <button class="pf-flag-btn" data-flag="bestseller">Bestseller</button>
+                                <button class="pf-flag-btn" data-flag="lowstock">⚠ Low Stock</button>
+                                <button class="pf-flag-btn" data-flag="hidden">Hidden</button>
+                            </div>
+                            <span id="pf-count" class="muted-note"></span>
+                        </div>
                         <div style="overflow-x:auto;">
                             <table class="admin-table">
                                 <thead><tr><th></th><th>Name</th><th>Category</th><th>50ML Price</th><th>Stock</th><th>Flags</th><th></th></tr></thead>
@@ -258,7 +311,13 @@
                 <!-- ORDERS -->
                 <section data-panel="orders" style="display:none;">
                     <div class="panel">
-                        <div class="panel-head"><h3>Orders</h3><span class="muted-note" id="orders-count"></span></div>
+                        <div class="panel-head">
+                            <h3>Orders</h3>
+                            <div style="display:flex;align-items:center;gap:.6rem;">
+                                <span class="muted-note" id="orders-count"></span>
+                                <button class="link-btn" id="export-orders-btn" style="display:flex;align-items:center;gap:.3rem;"><ion-icon name="download-outline"></ion-icon> Export CSV</button>
+                            </div>
+                        </div>
                         <div style="overflow-x:auto;">
                             <table class="admin-table">
                                 <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead>
@@ -271,7 +330,13 @@
                 <!-- CUSTOMERS -->
                 <section data-panel="customers" style="display:none;">
                     <div class="panel">
-                        <div class="panel-head"><h3>Customers</h3><span class="muted-note" id="customers-count"></span></div>
+                        <div class="panel-head">
+                            <h3>Customers</h3>
+                            <div style="display:flex;align-items:center;gap:.6rem;">
+                                <span class="muted-note" id="customers-count"></span>
+                                <button class="link-btn" id="export-customers-btn" style="display:flex;align-items:center;gap:.3rem;"><ion-icon name="download-outline"></ion-icon> Export CSV</button>
+                            </div>
+                        </div>
                         <div style="overflow-x:auto;">
                             <table class="admin-table">
                                 <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
@@ -281,12 +346,163 @@
                     </div>
                 </section>
 
-                <section data-panel="categories" style="display:none;"><div class="panel"><p class="muted-note">Category management — coming soon.</p></div></section>
-                <section data-panel="coupons" style="display:none;"><div class="panel"><p class="muted-note">Coupon management — coming soon.</p></div></section>
-                <section data-panel="reviews" style="display:none;"><div class="panel"><p class="muted-note">Review moderation — coming soon.</p></div></section>
-                <section data-panel="analytics" style="display:none;"><div class="panel"><p class="muted-note">Detailed analytics — coming soon. Live visitor data is in your Google Analytics dashboard.</p></div></section>
-                <section data-panel="settings" style="display:none;"><div class="panel"><p class="muted-note">Site settings (homepage banner, contact info) — coming soon.</p></div></section>
+                <!-- CATEGORIES -->
+                <section data-panel="categories" style="display:none;">
+                    <div class="panel">
+                        <div class="panel-head">
+                            <h3>Categories</h3>
+                            <button class="btn" id="add-cat-btn"><ion-icon name="add-outline"></ion-icon> Add Category</button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead><tr><th>Name</th><th>Slug</th><th>Order</th><th>Products</th><th></th></tr></thead>
+                                <tbody id="cat-rows"><tr><td colspan="5" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- COUPONS -->
+                <section data-panel="coupons" style="display:none;">
+                    <div class="panel">
+                        <div class="panel-head">
+                            <h3>Coupons & Discount Codes</h3>
+                            <button class="btn" id="add-coupon-btn"><ion-icon name="add-outline"></ion-icon> Add Coupon</button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead><tr><th>Code</th><th>Discount</th><th>Min Order</th><th>Used/Max</th><th>Expires</th><th>Status</th><th></th></tr></thead>
+                                <tbody id="coupon-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- REVIEWS -->
+                <section data-panel="reviews" style="display:none;">
+                    <div class="panel">
+                        <div class="panel-head">
+                            <h3>Customer Reviews</h3>
+                            <span class="muted-note" id="pending-review-msg"></span>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead><tr><th>Product</th><th>Customer</th><th>Rating</th><th>Review</th><th>Status</th><th>Date</th><th></th></tr></thead>
+                                <tbody id="review-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- MESSAGES -->
+                <section data-panel="messages" style="display:none;">
+                    <div class="panel">
+                        <div class="panel-head">
+                            <h3>Customer Messages</h3>
+                            <span class="muted-note" id="messages-count-label"></span>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead><tr><th>Name</th><th>Email</th><th>Subject</th><th>Message</th><th>Date</th><th>Status</th><th></th></tr></thead>
+                                <tbody id="message-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ANALYTICS -->
+                <section data-panel="analytics" style="display:none;">
+                    <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+                        <span style="font-size:.83rem;color:var(--text-muted);font-weight:500;">Period:</span>
+                        <div id="analytics-period" style="display:flex;gap:.4rem;">
+                            <button class="an-period" data-days="7">7 Days</button>
+                            <button class="an-period active" data-days="30">30 Days</button>
+                            <button class="an-period" data-days="90">90 Days</button>
+                            <button class="an-period" data-days="0">All Time</button>
+                        </div>
+                        <a href="https://analytics.google.com" target="_blank" rel="noopener" class="link-btn" style="margin-left:auto;display:flex;align-items:center;gap:.4rem;">
+                            <ion-icon name="open-outline"></ion-icon> Google Analytics
+                        </a>
+                    </div>
+
+                    <div class="stat-grid" style="margin-bottom:1.25rem;">
+                        <div class="stat-card">
+                            <div class="stat-icon revenue"><ion-icon name="cash-outline"></ion-icon></div>
+                            <div><div class="lbl">Revenue</div><div class="num" id="an-revenue">—</div><div class="delta flat" id="an-avg-val">&nbsp;</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon orders"><ion-icon name="cart-outline"></ion-icon></div>
+                            <div><div class="lbl">Orders</div><div class="num" id="an-orders">—</div><div class="delta flat" id="an-order-conv">&nbsp;</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon customers"><ion-icon name="person-add-outline"></ion-icon></div>
+                            <div><div class="lbl">New Customers</div><div class="num" id="an-customers">—</div><div class="delta flat">&nbsp;</div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon products"><ion-icon name="mail-outline"></ion-icon></div>
+                            <div><div class="lbl">Subscribers</div><div class="num" id="an-newsletter">—</div><div class="delta flat">Newsletter</div></div>
+                        </div>
+                    </div>
+
+                    <div class="dash-row-2" style="margin-bottom:1.25rem;">
+                        <div class="panel">
+                            <div class="panel-head"><h3>Revenue Trend</h3><span class="muted-note" id="an-chart-label"></span></div>
+                            <div style="position:relative;height:220px;"><canvas id="an-revenue-chart"></canvas></div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-head"><h3>Top Products by Revenue</h3></div>
+                            <div id="an-top-products"><p class="muted-note">Loading…</p></div>
+                        </div>
+                    </div>
+
+                    <div class="dash-row-3">
+                        <div class="panel">
+                            <div class="panel-head"><h3>Orders by Status</h3></div>
+                            <div style="position:relative;height:170px;"><canvas id="an-status-chart"></canvas></div>
+                            <div id="an-status-legend" class="status-legend"></div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-head"><h3>Sales Funnel</h3></div>
+                            <div id="an-funnel"><p class="muted-note">Loading…</p></div>
+                        </div>
+                        <div class="an-ga-card">
+                            <ion-icon name="analytics-outline" style="font-size:2.2rem;color:rgba(255,255,255,.55);"></ion-icon>
+                            <h3>Visitor Analytics</h3>
+                            <p>Page views, traffic sources, devices &amp; real-time users are in Google Analytics (GA4 ID: G-DWXJFVRHFE).</p>
+                            <a href="https://analytics.google.com" target="_blank" rel="noopener" class="btn">Open Google Analytics →</a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SETTINGS -->
+                <section data-panel="settings" style="display:none;">
+                    <div class="panel" style="max-width:640px;">
+                        <div class="panel-head"><h3>Store Settings</h3></div>
+                        <form id="settings-form">
+                            <div class="fg"><label>WhatsApp Number (with country code)</label><input type="text" name="whatsapp" placeholder="8801886936581"></div>
+                            <div class="fg"><label>Contact Email</label><input type="email" name="contactEmail" placeholder="hello@zahroun.com"></div>
+                            <div class="fg"><label>Announcement Bar Text</label><input type="text" name="announcement" placeholder="Free shipping over ৳5000!"></div>
+                            <div class="fg" style="display:flex;align-items:center;gap:.6rem;"><input type="checkbox" name="announcementActive" id="ann-chk" style="width:auto;margin:0;"><label for="ann-chk" style="margin:0;font-size:.9rem;color:var(--text-main);">Show Announcement Bar</label></div>
+                            <div class="fg"><label>Hero Title (Homepage banner)</label><input type="text" name="heroTitle" placeholder="Discover Your Scent"></div>
+                            <div class="fg"><label>Hero Subtitle</label><input type="text" name="heroSubtitle" placeholder="Premium perfumes crafted for you"></div>
+                            <div class="form-actions" style="justify-content:flex-start;margin-top:1rem;">
+                                <button type="submit" class="btn" id="settings-save">Save Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
             </main>
+        </div>
+    </div>
+
+    <!-- Order details modal -->
+    <div class="admin-modal" id="order-detail-modal">
+        <div class="admin-form" style="max-width:600px;padding:1.75rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--border-color);">
+                <h2 id="od-order-id" style="font-size:1.25rem;color:var(--primary-color);margin:0;"></h2>
+                <button id="od-close" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);padding:0;line-height:1;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div id="od-content" style="max-height:70vh;overflow-y:auto;padding-right:.25rem;"></div>
         </div>
     </div>
 
@@ -355,6 +571,51 @@
             <div class="form-actions">
                 <button type="button" class="btn btn-outline" id="cancel-product">Cancel</button>
                 <button type="submit" class="btn" id="save-product">Save Product</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Category add/edit modal -->
+    <div class="admin-modal" id="cat-modal">
+        <form class="admin-form" id="cat-form" style="max-width:420px;">
+            <h2 id="cat-form-title">Add Category</h2>
+            <div class="fg"><label>Category Name</label><input type="text" name="name" required placeholder="Men's Fragrances"></div>
+            <div class="fg"><label>Slug (URL key, auto-filled)</label><input type="text" name="slug" required placeholder="mens"></div>
+            <div class="fg"><label>Display Order</label><input type="number" name="order" value="0" min="0"></div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" id="cancel-cat">Cancel</button>
+                <button type="submit" class="btn">Save Category</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Coupon add/edit modal -->
+    <div class="admin-modal" id="coupon-modal">
+        <form class="admin-form" id="coupon-form" style="max-width:500px;">
+            <h2 id="coupon-form-title">Add Coupon</h2>
+            <div class="grid2">
+                <div class="fg"><label>Code (auto-uppercase)</label><input type="text" name="code" required placeholder="SAVE10" style="text-transform:uppercase;"></div>
+                <div class="fg"><label>Discount Type</label>
+                    <select name="type">
+                        <option value="percent">Percentage (%)</option>
+                        <option value="flat">Flat Amount (৳)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid2">
+                <div class="fg"><label>Discount Value</label><input type="number" name="value" min="1" required placeholder="10"></div>
+                <div class="fg"><label>Minimum Order (৳)</label><input type="number" name="minOrder" min="0" value="0"></div>
+            </div>
+            <div class="grid2">
+                <div class="fg"><label>Max Uses (0 = unlimited)</label><input type="number" name="maxUses" min="0" value="0"></div>
+                <div class="fg"><label>Expiry Date (blank = no expiry)</label><input type="date" name="expiresAt"></div>
+            </div>
+            <div class="checks">
+                <label><input type="checkbox" name="active" checked> Active</label>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" id="cancel-coupon">Cancel</button>
+                <button type="submit" class="btn">Save Coupon</button>
             </div>
         </form>
     </div>
