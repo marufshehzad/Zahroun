@@ -5,7 +5,7 @@
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  collection, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc,
+  collection, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, addDoc,
   serverTimestamp, query, limit
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { uploadImage, optimizedUrl } from "./cloudinary.js";
@@ -260,6 +260,7 @@ function renderDashboard() {
   renderRecentOrders();
   renderTopSelling();
   setDateRange();
+  renderStockAlerts();
 }
 
 function setDelta(sel, n, unit, flatText) {
@@ -376,7 +377,7 @@ function renderProductTable() {
       <td>${escapeHtml(p.name)}</td>
       <td>${escapeHtml(p.category || "")}</td>
       <td>৳${price}</td>
-      <td>${p.stock ?? "—"}</td>
+      <td>${p.stock === 0 ? '<span style="color:#9b2226;font-weight:600;font-size:.8rem;">Out of Stock</span>' : (p.stock !== undefined && p.stock !== null && p.stock < 10) ? `<span style="color:#b8860b;font-weight:600;">⚠ ${p.stock}</span>` : (p.stock ?? "—")}</td>
       <td>${flags}</td>
       <td style="white-space:nowrap;">
         <button class="icon-btn" data-edit="${p.id}" title="Edit"><ion-icon name="create-outline"></ion-icon></button>
@@ -409,10 +410,14 @@ function renderOrderTable() {
   tbody.querySelectorAll("select[data-order]").forEach(sel => {
     sel.addEventListener("change", async () => {
       sel.disabled = true;
+      const order = orders.find(o => o.id === sel.dataset.order);
+      const prevStatus = order?.status || "pending";
+      const newStatus = sel.value;
       try {
-        await updateDoc(doc(db, "orders", sel.dataset.order), { status: sel.value });
-        const order = orders.find(o => o.id === sel.dataset.order);
-        if (order) order.status = sel.value;
+        if (newStatus === "confirmed" && prevStatus !== "confirmed") await deductOrderStock(order);
+        if (newStatus === "cancelled" && prevStatus !== "cancelled") await restoreOrderStock(order);
+        await updateDoc(doc(db, "orders", sel.dataset.order), { status: newStatus });
+        if (order) order.status = newStatus;
         updateOrdersBadge();
         renderOrderTable();
         renderDashboard();
@@ -831,6 +836,89 @@ async function deleteProduct(id) {
   if (!confirm(`Delete "${p ? p.name : id}"? This cannot be undone.`)) return;
   try { await deleteDoc(doc(db, "products", String(id))); await fetchProducts(); renderProductTable(); renderDashboard(); updateNotifications(); }
   catch (err) { alert("Delete failed: " + (err.code || err.message)); }
+}
+
+/* ---- Inventory management --------------------------------------------- */
+async function deductOrderStock(order) {
+  if (!order || order.stockDeducted) return;
+  const changes = [];
+  for (const item of (order.items || [])) {
+    const product = products.find(p => String(p.id) === String(item.id));
+    if (product && product.stock !== undefined && product.stock !== null) {
+      const before = product.stock;
+      const after = Math.max(0, before - (item.quantity || 1));
+      changes.push({ product, item, before, after });
+    }
+  }
+  if (!changes.length) return;
+  await Promise.all(changes.map(c => updateDoc(doc(db, "products", String(c.product.id)), { stock: c.after })));
+  changes.forEach(c => { c.product.stock = c.after; });
+  await updateDoc(doc(db, "orders", order.id), { stockDeducted: true });
+  order.stockDeducted = true;
+  logStockHistory(changes, order.id, "deduct").catch(() => {});
+  renderProductTable();
+  updateNotifications();
+  adminToast("Stock updated — order confirmed.");
+}
+
+async function restoreOrderStock(order) {
+  if (!order || !order.stockDeducted) return;
+  const changes = [];
+  for (const item of (order.items || [])) {
+    const product = products.find(p => String(p.id) === String(item.id));
+    if (product && product.stock !== undefined && product.stock !== null) {
+      const before = product.stock;
+      const after = before + (item.quantity || 1);
+      changes.push({ product, item, before, after });
+    }
+  }
+  if (!changes.length) return;
+  await Promise.all(changes.map(c => updateDoc(doc(db, "products", String(c.product.id)), { stock: c.after })));
+  changes.forEach(c => { c.product.stock = c.after; });
+  await updateDoc(doc(db, "orders", order.id), { stockDeducted: false });
+  order.stockDeducted = false;
+  logStockHistory(changes, order.id, "restore").catch(() => {});
+  renderProductTable();
+  updateNotifications();
+  adminToast("Stock restored — order cancelled.");
+}
+
+async function logStockHistory(changes, orderId, type) {
+  try {
+    await Promise.all(changes.map(c => addDoc(collection(db, "stockHistory"), {
+      productId: String(c.product.id),
+      productName: c.product.name || "",
+      type,
+      qty: c.item.quantity || 1,
+      stockBefore: c.before,
+      stockAfter: c.after,
+      orderId,
+      timestamp: serverTimestamp()
+    })));
+  } catch (e) { console.warn("stockHistory:", e); }
+}
+
+function renderStockAlerts() {
+  const el = document.getElementById("stock-alerts");
+  if (!el) return;
+  const outOfStock = products.filter(p => p.stock !== undefined && p.stock !== null && p.stock === 0);
+  const lowStock = products.filter(p => p.stock !== undefined && p.stock !== null && p.stock > 0 && p.stock < 10);
+  if (!outOfStock.length && !lowStock.length) { el.innerHTML = ""; return; }
+  const parts = [];
+  if (outOfStock.length) parts.push(`<strong>${outOfStock.length} out of stock</strong>: ${outOfStock.slice(0, 3).map(p => escapeHtml(p.name)).join(", ")}${outOfStock.length > 3 ? "…" : ""}`);
+  if (lowStock.length) parts.push(`<strong>${lowStock.length} low stock</strong>: ${lowStock.slice(0, 3).map(p => `${escapeHtml(p.name)} (${p.stock})`).join(", ")}${lowStock.length > 3 ? "…" : ""}`);
+  el.innerHTML = `<div style="background:#fef3cd;border:1px solid #ffc107;border-radius:10px;padding:.85rem 1.1rem;display:flex;align-items:center;gap:.75rem;font-size:.85rem;color:#856404;">
+    <ion-icon name="warning-outline" style="font-size:1.4rem;flex-shrink:0;color:#b8860b;"></ion-icon>
+    <div style="flex:1;">${parts.join(" &nbsp;·&nbsp; ")}</div>
+    <button id="stock-alert-goto" class="link-btn" style="white-space:nowrap;flex-shrink:0;">View Products →</button>
+  </div>`;
+  document.getElementById("stock-alert-goto")?.addEventListener("click", () => {
+    switchSection("products");
+    setTimeout(() => {
+      const lowBtn = document.querySelector(".pf-flag-btn[data-flag='lowstock']");
+      if (lowBtn && !lowBtn.classList.contains("active")) lowBtn.click();
+    }, 100);
+  });
 }
 
 /* ---- Analytics --------------------------------------------------------- */

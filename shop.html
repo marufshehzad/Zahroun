@@ -180,8 +180,8 @@
             <div class="footer-col-1">
                 <h4 style="font-size: 1.5rem; color: white; margin-bottom: 1rem;">Stay in the Loop</h4>
                 <p style="color: #999; font-size: 1rem; margin-bottom: 1.5rem;">Be the first to know about new arrivals, exclusive offers, and behind-the-scenes stories.</p>
-                <form style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
-                    <input type="email" placeholder="Enter your email" style="background: #222; border: none; padding: 1rem; color: white; flex: 1; border-radius: 4px;">
+                <form id="newsletter-form" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <input type="email" id="newsletter-email" placeholder="Enter your email" style="background: #222; border: none; padding: 1rem; color: white; flex: 1; border-radius: 4px;" required>
                     <button type="submit" class="btn" style="background: white; color: black;">Subscribe &rarr;</button>
                 </form>
                 <p style="color: #666; font-size: 0.95rem;">By subscribing, you agree to our Privacy Policy. Unsubscribe anytime.</p>
@@ -243,97 +243,128 @@
     <script type="module" src="js/store.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
-    <script>
-        document.addEventListener('products-ready', () => {
-            const grid = document.getElementById('shop-products');
-            const filterBtns = document.querySelectorAll('#category-filter button');
-            const searchInput = document.getElementById('search-input');
-            
-            // Check URL for category parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            const categoryParam = urlParams.get('category');
-            
-            let currentFilter = 'all';
-            let searchQuery = '';
+    <script type="module">
+        import { db } from "./js/firebase-config.js";
+        import { collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-            if(categoryParam) {
-                // simple mapping e.g., 'skincare' to 'Skincare'
-                const map = {
-                    'men': 'Men',
-                    'women': 'Women',
-                    'unisex': 'Unisex'
-                };
-                currentFilter = map[categoryParam.toLowerCase()] || 'all';
-                filterBtns.forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.filter === currentFilter);
-                });
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+        const filterList = document.getElementById("category-filter");
+        const grid = document.getElementById("shop-products");
+        const searchInput = document.getElementById("search-input");
+        const categoryParam = new URLSearchParams(window.location.search).get("category");
+
+        let currentFilter = "all";
+        let searchQuery = "";
+        let catsReady = false;
+        let productsReady = typeof products !== "undefined" && products.length > 0;
+
+        function renderProducts() {
+            if (typeof products === "undefined" || !products.length) return;
+            const filtered = products.filter(p =>
+                (currentFilter === "all" || p.category === currentFilter) &&
+                p.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            if (!filtered.length) { grid.innerHTML = `<p style="color:var(--text-muted)">No products found.</p>`; return; }
+            grid.innerHTML = filtered.map(p => {
+                const price = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : p.price;
+                const outOfStock = p.stock !== undefined && p.stock !== null && p.stock === 0;
+                const oosBadge = outOfStock ? `<span style="position:absolute;top:.5rem;left:.5rem;background:#9b2226;color:#fff;font-size:.68rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;letter-spacing:.04em;z-index:1;">OUT OF STOCK</span>` : "";
+                const cartBtn = outOfStock
+                    ? `<button class="add-to-cart-quick" disabled style="cursor:not-allowed;opacity:.7;background:#aaa;">Out of Stock</button>`
+                    : `<button class="add-to-cart-quick" onclick="event.stopPropagation();addToCart(${p.id},'50ML',${price});window.showAddedToast&&window.showAddedToast('${esc(p.name)}')">Add to Cart</button>`;
+                return `<div class="product-card">
+                    <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;position:relative;">
+                        <img src="${esc(p.image)}" alt="${esc(p.name)}" class="product-img" style="background-color:#FFFFFF;${outOfStock ? "opacity:.75;" : ""}">
+                        ${oosBadge}
+                        ${cartBtn}
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">${esc(p.category)}</span>
+                        <h3 class="product-title"><a href="product.html?id=${p.id}">${esc(p.name)}</a></h3>
+                        <div class="product-price">${price} BDT</div>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        function tryRender() {
+            if (catsReady && productsReady) renderProducts();
+        }
+
+        document.addEventListener("products-ready", () => { productsReady = true; tryRender(); });
+
+        // Fetch categories dynamically from Firestore
+        getDocs(collection(db, "categories")).then(snap => {
+            const cats = snap.docs.map(d => d.data()).sort((a, b) => (a.order || 0) - (b.order || 0));
+            if (cats.length) {
+                filterList.innerHTML = `<li><button class="active" data-filter="all">All</button></li>` +
+                    cats.map(c => `<li><button data-filter="${esc(c.name)}">${esc(c.name)}</button></li>`).join("");
             }
-
-            function renderProducts() {
-                const filtered = products.filter(p => {
-                    const matchCategory = currentFilter === 'all' || p.category === currentFilter;
-                    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-                    return matchCategory && matchSearch;
-                });
-
-                if (filtered.length === 0) {
-                    grid.innerHTML = '<p>No products found.</p>';
-                    return;
+            // Apply URL category param
+            if (categoryParam) {
+                const hit = filterList.querySelector(`button[data-filter="${CSS.escape(categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1).toLowerCase())}"]`) ||
+                            filterList.querySelector(`button[data-filter="${esc(categoryParam)}"]`);
+                if (hit) {
+                    currentFilter = hit.dataset.filter;
+                    filterList.querySelectorAll("button").forEach(b => b.classList.toggle("active", b === hit));
                 }
-
-                grid.innerHTML = filtered.map(p => {
-                    const defaultPrice = (p.prices && p.prices['50ML']) ? p.prices['50ML'] : p.price;
-                    return `
-                    <div class="product-card">
-                        <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
-                            <img src="${p.image}" alt="${p.name}" class="product-img" style="background-color:#FFFFFF;">
-                            <button class="add-to-cart-quick" onclick="event.stopPropagation(); addToCart(${p.id}, '50ML', ${defaultPrice}); showAddedToast('${p.name}')">Add to Cart</button>
-                        </div>
-                        <div class="product-info">
-                            <span class="product-category">${p.category}</span>
-                            <h3 class="product-title"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-                            <div class="product-price">${defaultPrice} BDT</div>
-                        </div>
-                    </div>`;
-                }).join('');
             }
-
-            filterBtns.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    filterBtns.forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentFilter = e.target.dataset.filter;
-                    renderProducts();
-                });
-            });
-
-            searchInput.addEventListener('input', (e) => {
-                searchQuery = e.target.value;
+        }).catch(() => {
+            // Hardcoded fallback — apply URL param
+            if (categoryParam) {
+                const map = { men: "Men", women: "Women", unisex: "Unisex" };
+                currentFilter = map[categoryParam.toLowerCase()] || "all";
+                filterList.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.filter === currentFilter));
+            }
+        }).finally(() => {
+            // Event delegation — works for both hardcoded and dynamically built buttons
+            filterList.addEventListener("click", e => {
+                const btn = e.target.closest("button[data-filter]");
+                if (!btn) return;
+                filterList.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentFilter = btn.dataset.filter;
                 renderProducts();
             });
-
-            renderProducts();
+            searchInput.addEventListener("input", e => { searchQuery = e.target.value; renderProducts(); });
+            catsReady = true;
+            tryRender();
         });
 
-        function showAddedToast(name) {
-            let toast = document.getElementById('cart-toast');
-            if (!toast) {
-                toast = document.createElement('div');
-                toast.id = 'cart-toast';
-                toast.style.cssText = `
-                    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
-                    background: var(--primary-color, #2d6a4f); color: white;
-                    padding: 0.8rem 2rem; border-radius: 50px; font-size: 0.9rem;
-                    font-family: var(--font-sans); z-index: 9999;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.2); opacity: 0;
-                    transition: opacity 0.3s ease;
-                `;
-                document.body.appendChild(toast);
+        // Cart toast (exposed globally for inline onclick)
+        window.showAddedToast = function(name) {
+            let t = document.getElementById("cart-toast");
+            if (!t) {
+                t = document.createElement("div"); t.id = "cart-toast";
+                t.style.cssText = "position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--primary-color,#2d6a4f);color:white;padding:.8rem 2rem;border-radius:50px;font-size:.9rem;font-family:var(--font-sans);z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;";
+                document.body.appendChild(t);
             }
-            toast.textContent = '✓ ' + name + ' added to cart';
-            toast.style.opacity = '1';
-            clearTimeout(toast._timer);
-            toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+            t.textContent = "✓ " + name + " added to cart";
+            t.style.opacity = "1";
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => { t.style.opacity = "0"; }, 2500);
+        };
+
+        // Newsletter form
+        const nlForm = document.getElementById("newsletter-form");
+        if (nlForm) {
+            nlForm.addEventListener("submit", async e => {
+                e.preventDefault();
+                const emailInput = document.getElementById("newsletter-email");
+                const email = emailInput.value.trim();
+                if (!email) return;
+                const btn = nlForm.querySelector("button");
+                btn.disabled = true; btn.textContent = "Subscribing…";
+                try {
+                    await addDoc(collection(db, "newsletter"), { email, subscribedAt: serverTimestamp() });
+                    if (window.showToast) window.showToast("Subscribed! Thank you.");
+                    if (window.zahrounGA) window.zahrounGA.trackNewsletterSubscribe(email);
+                    emailInput.value = "";
+                } catch {
+                    if (window.showToast) window.showToast("Could not subscribe. Try again.", "error");
+                }
+                btn.disabled = false; btn.textContent = "Subscribe →";
+            });
         }
     </script>
 </body>
