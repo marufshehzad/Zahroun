@@ -1236,81 +1236,101 @@ function printOrderInvoice(order) {
   const win = window.open("", "_blank", "width=720,height=960,scrollbars=yes");
   win.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <title>Invoice ${orderNumDisplay} | Zahroun</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Georgia',serif;color:#1a1a1a;background:#fff;padding:2.5cm 2cm;font-size:.9rem;}
-  .hdr{text-align:center;border-bottom:2.5px solid #163E34;padding-bottom:1.2rem;margin-bottom:1.5rem;}
-  .brand{font-size:2.2rem;letter-spacing:5px;color:#163E34;font-weight:700;}
-  .brand-sub{font-size:.62rem;letter-spacing:6px;color:#888;margin-top:3px;text-transform:uppercase;}
-  .inv-meta{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;}
-  .inv-num{font-size:1.5rem;font-weight:700;color:#163E34;}
-  .status-badge{display:inline-block;background:${statusColor};color:#fff;padding:.18rem .6rem;border-radius:4px;font-size:.7rem;font-weight:700;font-family:sans-serif;letter-spacing:.04em;margin-top:.4rem;}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;}
-  .lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:#888;margin-bottom:.3rem;font-family:sans-serif;}
+  body{font-family:'Inter',sans-serif;color:#1c1c1c;background:#fff;padding:2.5cm 2.2cm;font-size:.82rem;font-weight:400;line-height:1.6;}
+  /* Header */
+  .hdr{text-align:center;padding-bottom:1.4rem;margin-bottom:1.8rem;position:relative;}
+  .hdr::after{content:'';display:block;margin:1.2rem auto 0;width:60px;height:1.5px;background:#163E34;}
+  .brand{font-family:'Cormorant Garamond',serif;font-size:2.6rem;font-weight:300;letter-spacing:10px;color:#163E34;text-transform:uppercase;}
+  .brand-sub{font-family:'Inter',sans-serif;font-size:.58rem;letter-spacing:7px;color:#aaa;margin-top:5px;text-transform:uppercase;font-weight:500;}
+  .inv-tag{font-family:'Inter',sans-serif;font-size:.68rem;letter-spacing:3px;color:#b0a090;margin-top:1rem;text-transform:uppercase;font-weight:400;}
+  /* Order meta */
+  .inv-meta{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.8rem;padding-bottom:1.2rem;border-bottom:1px solid #e8e4dc;}
+  .inv-num{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;color:#163E34;letter-spacing:1px;line-height:1.1;}
+  .inv-num-lbl{font-size:.58rem;letter-spacing:4px;text-transform:uppercase;color:#aaa;margin-bottom:.3rem;font-weight:500;}
+  .status-badge{display:inline-block;background:${statusColor};color:#fff;padding:.2rem .65rem;border-radius:3px;font-size:.62rem;font-weight:600;letter-spacing:.06em;margin-top:.5rem;text-transform:uppercase;}
+  /* Grid */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:1.8rem;}
+  .lbl{font-size:.58rem;text-transform:uppercase;letter-spacing:.12em;color:#aaa;margin-bottom:.4rem;font-weight:600;}
+  .val{font-size:.82rem;line-height:1.9;color:#2a2a2a;}
+  .val strong{font-weight:600;color:#1c1c1c;}
+  /* Table */
   table{width:100%;border-collapse:collapse;margin-bottom:1.5rem;}
-  thead th{background:#163E34;color:#fff;padding:.45rem .6rem;font-size:.75rem;font-weight:600;font-family:sans-serif;}
-  td{padding:.45rem .6rem;border-bottom:1px solid #eee;font-size:.85rem;}
-  .tot td{border:none;padding:.25rem .6rem;font-size:.85rem;font-family:sans-serif;}
-  .grand td{border-top:2px solid #163E34;padding-top:.5rem;font-weight:700;font-size:1rem;font-family:sans-serif;}
-  .grand td:last-child{color:#163E34;}
-  .footer{text-align:center;font-size:.72rem;color:#888;border-top:1px solid #eee;padding-top:1rem;margin-top:1.5rem;font-family:sans-serif;line-height:1.8;}
-  .print-btn{text-align:center;margin-top:1.5rem;}
-  .print-btn button{background:#163E34;color:#fff;border:none;padding:.6rem 2rem;border-radius:6px;cursor:pointer;font-size:.88rem;font-family:sans-serif;}
-  @media print{.print-btn{display:none;}}
+  thead th{background:#163E34;color:#fff;padding:.5rem .7rem;font-size:.62rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;}
+  tbody td{padding:.5rem .7rem;border-bottom:1px solid #f0ece4;font-size:.82rem;color:#2a2a2a;vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  .tot td{border:none;padding:.22rem .7rem;font-size:.8rem;color:#666;}
+  .tot td:last-child{color:#2a2a2a;}
+  .tot-sep td{border-top:1px solid #e8e4dc;padding-top:.6rem;}
+  .grand td{padding:.55rem .7rem;font-weight:600;font-size:.9rem;color:#1c1c1c;border-top:1.5px solid #163E34;}
+  .grand td:last-child{color:#163E34;font-size:1rem;}
+  /* Footer */
+  .footer{text-align:center;font-size:.68rem;color:#bbb;border-top:1px solid #f0ece4;padding-top:1rem;margin-top:1.8rem;line-height:2;letter-spacing:.02em;}
+  .footer strong{color:#999;font-weight:500;}
+  .print-btn{text-align:center;margin-top:1.8rem;}
+  .print-btn button{background:#163E34;color:#fff;border:none;padding:.6rem 2rem;border-radius:4px;cursor:pointer;font-size:.8rem;font-family:'Inter',sans-serif;letter-spacing:.04em;font-weight:500;}
+  .print-btn button:hover{background:#0f2820;}
+  @media print{.print-btn{display:none;}body{padding:1.5cm;}}
 </style></head><body>
 <div class="hdr">
-  <div class="brand">ZAHROUN</div>
+  <div class="brand">Zahroun</div>
   <div class="brand-sub">Luxury Fragrances</div>
-  <div style="font-size:.75rem;color:#888;margin-top:.5rem;font-family:sans-serif;">Tax Invoice / Order Confirmation</div>
+  <div class="inv-tag">Tax Invoice &nbsp;·&nbsp; Order Confirmation</div>
 </div>
 
 <div class="inv-meta">
   <div>
-    <div class="lbl">Order Number</div>
+    <div class="inv-num-lbl">Order Number</div>
     <div class="inv-num">${orderNumDisplay}</div>
     <div><span class="status-badge">${(order.status || "pending").toUpperCase()}</span></div>
   </div>
-  <div style="text-align:right;font-family:sans-serif;font-size:.85rem;">
-    <div class="lbl">Date</div>
-    <div>${dateStr}</div>
+  <div style="text-align:right;">
+    <div class="lbl">Date Issued</div>
+    <div class="val">${dateStr}</div>
   </div>
 </div>
 
 <div class="grid2">
   <div>
     <div class="lbl">Bill To</div>
-    <div style="font-size:.88rem;line-height:1.9;">
+    <div class="val">
       <strong>${escapeHtml(c.name || "—")}</strong><br>
       ${c.email ? escapeHtml(c.email) + "<br>" : ""}
       ${c.mobile ? escapeHtml(c.mobile) + "<br>" : ""}
-      ${c.address ? `<span style="color:#555;">${escapeHtml(c.address)}</span>` : ""}
+      ${c.address ? `<span style="color:#777;">${escapeHtml(c.address)}</span>` : ""}
     </div>
   </div>
   <div>
-    <div class="lbl">Payment</div>
-    <div style="font-size:.88rem;line-height:1.9;">
+    <div class="lbl">Payment Details</div>
+    <div class="val">
       <strong>${escapeHtml(order.payment?.method || "—")}</strong><br>
-      ${order.payment?.txnId ? "TxnID: " + escapeHtml(order.payment.txnId) + "<br>" : ""}
-      ${couponCode ? "Coupon: <strong>" + escapeHtml(couponCode) + "</strong>" : ""}
+      ${order.payment?.txnId ? "Txn ID: " + escapeHtml(order.payment.txnId) + "<br>" : ""}
+      ${couponCode ? 'Coupon: <strong style="color:#163E34;">' + escapeHtml(couponCode) + "</strong>" : ""}
     </div>
   </div>
 </div>
 
 <table>
-  <thead><tr><th>#</th><th>Product</th><th>Size</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Unit Price</th><th style="text-align:right;">Amount</th></tr></thead>
+  <thead><tr><th style="width:2rem;">#</th><th>Product</th><th>Size</th><th style="text-align:center;width:3rem;">Qty</th><th style="text-align:right;">Unit Price</th><th style="text-align:right;">Amount</th></tr></thead>
   <tbody>${itemRows}</tbody>
   <tfoot>
-    <tr class="tot"><td colspan="5" style="text-align:right;color:#555;">Subtotal</td><td style="text-align:right;">৳${subtotal.toLocaleString()}</td></tr>
+    <tr class="tot"><td colspan="5" style="text-align:right;">Subtotal</td><td style="text-align:right;">৳${subtotal.toLocaleString()}</td></tr>
     ${discountRow}${deliveryRow}
-    <tr class="grand"><td colspan="5" style="text-align:right;">Total</td><td style="text-align:right;">৳${(order.total || 0).toLocaleString()}</td></tr>
+    <tr class="tot tot-sep"><td colspan="6"></td></tr>
+    <tr class="grand"><td colspan="5" style="text-align:right;">Total Payable</td><td style="text-align:right;">৳${(order.total || 0).toLocaleString()}</td></tr>
   </tfoot>
 </table>
 
 <div class="footer">
-  Zahroun · Dhanmondi, Dhaka, Bangladesh, 1205 · WhatsApp: +880 1886-936581<br>
-  Thank you for shopping with us!
+  <strong>Zahroun</strong> &nbsp;·&nbsp; Dhanmondi, Dhaka, Bangladesh, 1205<br>
+  WhatsApp: +880 1886-936581 &nbsp;·&nbsp; zahroun.netlify.app<br>
+  Thank you for your order — we hope you love your fragrance.
 </div>
-<div class="print-btn"><button onclick="window.print()">🖨 Print / Save as PDF</button></div>
+<div class="print-btn"><button onclick="window.print()">Print / Save as PDF</button></div>
 </body></html>`);
   win.document.close();
 }
