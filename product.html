@@ -1,10 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details | Zahroun</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="js/analytics.js"></script>
+    <script type="module" src="js/auth.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <style>
@@ -96,6 +99,11 @@
             opacity: 0;
             transform: scale(0.98);
         }
+        .product-image-large:hover .product-main-img:not(.is-switching) { transform: scale(1.04); cursor: zoom-in; }
+        .gallery-strip { display:flex; gap:.5rem; margin-top:.8rem; flex-wrap:wrap; justify-content:center; }
+        .gallery-strip .gt { width:62px; height:62px; border:2px solid transparent; border-radius:7px; overflow:hidden; cursor:pointer; background:var(--surface-color); padding:0; transition:border-color .18s,transform .18s; flex-shrink:0; }
+        .gallery-strip .gt:hover, .gallery-strip .gt.active { border-color:var(--primary-color); transform:translateY(-2px); }
+        .gallery-strip .gt img { width:100%; height:100%; object-fit:contain; display:block; }
         .product-option-panel {
             margin-bottom: 2rem;
             background: var(--surface-color);
@@ -343,7 +351,7 @@
         </div>
     </div>
 
-    <script src="js/products.js"></script>
+    <script type="module" src="js/store.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
     <script>
@@ -351,12 +359,15 @@
         let currentProduct = null;
         let hoverPreviewTimer = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('products-ready', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const productId = parseInt(urlParams.get('id'));
-            
+
             const product = products.find(p => p.id === productId) || products[0]; // fallback to first product
             currentProduct = product;
+            window.currentProduct = product;
+            window.currentProductId = product.id;
+            if (window.zahrounGA) window.zahrounGA.trackProductView(product);
             const productPrice = getSizePrice(product, '50ML');
             currentSelectedSize = '50ML';
             currentSelectedPrice = productPrice;
@@ -377,22 +388,33 @@
                     </button>`;
             }).join('');
 
+            const stockStat = (product.stock !== undefined && product.stock !== null) ? (product.stock === 0 ? "out" : product.stock < 10 ? "low" : "in") : null;
+            const stockColor = stockStat === "out" ? "color:#9b2226;font-weight:600;" : stockStat === "low" ? "color:#b8860b;font-weight:600;" : "color:#1e7e34;";
+            const stockIcon = stockStat === "out" ? "close-circle-outline" : stockStat === "low" ? "warning-outline" : "checkmark-circle-outline";
+            const stockText = stockStat === "out" ? "Out of Stock" : stockStat === "low" ? "Only " + product.stock + " left!" : "In Stock";
+            const stockHtml = stockStat ? `<div style="margin-bottom:1rem;font-size:.9rem;${stockColor}"><ion-icon name="${stockIcon}" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>${stockText}</div>` : "";
+            const addCartHtml = product.stock === 0 ? `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;opacity:.5;cursor:not-allowed;" disabled>OUT OF STOCK</button>` : `<button class="btn btn-black" style="width: 100%; margin-bottom: 1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>`;
+            const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:2rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="window.location.href='checkout.html'">BUY IT NOW</button>`;
+            const gallImgs = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
+            const gallStripHtml = gallImgs.length > 1 ? '<div class="gallery-strip" id="gallery-strip">' + gallImgs.map((u, i) => '<button class="gt' + (i === 0 ? ' active' : '') + '" data-gi="' + i + '" type="button"><img src="' + u.replace(/"/g, '&quot;') + '" alt="View ' + (i + 1) + '"></button>').join('') + '</div>' : '';
             const container = document.getElementById('product-detail-content');
             container.innerHTML = `
                 <div class="product-image-large">
                     <img id="main-product-image" src="${getSizeImage(product, currentSelectedSize)}" alt="${product.name}" class="product-main-img">
+                    ${gallStripHtml}
                 </div>
                 <div class="product-meta">
                     <span class="product-category" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem;">${product.category}</span>
                     <h1 style="font-family: var(--font-serif); margin-bottom: 0.5rem; font-size: 2.5rem;">${product.name}</h1>
                     <div class="price" id="display-price" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 2rem; color: var(--primary-color);">${productPrice} BDT</div>
 
-                    <button class="btn btn-black" style="width: 100%; margin-bottom: 1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>
-                    <button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="window.location.href='checkout.html'">BUY IT NOW</button>
+                    ${stockHtml}
+                    ${addCartHtml}
+                    ${buyNowHtml}
                     
                     <div style="display: flex; gap: 2rem; margin-bottom: 2rem; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 500;">
                         <span style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;"><ion-icon name="share-outline" style="font-size: 1.2rem;"></ion-icon> SHARE</span>
-                        <span style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;"><ion-icon name="heart-outline" style="font-size: 1.2rem;"></ion-icon> WISHLIST</span>
+                        <span id="wishlist-btn" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.toggleWishlist && window.toggleWishlist(${product.id})"><ion-icon id="wishlist-icon" name="heart-outline" style="font-size: 1.2rem;"></ion-icon> <span id="wishlist-label">WISHLIST</span></span>
                     </div>
 
                     <div class="product-option-panel">
@@ -467,14 +489,27 @@
                             <div class="accordion-header" onclick="toggleAccordion(this)">
                                 Reviews <ion-icon name="add-outline"></ion-icon>
                             </div>
-                            <div class="accordion-content">
-                                No reviews yet. Be the first to review this product!
+                            <div class="accordion-content" id="product-reviews-section">
+                                <p style="color:var(--text-muted);font-size:.9rem;">Loading reviews…</p>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
             
+            // Wire gallery strip thumbnails
+            const gallStripEl = document.getElementById('gallery-strip');
+            if (gallStripEl) {
+                gallStripEl.querySelectorAll('.gt').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const idx = Number(btn.dataset.gi);
+                        updateProductImage(gallImgs[idx]);
+                        gallStripEl.querySelectorAll('.gt').forEach(el => el.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+            }
+
             // Set document title
             document.title = `${product.name} | Zahroun`;
 
@@ -600,13 +635,18 @@
         function toggleAccordion(header) {
             const content = header.nextElementSibling;
             const icon = header.querySelector('ion-icon');
-            
+
             if (content.style.display === 'block') {
                 content.style.display = 'none';
                 icon.setAttribute('name', 'chevron-down-outline');
             } else {
                 content.style.display = 'block';
                 icon.setAttribute('name', 'chevron-up-outline');
+                // Lazy-load reviews on first accordion open
+                if (content.id === 'product-reviews-section' && !content.dataset.loaded) {
+                    content.dataset.loaded = '1';
+                    if (window.loadProductReviews) window.loadProductReviews(content);
+                }
             }
         }
 
@@ -651,6 +691,143 @@
         // Run on page load to reflect existing cart
         document.addEventListener('DOMContentLoaded', updateInlineCart);
     </script>
+
+    <!-- Reviews + Wishlist (Firebase module) -->
+    <script type="module">
+        import { db, auth } from "./js/firebase-config.js";
+        import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+        let currentUser = null;
+        onAuthStateChanged(auth, async u => {
+            currentUser = u;
+            if (u && window.currentProductId) refreshWishlistIcon(window.currentProductId);
+        });
+
+        /* ---- Reviews ---- */
+        window.loadProductReviews = async function(container) {
+            const productId = window.currentProductId;
+            if (!productId) return;
+            container.innerHTML = '<p style="color:var(--text-muted);font-size:.9rem;">Loading reviews…</p>';
+            try {
+                const q = query(collection(db, "reviews"), where("productId", "==", productId), where("status", "==", "approved"));
+                const snap = await getDocs(q);
+                const reviews = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+                const reviewsHtml = reviews.length ? reviews.map(r => `
+                    <div style="border-bottom:1px solid var(--border-color);padding:.9rem 0;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem;">
+                            <strong style="font-size:.9rem;">${esc(r.reviewerName)}</strong>
+                            <span style="color:#f0b429;font-size:.95rem;letter-spacing:1px;">${"★".repeat(r.rating||0)}${"☆".repeat(5-(r.rating||0))}</span>
+                        </div>
+                        <p style="font-size:.9rem;color:var(--text-muted);margin:.25rem 0;">${esc(r.text)}</p>
+                        <span style="font-size:.75rem;color:var(--text-muted);">${r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : ""}</span>
+                    </div>`).join("") : '<p style="color:var(--text-muted);font-size:.9rem;padding:.5rem 0;">No reviews yet. Be the first!</p>';
+
+                const formHtml = currentUser ? `
+                    <form id="review-form" style="margin-top:1.25rem;border-top:1px solid var(--border-color);padding-top:1.1rem;">
+                        <p style="font-weight:600;margin-bottom:.75rem;font-size:.95rem;">Write a Review</p>
+                        <div style="margin-bottom:.75rem;">
+                            <div id="star-picker" style="display:flex;gap:.25rem;font-size:1.6rem;cursor:pointer;margin-bottom:.25rem;">
+                                ${[1,2,3,4,5].map(n=>`<span data-star="${n}" style="color:#ddd;line-height:1;">★</span>`).join("")}
+                            </div>
+                            <input type="hidden" id="review-rating" value="0">
+                        </div>
+                        <textarea id="review-text" style="width:100%;padding:.7rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);font-size:.9rem;resize:vertical;min-height:80px;box-sizing:border-box;" placeholder="Share your experience…"></textarea>
+                        <button type="submit" class="btn" style="margin-top:.75rem;padding:.6rem 1.5rem;font-size:.9rem;">Submit Review</button>
+                    </form>` :
+                    `<p style="margin-top:.9rem;font-size:.88rem;color:var(--text-muted);"><a href="#" onclick="window.zahrounAuth&&window.zahrounAuth.openModal();return false;" style="color:var(--primary-color);">Log in</a> to write a review.</p>`;
+
+                container.innerHTML = reviewsHtml + formHtml;
+
+                // Wire star picker
+                const picker = document.getElementById("star-picker");
+                if (picker) {
+                    const ratingInput = document.getElementById("review-rating");
+                    const highlightStars = n => picker.querySelectorAll("span").forEach((s,i) => s.style.color = i < n ? "#f0b429" : "#ddd");
+                    picker.querySelectorAll("span").forEach(s => {
+                        s.onclick = () => { ratingInput.value = s.dataset.star; highlightStars(+s.dataset.star); };
+                        s.onmouseover = () => highlightStars(+s.dataset.star);
+                        s.onmouseout = () => highlightStars(+ratingInput.value);
+                    });
+                }
+
+                // Wire review form
+                const form = document.getElementById("review-form");
+                if (form) {
+                    form.addEventListener("submit", async e => {
+                        e.preventDefault();
+                        const rating = parseInt(document.getElementById("review-rating").value);
+                        const text = document.getElementById("review-text").value.trim();
+                        if (!rating) { alert("Please select a star rating."); return; }
+                        if (!text) { alert("Please write your review."); return; }
+                        const btn = form.querySelector("button[type=submit]");
+                        btn.disabled = true; btn.textContent = "Submitting…";
+                        try {
+                            await addDoc(collection(db, "reviews"), {
+                                productId: window.currentProductId,
+                                productName: window.currentProduct?.name || "",
+                                uid: currentUser.uid,
+                                reviewerName: currentUser.displayName || currentUser.email.split("@")[0],
+                                reviewerEmail: currentUser.email,
+                                rating, text,
+                                status: "pending",
+                                createdAt: serverTimestamp()
+                            });
+                            container.innerHTML = '<p style="color:#1e7e34;padding:1rem 0;font-size:.9rem;">✓ Thank you! Your review will appear after admin approval.</p>';
+                        } catch (err) {
+                            alert("Failed to submit: " + (err.message || err.code));
+                            btn.disabled = false; btn.textContent = "Submit Review";
+                        }
+                    });
+                }
+            } catch (err) {
+                container.innerHTML = `<p style="color:#9b2226;font-size:.85rem;">Could not load reviews: ${esc(err.message)}</p>`;
+            }
+        };
+
+        /* ---- Wishlist ---- */
+        async function getWishlistIds(uid) {
+            try {
+                const snap = await getDoc(doc(db, "wishlist", uid));
+                return snap.exists() ? (snap.data().productIds || []) : [];
+            } catch { return []; }
+        }
+
+        async function refreshWishlistIcon(productId) {
+            if (!currentUser) return;
+            const ids = await getWishlistIds(currentUser.uid);
+            const inList = ids.includes(productId);
+            const icon = document.getElementById("wishlist-icon");
+            const label = document.getElementById("wishlist-label");
+            if (icon) icon.setAttribute("name", inList ? "heart" : "heart-outline");
+            if (label) { label.textContent = inList ? "SAVED" : "WISHLIST"; label.style.color = inList ? "#9b2226" : ""; }
+        }
+
+        window.toggleWishlist = async function(productId) {
+            if (!currentUser) { window.zahrounAuth && window.zahrounAuth.openModal(); return; }
+            const ref = doc(db, "wishlist", currentUser.uid);
+            const ids = await getWishlistIds(currentUser.uid);
+            const inList = ids.includes(productId);
+            const newIds = inList ? ids.filter(x => x !== productId) : [...ids, productId];
+            await setDoc(ref, { productIds: newIds }, { merge: true });
+            await refreshWishlistIcon(productId);
+            if (window.showToast) window.showToast(inList ? "Removed from wishlist." : "Added to wishlist!");
+            const prod = window.products?.find(p => p.id === productId);
+            if (prod && window.zahrounGA) {
+                inList ? window.zahrounGA.trackWishlistRemove(prod) : window.zahrounGA.trackWishlistAdd(prod);
+            }
+        };
+
+        // Refresh wishlist icon after product detail renders
+        document.addEventListener("products-ready", () => {
+            if (currentUser && window.currentProductId) refreshWishlistIcon(window.currentProductId);
+        });
+    </script>
 </body>
 </html>
+
 

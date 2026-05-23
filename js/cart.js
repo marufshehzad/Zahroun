@@ -1,21 +1,26 @@
 let cart = JSON.parse(localStorage.getItem('zahroun_cart')) || [];
 
-// Keep older carts compatible after replacing the demo collection.
-cart = cart.filter(item => typeof products !== 'undefined' && products.some(p => p.id === item.id)).map(item => {
-    const prod = products.find(p => p.id === item.id);
-    if (!item.size || item.size === 'undefined') {
-        item.size = '50ML';
-    }
-    if (!prod.prices[item.size] && prod.prices['50ML']) {
-        item.size = '50ML';
-    }
-    if (prod && prod.prices && prod.prices[item.size]) {
-        item.selectedPrice = prod.prices[item.size];
-    } else if (item.selectedPrice === undefined || isNaN(item.selectedPrice) || item.selectedPrice === null) {
-        item.selectedPrice = prod.price;
-    }
-    return { ...prod, size: item.size, selectedPrice: item.selectedPrice, quantity: item.quantity || 1 };
-});
+// Reconcile saved cart items against the live product list (refresh prices /
+// images, drop deleted products). Runs only once products are loaded, so it
+// never wipes the cart while the async product fetch is still in flight.
+function reconcileCart() {
+    if (typeof products === 'undefined' || !Array.isArray(products) || products.length === 0) return;
+    cart = cart
+        .filter(item => products.some(p => p.id === item.id))
+        .map(item => {
+            const prod = products.find(p => p.id === item.id);
+            if (!item.size || item.size === 'undefined') item.size = '50ML';
+            if (!prod.prices[item.size] && prod.prices['50ML']) item.size = '50ML';
+            if (prod.prices && prod.prices[item.size]) {
+                item.selectedPrice = prod.prices[item.size];
+            } else if (item.selectedPrice === undefined || isNaN(item.selectedPrice) || item.selectedPrice === null) {
+                item.selectedPrice = prod.price;
+            }
+            return { ...prod, size: item.size, selectedPrice: item.selectedPrice, quantity: item.quantity || 1 };
+        });
+    saveCart();
+}
+document.addEventListener('products-ready', reconcileCart);
 
 let discountMultiplier = 1;
 
@@ -43,11 +48,12 @@ window.addToCart = function(productId, size = '50ML', price = null) {
     
     saveCart();
     openCart();
-    
-    // Optional: show a small toast notification here
+    if (window.zahrounGA) window.zahrounGA.trackAddToCart(product, size, itemPrice);
 }
 
 window.removeFromCart = function(productId, size) {
+    const item = cart.find(i => i.id === productId && i.size === size);
+    if (item && window.zahrounGA) window.zahrounGA.trackRemoveFromCart(item, size, item.selectedPrice);
     cart = cart.filter(item => !(item.id === productId && item.size === size));
     saveCart();
 }
@@ -89,6 +95,7 @@ window.applyVoucher = function() {
             localStorage.setItem('zahroun_voucher', 'myzahroun10');
             msg.textContent = 'Voucher Applied! You got 10% off.';
             msg.style.color = '#27ae60';
+            if (window.zahrounGA) window.zahrounGA.trackCouponApply('myzahroun10', subtotal * 0.1);
         } else {
             appliedVoucher = null;
             localStorage.removeItem('zahroun_voucher');

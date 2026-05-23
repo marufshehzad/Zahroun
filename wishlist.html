@@ -1,0 +1,166 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist | Zahroun</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/analytics.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .wishlist-head { background-color: var(--accent-color); padding: 3rem 0; text-align: center; }
+        .wl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2rem; margin-top: 3rem; }
+        .wl-card { background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; position: relative; }
+        .wl-card img { width: 100%; height: 200px; object-fit: contain; background: var(--bg-color); padding: 1rem; box-sizing: border-box; }
+        .wl-card-body { padding: 1rem; }
+        .wl-card-body h3 { font-size: 1rem; margin-bottom: .3rem; }
+        .wl-card-body .price { color: var(--primary-color); font-weight: 600; font-size: .95rem; margin-bottom: .75rem; }
+        .wl-actions { display: flex; gap: .5rem; }
+        .wl-remove { position: absolute; top: .7rem; right: .7rem; background: rgba(255,255,255,.9); border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; color: #9b2226; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
+        .wl-remove:hover { background: #fdecea; }
+        .login-cta { text-align: center; padding: 4rem 1rem; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container nav-container">
+            <a href="index.html" class="logo"><img src="product pictures/main logo.png" alt="Zahroun"></a>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="nav-icons">
+                <button aria-label="Search" onclick="window.location.href='shop.html'"><ion-icon name="search-outline"></ion-icon></button>
+                <button aria-label="Cart" id="cart-icon"><ion-icon name="bag-outline"></ion-icon><span class="cart-count" id="cart-count">0</span></button>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu"><ion-icon name="menu-outline"></ion-icon></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="wishlist-head">
+        <div class="container">
+            <h1>My Wishlist</h1>
+            <p id="wl-count" style="color: var(--text-muted);">Your saved fragrances</p>
+        </div>
+    </div>
+
+    <div class="container py-8" style="margin-top: 40px; margin-bottom: 80px;">
+        <div id="wl-content">
+            <p style="text-align:center;color:var(--text-muted);padding:3rem;">Loading…</p>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h3>Your Cart</h3>
+                <button id="close-cart" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div id="cart-items" style="flex: 1; overflow-y: auto;"></div>
+            <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;"><span>Total</span><span id="cart-total">0 BDT</span></div>
+                <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/store.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/ui.js"></script>
+    <script type="module">
+        import { db, auth } from "./js/firebase-config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const content = document.getElementById("wl-content");
+        const countEl = document.getElementById("wl-count");
+
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                content.innerHTML = `<div class="login-cta">
+                    <ion-icon name="heart-outline" style="font-size:3rem;color:var(--text-muted);"></ion-icon>
+                    <h3 style="margin:1rem 0;">Please log in to view your wishlist</h3>
+                    <button class="btn" id="wl-login">Log in</button></div>`;
+                document.getElementById("wl-login").onclick = () => window.zahrounAuth && window.zahrounAuth.openModal();
+                return;
+            }
+
+            // Wait for products to be available
+            const loadWishlist = async () => {
+                try {
+                    const snap = await getDoc(doc(db, "wishlist", user.uid));
+                    const ids = snap.exists() ? (snap.data().productIds || []) : [];
+
+                    if (!ids.length) {
+                        countEl.textContent = "0 saved items";
+                        content.innerHTML = `<div class="login-cta">
+                            <ion-icon name="heart-outline" style="font-size:3rem;color:var(--text-muted);"></ion-icon>
+                            <h3 style="margin:1rem 0;">Your wishlist is empty</h3>
+                            <a href="shop.html" class="btn">Browse Fragrances</a></div>`;
+                        return;
+                    }
+
+                    // Match product IDs against loaded products
+                    const allProducts = typeof products !== "undefined" ? products : [];
+                    const wishlisted = ids.map(id => allProducts.find(p => p.id === id)).filter(Boolean);
+
+                    if (!wishlisted.length) {
+                        countEl.textContent = `${ids.length} saved`;
+                        content.innerHTML = `<p style="text-align:center;color:var(--text-muted);padding:2rem;">Products in your wishlist are no longer available.</p>`;
+                        return;
+                    }
+
+                    countEl.textContent = `${wishlisted.length} saved item${wishlisted.length !== 1 ? "s" : ""}`;
+                    content.innerHTML = `<div class="wl-grid">${wishlisted.map(p => {
+                        const price = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : p.price;
+                        return `<div class="wl-card">
+                            <a href="product.html?id=${p.id}"><img src="${esc(p.image)}" alt="${esc(p.name)}"></a>
+                            <button class="wl-remove" data-remove="${p.id}" title="Remove from wishlist"><ion-icon name="heart"></ion-icon></button>
+                            <div class="wl-card-body">
+                                <h3><a href="product.html?id=${p.id}" style="color:inherit;text-decoration:none;">${esc(p.name)}</a></h3>
+                                <div class="price">৳${price}</div>
+                                <div class="wl-actions">
+                                    <button class="btn" style="flex:1;font-size:.85rem;padding:.55rem;" onclick="addToCart(${p.id},'50ML',${price})">Add to Cart</button>
+                                    <a href="product.html?id=${p.id}" class="btn btn-outline" style="font-size:.85rem;padding:.55rem;">View</a>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join("")}</div>`;
+
+                    // Wire remove buttons
+                    content.querySelectorAll("[data-remove]").forEach(btn => {
+                        btn.addEventListener("click", async () => {
+                            const removeId = parseInt(btn.dataset.remove);
+                            const removedProduct = wishlisted.find(p => p.id === removeId);
+                            const newIds = ids.filter(x => x !== removeId);
+                            await setDoc(doc(db, "wishlist", user.uid), { productIds: newIds }, { merge: true });
+                            if (window.showToast) window.showToast("Removed from wishlist.");
+                            if (removedProduct && window.zahrounGA) window.zahrounGA.trackWishlistRemove(removedProduct);
+                            loadWishlist();
+                        });
+                    });
+
+                } catch (e) {
+                    content.innerHTML = `<p style="color:#9b2226;text-align:center;padding:2rem;">Could not load wishlist: ${esc(e.message)}</p>`;
+                }
+            };
+
+            // Products may not be ready yet; wait for the event
+            if (typeof products !== "undefined" && products.length) {
+                loadWishlist();
+            } else {
+                document.addEventListener("products-ready", loadWishlist, { once: true });
+            }
+        });
+    </script>
+</body>
+</html>
+

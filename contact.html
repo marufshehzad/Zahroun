@@ -1,10 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Us | Zahroun</title>
+    <title>Contact Us | Zahroun Luxury Perfumes</title>
+    <meta name="description" content="Get in touch with Zahroun — Dhanmondi, Dhaka. Send a message, WhatsApp us, or find us on the map. We're here to assist with your fragrance inquiries.">
+    <meta property="og:title" content="Contact Us | Zahroun Luxury Perfumes">
+    <meta property="og:description" content="Reach out to Zahroun for perfume inquiries, orders, or support. Located in Dhanmondi, Dhaka, Bangladesh.">
+    <meta property="og:type" content="website">
     <link rel="stylesheet" href="css/style.css">
+    <script src="js/analytics.js"></script>
+    <script type="module" src="js/auth.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <style>
@@ -76,7 +83,7 @@
         </div>
     </header>
 
-    <div style="background: url('assets/Home.jpg') center/cover no-repeat; padding: 8rem 0; text-align: center; position: relative;">
+    <div id="contact-hero-section" style="background: url('product pictures/New product pic and price/Home.jpg') center/cover no-repeat; padding: 8rem 0; text-align: center; position: relative;">
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6));"></div>
         <div class="container fade-in" style="position: relative; z-index: 2;">
             <div class="hero-glass">
@@ -92,7 +99,7 @@
             <!-- Glass Contact Card -->
             <div class="contact-card" style="background: rgba(255,255,255,0.8); backdrop-filter: blur(16px); border-radius: 16px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.4);">
                 <h3 style="font-size: 2rem; margin-bottom: 2rem; color: var(--primary-color);">Send a Message</h3>
-                <form onsubmit="event.preventDefault(); alert('Thank you for your message. We will get back to you shortly.'); this.reset();">
+                <form id="contact-form">
                     <div class="form-group">
                         <label for="name" style="color: var(--text-main);">Full Name</label>
                         <input type="text" id="name" style="background: rgba(255,255,255,0.5);" required>
@@ -109,7 +116,7 @@
                         <label for="message" style="color: var(--text-main);">Message</label>
                         <textarea id="message" rows="5" style="background: rgba(255,255,255,0.5);" required></textarea>
                     </div>
-                    <button type="submit" class="btn" style="width: 100%;">Send Message</button>
+                    <button type="submit" id="contact-submit" class="btn" style="width: 100%;">Send Message</button>
                 </form>
             </div>
 
@@ -130,14 +137,14 @@
                         <span>01886-936581</span>
                     </div>
                     
-                    <a href="https://wa.me/8801886936581" target="_blank" class="btn" style="background-color: #25D366; color: white; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 2rem; width: 100%;">
+                    <a id="whatsapp-link" href="https://wa.me/8801886936581" target="_blank" class="btn" style="background-color: #25D366; color: white; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 2rem; width: 100%;">
                         <ion-icon name="logo-whatsapp" style="font-size: 1.5rem;"></ion-icon> Chat on WhatsApp
                     </a>
                 </div>
 
-                <!-- Google Maps Embed -->
-                <div style="border-radius: 16px; overflow: hidden; height: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3652.3702581692135!2d90.37566737533555!3d23.73417938939989!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8cb43180415%3A0x6b8d96014ba570f7!2sDhanmondi%2C%20Dhaka%201205!5e0!3m2!1sen!2sbd!4v1700000000000!5m2!1sen!2sbd" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                <!-- Google Maps Embed / Static Map -->
+                <div id="map-container" style="border-radius: 16px; overflow: hidden; height: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+                    <iframe id="map-iframe" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3652.3702581692135!2d90.37566737533555!3d23.73417938939989!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8cb43180415%3A0x6b8d96014ba570f7!2sDhanmondi%2C%20Dhaka%201205!5e0!3m2!1sen!2sbd!4v1700000000000!5m2!1sen!2sbd" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                 </div>
             </div>
         </div>
@@ -164,10 +171,74 @@
         </div>
     </div>
 
-    <script src="js/products.js"></script>
+    <script type="module" src="js/store.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
+    <script type="module">
+        import { db } from "./js/firebase-config.js";
+        import { getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        function cloudinaryTransform(url, transform) {
+            if (!url || !url.includes("/upload/")) return url;
+            return url.replace("/upload/", `/upload/${transform}/`);
+        }
+
+        try {
+            const snap = await getDoc(doc(db, "settings", "contact"));
+            if (snap.exists()) {
+                const d = snap.data();
+                if (d.heroImage) {
+                    const heroSection = document.getElementById("contact-hero-section");
+                    if (heroSection) {
+                        heroSection.style.background = `url('${cloudinaryTransform(d.heroImage, "w_1400,f_auto,q_auto")}') center/cover no-repeat`;
+                    }
+                }
+                if (d.mapEmbed) {
+                    const iframe = document.getElementById("map-iframe");
+                    if (iframe) iframe.src = d.mapEmbed;
+                } else if (d.mapImage) {
+                    const container = document.getElementById("map-container");
+                    if (container) {
+                        container.innerHTML = `<img src="${cloudinaryTransform(d.mapImage, "w_600,f_auto,q_auto")}" alt="Map" style="width:100%;height:100%;object-fit:cover;" loading="lazy">`;
+                    }
+                }
+            }
+        } catch (e) { /* silently use hardcoded fallback */ }
+    </script>
+    <script type="module">
+        import { db } from "./js/firebase-config.js";
+        import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const form = document.getElementById("contact-form");
+        const submitBtn = document.getElementById("contact-submit");
+
+        form.addEventListener("submit", async e => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Sending…";
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const subject = document.getElementById("subject").value.trim();
+            const message = document.getElementById("message").value.trim();
+            try {
+                await addDoc(collection(db, "messages"), {
+                    name, email, subject, message,
+                    sentAt: serverTimestamp(),
+                    read: false
+                });
+                if (window.showToast) window.showToast("Message sent! We'll get back to you shortly.");
+                if (window.zahrounGA) window.zahrounGA.trackContactForm(subject);
+                form.reset();
+            } catch (err) {
+                if (window.showToast) window.showToast("Failed to send message. Please try again.", "error");
+                console.error(err);
+            }
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Send Message";
+        });
+    </script>
 </body>
 </html>
+
 
 

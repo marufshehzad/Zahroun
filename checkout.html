@@ -1,10 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | Zahroun</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="js/analytics.js"></script>
+    <script type="module" src="js/auth.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <style>
@@ -94,8 +97,13 @@
         @media (max-width: 768px) {
             .checkout-container {
                 grid-template-columns: 1fr;
-                gap: 2rem;
+                gap: 1.25rem;
+                margin: 1.25rem auto !important;
             }
+            /* Order summary appears first on mobile */
+            .checkout-container > div:last-child { order: -1; }
+            .checkout-section { padding: 1.25rem !important; }
+            .checkout-section h2 { font-size: 1.3rem; }
         }
     </style>
 </head>
@@ -182,9 +190,22 @@
                     </div>
                     
                     <div style="margin-top: 1.5rem;">
+                        <!-- Coupon Code Input -->
+                        <div style="margin-bottom:1rem;">
+                            <div style="display:flex;gap:.5rem;">
+                                <input type="text" id="coupon-code-input" class="form-control" placeholder="Coupon code" style="flex:1;text-transform:uppercase;font-size:.9rem;padding:.6rem .8rem;">
+                                <button type="button" id="apply-coupon-btn" class="btn" style="padding:.6rem 1rem;font-size:.88rem;white-space:nowrap;">Apply</button>
+                            </div>
+                            <div id="coupon-feedback" style="font-size:.82rem;margin-top:.4rem;min-height:1.1em;"></div>
+                        </div>
+
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted);">
                             <span>Subtotal</span>
                             <span id="summary-subtotal">0 BDT</span>
+                        </div>
+                        <div id="discount-row" style="display:none;justify-content:space-between;margin-bottom:.5rem;color:#1e7e34;">
+                            <span id="discount-label">Discount</span>
+                            <span id="summary-discount">-৳0</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted);">
                             <span>Delivery Charge</span>
@@ -196,7 +217,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn" style="width: 100%; margin-top: 2rem; font-size: 1.2rem; padding: 1rem;">Place Order via WhatsApp</button>
+                    <button type="submit" class="btn" style="width: 100%; margin-top: 2rem; font-size: 1.2rem; padding: 1rem;">Place Order</button>
                 </div>
             </div>
         </form>
@@ -220,20 +241,57 @@
         </div>
     </div>
 
-    <script src="js/products.js"></script>
+    <script type="module" src="js/store.js"></script>
+    <script type="module" src="js/orders.js"></script>
+    <script type="module" src="js/coupon.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             renderCheckoutCart();
             calculateTotal();
-            togglePaymentDetails(); // Initialize UI state
+            if (window.zahrounGA && cart.length) {
+                const sub = cart.reduce((s, i) => s + parseFloat(i.selectedPrice) * i.quantity, 0);
+                window.zahrounGA.trackBeginCheckout(cart, sub);
+            }
+            togglePaymentDetails();
 
             const form = document.getElementById('checkout-form');
             form.addEventListener('submit', handleCheckout);
             form.addEventListener('input', checkFormValidity);
             form.addEventListener('change', checkFormValidity);
-            checkFormValidity(); // Initial check
+            checkFormValidity();
+
+            // Coupon apply button
+            document.getElementById('apply-coupon-btn').addEventListener('click', async () => {
+                const btn = document.getElementById('apply-coupon-btn');
+                const code = document.getElementById('coupon-code-input').value.trim();
+                const fb = document.getElementById('coupon-feedback');
+                if (!code) { fb.textContent = 'Enter a coupon code.'; fb.style.color = '#9b2226'; return; }
+                btn.disabled = true; btn.textContent = 'Checking…';
+                const subtotal = cart.reduce((s, i) => s + parseFloat(i.selectedPrice) * i.quantity, 0);
+                try {
+                    if (!window.validateAndApplyCoupon) { fb.textContent = 'Coupon system loading, try again.'; fb.style.color = '#9b2226'; return; }
+                    const result = await window.validateAndApplyCoupon(code, subtotal);
+                    fb.textContent = result.msg;
+                    fb.style.color = result.valid ? '#1e7e34' : '#9b2226';
+                    if (result.valid) calculateTotal();
+                } catch (err) {
+                    fb.textContent = 'Could not validate coupon. Try again.';
+                    fb.style.color = '#9b2226';
+                } finally {
+                    btn.disabled = false; btn.textContent = 'Apply';
+                }
+            });
+
+            // Clear coupon when code input is cleared
+            document.getElementById('coupon-code-input').addEventListener('input', function() {
+                if (!this.value.trim() && window.clearAppliedCoupon) {
+                    window.clearAppliedCoupon();
+                    document.getElementById('coupon-feedback').textContent = '';
+                    calculateTotal();
+                }
+            });
         });
 
         function checkFormValidity() {
@@ -276,21 +334,24 @@
             const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.selectedPrice) * item.quantity), 0);
             const deliverySelect = document.getElementById('deliveryArea');
             const deliveryCharge = parseInt(deliverySelect.value);
-            
-            const appliedVoucher = localStorage.getItem('zahroun_voucher');
-            let discount = 0;
-            if (appliedVoucher === 'myzahroun10' && subtotal >= 4000) {
-                discount = subtotal * 0.1;
-            }
-            
+
+            const coupon = window.appliedCoupon || null;
+            const discount = coupon ? (coupon.discount || 0) : 0;
+
             const total = (subtotal - discount) + deliveryCharge;
 
-            let subtotalHtml = subtotal.toFixed(2) + ' BDT';
+            document.getElementById('summary-subtotal').textContent = subtotal.toFixed(2) + ' BDT';
+
+            const discountRow = document.getElementById('discount-row');
             if (discount > 0) {
-                subtotalHtml = `<span style="text-decoration: line-through; color: #999; margin-right: 0.5rem;">${subtotal.toFixed(2)} BDT</span> ${(subtotal - discount).toFixed(2)} BDT <br><span style="color: #27ae60; font-size: 0.85rem;">(10% Voucher Applied)</span>`;
+                discountRow.style.display = 'flex';
+                const label = coupon.type === 'percent' ? `Coupon (${coupon.value}% off)` : `Coupon discount`;
+                document.getElementById('discount-label').textContent = label;
+                document.getElementById('summary-discount').textContent = '-৳' + discount.toFixed(2);
+            } else {
+                discountRow.style.display = 'none';
             }
 
-            document.getElementById('summary-subtotal').innerHTML = subtotalHtml;
             document.getElementById('summary-delivery').textContent = deliveryCharge + ' BDT';
             document.getElementById('summary-total').textContent = total.toFixed(2) + ' BDT';
         }
@@ -316,11 +377,38 @@
             }
         }
 
-        function handleCheckout(e) {
+        async function handleCheckout(e) {
             e.preventDefault();
 
             if (cart.length === 0) {
                 alert('Your cart is empty! Add products to proceed.');
+                return;
+            }
+
+            // Orders require a logged-in account (for order history + admin tracking).
+            const user = window.getCurrentUser && window.getCurrentUser();
+            if (!user) {
+                if (window.showToast) window.showToast('Please log in to place your order', 'error');
+                if (window.zahrounAuth) window.zahrounAuth.openModal();
+                return;
+            }
+
+            // Stock validation — check current product stock before accepting order
+            const allProducts = window.products || (window.ZahrounStore && window.ZahrounStore.products) || [];
+            const stockErrors = [];
+            for (const item of cart) {
+                const prod = allProducts.find(p => Number(p.id) === Number(item.id));
+                if (prod && prod.stock !== undefined && prod.stock !== null) {
+                    if (prod.stock === 0) {
+                        stockErrors.push('"' + item.name + '" is out of stock. Please remove it from your cart.');
+                    } else if (prod.stock < item.quantity) {
+                        stockErrors.push('"' + item.name + '": only ' + prod.stock + ' left in stock (you ordered ' + item.quantity + ').');
+                    }
+                }
+            }
+            if (stockErrors.length) {
+                if (window.showToast) window.showToast(stockErrors[0], 'error');
+                else alert(stockErrors[0]);
                 return;
             }
 
@@ -338,51 +426,81 @@
             if (paymentMethod === 'Nagad') txnId = document.getElementById('nagadTxn').value;
 
             const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.selectedPrice) * item.quantity), 0);
-            
-            const appliedVoucher = localStorage.getItem('zahroun_voucher');
-            let discount = 0;
-            if (appliedVoucher === 'myzahroun10' && subtotal >= 4000) {
-                discount = subtotal * 0.1;
-            }
-            
+            const coupon = window.appliedCoupon || null;
+            const discount = coupon ? (coupon.discount || 0) : 0;
             const total = (subtotal - discount) + deliveryCharge;
 
-            // Build Item List
+            // Build the order items snapshot
+            const items = cart.map(item => ({
+                id: item.id,
+                name: item.name,
+                size: item.size,
+                price: parseFloat(item.selectedPrice),
+                quantity: item.quantity,
+                image: item.image || ''
+            }));
+
+            // WhatsApp notification message (offered after the order is saved)
             let itemList = '';
             cart.forEach(item => {
                 itemList += `- ${item.name} (${item.size}) (x${item.quantity}) : ${(parseFloat(item.selectedPrice) * item.quantity).toFixed(2)} BDT\n`;
             });
+            let message = `*New Order for Zahroun*\n------------------------\n*Customer Details:*\n`;
+            message += `Name: ${name}\nMobile: ${mobile}\nAddress: ${address}\nDelivery Area: ${deliveryAreaText}\n\n`;
+            message += `*Items:*\n${itemList}\nSubtotal: ${subtotal.toFixed(2)} BDT\n`;
+            if (discount > 0 && coupon) message += `Coupon (${coupon.id}): -${discount.toFixed(2)} BDT\n`;
+            message += `Delivery: ${deliveryCharge} BDT\n*Total:* ${total.toFixed(2)} BDT\n\n*Payment Method:* ${paymentMethod}\n`;
+            if (txnId) message += `*Transaction ID:* ${txnId}\n`;
+            const whatsappUrl = `https://wa.me/8801886936581?text=${encodeURIComponent(message)}`;
 
-            // Construct WhatsApp Message
-            let message = `*New Order for Zahroun*\n`;
-            message += `------------------------\n`;
-            message += `*Customer Details:*\n`;
-            message += `Name: ${name}\n`;
-            message += `Mobile: ${mobile}\n`;
-            message += `Address: ${address}\n`;
-            message += `Delivery Area: ${deliveryAreaText}\n\n`;
-            
-            message += `*Items:*\n${itemList}\n`;
-            
-            message += `Subtotal: ${subtotal.toFixed(2)} BDT\n`;
-            if (discount > 0) {
-                message += `Discount (10%): -${discount.toFixed(2)} BDT\n`;
-            }
-            message += `Delivery: ${deliveryCharge} BDT\n`;
-            message += `*Total:* ${total.toFixed(2)} BDT\n\n`;
-            
-            message += `*Payment Method:* ${paymentMethod}\n`;
-            if (txnId) {
-                message += `*Transaction ID:* ${txnId}\n`;
-            }
+            // Save the order to Firestore
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Placing order...';
+            try {
+                const orderId = await window.saveOrder({
+                    customer: { name, mobile, address, area: deliveryAreaText },
+                    items,
+                    subtotal: +subtotal.toFixed(2),
+                    discount: +discount.toFixed(2),
+                    couponCode: coupon ? coupon.id : null,
+                    delivery: deliveryCharge,
+                    total: +total.toFixed(2),
+                    payment: { method: paymentMethod, txnId: txnId || null }
+                });
 
-            const whatsappNumber = "8801886936581";
-            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-            
-            // Redirect to WhatsApp
-            window.open(whatsappUrl, '_blank');
+                if (window.zahrounGA) window.zahrounGA.trackPurchase(orderId, items, total, coupon ? coupon.id : null);
+                // Increment coupon usage counter if one was applied
+                if (coupon && window.incrementCouponUsage) await window.incrementCouponUsage(coupon.id).catch(() => {});
+                if (window.clearAppliedCoupon) window.clearAppliedCoupon();
+
+                // Clear the cart
+                localStorage.removeItem('zahroun_cart');
+                cart = [];
+                if (typeof updateCartUI === 'function') updateCartUI();
+
+                // Success screen
+                document.querySelector('.checkout-container').innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem;">
+                        <ion-icon name="checkmark-circle" style="font-size: 4rem; color: #1e7e34;"></ion-icon>
+                        <h2 style="margin: 1rem 0 0.5rem;">Order Placed!</h2>
+                        <p style="color: var(--text-muted); margin-bottom: 0.4rem;">Your order <strong>#${orderId.slice(0,8).toUpperCase()}</strong> has been received.</p>
+                        <p style="color: var(--text-muted); margin-bottom: 2rem;">We'll contact you on ${mobile} to confirm delivery.</p>
+                        <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+                            <a href="index.html" class="btn">Continue Shopping</a>
+                            <a href="${whatsappUrl}" target="_blank" class="btn btn-outline" style="display:inline-flex;align-items:center;gap:.5rem;"><ion-icon name="logo-whatsapp"></ion-icon> Notify us on WhatsApp</a>
+                        </div>
+                    </div>`;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (err) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Place Order';
+                const msg = err.message === 'not-logged-in' ? 'Please log in to place your order' : ('Could not place order: ' + (err.code || err.message));
+                if (window.showToast) window.showToast(msg, 'error'); else alert(msg);
+            }
         }
     </script>
 </body>
 </html>
+
 

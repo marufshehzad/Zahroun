@@ -1,10 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop | Zahroun</title>
+    <title>Shop Perfumes | Zahroun Luxury Fragrances</title>
+    <meta name="description" content="Browse Zahroun's collection of luxury perfumes for her, him, and unisex. Premium niche fragrances with extraordinary longevity. Order online in Bangladesh.">
+    <meta property="og:title" content="Shop Perfumes | Zahroun Luxury Fragrances">
+    <meta property="og:description" content="Luxury niche perfumes for men and women. Long-lasting premium fragrances crafted from rare botanicals. Shop online.">
+    <meta property="og:type" content="website">
     <link rel="stylesheet" href="css/style.css">
+    <script src="js/analytics.js"></script>
+    <script type="module" src="js/auth.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <style>
@@ -53,42 +60,65 @@
             border-radius: 4px;
             margin-bottom: 1rem;
         }
+        .product-img { transition: opacity .15s ease; }
         @media (max-width: 768px) {
             .shop-header {
-                padding: 3rem 0;
+                padding: 2rem 0;
             }
             .shop-container {
                 flex-direction: column;
-                gap: 1.5rem;
+                gap: 1rem;
+                margin-top: 1rem;
             }
             .sidebar {
                 width: 100%;
-                text-align: center;
-                max-width: 340px;
-                margin: 0 auto;
+                text-align: left;
+                max-width: 100%;
+                margin: 0;
+                background: var(--surface-color);
+                border-radius: 10px;
+                padding: .75rem 1rem;
+            }
+            .sidebar h3 {
+                font-size: 1rem;
+                margin-bottom: .5rem;
             }
             .filter-list {
                 display: flex;
-                justify-content: center;
                 flex-wrap: wrap;
-                gap: 0.65rem 1rem;
-                margin-bottom: 1.5rem;
+                gap: .4rem .75rem;
+                margin-bottom: .5rem;
             }
             .filter-list li {
                 margin-bottom: 0;
             }
+            .filter-list button {
+                background: var(--accent-color);
+                border-radius: 20px;
+                padding: .3rem .85rem;
+                font-size: .85rem;
+                border: 1px solid transparent;
+            }
+            .filter-list button.active {
+                background: var(--primary-color);
+                color: white;
+                border-color: var(--primary-color);
+            }
+            .search-box {
+                margin-bottom: .75rem;
+                font-size: .9rem;
+            }
             #shop-products {
-                grid-template-columns: minmax(0, 1fr);
-                gap: 1.5rem;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: .75rem;
             }
             #shop-products .product-card {
-                max-width: 320px;
-                margin-left: auto;
-                margin-right: auto;
+                max-width: none;
+                margin: 0;
             }
             .container.py-4 {
-                padding-left: 18px;
-                padding-right: 18px;
+                padding-left: 12px;
+                padding-right: 12px;
             }
         }
     </style>
@@ -178,8 +208,8 @@
             <div class="footer-col-1">
                 <h4 style="font-size: 1.5rem; color: white; margin-bottom: 1rem;">Stay in the Loop</h4>
                 <p style="color: #999; font-size: 1rem; margin-bottom: 1.5rem;">Be the first to know about new arrivals, exclusive offers, and behind-the-scenes stories.</p>
-                <form style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
-                    <input type="email" placeholder="Enter your email" style="background: #222; border: none; padding: 1rem; color: white; flex: 1; border-radius: 4px;">
+                <form id="newsletter-form" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <input type="email" id="newsletter-email" placeholder="Enter your email" style="background: #222; border: none; padding: 1rem; color: white; flex: 1; border-radius: 4px;" required>
                     <button type="submit" class="btn" style="background: white; color: black;">Subscribe &rarr;</button>
                 </form>
                 <p style="color: #666; font-size: 0.95rem;">By subscribing, you agree to our Privacy Policy. Unsubscribe anytime.</p>
@@ -238,101 +268,160 @@
         </div>
     </div>
 
-    <script src="js/products.js"></script>
+    <script type="module" src="js/store.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const grid = document.getElementById('shop-products');
-            const filterBtns = document.querySelectorAll('#category-filter button');
-            const searchInput = document.getElementById('search-input');
-            
-            // Check URL for category parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            const categoryParam = urlParams.get('category');
-            
-            let currentFilter = 'all';
-            let searchQuery = '';
+    <script type="module">
+        import { db } from "./js/firebase-config.js";
+        import { collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-            if(categoryParam) {
-                // simple mapping e.g., 'skincare' to 'Skincare'
-                const map = {
-                    'men': 'Men',
-                    'women': 'Women',
-                    'unisex': 'Unisex'
-                };
-                currentFilter = map[categoryParam.toLowerCase()] || 'all';
-                filterBtns.forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.filter === currentFilter);
-                });
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+        const filterList = document.getElementById("category-filter");
+        const grid = document.getElementById("shop-products");
+        const searchInput = document.getElementById("search-input");
+        const categoryParam = new URLSearchParams(window.location.search).get("category");
+
+        // Delegated hover — swaps to second image on card hover
+        grid.addEventListener("mouseenter", e => {
+            const wrapper = e.target.closest(".product-img-wrapper[data-img2]");
+            if (!wrapper) return;
+            const img = wrapper.querySelector(".product-img");
+            if (!img || img._swapping) return;
+            img._swapping = true;
+            img.style.opacity = "0";
+            setTimeout(() => { img.src = wrapper.dataset.img2; img.style.opacity = "1"; img._swapping = false; }, 160);
+        }, true);
+        grid.addEventListener("mouseleave", e => {
+            const wrapper = e.target.closest(".product-img-wrapper[data-img2]");
+            if (!wrapper) return;
+            const img = wrapper.querySelector(".product-img");
+            if (!img) return;
+            img.style.opacity = "0";
+            setTimeout(() => { img.src = wrapper.dataset.img1; img.style.opacity = "1"; }, 160);
+        }, true);
+
+        let currentFilter = "all";
+        let searchQuery = "";
+        let catsReady = false;
+        let productsReady = typeof products !== "undefined" && products.length > 0;
+
+        function cardImg(url) {
+            if (!url || !url.includes("/upload/")) return url || "";
+            return url.replace("/upload/", "/upload/w_400,h_533,c_fill,f_auto,q_auto/");
+        }
+
+        function renderProducts() {
+            if (typeof products === "undefined" || !products.length) return;
+            const filtered = products.filter(p =>
+                (currentFilter === "all" || p.category === currentFilter) &&
+                p.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            if (!filtered.length) { grid.innerHTML = `<p style="color:var(--text-muted)">No products found.</p>`; return; }
+            grid.innerHTML = filtered.map(p => {
+                const price = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : p.price;
+                const outOfStock = p.stock !== undefined && p.stock !== null && p.stock === 0;
+                const oosBadge = outOfStock ? `<span style="position:absolute;top:.5rem;left:.5rem;background:#9b2226;color:#fff;font-size:.68rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;letter-spacing:.04em;z-index:1;">OUT OF STOCK</span>` : "";
+                const cartBtn = outOfStock
+                    ? `<button class="add-to-cart-quick" disabled style="cursor:not-allowed;opacity:.7;background:#aaa;">Out of Stock</button>`
+                    : `<button class="add-to-cart-quick" onclick="event.stopPropagation();addToCart(${p.id},'50ML',${price});window.showAddedToast&&window.showAddedToast('${esc(p.name)}')">Add to Cart</button>`;
+                const src1 = cardImg(p.image);
+                const img2 = (p.images && p.images.length > 1) ? cardImg(p.images[1]) : "";
+                const wrapAttrs = img2 ? ` data-img1="${esc(src1)}" data-img2="${esc(img2)}"` : "";
+                return `<div class="product-card">
+                    <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;position:relative;"${wrapAttrs}>
+                        <img src="${esc(src1)}" alt="${esc(p.name)}" class="product-img" style="background-color:#FFFFFF;${outOfStock ? "opacity:.75;" : ""}">
+                        ${oosBadge}
+                        ${cartBtn}
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">${esc(p.category)}</span>
+                        <h3 class="product-title"><a href="product.html?id=${p.id}">${esc(p.name)}</a></h3>
+                        <div class="product-price">${price} BDT</div>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        function tryRender() {
+            if (catsReady && productsReady) renderProducts();
+        }
+
+        document.addEventListener("products-ready", () => { productsReady = true; tryRender(); });
+
+        // Fetch categories dynamically from Firestore
+        getDocs(collection(db, "categories")).then(snap => {
+            const cats = snap.docs.map(d => d.data()).sort((a, b) => (a.order || 0) - (b.order || 0));
+            if (cats.length) {
+                filterList.innerHTML = `<li><button class="active" data-filter="all">All</button></li>` +
+                    cats.map(c => `<li><button data-filter="${esc(c.name)}">${esc(c.name)}</button></li>`).join("");
             }
-
-            function renderProducts() {
-                const filtered = products.filter(p => {
-                    const matchCategory = currentFilter === 'all' || p.category === currentFilter;
-                    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-                    return matchCategory && matchSearch;
-                });
-
-                if (filtered.length === 0) {
-                    grid.innerHTML = '<p>No products found.</p>';
-                    return;
+            // Apply URL category param
+            if (categoryParam) {
+                const hit = filterList.querySelector(`button[data-filter="${CSS.escape(categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1).toLowerCase())}"]`) ||
+                            filterList.querySelector(`button[data-filter="${esc(categoryParam)}"]`);
+                if (hit) {
+                    currentFilter = hit.dataset.filter;
+                    filterList.querySelectorAll("button").forEach(b => b.classList.toggle("active", b === hit));
                 }
-
-                grid.innerHTML = filtered.map(p => {
-                    const defaultPrice = (p.prices && p.prices['50ML']) ? p.prices['50ML'] : p.price;
-                    return `
-                    <div class="product-card">
-                        <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
-                            <img src="${p.image}" alt="${p.name}" class="product-img" style="background-color:#FFFFFF;">
-                            <button class="add-to-cart-quick" onclick="event.stopPropagation(); addToCart(${p.id}, '50ML', ${defaultPrice}); showAddedToast('${p.name}')">Add to Cart</button>
-                        </div>
-                        <div class="product-info">
-                            <span class="product-category">${p.category}</span>
-                            <h3 class="product-title"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-                            <div class="product-price">${defaultPrice} BDT</div>
-                        </div>
-                    </div>`;
-                }).join('');
             }
-
-            filterBtns.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    filterBtns.forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentFilter = e.target.dataset.filter;
-                    renderProducts();
-                });
-            });
-
-            searchInput.addEventListener('input', (e) => {
-                searchQuery = e.target.value;
+        }).catch(() => {
+            // Hardcoded fallback — apply URL param
+            if (categoryParam) {
+                const map = { men: "Men", women: "Women", unisex: "Unisex" };
+                currentFilter = map[categoryParam.toLowerCase()] || "all";
+                filterList.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.filter === currentFilter));
+            }
+        }).finally(() => {
+            // Event delegation — works for both hardcoded and dynamically built buttons
+            filterList.addEventListener("click", e => {
+                const btn = e.target.closest("button[data-filter]");
+                if (!btn) return;
+                filterList.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentFilter = btn.dataset.filter;
                 renderProducts();
             });
-
-            renderProducts();
+            searchInput.addEventListener("input", e => { searchQuery = e.target.value; renderProducts(); });
+            catsReady = true;
+            tryRender();
         });
 
-        function showAddedToast(name) {
-            let toast = document.getElementById('cart-toast');
-            if (!toast) {
-                toast = document.createElement('div');
-                toast.id = 'cart-toast';
-                toast.style.cssText = `
-                    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
-                    background: var(--primary-color, #2d6a4f); color: white;
-                    padding: 0.8rem 2rem; border-radius: 50px; font-size: 0.9rem;
-                    font-family: var(--font-sans); z-index: 9999;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.2); opacity: 0;
-                    transition: opacity 0.3s ease;
-                `;
-                document.body.appendChild(toast);
+        // Cart toast (exposed globally for inline onclick)
+        window.showAddedToast = function(name) {
+            let t = document.getElementById("cart-toast");
+            if (!t) {
+                t = document.createElement("div"); t.id = "cart-toast";
+                t.style.cssText = "position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--primary-color,#2d6a4f);color:white;padding:.8rem 2rem;border-radius:50px;font-size:.9rem;font-family:var(--font-sans);z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;";
+                document.body.appendChild(t);
             }
-            toast.textContent = '✓ ' + name + ' added to cart';
-            toast.style.opacity = '1';
-            clearTimeout(toast._timer);
-            toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+            t.textContent = "✓ " + name + " added to cart";
+            t.style.opacity = "1";
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => { t.style.opacity = "0"; }, 2500);
+        };
+
+        // Newsletter form
+        const nlForm = document.getElementById("newsletter-form");
+        if (nlForm) {
+            nlForm.addEventListener("submit", async e => {
+                e.preventDefault();
+                const emailInput = document.getElementById("newsletter-email");
+                const email = emailInput.value.trim();
+                if (!email) return;
+                const btn = nlForm.querySelector("button");
+                btn.disabled = true; btn.textContent = "Subscribing…";
+                try {
+                    await addDoc(collection(db, "newsletter"), { email, subscribedAt: serverTimestamp() });
+                    if (window.showToast) window.showToast("Subscribed! Thank you.");
+                    if (window.zahrounGA) window.zahrounGA.trackNewsletterSubscribe(email);
+                    emailInput.value = "";
+                } catch {
+                    if (window.showToast) window.showToast("Could not subscribe. Try again.", "error");
+                }
+                btn.disabled = false; btn.textContent = "Subscribe →";
+            });
         }
     </script>
 </body>
 </html>
+

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin.html
+Disallow: /seed.html
+Disallow: /test_images.html
+
+Sitemap: https://zahroun.com/sitemap.xml
