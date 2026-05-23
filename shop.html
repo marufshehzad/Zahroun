@@ -55,6 +55,7 @@
             border-radius: 4px;
             margin-bottom: 1rem;
         }
+        .product-img { transition: opacity .15s ease; }
         @media (max-width: 768px) {
             .shop-header {
                 padding: 3rem 0;
@@ -253,6 +254,25 @@
         const searchInput = document.getElementById("search-input");
         const categoryParam = new URLSearchParams(window.location.search).get("category");
 
+        // Delegated hover — swaps to second image on card hover
+        grid.addEventListener("mouseenter", e => {
+            const wrapper = e.target.closest(".product-img-wrapper[data-img2]");
+            if (!wrapper) return;
+            const img = wrapper.querySelector(".product-img");
+            if (!img || img._swapping) return;
+            img._swapping = true;
+            img.style.opacity = "0";
+            setTimeout(() => { img.src = wrapper.dataset.img2; img.style.opacity = "1"; img._swapping = false; }, 160);
+        }, true);
+        grid.addEventListener("mouseleave", e => {
+            const wrapper = e.target.closest(".product-img-wrapper[data-img2]");
+            if (!wrapper) return;
+            const img = wrapper.querySelector(".product-img");
+            if (!img) return;
+            img.style.opacity = "0";
+            setTimeout(() => { img.src = wrapper.dataset.img1; img.style.opacity = "1"; }, 160);
+        }, true);
+
         let currentFilter = "all";
         let searchQuery = "";
         let catsReady = false;
@@ -272,8 +292,10 @@
                 const cartBtn = outOfStock
                     ? `<button class="add-to-cart-quick" disabled style="cursor:not-allowed;opacity:.7;background:#aaa;">Out of Stock</button>`
                     : `<button class="add-to-cart-quick" onclick="event.stopPropagation();addToCart(${p.id},'50ML',${price});window.showAddedToast&&window.showAddedToast('${esc(p.name)}')">Add to Cart</button>`;
+                const img2 = (p.images && p.images.length > 1) ? esc(p.images[1]) : "";
+                const wrapAttrs = img2 ? ` data-img1="${esc(p.image)}" data-img2="${img2}"` : "";
                 return `<div class="product-card">
-                    <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;position:relative;">
+                    <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;position:relative;"${wrapAttrs}>
                         <img src="${esc(p.image)}" alt="${esc(p.name)}" class="product-img" style="background-color:#FFFFFF;${outOfStock ? "opacity:.75;" : ""}">
                         ${oosBadge}
                         ${cartBtn}

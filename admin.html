@@ -148,6 +148,11 @@
         .checks input { width: auto; }
         .img-up { display: flex; align-items: center; gap: 1rem; }
         .img-up img { width: 70px; height: 70px; object-fit: contain; background: var(--bg-color); border-radius: 8px; border: 1px solid var(--border-color); }
+        .gallery-thumb { position:relative; width:72px; height:72px; border-radius:8px; overflow:hidden; border:2px solid var(--border-color); cursor:grab; flex-shrink:0; background:var(--bg-color); }
+        .gallery-thumb img { width:100%; height:100%; object-fit:cover; display:block; pointer-events:none; }
+        .gallery-thumb .th-del { position:absolute; top:2px; right:2px; background:rgba(0,0,0,.65); border:none; border-radius:50%; width:19px; height:19px; color:#fff; font-size:.75rem; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; padding:0; z-index:2; }
+        .gallery-thumb .th-del:hover { background:rgba(155,34,38,.9); }
+        .gallery-thumb.is-main::after { content:"Main"; position:absolute; bottom:0; left:0; right:0; text-align:center; background:rgba(22,62,52,.82); color:#fff; font-size:.58rem; font-weight:700; letter-spacing:.04em; padding:2px 0; pointer-events:none; }
         .form-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem; }
         .muted-note { color: var(--text-muted); font-size: .8rem; }
 
@@ -516,13 +521,14 @@
             <input type="hidden" name="image">
 
             <div class="fg">
-                <label>Product Image</label>
-                <div class="img-up">
-                    <img id="img-preview" src="" alt="" style="display:none;">
-                    <div>
-                        <input type="file" id="img-file" accept="image/*">
-                        <p class="muted-note" id="img-status">Upload to Cloudinary (max 10MB).</p>
-                    </div>
+                <label>Product Images <span class="muted-note" style="font-weight:normal;font-size:.76rem;">First = main &middot; Drag to reorder &middot; &times; to remove</span></label>
+                <div id="gallery-thumbs" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.6rem;min-height:1rem;align-items:flex-start;"></div>
+                <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+                    <label class="btn btn-outline" style="cursor:pointer;font-size:.82rem;padding:.4rem .9rem;" for="img-file-multi">
+                        <ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.3rem;font-size:.95rem;"></ion-icon>Add Images
+                    </label>
+                    <input type="file" id="img-file-multi" accept="image/*" multiple style="display:none;">
+                    <span class="muted-note" id="img-status" style="font-size:.78rem;"></span>
                 </div>
             </div>
 

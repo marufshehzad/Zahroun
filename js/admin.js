@@ -23,6 +23,8 @@ let anDays = 30;
 let pfSearch = "", pfCategory = "", pfSort = "default";
 const pfFlags = new Set();
 const sectionLoaded = new Set();
+let galleryImages = [];
+let galleryDragSrc = null;
 
 const SUBTITLES = {
   dashboard: "Overview of your store performance",
@@ -78,7 +80,7 @@ async function initAdmin(user, profile) {
   $("#add-product-btn").addEventListener("click", () => openForm(null));
   $("#cancel-product").addEventListener("click", closeForm);
   $("#product-modal").addEventListener("click", (e) => { if (e.target.id === "product-modal") closeForm(); });
-  $("#img-file").addEventListener("change", handleImageUpload);
+  document.getElementById("img-file-multi").addEventListener("change", handleMultiImageUpload);
   $("#product-form").addEventListener("submit", saveProduct);
 
   // Notification bell
@@ -748,11 +750,10 @@ function openForm(product) {
   const f = $("#product-form");
   f.reset();
   $("#product-form-title").textContent = product ? "Edit Product" : "Add Product";
-  const img = product?.image || "";
-  f.image.value = img;
-  const preview = $("#img-preview");
-  if (img) { preview.src = optimizedUrl(img, 140); preview.style.display = "block"; } else { preview.style.display = "none"; }
-  $("#img-status").textContent = "Upload to Cloudinary (max 10MB).";
+  galleryImages = product?.images ? [...product.images] : (product?.image ? [product.image] : []);
+  f.image.value = galleryImages[0] || "";
+  renderGalleryThumbs();
+  document.getElementById("img-status").textContent = "";
   if (product) {
     f.id.value = product.id;
     f.name.value = product.name || "";
@@ -776,20 +777,64 @@ function openForm(product) {
   $("#product-modal").classList.add("open");
 }
 
-function closeForm() { $("#product-modal").classList.remove("open"); }
+function closeForm() { galleryImages = []; $("#product-modal").classList.remove("open"); }
 
-async function handleImageUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const statusEl = $("#img-status");
-  statusEl.textContent = "Uploading… 0%";
+async function handleMultiImageUpload(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  const statusEl = document.getElementById("img-status");
+  const total = files.length;
+  let uploaded = 0;
+  statusEl.textContent = `Uploading 0/${total}…`;
   try {
-    const { url } = await uploadImage(file, { onProgress: (p) => statusEl.textContent = `Uploading… ${p}%` });
-    $("#product-form").image.value = url;
-    const preview = $("#img-preview");
-    preview.src = optimizedUrl(url, 140); preview.style.display = "block";
-    statusEl.textContent = "✓ Image uploaded.";
+    for (const file of files) {
+      const { url } = await uploadImage(file, { onProgress: (p) => { statusEl.textContent = `Uploading ${uploaded + 1}/${total} (${p}%)…`; } });
+      galleryImages.push(url);
+      uploaded++;
+      renderGalleryThumbs();
+      statusEl.textContent = `${uploaded}/${total} uploaded.`;
+    }
+    document.getElementById("product-form").image.value = galleryImages[0] || "";
+    statusEl.textContent = `✓ ${uploaded} image${uploaded > 1 ? "s" : ""} added.`;
   } catch (err) { statusEl.textContent = "⚠ " + err.message; }
+  e.target.value = "";
+}
+
+function renderGalleryThumbs() {
+  const el = document.getElementById("gallery-thumbs");
+  if (!el) return;
+  if (!galleryImages.length) {
+    el.innerHTML = `<span class="muted-note" style="font-size:.78rem;line-height:2.5rem;">No images yet.</span>`;
+    return;
+  }
+  el.innerHTML = galleryImages.map((url, i) => `
+    <div class="gallery-thumb${i === 0 ? " is-main" : ""}" draggable="true" data-gi="${i}">
+      <img src="${optimizedUrl(url, 120)}" alt="">
+      <button type="button" class="th-del" data-gi="${i}" title="Remove">&times;</button>
+    </div>`).join("");
+  el.querySelectorAll(".th-del").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      galleryImages.splice(Number(btn.dataset.gi), 1);
+      document.getElementById("product-form").image.value = galleryImages[0] || "";
+      renderGalleryThumbs();
+    });
+  });
+  el.querySelectorAll(".gallery-thumb").forEach(th => {
+    th.addEventListener("dragstart", () => { galleryDragSrc = Number(th.dataset.gi); });
+    th.addEventListener("dragover", e => { e.preventDefault(); th.style.outline = "2px solid var(--primary-color)"; });
+    th.addEventListener("dragleave", () => { th.style.outline = ""; });
+    th.addEventListener("drop", e => {
+      e.preventDefault(); th.style.outline = "";
+      const src = galleryDragSrc, dest = Number(th.dataset.gi);
+      if (src === null || src === dest) return;
+      const moved = galleryImages.splice(src, 1)[0];
+      galleryImages.splice(dest, 0, moved);
+      document.getElementById("product-form").image.value = galleryImages[0] || "";
+      renderGalleryThumbs();
+    });
+    th.addEventListener("dragend", () => { el.querySelectorAll(".gallery-thumb").forEach(t => t.style.outline = ""); });
+  });
 }
 
 function csv(v) { return v.split(",").map(s => s.trim()).filter(Boolean); }
@@ -807,11 +852,12 @@ async function saveProduct(e) {
   const prices = {};
   [["6ML", f.price6.value], ["15ML", f.price15.value], ["30ML", f.price30.value], ["50ML", f.price50.value]]
     .forEach(([k, v]) => { const n = numOrNull(v); if (n !== null) prices[k] = n; });
-  const image = f.image.value || (editing && editing.image) || "";
+  const image = galleryImages[0] || (editing && editing.image) || "";
+  const images = galleryImages.length ? [...galleryImages] : (editing?.images ? [...editing.images] : (image ? [image] : []));
   let sizeImages = (editing && editing.sizeImages) ? editing.sizeImages : null;
   if (!sizeImages && image) sizeImages = { "6ML": image, "15ML": image, "30ML": image, "50ML": image };
   const data = {
-    id, name: f.name.value.trim(), category: f.category.value, price: price50, prices, image, sizeImages: sizeImages || {},
+    id, name: f.name.value.trim(), category: f.category.value, price: price50, prices, image, images, sizeImages: sizeImages || {},
     description: f.description.value.trim(), ingredients: f.ingredients.value.trim(),
     tags: { gender: f.gender.value.trim(), type: f.type.value.trim(), concentration: f.concentration.value.trim() },
     fragrance_notes: csv(f.fragrance_notes.value), seasons: csv(f.seasons.value), occasions: csv(f.occasions.value),

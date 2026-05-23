@@ -98,6 +98,11 @@
             opacity: 0;
             transform: scale(0.98);
         }
+        .product-image-large:hover .product-main-img:not(.is-switching) { transform: scale(1.04); cursor: zoom-in; }
+        .gallery-strip { display:flex; gap:.5rem; margin-top:.8rem; flex-wrap:wrap; justify-content:center; }
+        .gallery-strip .gt { width:62px; height:62px; border:2px solid transparent; border-radius:7px; overflow:hidden; cursor:pointer; background:var(--surface-color); padding:0; transition:border-color .18s,transform .18s; flex-shrink:0; }
+        .gallery-strip .gt:hover, .gallery-strip .gt.active { border-color:var(--primary-color); transform:translateY(-2px); }
+        .gallery-strip .gt img { width:100%; height:100%; object-fit:contain; display:block; }
         .product-option-panel {
             margin-bottom: 2rem;
             background: var(--surface-color);
@@ -389,10 +394,13 @@
             const stockHtml = stockStat ? `<div style="margin-bottom:1rem;font-size:.9rem;${stockColor}"><ion-icon name="${stockIcon}" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>${stockText}</div>` : "";
             const addCartHtml = product.stock === 0 ? `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;opacity:.5;cursor:not-allowed;" disabled>OUT OF STOCK</button>` : `<button class="btn btn-black" style="width: 100%; margin-bottom: 1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>`;
             const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:2rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="window.location.href='checkout.html'">BUY IT NOW</button>`;
+            const gallImgs = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
+            const gallStripHtml = gallImgs.length > 1 ? '<div class="gallery-strip" id="gallery-strip">' + gallImgs.map((u, i) => '<button class="gt' + (i === 0 ? ' active' : '') + '" data-gi="' + i + '" type="button"><img src="' + u.replace(/"/g, '&quot;') + '" alt="View ' + (i + 1) + '"></button>').join('') + '</div>' : '';
             const container = document.getElementById('product-detail-content');
             container.innerHTML = `
                 <div class="product-image-large">
                     <img id="main-product-image" src="${getSizeImage(product, currentSelectedSize)}" alt="${product.name}" class="product-main-img">
+                    ${gallStripHtml}
                 </div>
                 <div class="product-meta">
                     <span class="product-category" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem;">${product.category}</span>
@@ -488,6 +496,19 @@
                 </div>
             `;
             
+            // Wire gallery strip thumbnails
+            const gallStripEl = document.getElementById('gallery-strip');
+            if (gallStripEl) {
+                gallStripEl.querySelectorAll('.gt').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const idx = Number(btn.dataset.gi);
+                        updateProductImage(gallImgs[idx]);
+                        gallStripEl.querySelectorAll('.gt').forEach(el => el.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+            }
+
             // Set document title
             document.title = `${product.name} | Zahroun`;
 
