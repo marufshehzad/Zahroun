@@ -427,9 +427,11 @@ async function fetchSettings() {
 }
 
 function updateOrdersBadge() {
+  const newCount = orders.filter(o => isNewOrder(o)).length;
   const pending = orders.filter(o => o.status === "pending").length;
+  const count = newCount || pending;
   const badge = $("#nav-orders-badge");
-  if (pending) { badge.textContent = pending; badge.style.display = ""; } else { badge.style.display = "none"; }
+  if (count) { badge.textContent = count; badge.style.display = ""; } else { badge.style.display = "none"; }
 }
 
 /* ---- Dashboard --------------------------------------------------------- */
@@ -1675,38 +1677,67 @@ function printOrderInvoice(order) {
 }
 
 /* ---- Notification system ---------------------------------------------- */
+function timeAgo(ms) {
+  const d = Date.now() - ms;
+  if (d < 60000) return "just now";
+  if (d < 3600000) return Math.floor(d / 60000) + "m ago";
+  if (d < 86400000) return Math.floor(d / 3600000) + "h ago";
+  return Math.floor(d / 86400000) + "d ago";
+}
+
 function updateNotifications() {
-  const pendingOrders = orders.filter(o => o.status === "pending").length;
+  const newOrds = orders.filter(o => isNewOrder(o));
   const unreadMsgs = messages.filter(m => !m.read).length;
   const lowStock = products.filter(p => p.stock !== undefined && p.stock !== null && p.stock < 10).length;
-  const total = pendingOrders + unreadMsgs + lowStock;
+  const total = newOrds.length + unreadMsgs + lowStock;
 
   const badge = document.getElementById("notif-badge");
   if (badge) { badge.textContent = total; badge.style.display = total ? "" : "none"; }
 
   const list = document.getElementById("notif-list");
   if (!list) return;
-  const items = [];
-  if (pendingOrders) items.push({ icon: "cart-outline", text: `${pendingOrders} pending order${pendingOrders > 1 ? "s" : ""}`, go: "orders", color: "#f0b429" });
-  if (unreadMsgs) items.push({ icon: "mail-outline", text: `${unreadMsgs} unread message${unreadMsgs > 1 ? "s" : ""}`, go: "messages", color: "#1a56b8" });
-  if (lowStock) items.push({ icon: "warning-outline", text: `${lowStock} product${lowStock > 1 ? "s" : ""} low in stock (<10)`, go: "products", color: "#9b2226" });
 
-  if (!items.length) {
+  if (!total) {
     list.innerHTML = `<div style="padding:1.1rem 1rem;text-align:center;color:var(--text-muted);font-size:.85rem;">All clear ✓</div>`;
-  } else {
-    list.innerHTML = items.map(item => `
-      <div class="notif-item" data-goto="${item.go}" style="display:flex;align-items:center;gap:.7rem;padding:.75rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;">
-        <ion-icon name="${item.icon}" style="font-size:1.2rem;color:${item.color};flex-shrink:0;"></ion-icon>
-        <span style="font-size:.85rem;">${item.text}</span>
-        <ion-icon name="chevron-forward-outline" style="margin-left:auto;color:var(--text-muted);font-size:.9rem;"></ion-icon>
-      </div>`).join("");
-    list.querySelectorAll(".notif-item").forEach(el => {
-      el.addEventListener("click", () => {
-        document.getElementById("notif-dropdown").style.display = "none";
-        switchSection(el.dataset.goto);
-      });
-    });
+    return;
   }
+
+  let html = "";
+
+  if (newOrds.length) {
+    html += `<div style="padding:.45rem 1rem .2rem;font-size:.67rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-color);">New Orders</div>`;
+    html += newOrds.slice(0, 6).map(o => {
+      const c = o.customer || {};
+      const num = o.orderNumber || o.id.slice(0, 8).toUpperCase();
+      const ms = o.createdAt?.toMillis ? o.createdAt.toMillis() : (o.createdAt?.seconds || 0) * 1000;
+      return `<div class="notif-item" data-goto="orders" style="display:flex;align-items:center;gap:.7rem;padding:.65rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;">
+        <ion-icon name="cart-outline" style="font-size:1.2rem;color:var(--primary-color);flex-shrink:0;"></ion-icon>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.82rem;font-weight:600;">#${escapeHtml(num)}</div>
+          <div style="font-size:.74rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c.name || "Customer")} · ৳${(o.total || 0).toLocaleString()}</div>
+        </div>
+        <span style="font-size:.7rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">${timeAgo(ms)}</span>
+      </div>`;
+    }).join("");
+  }
+
+  const summaryItems = [];
+  if (unreadMsgs) summaryItems.push({ icon: "mail-outline", text: `${unreadMsgs} unread message${unreadMsgs > 1 ? "s" : ""}`, go: "messages", color: "#1a56b8" });
+  if (lowStock) summaryItems.push({ icon: "warning-outline", text: `${lowStock} product${lowStock > 1 ? "s" : ""} low in stock (<10)`, go: "products", color: "#9b2226" });
+  html += summaryItems.map(item => `
+    <div class="notif-item" data-goto="${item.go}" style="display:flex;align-items:center;gap:.7rem;padding:.75rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;">
+      <ion-icon name="${item.icon}" style="font-size:1.2rem;color:${item.color};flex-shrink:0;"></ion-icon>
+      <span style="font-size:.85rem;">${item.text}</span>
+      <ion-icon name="chevron-forward-outline" style="margin-left:auto;color:var(--text-muted);font-size:.9rem;"></ion-icon>
+    </div>`).join("");
+
+  list.innerHTML = html;
+  list.querySelectorAll(".notif-item").forEach(el => {
+    el.addEventListener("click", () => {
+      document.getElementById("notif-dropdown").style.display = "none";
+      switchSection(el.dataset.goto);
+    });
+  });
 }
 
 /* ---- CSV Export -------------------------------------------------------- */

@@ -5,6 +5,10 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details | Zahroun</title>
+    <meta name="description" content="Discover Zahroun luxury perfumes — niche fragrances for men, women, and unisex. Long-lasting, premium quality. Shop online in Bangladesh.">
+    <meta property="og:site_name" content="Zahroun">
+    <meta property="og:type" content="product">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
@@ -510,8 +514,12 @@
                 });
             }
 
-            // Set document title
+            // Set document title + dynamic SEO
             document.title = `${product.name} | Zahroun`;
+            const pid = new URLSearchParams(location.search).get("id") || "";
+            document.querySelector('meta[name="description"]').content = `${product.name} — ${(product.description || "").slice(0,120)}. Shop Zahroun luxury perfumes online in Bangladesh.`;
+            document.head.insertAdjacentHTML("beforeend", `<link rel="canonical" href="https://zahroun.com/product.html?id=${pid}"><meta property="og:title" content="${product.name} | Zahroun"><meta property="og:description" content="${(product.description || "").slice(0,120)}"><meta property="og:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}"><meta property="og:url" content="https://zahroun.com/product.html?id=${pid}"><meta name="twitter:title" content="${product.name} | Zahroun"><meta name="twitter:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}">`);
+
 
             // Populate Upsell Grid
             const upsellGrid = document.getElementById('upsell-products');
