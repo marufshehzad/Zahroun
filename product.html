@@ -394,7 +394,7 @@
             const stockText = stockStat === "out" ? "Out of Stock" : stockStat === "low" ? "Only " + product.stock + " left!" : "In Stock";
             const stockHtml = stockStat ? `<div style="margin-bottom:1rem;font-size:.9rem;${stockColor}"><ion-icon name="${stockIcon}" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>${stockText}</div>` : "";
             const addCartHtml = product.stock === 0 ? `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;opacity:.5;cursor:not-allowed;" disabled>OUT OF STOCK</button>` : `<button class="btn btn-black" style="width: 100%; margin-bottom: 1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>`;
-            const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:2rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="window.location.href='checkout.html'">BUY IT NOW</button>`;
+            const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:2rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="buyItNow(${product.id})">BUY IT NOW</button>`;
             const gallImgs = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
             const gallStripHtml = gallImgs.length > 1 ? '<div class="gallery-strip" id="gallery-strip">' + gallImgs.map((u, i) => '<button class="gt' + (i === 0 ? ' active' : '') + '" data-gi="' + i + '" type="button"><img src="' + u.replace(/"/g, '&quot;') + '" alt="View ' + (i + 1) + '"></button>').join('') + '</div>' : '';
             const container = document.getElementById('product-detail-content');
@@ -665,6 +665,11 @@
         window.addCurrentSizeToCart = function(productId) {
             addToCart(productId, currentSelectedSize, currentSelectedPrice);
             updateInlineCart();
+        };
+
+        window.buyItNow = function(productId) {
+            addToCart(productId, currentSelectedSize, currentSelectedPrice);
+            window.location.href = 'checkout.html';
         };
 
         function updateInlineCart() {
