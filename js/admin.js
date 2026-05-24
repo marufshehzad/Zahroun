@@ -1666,7 +1666,7 @@ function printOrderInvoice(order) {
 
 <div class="footer">
   <strong>Zahroun</strong> &nbsp;·&nbsp; Dhanmondi, Dhaka, Bangladesh, 1205<br>
-  WhatsApp: +880 1886-936581 &nbsp;·&nbsp; zahroun.netlify.app<br>
+  WhatsApp: +880 1886-936581 &nbsp;·&nbsp; zahroun.com<br>
   Thank you for your order — we hope you love your fragrance.
 </div>
 <div class="print-btn"><button onclick="window.print()">Print / Save as PDF</button></div>
