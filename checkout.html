@@ -5,9 +5,11 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | Zahroun</title>
+    <meta name="robots" content="noindex, nofollow">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <style>
@@ -100,10 +102,29 @@
                 gap: 1.25rem;
                 margin: 1.25rem auto !important;
             }
-            /* Order summary appears first on mobile */
-            .checkout-container > div:last-child { order: -1; }
             .checkout-section { padding: 1.25rem !important; }
             .checkout-section h2 { font-size: 1.3rem; }
+        }
+        .coupon-row {
+            display: flex;
+            gap: .5rem;
+            align-items: stretch;
+        }
+        .coupon-row input {
+            flex: 1;
+            min-width: 0;
+            text-transform: uppercase;
+            font-size: .9rem;
+            padding: .6rem .8rem;
+        }
+        .coupon-row .coupon-btn {
+            flex-shrink: 0;
+            width: auto !important;
+            display: inline-block !important;
+            padding: .6rem 1.1rem;
+            font-size: .85rem;
+            white-space: nowrap;
+            line-height: 1;
         }
     </style>
 </head>
@@ -163,14 +184,14 @@
                         <label class="payment-option">
                             <input type="radio" name="payment" value="bKash" onchange="togglePaymentDetails()"> bKash (Manual)
                             <div class="payment-details" id="bkash-details">
-                                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Please send money to our bKash Number: <strong>01886936581</strong> (Personal)</p>
+                                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Please send money to our bKash Number: <strong>01886-936581</strong> (Personal)</p>
                                 <input type="text" id="bkashTxn" class="form-control" placeholder="Enter Transaction ID">
                             </div>
                         </label>
                         <label class="payment-option">
                             <input type="radio" name="payment" value="Nagad" onchange="togglePaymentDetails()"> Nagad (Manual)
                             <div class="payment-details" id="nagad-details">
-                                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Please send money to our Nagad Number: <strong>01886936581</strong> (Personal)</p>
+                                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Please send money to our Nagad Number: <strong>01886-936581</strong> (Personal)</p>
                                 <input type="text" id="nagadTxn" class="form-control" placeholder="Enter Transaction ID">
                             </div>
                         </label>
@@ -192,9 +213,9 @@
                     <div style="margin-top: 1.5rem;">
                         <!-- Coupon Code Input -->
                         <div style="margin-bottom:1rem;">
-                            <div style="display:flex;gap:.5rem;">
-                                <input type="text" id="coupon-code-input" class="form-control" placeholder="Coupon code" style="flex:1;text-transform:uppercase;font-size:.9rem;padding:.6rem .8rem;">
-                                <button type="button" id="apply-coupon-btn" class="btn" style="padding:.6rem 1rem;font-size:.88rem;white-space:nowrap;">Apply</button>
+                            <div class="coupon-row">
+                                <input type="text" id="coupon-code-input" class="form-control" placeholder="Coupon code">
+                                <button type="button" id="apply-coupon-btn" class="btn coupon-btn">Apply</button>
                             </div>
                             <div id="coupon-feedback" style="font-size:.82rem;margin-top:.4rem;min-height:1.1em;"></div>
                         </div>
@@ -247,6 +268,50 @@
     <script src="js/cart.js"></script>
     <script src="js/ui.js"></script>
     <script>
+        // ── EmailJS config ── fill these 3 values after EmailJS setup ──
+        const EMAILJS_PUBLIC_KEY  = "wUGMJ65uoDE5-C0AF";
+        const EMAILJS_SERVICE_ID  = "service_y827jxy";
+        const EMAILJS_TEMPLATE_ID = "template_7r5991b";
+        // ────────────────────────────────────────────────────────────────
+
+        (function initEmailJS() {
+            if (typeof emailjs !== "undefined" && EMAILJS_PUBLIC_KEY !== "YOUR_PUBLIC_KEY") {
+                emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+            }
+        })();
+
+        async function sendInvoiceEmail({ userEmail, name, orderId, items, subtotal, delivery, discount, coupon, total, paymentMethod, address, mobile }) {
+            if (typeof emailjs === "undefined" || EMAILJS_PUBLIC_KEY === "YOUR_PUBLIC_KEY") return;
+            try {
+                const orderDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+
+                const itemsList = items.map(item =>
+                    `${item.name} (${item.size})  x${item.quantity}  —  BDT ${(item.price * item.quantity).toFixed(2)}`
+                ).join('\n');
+
+                const discountLine = discount > 0
+                    ? `Coupon${coupon ? ' (' + coupon.id + ')' : ''}: -BDT ${(+discount).toFixed(2)}`
+                    : '';
+
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                    to_email:       userEmail,
+                    to_name:        name,
+                    order_id:       orderId.slice(0, 8).toUpperCase(),
+                    order_date:     orderDate,
+                    items_list:     itemsList,
+                    subtotal:       (+subtotal).toFixed(2),
+                    delivery:       (+delivery).toFixed(2),
+                    discount_line:  discountLine,
+                    total:          (+total).toFixed(2),
+                    payment_method: paymentMethod,
+                    address:        address,
+                    mobile:         mobile,
+                });
+            } catch (err) {
+                console.warn("Invoice email failed:", err);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             renderCheckoutCart();
             calculateTotal();
@@ -470,6 +535,12 @@
                 });
 
                 if (window.zahrounGA) window.zahrounGA.trackPurchase(orderId, items, total, coupon ? coupon.id : null);
+                // Send invoice email to customer
+                sendInvoiceEmail({
+                    userEmail: user.email,
+                    name, orderId, items, subtotal, delivery: deliveryCharge,
+                    discount, coupon, total, paymentMethod, address, mobile
+                });
                 // Increment coupon usage counter if one was applied
                 if (coupon && window.incrementCouponUsage) await window.incrementCouponUsage(coupon.id).catch(() => {});
                 if (window.clearAppliedCoupon) window.clearAppliedCoupon();
@@ -485,7 +556,7 @@
                         <ion-icon name="checkmark-circle" style="font-size: 4rem; color: #1e7e34;"></ion-icon>
                         <h2 style="margin: 1rem 0 0.5rem;">Order Placed!</h2>
                         <p style="color: var(--text-muted); margin-bottom: 0.4rem;">Your order <strong>#${orderId.slice(0,8).toUpperCase()}</strong> has been received.</p>
-                        <p style="color: var(--text-muted); margin-bottom: 2rem;">We'll contact you on ${mobile} to confirm delivery.</p>
+                        <p style="color: var(--text-muted); margin-bottom: 2rem;">We'll contact you via <strong>01886-936581</strong> to confirm delivery.</p>
                         <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
                             <a href="index.html" class="btn">Continue Shopping</a>
                             <a href="${whatsappUrl}" target="_blank" class="btn btn-outline" style="display:inline-flex;align-items:center;gap:.5rem;"><ion-icon name="logo-whatsapp"></ion-icon> Notify us on WhatsApp</a>

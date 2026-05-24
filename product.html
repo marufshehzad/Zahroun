@@ -5,6 +5,10 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details | Zahroun</title>
+    <meta name="description" content="Discover Zahroun luxury perfumes — niche fragrances for men, women, and unisex. Long-lasting, premium quality. Shop online in Bangladesh.">
+    <meta property="og:site_name" content="Zahroun">
+    <meta property="og:type" content="product">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
@@ -394,7 +398,7 @@
             const stockText = stockStat === "out" ? "Out of Stock" : stockStat === "low" ? "Only " + product.stock + " left!" : "In Stock";
             const stockHtml = stockStat ? `<div style="margin-bottom:1rem;font-size:.9rem;${stockColor}"><ion-icon name="${stockIcon}" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>${stockText}</div>` : "";
             const addCartHtml = product.stock === 0 ? `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;opacity:.5;cursor:not-allowed;" disabled>OUT OF STOCK</button>` : `<button class="btn btn-black" style="width: 100%; margin-bottom: 1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>`;
-            const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:2rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="window.location.href='checkout.html'">BUY IT NOW</button>`;
+            const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:2rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="buyItNow(${product.id})">BUY IT NOW</button>`;
             const gallImgs = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
             const gallStripHtml = gallImgs.length > 1 ? '<div class="gallery-strip" id="gallery-strip">' + gallImgs.map((u, i) => '<button class="gt' + (i === 0 ? ' active' : '') + '" data-gi="' + i + '" type="button"><img src="' + u.replace(/"/g, '&quot;') + '" alt="View ' + (i + 1) + '"></button>').join('') + '</div>' : '';
             const container = document.getElementById('product-detail-content');
@@ -510,8 +514,12 @@
                 });
             }
 
-            // Set document title
+            // Set document title + dynamic SEO
             document.title = `${product.name} | Zahroun`;
+            const pid = new URLSearchParams(location.search).get("id") || "";
+            document.querySelector('meta[name="description"]').content = `${product.name} — ${(product.description || "").slice(0,120)}. Shop Zahroun luxury perfumes online in Bangladesh.`;
+            document.head.insertAdjacentHTML("beforeend", `<link rel="canonical" href="https://zahroun.com/product.html?id=${pid}"><meta property="og:title" content="${product.name} | Zahroun"><meta property="og:description" content="${(product.description || "").slice(0,120)}"><meta property="og:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}"><meta property="og:url" content="https://zahroun.com/product.html?id=${pid}"><meta name="twitter:title" content="${product.name} | Zahroun"><meta name="twitter:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}">`);
+
 
             // Populate Upsell Grid
             const upsellGrid = document.getElementById('upsell-products');
@@ -665,6 +673,11 @@
         window.addCurrentSizeToCart = function(productId) {
             addToCart(productId, currentSelectedSize, currentSelectedPrice);
             updateInlineCart();
+        };
+
+        window.buyItNow = function(productId) {
+            addToCart(productId, currentSelectedSize, currentSelectedPrice);
+            window.location.href = 'checkout.html';
         };
 
         function updateInlineCart() {

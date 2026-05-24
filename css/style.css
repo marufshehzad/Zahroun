@@ -28,6 +28,7 @@
 html {
   overflow-x: hidden;
   max-width: 100%;
+  color-scheme: light;
 }
 
 body {
@@ -1031,7 +1032,7 @@ section:not(.hero) {
 
   /* Section titles: tighter */
   .section-title { margin-bottom: 1.75rem; }
-  .section-title h2 { font-size: 1.7rem; }
+  .section-title h2 { font-size: 1.5rem !important; word-break: break-word; overflow-wrap: break-word; }
   .section-title p { font-size: .9rem; }
 
   /* Contact info box */
@@ -1094,4 +1095,24 @@ section:not(.hero) {
   /* Benefits bar: 1 per row on very small */
   .benefits-grid { grid-template-columns: 1fr 1fr; gap: .5rem .5rem; }
   .benefit-item { font-size: .78rem; }
+}
+
+/* ===== FORCE LIGHT MODE — block Samsung / Chrome dark mode ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: light;
+    --primary-color: #163E34;
+    --primary-hover: #0F2E27;
+    --bg-color: #F5F3EF;
+    --surface-color: #FFFFFF;
+    --accent-color: #E8E4DB;
+    --text-main: #1A1A1A;
+    --text-muted: #666666;
+    --border-color: #DCD8CF;
+  }
+  html, body {
+    background-color: #F5F3EF !important;
+    color: #1A1A1A !important;
+    color-scheme: light !important;
+  }
 }

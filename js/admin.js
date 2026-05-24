@@ -6,7 +6,7 @@ import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   collection, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, addDoc,
-  serverTimestamp, query, limit
+  serverTimestamp, Timestamp, query, limit, onSnapshot, where, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { uploadImage, optimizedUrl } from "./cloudinary.js";
 
@@ -27,9 +27,11 @@ let anCustomTo = null;
 let pfSearch = "", pfCategory = "", pfSort = "default";
 const pfFlags = new Set();
 const sectionLoaded = new Set();
+const acknowledgedOrderIds = new Set(JSON.parse(sessionStorage.getItem("ackOrderIds") || "[]"));
 let galleryImages = [];
 let galleryDragSrc = null;
 let ofSearch = "";
+let ofStatusFilter = "all";
 let currentDetailOrder = null;
 let _cropResolve = null;
 let _cropReject = null;
@@ -189,7 +191,11 @@ async function initAdmin(user, profile) {
       e.stopPropagation();
       const open = notifDrop.style.display !== "none";
       notifDrop.style.display = open ? "none" : "";
-      if (!open) updateNotifications();
+      if (!open) {
+        orders.filter(o => isNewOrder(o)).forEach(o => acknowledgedOrderIds.add(o.id));
+        sessionStorage.setItem("ackOrderIds", JSON.stringify([...acknowledgedOrderIds]));
+        updateNotifications();
+      }
     });
     document.addEventListener("click", e => {
       if (!document.getElementById("notif-wrap")?.contains(e.target)) notifDrop.style.display = "none";
@@ -227,6 +233,65 @@ async function initAdmin(user, profile) {
   updateNotifications();
   // Show unread messages badge without blocking
   fetchMessages().catch(() => {});
+  // Real-time new-order notifications
+  startOrderListener();
+}
+
+/* ---- Real-time order listener + browser notifications ------------------ */
+let _orderListenerUnsub = null;
+let _knownOrderIds = null;
+
+async function requestNotifPermission() {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "default") await Notification.requestPermission();
+}
+
+function playOrderSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.setValueAtTime(880, ctx.currentTime);
+    o.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
+    g.gain.setValueAtTime(0.25, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    o.start(); o.stop(ctx.currentTime + 0.5);
+  } catch (_) {}
+}
+
+function showOrderNotification(order) {
+  playOrderSound();
+  const title = "New Order — Zahroun";
+  const body = `${order.customer?.name || "Customer"} · ৳${order.total}`;
+  if (Notification.permission === "granted") {
+    try { new Notification(title, { body, icon: "product pictures/main logo.png" }); } catch (_) {}
+  }
+  adminToast(`🛒 New order from ${order.customer?.name || "a customer"} — ৳${order.total}`);
+  updateNotifications();
+}
+
+function startOrderListener() {
+  requestNotifPermission();
+  if (_orderListenerUnsub) _orderListenerUnsub();
+
+  // Snapshot to track which order IDs already exist at startup
+  _knownOrderIds = new Set(orders.map(o => o.id));
+
+  const q = query(collection(db, "orders"), orderBy("createdAt", "desc"), limit(50));
+  _orderListenerUnsub = onSnapshot(q, snap => {
+    if (_knownOrderIds === null) return;
+    snap.docChanges().forEach(change => {
+      if (change.type === "added" && !_knownOrderIds.has(change.doc.id)) {
+        const order = { id: change.doc.id, ...change.doc.data() };
+        orders.unshift(order);
+        _knownOrderIds.add(change.doc.id);
+        showOrderNotification(order);
+        if (typeof renderOrderTable === "function") renderOrderTable();
+        renderDashboard();
+      }
+    });
+  }, err => console.warn("Order listener:", err));
 }
 
 /* ---- Section switcher — lazy render ------------------------------------ */
@@ -290,6 +355,16 @@ function setupSection(name) {
   } else if (name === "orders") {
     const ofInput = document.getElementById("of-search");
     if (ofInput) ofInput.addEventListener("input", e => { ofSearch = e.target.value; renderOrderTable(); });
+    document.querySelectorAll("#ord-tabs .ord-pill").forEach(btn => {
+      btn.addEventListener("click", () => {
+        ofStatusFilter = btn.dataset.filter;
+        document.querySelectorAll("#ord-tabs .ord-pill").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderOrderTable();
+      });
+    });
+    const expBtn = document.getElementById("export-orders-btn");
+    if (expBtn && !expBtn._wired) { expBtn._wired = true; expBtn.addEventListener("click", exportOrdersCSV); }
   } else if (name === "settings") {
     $("#settings-form").addEventListener("submit", saveSettings);
   } else if (name === "pages") {
@@ -357,9 +432,11 @@ async function fetchSettings() {
 }
 
 function updateOrdersBadge() {
+  const newCount = orders.filter(o => isNewOrder(o)).length;
   const pending = orders.filter(o => o.status === "pending").length;
+  const count = newCount || pending;
   const badge = $("#nav-orders-badge");
-  if (pending) { badge.textContent = pending; badge.style.display = ""; } else { badge.style.display = "none"; }
+  if (count) { badge.textContent = count; badge.style.display = ""; } else { badge.style.display = "none"; }
 }
 
 /* ---- Dashboard --------------------------------------------------------- */
@@ -517,49 +594,83 @@ function renderProductTable() {
   tbody.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => deleteProduct(Number(b.dataset.del))));
 }
 
+function isNewOrder(o) {
+  try {
+    const ms = o.createdAt?.toMillis ? o.createdAt.toMillis() : o.createdAt?.seconds ? o.createdAt.seconds * 1000 : null;
+    return ms && (Date.now() - ms) < 86400000;
+  } catch { return false; }
+}
+
+async function changeOrderStatus(orderId, newStatus) {
+  const order = orders.find(o => o.id === orderId);
+  const prevStatus = order?.status || "pending";
+  try {
+    if (newStatus === "confirmed" && prevStatus !== "confirmed") await deductOrderStock(order);
+    if (newStatus === "cancelled" && prevStatus !== "cancelled") await restoreOrderStock(order);
+    await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+    if (order) order.status = newStatus;
+    updateOrdersBadge(); renderOrderTable(); renderDashboard(); updateNotifications();
+  } catch (e) { alert("Update failed: " + (e.code || e.message)); }
+}
+
 function renderOrderTable() {
   const tbody = $("#order-rows");
+  const cardsWrap = document.getElementById("ord-cards");
   const q = ofSearch.trim().toLowerCase();
-  const visible = q ? orders.filter(o =>
+
+  // Update pill counts
+  const newCount = orders.filter(isNewOrder).length;
+  const statusKeys = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+  const tcAll = document.getElementById("ord-tc-all"); if (tcAll) tcAll.textContent = orders.length;
+  const tcNew = document.getElementById("ord-tc-new"); if (tcNew) tcNew.textContent = newCount;
+  statusKeys.forEach(s => {
+    const el = document.getElementById("ord-tc-" + s);
+    if (el) el.textContent = orders.filter(o => (o.status || "pending") === s).length;
+  });
+
+  // Update header subtitle
+  const sub = document.getElementById("orders-subtitle");
+  const pCount = orders.filter(o => (o.status || "pending") === "pending").length;
+  if (sub) sub.textContent = `${orders.length} total · ${pCount} pending`;
+  const countEl = document.getElementById("orders-count");
+  if (countEl) countEl.textContent = `${orders.length} order(s)`;
+
+  // Filter
+  let visible = orders;
+  if (ofStatusFilter === "new") visible = orders.filter(isNewOrder);
+  else if (ofStatusFilter !== "all") visible = orders.filter(o => (o.status || "pending") === ofStatusFilter);
+  if (q) visible = visible.filter(o =>
     String(o.orderNum || "").includes(q) ||
     o.id.toLowerCase().startsWith(q) ||
     (o.customer?.name || "").toLowerCase().includes(q) ||
     (o.customer?.mobile || "").includes(q)
-  ) : orders;
-  $("#orders-count").textContent = q ? `${visible.length} of ${orders.length} order(s)` : `${orders.length} order(s)`;
-  if (!orders.length) { tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No orders yet.</td></tr>`; return; }
-  if (!visible.length) { tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No orders match your search.</td></tr>`; return; }
+  );
+
+  const empty = (msg) => {
+    tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">${msg}</td></tr>`;
+    if (cardsWrap) cardsWrap.innerHTML = `<p class="muted-note" style="text-align:center;padding:2rem 0;">${msg}</p>`;
+  };
+  if (!orders.length) { empty("No orders yet."); return; }
+  if (!visible.length) { empty("No orders match."); return; }
+
+  // Desktop table
+  const opts = (st) => ORDER_STATUSES.map(s => `<option value="${s}" ${st === s ? "selected" : ""}>${s}</option>`).join("");
   tbody.innerHTML = visible.map(o => {
     const c = o.customer || {};
+    const st = o.status || "pending";
     const items = (o.items || []).map(i => `${escapeHtml(i.name)} (${i.size}) ×${i.quantity}`).join("<br>");
-    const opts = ORDER_STATUSES.map(s => `<option value="${s}" ${(o.status || "pending") === s ? "selected" : ""}>${s}</option>`).join("");
-    return `<tr data-oid="${o.id}" style="cursor:pointer;" title="Click for order details">
+    return `<tr data-oid="${o.id}" style="cursor:pointer;">
       <td><strong>${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</strong></td>
-      <td>${escapeHtml(c.name || "")}<br><span class="muted-note">${escapeHtml(c.mobile || "")}</span><br><span class="muted-note">${escapeHtml(c.address || "")}</span></td>
+      <td>${escapeHtml(c.name || "")}<br><span class="muted-note">${escapeHtml(c.mobile || "")}</span></td>
       <td style="font-size:.82rem;">${items}</td>
       <td>৳${o.total || 0}</td>
       <td>${escapeHtml(o.payment?.method || "")}${o.payment?.txnId ? `<br><span class="muted-note">${escapeHtml(o.payment.txnId)}</span>` : ""}</td>
-      <td><select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);">${opts}</select></td>
+      <td><select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);">${opts(st)}</select></td>
       <td class="muted-note">${fmtDate(o.createdAt)}</td>
     </tr>`;
   }).join("");
   tbody.querySelectorAll("select[data-order]").forEach(sel => {
-    sel.addEventListener("change", async () => {
-      sel.disabled = true;
-      const order = orders.find(o => o.id === sel.dataset.order);
-      const prevStatus = order?.status || "pending";
-      const newStatus = sel.value;
-      try {
-        if (newStatus === "confirmed" && prevStatus !== "confirmed") await deductOrderStock(order);
-        if (newStatus === "cancelled" && prevStatus !== "cancelled") await restoreOrderStock(order);
-        await updateDoc(doc(db, "orders", sel.dataset.order), { status: newStatus });
-        if (order) order.status = newStatus;
-        updateOrdersBadge();
-        renderOrderTable();
-        renderDashboard();
-        updateNotifications();
-      } catch (e) { alert("Update failed: " + (e.code || e.message)); sel.disabled = false; }
-    });
+    sel.addEventListener("change", async () => { sel.disabled = true; await changeOrderStatus(sel.dataset.order, sel.value); });
   });
   tbody.querySelectorAll("tr[data-oid]").forEach(row => {
     row.addEventListener("click", e => {
@@ -568,8 +679,56 @@ function renderOrderTable() {
       if (order) openOrderDetail(order);
     });
   });
-  const expBtn = document.getElementById("export-orders-btn");
-  if (expBtn && !expBtn._wired) { expBtn._wired = true; expBtn.addEventListener("click", exportOrdersCSV); }
+
+  // Mobile cards
+  if (!cardsWrap) return;
+  cardsWrap.innerHTML = visible.map(o => {
+    const c = o.customer || {};
+    const st = o.status || "pending";
+    const ordId = o.orderNum ? "#" + String(o.orderNum).padStart(6,"0") : "#" + o.id.slice(0,6).toUpperCase();
+    const initial = (c.name || "?")[0].toUpperCase();
+    const d = fmtDate(o.createdAt);
+    const itemsHtml = (o.items || []).map(i =>
+      `<div class="orc-item"><span>${escapeHtml(i.name)} <span class="orc-size">(${i.size})</span></span><span class="orc-qty">×${i.quantity}</span></div>`
+    ).join("");
+    return `<div class="orc" data-oid="${o.id}">
+      <div class="orc-head">
+        <div><div class="orc-ordnum">${ordId}</div><div class="orc-date-pay">${d} · ${escapeHtml(o.payment?.method || "")}</div></div>
+        <span class="orc-badge st-${st}">${st}</span>
+      </div>
+      <div class="orc-customer">
+        <div class="orc-av">${initial}</div>
+        <div class="orc-cinfo">
+          <div class="orc-name">${escapeHtml(c.name || "—")}</div>
+          <div class="orc-phone">${escapeHtml(c.mobile || "")}</div>
+          <div class="orc-addr">${escapeHtml(c.address || "")}</div>
+        </div>
+        <div class="orc-amount">৳${(o.total || 0).toLocaleString()}</div>
+      </div>
+      <div class="orc-items-block">${itemsHtml}</div>
+      <div class="orc-actions">
+        <button class="orc-act-btn" data-view="${o.id}"><ion-icon name="eye-outline"></ion-icon> View</button>
+        <button class="orc-act-btn" data-call="${escapeHtml(c.mobile || "")}"><ion-icon name="call-outline"></ion-icon> Call</button>
+        <div class="orc-act-btn orc-status-cell">
+          <ion-icon name="swap-vertical-outline"></ion-icon> Status
+          <select class="orc-status-sel" data-order="${o.id}">${opts(st)}</select>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+
+  cardsWrap.querySelectorAll("[data-view]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const order = orders.find(o => o.id === btn.dataset.view);
+      if (order) openOrderDetail(order);
+    });
+  });
+  cardsWrap.querySelectorAll("[data-call]").forEach(btn => {
+    btn.addEventListener("click", () => { if (btn.dataset.call) window.open("tel:" + btn.dataset.call); });
+  });
+  cardsWrap.querySelectorAll(".orc-status-sel").forEach(sel => {
+    sel.addEventListener("change", async () => { sel.disabled = true; await changeOrderStatus(sel.dataset.order, sel.value); });
+  });
 }
 
 function renderCustomerTable() {
@@ -723,7 +882,7 @@ async function saveCoupon(e) {
       minOrder: parseFloat(f.querySelector("[name=minOrder]").value) || 0,
       maxUses: parseInt(f.querySelector("[name=maxUses]").value) || 0,
       active: f.querySelector("[name=active]").checked,
-      expiresAt: expiresVal ? new Date(expiresVal) : null,
+      expiresAt: expiresVal ? Timestamp.fromDate(new Date(expiresVal)) : null,
       usedCount: editingCoupon ? (editingCoupon.usedCount || 0) : 0,
       updatedAt: serverTimestamp(),
       ...(!editingCoupon ? { createdAt: serverTimestamp() } : {})
@@ -732,7 +891,13 @@ async function saveCoupon(e) {
     await fetchCoupons();
     renderCouponTable();
     adminToast("Coupon saved.");
-  } catch (err) { alert("Save failed: " + (err.code || err.message)); }
+  } catch (err) {
+    const msg = err.code === "permission-denied"
+      ? "Permission denied. Make sure your Firestore Security Rules are published in Firebase Console."
+      : (err.code || err.message);
+    alert("Save failed: " + msg);
+    console.error("saveCoupon error:", err);
+  }
   finally { btn.disabled = false; btn.textContent = "Save Coupon"; }
 }
 
@@ -1514,7 +1679,7 @@ function printOrderInvoice(order) {
 
 <div class="footer">
   <strong>Zahroun</strong> &nbsp;·&nbsp; Dhanmondi, Dhaka, Bangladesh, 1205<br>
-  WhatsApp: +880 1886-936581 &nbsp;·&nbsp; zahroun.netlify.app<br>
+  WhatsApp: +880 1886-936581 &nbsp;·&nbsp; zahroun.com<br>
   Thank you for your order — we hope you love your fragrance.
 </div>
 <div class="print-btn"><button onclick="window.print()">Print / Save as PDF</button></div>
@@ -1523,38 +1688,70 @@ function printOrderInvoice(order) {
 }
 
 /* ---- Notification system ---------------------------------------------- */
+function timeAgo(ms) {
+  const d = Date.now() - ms;
+  if (d < 60000) return "just now";
+  if (d < 3600000) return Math.floor(d / 60000) + "m ago";
+  if (d < 86400000) return Math.floor(d / 3600000) + "h ago";
+  return Math.floor(d / 86400000) + "d ago";
+}
+
 function updateNotifications() {
-  const pendingOrders = orders.filter(o => o.status === "pending").length;
+  const newOrds = orders.filter(o => isNewOrder(o));
   const unreadMsgs = messages.filter(m => !m.read).length;
   const lowStock = products.filter(p => p.stock !== undefined && p.stock !== null && p.stock < 10).length;
-  const total = pendingOrders + unreadMsgs + lowStock;
+  const unackNew = newOrds.filter(o => !acknowledgedOrderIds.has(o.id)).length;
+  const badgeTotal = unackNew + unreadMsgs + lowStock;
 
   const badge = document.getElementById("notif-badge");
-  if (badge) { badge.textContent = total; badge.style.display = total ? "" : "none"; }
+  if (badge) { badge.textContent = badgeTotal; badge.style.display = badgeTotal ? "" : "none"; }
+
+  const total = newOrds.length + unreadMsgs + lowStock;
 
   const list = document.getElementById("notif-list");
   if (!list) return;
-  const items = [];
-  if (pendingOrders) items.push({ icon: "cart-outline", text: `${pendingOrders} pending order${pendingOrders > 1 ? "s" : ""}`, go: "orders", color: "#f0b429" });
-  if (unreadMsgs) items.push({ icon: "mail-outline", text: `${unreadMsgs} unread message${unreadMsgs > 1 ? "s" : ""}`, go: "messages", color: "#1a56b8" });
-  if (lowStock) items.push({ icon: "warning-outline", text: `${lowStock} product${lowStock > 1 ? "s" : ""} low in stock (<10)`, go: "products", color: "#9b2226" });
 
-  if (!items.length) {
+  if (!total) {
     list.innerHTML = `<div style="padding:1.1rem 1rem;text-align:center;color:var(--text-muted);font-size:.85rem;">All clear ✓</div>`;
-  } else {
-    list.innerHTML = items.map(item => `
-      <div class="notif-item" data-goto="${item.go}" style="display:flex;align-items:center;gap:.7rem;padding:.75rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;">
-        <ion-icon name="${item.icon}" style="font-size:1.2rem;color:${item.color};flex-shrink:0;"></ion-icon>
-        <span style="font-size:.85rem;">${item.text}</span>
-        <ion-icon name="chevron-forward-outline" style="margin-left:auto;color:var(--text-muted);font-size:.9rem;"></ion-icon>
-      </div>`).join("");
-    list.querySelectorAll(".notif-item").forEach(el => {
-      el.addEventListener("click", () => {
-        document.getElementById("notif-dropdown").style.display = "none";
-        switchSection(el.dataset.goto);
-      });
-    });
+    return;
   }
+
+  let html = "";
+
+  if (newOrds.length) {
+    html += `<div style="padding:.45rem 1rem .2rem;font-size:.67rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-color);">New Orders</div>`;
+    html += newOrds.slice(0, 6).map(o => {
+      const c = o.customer || {};
+      const num = o.orderNum || o.id.slice(0, 8).toUpperCase();
+      const ms = o.createdAt?.toMillis ? o.createdAt.toMillis() : (o.createdAt?.seconds || 0) * 1000;
+      return `<div class="notif-item" data-goto="orders" style="display:flex;align-items:center;gap:.7rem;padding:.65rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;">
+        <ion-icon name="cart-outline" style="font-size:1.2rem;color:var(--primary-color);flex-shrink:0;"></ion-icon>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.82rem;font-weight:600;">#${escapeHtml(num)}</div>
+          <div style="font-size:.74rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c.name || "Customer")} · ৳${(o.total || 0).toLocaleString()}</div>
+        </div>
+        <span style="font-size:.7rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">${timeAgo(ms)}</span>
+      </div>`;
+    }).join("");
+  }
+
+  const summaryItems = [];
+  if (unreadMsgs) summaryItems.push({ icon: "mail-outline", text: `${unreadMsgs} unread message${unreadMsgs > 1 ? "s" : ""}`, go: "messages", color: "#1a56b8" });
+  if (lowStock) summaryItems.push({ icon: "warning-outline", text: `${lowStock} product${lowStock > 1 ? "s" : ""} low in stock (<10)`, go: "products", color: "#9b2226" });
+  html += summaryItems.map(item => `
+    <div class="notif-item" data-goto="${item.go}" style="display:flex;align-items:center;gap:.7rem;padding:.75rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;">
+      <ion-icon name="${item.icon}" style="font-size:1.2rem;color:${item.color};flex-shrink:0;"></ion-icon>
+      <span style="font-size:.85rem;">${item.text}</span>
+      <ion-icon name="chevron-forward-outline" style="margin-left:auto;color:var(--text-muted);font-size:.9rem;"></ion-icon>
+    </div>`).join("");
+
+  list.innerHTML = html;
+  list.querySelectorAll(".notif-item").forEach(el => {
+    el.addEventListener("click", () => {
+      document.getElementById("notif-dropdown").style.display = "none";
+      switchSection(el.dataset.goto);
+    });
+  });
 }
 
 /* ---- CSV Export -------------------------------------------------------- */

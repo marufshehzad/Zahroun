@@ -4,7 +4,7 @@
 import { db } from "./firebase-config.js";
 import { auth } from "./firebase-config.js";
 import {
-  doc, getDoc, updateDoc
+  doc, getDoc, updateDoc, increment
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 window.appliedCoupon = null;
@@ -39,8 +39,7 @@ window.clearAppliedCoupon = function () {
 window.incrementCouponUsage = async function (code) {
   if (!code || !auth.currentUser) return;
   try {
-    const used = (window.appliedCoupon?.usedCount || 0) + 1;
-    await updateDoc(doc(db, "coupons", code), { usedCount: used });
+    await updateDoc(doc(db, "coupons", code), { usedCount: increment(1) });
   } catch (e) {
     console.warn("Could not increment coupon usage:", e);
   }
