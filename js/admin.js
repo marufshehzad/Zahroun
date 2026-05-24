@@ -27,6 +27,7 @@ let anCustomTo = null;
 let pfSearch = "", pfCategory = "", pfSort = "default";
 const pfFlags = new Set();
 const sectionLoaded = new Set();
+const acknowledgedOrderIds = new Set(JSON.parse(sessionStorage.getItem("ackOrderIds") || "[]"));
 let galleryImages = [];
 let galleryDragSrc = null;
 let ofSearch = "";
@@ -190,7 +191,11 @@ async function initAdmin(user, profile) {
       e.stopPropagation();
       const open = notifDrop.style.display !== "none";
       notifDrop.style.display = open ? "none" : "";
-      if (!open) updateNotifications();
+      if (!open) {
+        orders.filter(o => isNewOrder(o)).forEach(o => acknowledgedOrderIds.add(o.id));
+        sessionStorage.setItem("ackOrderIds", JSON.stringify([...acknowledgedOrderIds]));
+        updateNotifications();
+      }
     });
     document.addEventListener("click", e => {
       if (!document.getElementById("notif-wrap")?.contains(e.target)) notifDrop.style.display = "none";
@@ -1695,10 +1700,13 @@ function updateNotifications() {
   const newOrds = orders.filter(o => isNewOrder(o));
   const unreadMsgs = messages.filter(m => !m.read).length;
   const lowStock = products.filter(p => p.stock !== undefined && p.stock !== null && p.stock < 10).length;
-  const total = newOrds.length + unreadMsgs + lowStock;
+  const unackNew = newOrds.filter(o => !acknowledgedOrderIds.has(o.id)).length;
+  const badgeTotal = unackNew + unreadMsgs + lowStock;
 
   const badge = document.getElementById("notif-badge");
-  if (badge) { badge.textContent = total; badge.style.display = total ? "" : "none"; }
+  if (badge) { badge.textContent = badgeTotal; badge.style.display = badgeTotal ? "" : "none"; }
+
+  const total = newOrds.length + unreadMsgs + lowStock;
 
   const list = document.getElementById("notif-list");
   if (!list) return;
