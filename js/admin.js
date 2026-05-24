@@ -30,6 +30,7 @@ const sectionLoaded = new Set();
 let galleryImages = [];
 let galleryDragSrc = null;
 let ofSearch = "";
+let ofStatusFilter = "all";
 let currentDetailOrder = null;
 let _cropResolve = null;
 let _cropReject = null;
@@ -349,6 +350,24 @@ function setupSection(name) {
   } else if (name === "orders") {
     const ofInput = document.getElementById("of-search");
     if (ofInput) ofInput.addEventListener("input", e => { ofSearch = e.target.value; renderOrderTable(); });
+    document.querySelectorAll("#ord-tabs .ord-tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        ofStatusFilter = btn.dataset.filter;
+        document.querySelectorAll("#ord-tabs .ord-tab").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderOrderTable();
+      });
+    });
+    document.querySelectorAll(".ord-sum-card[data-sum-filter]").forEach(card => {
+      card.addEventListener("click", () => {
+        const f = card.dataset.sumFilter;
+        ofStatusFilter = f;
+        document.querySelectorAll("#ord-tabs .ord-tab").forEach(b => {
+          b.classList.toggle("active", b.dataset.filter === f);
+        });
+        renderOrderTable();
+      });
+    });
   } else if (name === "settings") {
     $("#settings-form").addEventListener("submit", saveSettings);
   } else if (name === "pages") {
@@ -578,23 +597,56 @@ function renderProductTable() {
 
 function renderOrderTable() {
   const tbody = $("#order-rows");
+  const cardsWrap = document.getElementById("ord-cards");
   const q = ofSearch.trim().toLowerCase();
-  const visible = q ? orders.filter(o =>
+
+  // Update summary strip counts
+  const statusKeys = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+  const sumAll = document.getElementById("sum-n-all");
+  if (sumAll) sumAll.textContent = orders.length;
+  statusKeys.forEach(s => {
+    const el = document.getElementById("sum-n-" + s);
+    if (el) el.textContent = orders.filter(o => (o.status || "pending") === s).length;
+  });
+
+  // Update tab counts
+  const allFilters = ["all", ...statusKeys];
+  allFilters.forEach(s => {
+    const el = document.getElementById("ord-tc-" + s);
+    if (el) el.textContent = s === "all" ? orders.length : orders.filter(o => (o.status || "pending") === s).length;
+  });
+
+  // Apply status filter then search filter
+  let visible = ofStatusFilter === "all" ? orders : orders.filter(o => (o.status || "pending") === ofStatusFilter);
+  if (q) visible = visible.filter(o =>
     String(o.orderNum || "").includes(q) ||
     o.id.toLowerCase().startsWith(q) ||
     (o.customer?.name || "").toLowerCase().includes(q) ||
     (o.customer?.mobile || "").includes(q)
-  ) : orders;
-  $("#orders-count").textContent = q ? `${visible.length} of ${orders.length} order(s)` : `${orders.length} order(s)`;
-  if (!orders.length) { tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No orders yet.</td></tr>`; return; }
-  if (!visible.length) { tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No orders match your search.</td></tr>`; return; }
+  );
+
+  const label = ofStatusFilter === "all" ? `${orders.length} order(s)` : `${visible.length} of ${orders.length} order(s)`;
+  $("#orders-count").textContent = label;
+
+  if (!orders.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No orders yet.</td></tr>`;
+    if (cardsWrap) cardsWrap.innerHTML = `<p class="muted-note" style="text-align:center;padding:2rem 0;">No orders yet.</p>`;
+    return;
+  }
+  if (!visible.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No orders match.</td></tr>`;
+    if (cardsWrap) cardsWrap.innerHTML = `<p class="muted-note" style="text-align:center;padding:2rem 0;">No orders match.</p>`;
+    return;
+  }
+
+  // Desktop table rows
   tbody.innerHTML = visible.map(o => {
     const c = o.customer || {};
     const items = (o.items || []).map(i => `${escapeHtml(i.name)} (${i.size}) ×${i.quantity}`).join("<br>");
     const opts = ORDER_STATUSES.map(s => `<option value="${s}" ${(o.status || "pending") === s ? "selected" : ""}>${s}</option>`).join("");
     return `<tr data-oid="${o.id}" style="cursor:pointer;" title="Click for order details">
       <td><strong>${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</strong></td>
-      <td>${escapeHtml(c.name || "")}<br><span class="muted-note">${escapeHtml(c.mobile || "")}</span><br><span class="muted-note">${escapeHtml(c.address || "")}</span></td>
+      <td>${escapeHtml(c.name || "")}<br><span class="muted-note">${escapeHtml(c.mobile || "")}</span></td>
       <td style="font-size:.82rem;">${items}</td>
       <td>৳${o.total || 0}</td>
       <td>${escapeHtml(o.payment?.method || "")}${o.payment?.txnId ? `<br><span class="muted-note">${escapeHtml(o.payment.txnId)}</span>` : ""}</td>
@@ -602,6 +654,54 @@ function renderOrderTable() {
       <td class="muted-note">${fmtDate(o.createdAt)}</td>
     </tr>`;
   }).join("");
+
+  // Mobile order cards
+  if (cardsWrap) {
+    cardsWrap.innerHTML = visible.map(o => {
+      const c = o.customer || {};
+      const st = o.status || "pending";
+      const itemsText = (o.items || []).map(i => `${escapeHtml(i.name)} (${i.size}) ×${i.quantity}`).join(" · ");
+      const opts = ORDER_STATUSES.map(s => `<option value="${s}" ${st === s ? "selected" : ""}>${s}</option>`).join("");
+      const ordId = o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase();
+      return `<div class="ord-card status-${st}" data-oid="${o.id}">
+        <div class="ord-card-head">
+          <span class="ord-card-id">${ordId}</span>
+          <span class="ord-card-total">৳${o.total || 0}</span>
+        </div>
+        <div class="ord-card-name">${escapeHtml(c.name || "—")}</div>
+        <div class="ord-card-meta">${escapeHtml(c.mobile || "")} · ${escapeHtml(o.payment?.method || "")} · ${fmtDate(o.createdAt)}</div>
+        <div class="ord-card-items">${itemsText}</div>
+        <div class="ord-card-foot">
+          <span class="o-status ${st}">${st}</span>
+          <select class="ord-card-select" data-order="${o.id}">${opts}</select>
+        </div>
+      </div>`;
+    }).join("");
+
+    cardsWrap.querySelectorAll("select[data-order]").forEach(sel => {
+      sel.addEventListener("change", async () => {
+        sel.disabled = true;
+        const order = orders.find(o => o.id === sel.dataset.order);
+        const prevStatus = order?.status || "pending";
+        const newStatus = sel.value;
+        try {
+          if (newStatus === "confirmed" && prevStatus !== "confirmed") await deductOrderStock(order);
+          if (newStatus === "cancelled" && prevStatus !== "cancelled") await restoreOrderStock(order);
+          await updateDoc(doc(db, "orders", sel.dataset.order), { status: newStatus });
+          if (order) order.status = newStatus;
+          updateOrdersBadge(); renderOrderTable(); renderDashboard(); updateNotifications();
+        } catch (e) { alert("Update failed: " + (e.code || e.message)); sel.disabled = false; }
+      });
+    });
+    cardsWrap.querySelectorAll(".ord-card[data-oid]").forEach(card => {
+      card.addEventListener("click", e => {
+        if (e.target.closest("select")) return;
+        const order = orders.find(o => o.id === card.dataset.oid);
+        if (order) openOrderDetail(order);
+      });
+    });
+  }
+
   tbody.querySelectorAll("select[data-order]").forEach(sel => {
     sel.addEventListener("change", async () => {
       sel.disabled = true;
@@ -613,10 +713,7 @@ function renderOrderTable() {
         if (newStatus === "cancelled" && prevStatus !== "cancelled") await restoreOrderStock(order);
         await updateDoc(doc(db, "orders", sel.dataset.order), { status: newStatus });
         if (order) order.status = newStatus;
-        updateOrdersBadge();
-        renderOrderTable();
-        renderDashboard();
-        updateNotifications();
+        updateOrdersBadge(); renderOrderTable(); renderDashboard(); updateNotifications();
       } catch (e) { alert("Update failed: " + (e.code || e.message)); sel.disabled = false; }
     });
   });
