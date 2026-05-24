@@ -6,7 +6,7 @@ import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   collection, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, addDoc,
-  serverTimestamp, query, limit, onSnapshot, where, orderBy
+  serverTimestamp, Timestamp, query, limit, onSnapshot, where, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { uploadImage, optimizedUrl } from "./cloudinary.js";
 
@@ -877,7 +877,7 @@ async function saveCoupon(e) {
       minOrder: parseFloat(f.querySelector("[name=minOrder]").value) || 0,
       maxUses: parseInt(f.querySelector("[name=maxUses]").value) || 0,
       active: f.querySelector("[name=active]").checked,
-      expiresAt: expiresVal ? new Date(expiresVal) : null,
+      expiresAt: expiresVal ? Timestamp.fromDate(new Date(expiresVal)) : null,
       usedCount: editingCoupon ? (editingCoupon.usedCount || 0) : 0,
       updatedAt: serverTimestamp(),
       ...(!editingCoupon ? { createdAt: serverTimestamp() } : {})
@@ -886,7 +886,13 @@ async function saveCoupon(e) {
     await fetchCoupons();
     renderCouponTable();
     adminToast("Coupon saved.");
-  } catch (err) { alert("Save failed: " + (err.code || err.message)); }
+  } catch (err) {
+    const msg = err.code === "permission-denied"
+      ? "Permission denied. Make sure your Firestore Security Rules are published in Firebase Console."
+      : (err.code || err.message);
+    alert("Save failed: " + msg);
+    console.error("saveCoupon error:", err);
+  }
   finally { btn.disabled = false; btn.textContent = "Save Coupon"; }
 }
 
@@ -1708,7 +1714,7 @@ function updateNotifications() {
     html += `<div style="padding:.45rem 1rem .2rem;font-size:.67rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-color);">New Orders</div>`;
     html += newOrds.slice(0, 6).map(o => {
       const c = o.customer || {};
-      const num = o.orderNumber || o.id.slice(0, 8).toUpperCase();
+      const num = o.orderNum || o.id.slice(0, 8).toUpperCase();
       const ms = o.createdAt?.toMillis ? o.createdAt.toMillis() : (o.createdAt?.seconds || 0) * 1000;
       return `<div class="notif-item" data-goto="orders" style="display:flex;align-items:center;gap:.7rem;padding:.65rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;">
         <ion-icon name="cart-outline" style="font-size:1.2rem;color:var(--primary-color);flex-shrink:0;"></ion-icon>
