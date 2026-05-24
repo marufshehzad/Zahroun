@@ -702,7 +702,10 @@ function renderOrderTable() {
       <div class="orc-actions">
         <button class="orc-act-btn" data-view="${o.id}"><ion-icon name="eye-outline"></ion-icon> View</button>
         <button class="orc-act-btn" data-call="${escapeHtml(c.mobile || "")}"><ion-icon name="call-outline"></ion-icon> Call</button>
-        <button class="orc-act-btn" data-ship="${o.id}"><ion-icon name="car-outline"></ion-icon> Ship</button>
+        <div class="orc-act-btn orc-status-cell">
+          <ion-icon name="swap-vertical-outline"></ion-icon> Status
+          <select class="orc-status-sel" data-order="${o.id}">${opts(st)}</select>
+        </div>
       </div>
     </div>`;
   }).join("");
@@ -716,15 +719,8 @@ function renderOrderTable() {
   cardsWrap.querySelectorAll("[data-call]").forEach(btn => {
     btn.addEventListener("click", () => { if (btn.dataset.call) window.open("tel:" + btn.dataset.call); });
   });
-  cardsWrap.querySelectorAll("[data-ship]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const order = orders.find(o => o.id === btn.dataset.ship);
-      if (!order) return;
-      const cur = order.status || "pending";
-      if (cur === "shipped" || cur === "delivered") { adminToast("Already " + cur, false); return; }
-      btn.disabled = true;
-      await changeOrderStatus(btn.dataset.ship, "shipped");
-    });
+  cardsWrap.querySelectorAll(".orc-status-sel").forEach(sel => {
+    sel.addEventListener("change", async () => { sel.disabled = true; await changeOrderStatus(sel.dataset.order, sel.value); });
   });
 }
 
