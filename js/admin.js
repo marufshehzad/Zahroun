@@ -350,24 +350,16 @@ function setupSection(name) {
   } else if (name === "orders") {
     const ofInput = document.getElementById("of-search");
     if (ofInput) ofInput.addEventListener("input", e => { ofSearch = e.target.value; renderOrderTable(); });
-    document.querySelectorAll("#ord-tabs .ord-tab").forEach(btn => {
+    document.querySelectorAll("#ord-tabs .ord-pill").forEach(btn => {
       btn.addEventListener("click", () => {
         ofStatusFilter = btn.dataset.filter;
-        document.querySelectorAll("#ord-tabs .ord-tab").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll("#ord-tabs .ord-pill").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         renderOrderTable();
       });
     });
-    document.querySelectorAll(".ord-sum-card[data-sum-filter]").forEach(card => {
-      card.addEventListener("click", () => {
-        const f = card.dataset.sumFilter;
-        ofStatusFilter = f;
-        document.querySelectorAll("#ord-tabs .ord-tab").forEach(b => {
-          b.classList.toggle("active", b.dataset.filter === f);
-        });
-        renderOrderTable();
-      });
-    });
+    const expBtn = document.getElementById("export-orders-btn");
+    if (expBtn && !expBtn._wired) { expBtn._wired = true; expBtn.addEventListener("click", exportOrdersCSV); }
   } else if (name === "settings") {
     $("#settings-form").addEventListener("submit", saveSettings);
   } else if (name === "pages") {
@@ -595,29 +587,51 @@ function renderProductTable() {
   tbody.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => deleteProduct(Number(b.dataset.del))));
 }
 
+function isNewOrder(o) {
+  try {
+    const ms = o.createdAt?.toMillis ? o.createdAt.toMillis() : o.createdAt?.seconds ? o.createdAt.seconds * 1000 : null;
+    return ms && (Date.now() - ms) < 86400000;
+  } catch { return false; }
+}
+
+async function changeOrderStatus(orderId, newStatus) {
+  const order = orders.find(o => o.id === orderId);
+  const prevStatus = order?.status || "pending";
+  try {
+    if (newStatus === "confirmed" && prevStatus !== "confirmed") await deductOrderStock(order);
+    if (newStatus === "cancelled" && prevStatus !== "cancelled") await restoreOrderStock(order);
+    await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+    if (order) order.status = newStatus;
+    updateOrdersBadge(); renderOrderTable(); renderDashboard(); updateNotifications();
+  } catch (e) { alert("Update failed: " + (e.code || e.message)); }
+}
+
 function renderOrderTable() {
   const tbody = $("#order-rows");
   const cardsWrap = document.getElementById("ord-cards");
   const q = ofSearch.trim().toLowerCase();
 
-  // Update summary strip counts
+  // Update pill counts
+  const newCount = orders.filter(isNewOrder).length;
   const statusKeys = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
-  const sumAll = document.getElementById("sum-n-all");
-  if (sumAll) sumAll.textContent = orders.length;
+  const tcAll = document.getElementById("ord-tc-all"); if (tcAll) tcAll.textContent = orders.length;
+  const tcNew = document.getElementById("ord-tc-new"); if (tcNew) tcNew.textContent = newCount;
   statusKeys.forEach(s => {
-    const el = document.getElementById("sum-n-" + s);
+    const el = document.getElementById("ord-tc-" + s);
     if (el) el.textContent = orders.filter(o => (o.status || "pending") === s).length;
   });
 
-  // Update tab counts
-  const allFilters = ["all", ...statusKeys];
-  allFilters.forEach(s => {
-    const el = document.getElementById("ord-tc-" + s);
-    if (el) el.textContent = s === "all" ? orders.length : orders.filter(o => (o.status || "pending") === s).length;
-  });
+  // Update header subtitle
+  const sub = document.getElementById("orders-subtitle");
+  const pCount = orders.filter(o => (o.status || "pending") === "pending").length;
+  if (sub) sub.textContent = `${orders.length} total · ${pCount} pending`;
+  const countEl = document.getElementById("orders-count");
+  if (countEl) countEl.textContent = `${orders.length} order(s)`;
 
-  // Apply status filter then search filter
-  let visible = ofStatusFilter === "all" ? orders : orders.filter(o => (o.status || "pending") === ofStatusFilter);
+  // Filter
+  let visible = orders;
+  if (ofStatusFilter === "new") visible = orders.filter(isNewOrder);
+  else if (ofStatusFilter !== "all") visible = orders.filter(o => (o.status || "pending") === ofStatusFilter);
   if (q) visible = visible.filter(o =>
     String(o.orderNum || "").includes(q) ||
     o.id.toLowerCase().startsWith(q) ||
@@ -625,97 +639,31 @@ function renderOrderTable() {
     (o.customer?.mobile || "").includes(q)
   );
 
-  const label = ofStatusFilter === "all" ? `${orders.length} order(s)` : `${visible.length} of ${orders.length} order(s)`;
-  $("#orders-count").textContent = label;
+  const empty = (msg) => {
+    tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">${msg}</td></tr>`;
+    if (cardsWrap) cardsWrap.innerHTML = `<p class="muted-note" style="text-align:center;padding:2rem 0;">${msg}</p>`;
+  };
+  if (!orders.length) { empty("No orders yet."); return; }
+  if (!visible.length) { empty("No orders match."); return; }
 
-  if (!orders.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No orders yet.</td></tr>`;
-    if (cardsWrap) cardsWrap.innerHTML = `<p class="muted-note" style="text-align:center;padding:2rem 0;">No orders yet.</p>`;
-    return;
-  }
-  if (!visible.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No orders match.</td></tr>`;
-    if (cardsWrap) cardsWrap.innerHTML = `<p class="muted-note" style="text-align:center;padding:2rem 0;">No orders match.</p>`;
-    return;
-  }
-
-  // Desktop table rows
+  // Desktop table
+  const opts = (st) => ORDER_STATUSES.map(s => `<option value="${s}" ${st === s ? "selected" : ""}>${s}</option>`).join("");
   tbody.innerHTML = visible.map(o => {
     const c = o.customer || {};
+    const st = o.status || "pending";
     const items = (o.items || []).map(i => `${escapeHtml(i.name)} (${i.size}) ×${i.quantity}`).join("<br>");
-    const opts = ORDER_STATUSES.map(s => `<option value="${s}" ${(o.status || "pending") === s ? "selected" : ""}>${s}</option>`).join("");
-    return `<tr data-oid="${o.id}" style="cursor:pointer;" title="Click for order details">
+    return `<tr data-oid="${o.id}" style="cursor:pointer;">
       <td><strong>${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</strong></td>
       <td>${escapeHtml(c.name || "")}<br><span class="muted-note">${escapeHtml(c.mobile || "")}</span></td>
       <td style="font-size:.82rem;">${items}</td>
       <td>৳${o.total || 0}</td>
       <td>${escapeHtml(o.payment?.method || "")}${o.payment?.txnId ? `<br><span class="muted-note">${escapeHtml(o.payment.txnId)}</span>` : ""}</td>
-      <td><select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);">${opts}</select></td>
+      <td><select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);">${opts(st)}</select></td>
       <td class="muted-note">${fmtDate(o.createdAt)}</td>
     </tr>`;
   }).join("");
-
-  // Mobile order cards
-  if (cardsWrap) {
-    cardsWrap.innerHTML = visible.map(o => {
-      const c = o.customer || {};
-      const st = o.status || "pending";
-      const itemsText = (o.items || []).map(i => `${escapeHtml(i.name)} (${i.size}) ×${i.quantity}`).join(" · ");
-      const opts = ORDER_STATUSES.map(s => `<option value="${s}" ${st === s ? "selected" : ""}>${s}</option>`).join("");
-      const ordId = o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase();
-      return `<div class="ord-card status-${st}" data-oid="${o.id}">
-        <div class="ord-card-head">
-          <span class="ord-card-id">${ordId}</span>
-          <span class="ord-card-total">৳${o.total || 0}</span>
-        </div>
-        <div class="ord-card-name">${escapeHtml(c.name || "—")}</div>
-        <div class="ord-card-meta">${escapeHtml(c.mobile || "")} · ${escapeHtml(o.payment?.method || "")} · ${fmtDate(o.createdAt)}</div>
-        <div class="ord-card-items">${itemsText}</div>
-        <div class="ord-card-foot">
-          <span class="o-status ${st}">${st}</span>
-          <select class="ord-card-select" data-order="${o.id}">${opts}</select>
-        </div>
-      </div>`;
-    }).join("");
-
-    cardsWrap.querySelectorAll("select[data-order]").forEach(sel => {
-      sel.addEventListener("change", async () => {
-        sel.disabled = true;
-        const order = orders.find(o => o.id === sel.dataset.order);
-        const prevStatus = order?.status || "pending";
-        const newStatus = sel.value;
-        try {
-          if (newStatus === "confirmed" && prevStatus !== "confirmed") await deductOrderStock(order);
-          if (newStatus === "cancelled" && prevStatus !== "cancelled") await restoreOrderStock(order);
-          await updateDoc(doc(db, "orders", sel.dataset.order), { status: newStatus });
-          if (order) order.status = newStatus;
-          updateOrdersBadge(); renderOrderTable(); renderDashboard(); updateNotifications();
-        } catch (e) { alert("Update failed: " + (e.code || e.message)); sel.disabled = false; }
-      });
-    });
-    cardsWrap.querySelectorAll(".ord-card[data-oid]").forEach(card => {
-      card.addEventListener("click", e => {
-        if (e.target.closest("select")) return;
-        const order = orders.find(o => o.id === card.dataset.oid);
-        if (order) openOrderDetail(order);
-      });
-    });
-  }
-
   tbody.querySelectorAll("select[data-order]").forEach(sel => {
-    sel.addEventListener("change", async () => {
-      sel.disabled = true;
-      const order = orders.find(o => o.id === sel.dataset.order);
-      const prevStatus = order?.status || "pending";
-      const newStatus = sel.value;
-      try {
-        if (newStatus === "confirmed" && prevStatus !== "confirmed") await deductOrderStock(order);
-        if (newStatus === "cancelled" && prevStatus !== "cancelled") await restoreOrderStock(order);
-        await updateDoc(doc(db, "orders", sel.dataset.order), { status: newStatus });
-        if (order) order.status = newStatus;
-        updateOrdersBadge(); renderOrderTable(); renderDashboard(); updateNotifications();
-      } catch (e) { alert("Update failed: " + (e.code || e.message)); sel.disabled = false; }
-    });
+    sel.addEventListener("change", async () => { sel.disabled = true; await changeOrderStatus(sel.dataset.order, sel.value); });
   });
   tbody.querySelectorAll("tr[data-oid]").forEach(row => {
     row.addEventListener("click", e => {
@@ -724,8 +672,60 @@ function renderOrderTable() {
       if (order) openOrderDetail(order);
     });
   });
-  const expBtn = document.getElementById("export-orders-btn");
-  if (expBtn && !expBtn._wired) { expBtn._wired = true; expBtn.addEventListener("click", exportOrdersCSV); }
+
+  // Mobile cards
+  if (!cardsWrap) return;
+  cardsWrap.innerHTML = visible.map(o => {
+    const c = o.customer || {};
+    const st = o.status || "pending";
+    const ordId = o.orderNum ? "#" + String(o.orderNum).padStart(6,"0") : "#" + o.id.slice(0,6).toUpperCase();
+    const initial = (c.name || "?")[0].toUpperCase();
+    const d = fmtDate(o.createdAt);
+    const itemsHtml = (o.items || []).map(i =>
+      `<div class="orc-item"><span>${escapeHtml(i.name)} <span class="orc-size">(${i.size})</span></span><span class="orc-qty">×${i.quantity}</span></div>`
+    ).join("");
+    return `<div class="orc" data-oid="${o.id}">
+      <div class="orc-head">
+        <div><div class="orc-ordnum">${ordId}</div><div class="orc-date-pay">${d} · ${escapeHtml(o.payment?.method || "")}</div></div>
+        <span class="orc-badge st-${st}">${st}</span>
+      </div>
+      <div class="orc-customer">
+        <div class="orc-av">${initial}</div>
+        <div class="orc-cinfo">
+          <div class="orc-name">${escapeHtml(c.name || "—")}</div>
+          <div class="orc-phone">${escapeHtml(c.mobile || "")}</div>
+          <div class="orc-addr">${escapeHtml(c.address || "")}</div>
+        </div>
+        <div class="orc-amount">৳${(o.total || 0).toLocaleString()}</div>
+      </div>
+      <div class="orc-items-block">${itemsHtml}</div>
+      <div class="orc-actions">
+        <button class="orc-act-btn" data-view="${o.id}"><ion-icon name="eye-outline"></ion-icon> View</button>
+        <button class="orc-act-btn" data-call="${escapeHtml(c.mobile || "")}"><ion-icon name="call-outline"></ion-icon> Call</button>
+        <button class="orc-act-btn" data-ship="${o.id}"><ion-icon name="car-outline"></ion-icon> Ship</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  cardsWrap.querySelectorAll("[data-view]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const order = orders.find(o => o.id === btn.dataset.view);
+      if (order) openOrderDetail(order);
+    });
+  });
+  cardsWrap.querySelectorAll("[data-call]").forEach(btn => {
+    btn.addEventListener("click", () => { if (btn.dataset.call) window.open("tel:" + btn.dataset.call); });
+  });
+  cardsWrap.querySelectorAll("[data-ship]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const order = orders.find(o => o.id === btn.dataset.ship);
+      if (!order) return;
+      const cur = order.status || "pending";
+      if (cur === "shipped" || cur === "delivered") { adminToast("Already " + cur, false); return; }
+      btn.disabled = true;
+      await changeOrderStatus(btn.dataset.ship, "shipped");
+    });
+  });
 }
 
 function renderCustomerTable() {
