@@ -412,6 +412,14 @@
         .orc-act-btn:hover { background: var(--bg-color); color: var(--primary-color); }
         .orc-status-cell { position: relative; overflow: hidden; cursor: pointer; }
         .orc-status-sel { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; font-size: 1rem; }
+        .orc-pay-strip { display: flex; align-items: center; justify-content: space-between; padding: .6rem 1rem; font-size: .78rem; border-bottom: 1px solid #f0eee8; gap: .5rem; }
+        .orc-pay-pending { background: #fff8e1; }
+        .orc-pay-verified { background: #f0faf2; }
+        .orc-pay-strip .pay-info { color: #555; line-height: 1.5; flex: 1; min-width: 0; }
+        .orc-pay-strip .pay-info strong { color: #1a1a1a; font-size: .8rem; }
+        .orc-verify-btn { background: #e65100; color: #fff; border: none; border-radius: 6px; padding: .38rem .9rem; font-size: .78rem; font-weight: 600; cursor: pointer; font-family: var(--font-sans); white-space: nowrap; flex-shrink: 0; }
+        .orc-verify-btn:hover { background: #bf360c; }
+        .orc-verified-tag { background: #e6f4ea; color: #1e7e34; font-weight: 700; padding: .28rem .7rem; border-radius: 6px; font-size: .75rem; flex-shrink: 0; }
 
         @media (max-width: 900px) {
             .ord-table-wrap { display: none !important; }

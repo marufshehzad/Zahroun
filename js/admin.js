@@ -667,9 +667,9 @@ function renderOrderTable() {
       <td>${escapeHtml(o.payment?.method || "")}
         ${o.payment?.senderMobile ? `<br><span class="muted-note">${escapeHtml(o.payment.senderMobile)}</span>` : ""}
         ${o.payment?.txnId ? `<br><span class="muted-note">${escapeHtml(o.payment.txnId)}</span>` : ""}
-        ${o.payment?.method !== "COD" ? (o.paymentStatus === "verified"
+        ${(o.payment?.method === 'bKash' || o.payment?.method === 'Nagad') ? (o.paymentStatus === "verified"
           ? `<br><span style="color:#1e7e34;font-size:.74rem;font-weight:600;">✓ Verified</span>`
-          : `<br><button onclick="window._verifyPayment('${o.id}')" style="margin-top:.2rem;background:#1e7e34;color:#fff;border:none;border-radius:4px;padding:.2rem .6rem;font-size:.73rem;cursor:pointer;">Verify ✓</button>`) : ""}
+          : `<br><button onclick="window._verifyPayment('${o.id}')" style="margin-top:.3rem;background:#e65100;color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.75rem;font-weight:600;cursor:pointer;">Verify Payment</button>`) : ""}
       </td>
       <td><select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);">${opts(st)}</select></td>
       <td class="muted-note">${fmtDate(o.createdAt)}</td>
@@ -701,16 +701,20 @@ function renderOrderTable() {
       <div class="orc-head">
         <div>
           <div class="orc-ordnum">${ordId}</div>
-          <div class="orc-date-pay">${d} · ${escapeHtml(o.payment?.method || "")}
-            ${o.payment?.method !== "COD" ? (o.paymentStatus === "verified"
-              ? ` · <span style="color:#1e7e34;font-weight:600;">✓ Verified</span>`
-              : ` · <span style="color:#9b2226;">⏳ Unverified</span>`) : ""}
-          </div>
-          ${o.payment?.senderMobile ? `<div style="font-size:.74rem;color:var(--text-muted);margin-top:.1rem;">Paid from: ${escapeHtml(o.payment.senderMobile)}</div>` : ""}
-          ${o.payment?.txnId ? `<div style="font-size:.74rem;color:var(--text-muted);">TxnID: ${escapeHtml(o.payment.txnId)}</div>` : ""}
+          <div class="orc-date-pay">${d} · ${escapeHtml(o.payment?.method || "")}</div>
         </div>
         <span class="orc-badge st-${st}">${st}</span>
       </div>
+      ${(o.payment?.method === 'bKash' || o.payment?.method === 'Nagad') ? `
+      <div class="orc-pay-strip ${o.paymentStatus === 'verified' ? 'orc-pay-verified' : 'orc-pay-pending'}">
+        <div class="pay-info">
+          ${o.payment?.senderMobile ? `<strong>${escapeHtml(o.payment.senderMobile)}</strong>` : ''}
+          ${o.payment?.txnId ? `<br>TxnID: ${escapeHtml(o.payment.txnId)}` : ''}
+        </div>
+        ${o.paymentStatus === 'verified'
+          ? `<span class="orc-verified-tag">✓ Verified</span>`
+          : `<button class="orc-verify-btn" data-verify="${o.id}">Verify Payment</button>`}
+      </div>` : ''}
       <div class="orc-customer">
         <div class="orc-av">${initial}</div>
         <div class="orc-cinfo">
@@ -724,9 +728,6 @@ function renderOrderTable() {
       <div class="orc-actions">
         <button class="orc-act-btn" data-view="${o.id}"><ion-icon name="eye-outline"></ion-icon> View</button>
         <button class="orc-act-btn" data-call="${escapeHtml(c.mobile || "")}"><ion-icon name="call-outline"></ion-icon> Call</button>
-        ${o.payment?.method !== "COD" && o.paymentStatus !== "verified"
-          ? `<button class="orc-act-btn" data-verify="${o.id}" style="background:#e6f4ea;color:#1e7e34;border-color:#b7dfbf;"><ion-icon name="checkmark-circle-outline"></ion-icon> Verify</button>`
-          : ""}
         <div class="orc-act-btn orc-status-cell">
           <ion-icon name="swap-vertical-outline"></ion-icon> Status
           <select class="orc-status-sel" data-order="${o.id}">${opts(st)}</select>
