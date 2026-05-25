@@ -105,6 +105,18 @@
             .checkout-section { padding: 1.25rem !important; }
             .checkout-section h2 { font-size: 1.3rem; }
         }
+        .pay-badge {
+            display: inline-flex; align-items: center;
+            padding: 3px 12px; border-radius: 5px;
+            font-size: .88rem; font-family: var(--font-sans);
+            font-weight: 700; vertical-align: middle;
+            margin-left: .5rem; letter-spacing: .3px;
+        }
+        .pay-badge-bkash { background: #E2136E; color: #fff; }
+        .pay-badge-nagad { background: #F15A24; color: #fff; }
+        .pay-badge-cod { background: #444; color: #fff; font-weight: 500; }
+        .pay-field-label { display: block; margin-bottom: .35rem; font-size: .85rem; font-weight: 500; color: var(--text-main); }
+        .pay-verify-note { background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: .6rem .85rem; font-size: .82rem; color: #7a5800; margin-bottom: .85rem; }
         .coupon-row {
             display: flex;
             gap: .5rem;
@@ -182,21 +194,38 @@
                     <h2>Payment Method</h2>
                     <div class="payment-methods">
                         <label class="payment-option">
-                            <input type="radio" name="payment" value="bKash" onchange="togglePaymentDetails()"> bKash (Manual)
+                            <input type="radio" name="payment" value="bKash" onchange="togglePaymentDetails()">
+                            <span class="pay-badge pay-badge-bkash">bKash</span>
                             <div class="payment-details" id="bkash-details">
-                                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Please send money to our bKash Number: <strong>01886-936581</strong> (Personal)</p>
-                                <input type="text" id="bkashTxn" class="form-control" placeholder="Enter Transaction ID">
+                                <div class="pay-verify-note">Send payment to <strong>01886-936581</strong> (Personal bKash), then fill in your details below.</div>
+                                <div style="margin-bottom:.85rem;">
+                                    <label class="pay-field-label">Your bKash Number (number you paid from)</label>
+                                    <input type="tel" id="bkashMobile" class="form-control" placeholder="01XXXXXXXXX">
+                                </div>
+                                <div>
+                                    <label class="pay-field-label">Transaction ID</label>
+                                    <input type="text" id="bkashTxn" class="form-control" placeholder="e.g. 8C5K9X1H2J">
+                                </div>
                             </div>
                         </label>
                         <label class="payment-option">
-                            <input type="radio" name="payment" value="Nagad" onchange="togglePaymentDetails()"> Nagad (Manual)
+                            <input type="radio" name="payment" value="Nagad" onchange="togglePaymentDetails()">
+                            <span class="pay-badge pay-badge-nagad">Nagad</span>
                             <div class="payment-details" id="nagad-details">
-                                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Please send money to our Nagad Number: <strong>01886-936581</strong> (Personal)</p>
-                                <input type="text" id="nagadTxn" class="form-control" placeholder="Enter Transaction ID">
+                                <div class="pay-verify-note">Send payment to <strong>01886-936581</strong> (Personal Nagad), then fill in your details below.</div>
+                                <div style="margin-bottom:.85rem;">
+                                    <label class="pay-field-label">Your Nagad Number (number you paid from)</label>
+                                    <input type="tel" id="nagadMobile" class="form-control" placeholder="01XXXXXXXXX">
+                                </div>
+                                <div>
+                                    <label class="pay-field-label">Transaction ID</label>
+                                    <input type="text" id="nagadTxn" class="form-control" placeholder="e.g. 8C5K9X1H2J">
+                                </div>
                             </div>
                         </label>
                         <label class="payment-option">
-                            <input type="radio" name="payment" value="COD" checked onchange="togglePaymentDetails()"> Cash on Delivery
+                            <input type="radio" name="payment" value="COD" checked onchange="togglePaymentDetails()">
+                            <span class="pay-badge pay-badge-cod">Cash on Delivery</span>
                         </label>
                     </div>
                 </div>
@@ -427,18 +456,24 @@
             const nagadDetails = document.getElementById('nagad-details');
             const bkashTxn = document.getElementById('bkashTxn');
             const nagadTxn = document.getElementById('nagadTxn');
+            const bkashMobile = document.getElementById('bkashMobile');
+            const nagadMobile = document.getElementById('nagadMobile');
 
             bkashDetails.style.display = 'none';
             nagadDetails.style.display = 'none';
             bkashTxn.required = false;
             nagadTxn.required = false;
+            bkashMobile.required = false;
+            nagadMobile.required = false;
 
             if (paymentMethod === 'bKash') {
                 bkashDetails.style.display = 'block';
                 bkashTxn.required = true;
+                bkashMobile.required = true;
             } else if (paymentMethod === 'Nagad') {
                 nagadDetails.style.display = 'block';
                 nagadTxn.required = true;
+                nagadMobile.required = true;
             }
         }
 
@@ -486,9 +521,15 @@
             const deliveryCharge = parseInt(deliverySelect.value);
 
             const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-            let txnId = '';
-            if (paymentMethod === 'bKash') txnId = document.getElementById('bkashTxn').value;
-            if (paymentMethod === 'Nagad') txnId = document.getElementById('nagadTxn').value;
+            let txnId = '', senderMobile = '';
+            if (paymentMethod === 'bKash') {
+                txnId = document.getElementById('bkashTxn').value.trim();
+                senderMobile = document.getElementById('bkashMobile').value.trim();
+            }
+            if (paymentMethod === 'Nagad') {
+                txnId = document.getElementById('nagadTxn').value.trim();
+                senderMobile = document.getElementById('nagadMobile').value.trim();
+            }
 
             const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.selectedPrice) * item.quantity), 0);
             const coupon = window.appliedCoupon || null;
@@ -515,6 +556,7 @@
             message += `*Items:*\n${itemList}\nSubtotal: ${subtotal.toFixed(2)} BDT\n`;
             if (discount > 0 && coupon) message += `Coupon (${coupon.id}): -${discount.toFixed(2)} BDT\n`;
             message += `Delivery: ${deliveryCharge} BDT\n*Total:* ${total.toFixed(2)} BDT\n\n*Payment Method:* ${paymentMethod}\n`;
+            if (senderMobile) message += `*Paid From:* ${senderMobile}\n`;
             if (txnId) message += `*Transaction ID:* ${txnId}\n`;
             const whatsappUrl = `https://wa.me/8801886936581?text=${encodeURIComponent(message)}`;
 
@@ -531,7 +573,8 @@
                     couponCode: coupon ? coupon.id : null,
                     delivery: deliveryCharge,
                     total: +total.toFixed(2),
-                    payment: { method: paymentMethod, txnId: txnId || null }
+                    payment: { method: paymentMethod, txnId: txnId || null, senderMobile: senderMobile || null },
+                    paymentStatus: paymentMethod === 'COD' ? 'cod' : 'pending'
                 });
 
                 if (window.zahrounGA) window.zahrounGA.trackPurchase(orderId, items, total, coupon ? coupon.id : null);

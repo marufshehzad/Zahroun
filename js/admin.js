@@ -664,7 +664,13 @@ function renderOrderTable() {
       <td>${escapeHtml(c.name || "")}<br><span class="muted-note">${escapeHtml(c.mobile || "")}</span></td>
       <td style="font-size:.82rem;">${items}</td>
       <td>৳${o.total || 0}</td>
-      <td>${escapeHtml(o.payment?.method || "")}${o.payment?.txnId ? `<br><span class="muted-note">${escapeHtml(o.payment.txnId)}</span>` : ""}</td>
+      <td>${escapeHtml(o.payment?.method || "")}
+        ${o.payment?.senderMobile ? `<br><span class="muted-note">${escapeHtml(o.payment.senderMobile)}</span>` : ""}
+        ${o.payment?.txnId ? `<br><span class="muted-note">${escapeHtml(o.payment.txnId)}</span>` : ""}
+        ${o.payment?.method !== "COD" ? (o.paymentStatus === "verified"
+          ? `<br><span style="color:#1e7e34;font-size:.74rem;font-weight:600;">✓ Verified</span>`
+          : `<br><button onclick="window._verifyPayment('${o.id}')" style="margin-top:.2rem;background:#1e7e34;color:#fff;border:none;border-radius:4px;padding:.2rem .6rem;font-size:.73rem;cursor:pointer;">Verify ✓</button>`) : ""}
+      </td>
       <td><select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);">${opts(st)}</select></td>
       <td class="muted-note">${fmtDate(o.createdAt)}</td>
     </tr>`;
@@ -693,7 +699,16 @@ function renderOrderTable() {
     ).join("");
     return `<div class="orc" data-oid="${o.id}">
       <div class="orc-head">
-        <div><div class="orc-ordnum">${ordId}</div><div class="orc-date-pay">${d} · ${escapeHtml(o.payment?.method || "")}</div></div>
+        <div>
+          <div class="orc-ordnum">${ordId}</div>
+          <div class="orc-date-pay">${d} · ${escapeHtml(o.payment?.method || "")}
+            ${o.payment?.method !== "COD" ? (o.paymentStatus === "verified"
+              ? ` · <span style="color:#1e7e34;font-weight:600;">✓ Verified</span>`
+              : ` · <span style="color:#9b2226;">⏳ Unverified</span>`) : ""}
+          </div>
+          ${o.payment?.senderMobile ? `<div style="font-size:.74rem;color:var(--text-muted);margin-top:.1rem;">Paid from: ${escapeHtml(o.payment.senderMobile)}</div>` : ""}
+          ${o.payment?.txnId ? `<div style="font-size:.74rem;color:var(--text-muted);">TxnID: ${escapeHtml(o.payment.txnId)}</div>` : ""}
+        </div>
         <span class="orc-badge st-${st}">${st}</span>
       </div>
       <div class="orc-customer">
@@ -709,6 +724,9 @@ function renderOrderTable() {
       <div class="orc-actions">
         <button class="orc-act-btn" data-view="${o.id}"><ion-icon name="eye-outline"></ion-icon> View</button>
         <button class="orc-act-btn" data-call="${escapeHtml(c.mobile || "")}"><ion-icon name="call-outline"></ion-icon> Call</button>
+        ${o.payment?.method !== "COD" && o.paymentStatus !== "verified"
+          ? `<button class="orc-act-btn" data-verify="${o.id}" style="background:#e6f4ea;color:#1e7e34;border-color:#b7dfbf;"><ion-icon name="checkmark-circle-outline"></ion-icon> Verify</button>`
+          : ""}
         <div class="orc-act-btn orc-status-cell">
           <ion-icon name="swap-vertical-outline"></ion-icon> Status
           <select class="orc-status-sel" data-order="${o.id}">${opts(st)}</select>
@@ -726,10 +744,30 @@ function renderOrderTable() {
   cardsWrap.querySelectorAll("[data-call]").forEach(btn => {
     btn.addEventListener("click", () => { if (btn.dataset.call) window.open("tel:" + btn.dataset.call); });
   });
+  cardsWrap.querySelectorAll("[data-verify]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (confirm("Payment verified in bKash/Nagad app?")) await verifyPayment(btn.dataset.verify);
+    });
+  });
   cardsWrap.querySelectorAll(".orc-status-sel").forEach(sel => {
     sel.addEventListener("change", async () => { sel.disabled = true; await changeOrderStatus(sel.dataset.order, sel.value); });
   });
 }
+
+async function verifyPayment(orderId) {
+  try {
+    await updateDoc(doc(db, "orders", orderId), { paymentStatus: "verified", status: "confirmed" });
+    const idx = orders.findIndex(o => o.id === orderId);
+    if (idx !== -1) { orders[idx].paymentStatus = "verified"; orders[idx].status = "confirmed"; }
+    renderOrderTable();
+    if (currentDetailOrder?.id === orderId) {
+      currentDetailOrder.paymentStatus = "verified";
+      currentDetailOrder.status = "confirmed";
+      openOrderDetail(currentDetailOrder);
+    }
+  } catch (e) { alert("Verify failed: " + (e.code || e.message)); }
+}
+window._verifyPayment = verifyPayment;
 
 function renderCustomerTable() {
   const tbody = $("#customer-rows");
@@ -1521,8 +1559,17 @@ function openOrderDetail(order) {
       <div>
         <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin-bottom:.5rem;">Payment</div>
         <div style="font-size:.9rem;line-height:1.8;">
-          <strong>${escapeHtml(order.payment?.method || "—")}</strong><br>
+          <strong>${escapeHtml(order.payment?.method || "—")}</strong>
+          ${order.payment?.method !== "COD"
+            ? (order.paymentStatus === "verified"
+              ? `<span style="display:inline-block;margin-left:.5rem;background:#e6f4ea;color:#1e7e34;font-size:.72rem;font-weight:700;padding:.1rem .5rem;border-radius:4px;vertical-align:middle;">✓ VERIFIED</span>`
+              : `<span style="display:inline-block;margin-left:.5rem;background:#fdecea;color:#9b2226;font-size:.72rem;font-weight:600;padding:.1rem .5rem;border-radius:4px;vertical-align:middle;">⏳ UNVERIFIED</span>`)
+            : ""}<br>
+          ${order.payment?.senderMobile ? `Paid from: <strong>${escapeHtml(order.payment.senderMobile)}</strong><br>` : ""}
           ${order.payment?.txnId ? `TxnID: <code style="font-size:.82rem;background:var(--bg-color);padding:.1rem .3rem;border-radius:4px;">${escapeHtml(order.payment.txnId)}</code><br>` : ""}
+          ${order.payment?.method !== "COD" && order.paymentStatus !== "verified"
+            ? `<button onclick="window._verifyPayment('${order.id}')" style="margin-top:.4rem;background:#1e7e34;color:#fff;border:none;border-radius:6px;padding:.4rem 1rem;font-size:.82rem;cursor:pointer;font-family:var(--font-sans);">✓ Mark as Verified</button><br>`
+            : ""}
           ${couponCode ? `Coupon: <code style="font-size:.82rem;background:#e6f4ea;color:#1e7e34;padding:.1rem .4rem;border-radius:4px;font-weight:600;">${escapeHtml(couponCode)}</code>` : `<span style="color:var(--text-muted);font-size:.85rem;">No coupon</span>`}
         </div>
       </div>
@@ -1660,6 +1707,7 @@ function printOrderInvoice(order) {
     <div class="lbl">Payment Details</div>
     <div class="val">
       <strong>${escapeHtml(order.payment?.method || "—")}</strong><br>
+      ${order.payment?.senderMobile ? "Paid from: " + escapeHtml(order.payment.senderMobile) + "<br>" : ""}
       ${order.payment?.txnId ? "Txn ID: " + escapeHtml(order.payment.txnId) + "<br>" : ""}
       ${couponCode ? 'Coupon: <strong style="color:#163E34;">' + escapeHtml(couponCode) + "</strong>" : ""}
     </div>
