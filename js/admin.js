@@ -1186,7 +1186,7 @@ async function handleMultiImageUpload(e) {
     statusEl.textContent = `Uploading…`;
     try {
       const { url } = await uploadImage(blob, { onProgress: p => { statusEl.textContent = `Uploading ${p}%…`; } });
-      galleryImages.push(url);
+      galleryImages.unshift(url);
       uploaded++;
       renderGalleryThumbs();
     } catch (err) { statusEl.textContent = "⚠ " + err.message; break; }
