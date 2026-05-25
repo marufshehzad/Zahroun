@@ -1895,7 +1895,7 @@ function exportCustomersCSV() {
 let pageSettings = { homepage: {}, about: {}, contact: {} };
 let galleryPageImages = [];
 let galleryPageDragSrc = null;
-const MAX_UPLOAD_BYTES = 800 * 1024;
+const MAX_UPLOAD_BYTES = 3 * 1024 * 1024;
 
 async function fetchPageSettings() {
   try {
@@ -1969,7 +1969,7 @@ function bindPageUpload(fileId, previewId, statusId, delId, { aspectRatio = NaN 
     const file = fileInput.files[0];
     if (!file) return;
     if (file.size > MAX_UPLOAD_BYTES) {
-      statusEl.textContent = "File exceeds 800KB limit.";
+      statusEl.textContent = "File exceeds 3MB limit.";
       statusEl.style.color = "#9b2226";
       fileInput.value = "";
       return;
@@ -2025,7 +2025,7 @@ async function handleGalleryPageUpload(e) {
   const statusEl = document.getElementById("status-gallery-multi");
   for (const file of files) {
     if (file.size > MAX_UPLOAD_BYTES) {
-      statusEl.textContent = `"${file.name}" exceeds 800KB limit. Skipped.`;
+      statusEl.textContent = `"${file.name}" exceeds 3MB limit. Skipped.`;
       statusEl.style.color = "#9b2226";
       continue;
     }
