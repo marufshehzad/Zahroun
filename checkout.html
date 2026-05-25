@@ -312,7 +312,7 @@
         async function sendInvoiceEmail({ userEmail, name, orderId, items, subtotal, delivery, discount, coupon, total, paymentMethod, address, mobile }) {
             if (typeof emailjs === "undefined" || EMAILJS_PUBLIC_KEY === "YOUR_PUBLIC_KEY") return;
             try {
-                const orderDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+                const orderDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }) + ", " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 
                 const itemsList = items.map(item =>
                     `${item.name} (${item.size})  x${item.quantity}  —  BDT ${(item.price * item.quantity).toFixed(2)}`

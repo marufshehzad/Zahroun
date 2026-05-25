@@ -1038,7 +1038,7 @@ function renderMessagesTable() {
     return;
   }
   tbody.innerHTML = messages.map(m => {
-    const date = m.sentAt?.toDate ? m.sentAt.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "";
+    const date = m.sentAt?.toDate ? (() => { const d = m.sentAt.toDate(); return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) + ", " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }); })() : "";
     const rowStyle = m.read ? "" : "background:var(--accent-color);font-weight:500;";
     return `<tr style="${rowStyle}">
       <td>${escapeHtml(m.name || "")}</td>
@@ -1641,7 +1641,7 @@ function printOrderInvoice(order) {
   const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0);
   const discount = order.couponDiscount || (typeof order.coupon === "object" ? order.coupon?.discount : 0) || 0;
   const couponCode = typeof order.coupon === "string" ? order.coupon : (order.coupon?.id || order.coupon?.code || "");
-  const dateStr = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "";
+  const dateStr = fmtDate(order.createdAt);
   const orderNumDisplay = order.orderNum ? `#${order.orderNum}` : `#${order.id.slice(0, 8).toUpperCase()}`;
   const logoUrl = window.location.origin + "/product%20pictures/main%20logo.png";
   const statusColor = STATUS_COLORS[order.status || "pending"] || "#888";
@@ -2180,8 +2180,12 @@ async function savePagesContact() {
 
 /* ---- Helpers ----------------------------------------------------------- */
 function fmtDate(ts) {
-  try { return ts && ts.toDate ? ts.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"; }
-  catch { return "—"; }
+  try {
+    if (!ts || !ts.toDate) return "—";
+    const d = ts.toDate();
+    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) +
+      ", " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  } catch { return "—"; }
 }
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
