@@ -385,17 +385,22 @@
         }
     </script>
     <script>
-        // Load featured products (waits for Firestore/store.js to be ready)
+        function ctf(url) {
+            if (!url || !url.includes("/upload/")) return url;
+            return url.replace("/upload/", "/upload/f_auto,q_auto,w_600/");
+        }
         document.addEventListener('products-ready', () => {
             const grid = document.getElementById('featured-products');
-            const featured = products.slice(0, 4); // First 4 products
-            
+            let featured = products.filter(p => p.featured || p.bestseller);
+            if (!featured.length) featured = products;
+            featured = featured.slice(0, 4);
+
             grid.innerHTML = featured.map(p => {
                 const defaultPrice = (p.prices && p.prices['50ML']) ? p.prices['50ML'] : p.price;
                 return `
                 <div class="product-card">
                     <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
-                        <img src="${p.image}" alt="${p.name}" class="product-img" style="background-color:#FFFFFF;">
+                        <img src="${ctf(p.image)}" alt="${p.name}" class="product-img" style="background-color:#FFFFFF;">
                         <button class="add-to-cart-quick" onclick="event.stopPropagation(); addToCart(${p.id}, '50ML', ${defaultPrice}); showAddedToast('${p.name}')">Add to Cart</button>
                     </div>
                     <div class="product-info">

@@ -412,6 +412,14 @@
         .orc-act-btn:hover { background: var(--bg-color); color: var(--primary-color); }
         .orc-status-cell { position: relative; overflow: hidden; cursor: pointer; }
         .orc-status-sel { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; font-size: 1rem; }
+        .orc-pay-strip { display: flex; align-items: center; justify-content: space-between; padding: .6rem 1rem; font-size: .78rem; border-bottom: 1px solid #f0eee8; gap: .5rem; }
+        .orc-pay-pending { background: #fff8e1; }
+        .orc-pay-verified { background: #f0faf2; }
+        .orc-pay-strip .pay-info { color: #555; line-height: 1.5; flex: 1; min-width: 0; }
+        .orc-pay-strip .pay-info strong { color: #1a1a1a; font-size: .8rem; }
+        .orc-verify-btn { background: #e65100; color: #fff; border: none; border-radius: 6px; padding: .38rem .9rem; font-size: .78rem; font-weight: 600; cursor: pointer; font-family: var(--font-sans); white-space: nowrap; flex-shrink: 0; }
+        .orc-verify-btn:hover { background: #bf360c; }
+        .orc-verified-tag { background: #e6f4ea; color: #1e7e34; font-weight: 700; padding: .28rem .7rem; border-radius: 6px; font-size: .75rem; flex-shrink: 0; }
 
         @media (max-width: 900px) {
             .ord-table-wrap { display: none !important; }
@@ -422,6 +430,19 @@
             .panel, .stat-card { background: #fff !important; color: #1A1A1A !important; }
             .admin-modal-box { background: #fff !important; color: #1A1A1A !important; }
         }
+        @keyframes notif-bell-ring {
+            0%,100% { transform: rotate(0); }
+            15% { transform: rotate(15deg); }
+            35% { transform: rotate(-12deg); }
+            55% { transform: rotate(8deg); }
+            75% { transform: rotate(-5deg); }
+        }
+        #notif-btn.ringing ion-icon { animation: notif-bell-ring .65s ease; transform-origin: top center; display: inline-block; }
+        .notif-item { transition: background .12s; }
+        .notif-item:hover { background: #f8f7f4 !important; }
+        .notif-new-pill { background: #e65100; color: #fff; font-size: .58rem; font-weight: 700; padding: .05rem .38rem; border-radius: 3px; margin-left: .3rem; vertical-align: middle; letter-spacing: .02em; }
+        .orc-unverify-btn { background: none; color: #9b2226; border: 1px solid #d9a5a5; border-radius: 5px; padding: .22rem .6rem; font-size: .72rem; font-weight: 500; cursor: pointer; font-family: var(--font-sans); white-space: nowrap; margin-top: .25rem; }
+        .orc-unverify-btn:hover { background: #fdecea; }
     </style>
 </head>
 <body>
@@ -806,7 +827,7 @@
                                             <button class="icon-btn danger" id="del-hero-desktop" title="Remove image" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-hero-desktop"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 1400×800px &middot; Ratio 16:9 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 1400×800px &middot; Ratio 16:9 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                     <div class="img-field-wrap">
                                         <label class="fg" style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Mobile Hero Image</label>
@@ -817,7 +838,7 @@
                                             <button class="icon-btn danger" id="del-hero-mobile" title="Remove image" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-hero-mobile"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 768×900px &middot; Ratio 5:6 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 768×900px &middot; Ratio 5:6 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                 </div>
 
@@ -832,7 +853,7 @@
                                             <button class="icon-btn danger" id="del-cat-forher" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-cat-forher"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 380×400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 380×400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                     <div class="img-field-wrap">
                                         <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Unisex</label>
@@ -843,7 +864,7 @@
                                             <button class="icon-btn danger" id="del-cat-unisex" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-cat-unisex"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 380×400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 380×400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                     <div class="img-field-wrap">
                                         <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">For Him</label>
@@ -854,7 +875,7 @@
                                             <button class="icon-btn danger" id="del-cat-forhim" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-cat-forhim"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 380×400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 380×400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                 </div>
 
@@ -869,7 +890,7 @@
                                             <button class="icon-btn danger" id="del-why-0" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-why-0"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 96×96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 96×96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                     <div class="img-field-wrap">
                                         <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Extreme Longevity Icon</label>
@@ -880,7 +901,7 @@
                                             <button class="icon-btn danger" id="del-why-1" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-why-1"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 96×96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 96×96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                     <div class="img-field-wrap">
                                         <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Cruelty Free Icon</label>
@@ -891,7 +912,7 @@
                                             <button class="icon-btn danger" id="del-why-2" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-why-2"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 96×96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 96×96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                 </div>
 
@@ -903,7 +924,7 @@
                                     <input type="file" id="file-gallery-multi" accept="image/*" multiple style="display:none;">
                                     <span class="muted-note" id="status-gallery-multi"></span>
                                 </div>
-                                <div class="img-hint" style="margin-top:.5rem;">Recommended: 600×600px &middot; Ratio 1:1 &middot; JPG/PNG/WebP &middot; Max 5MB each<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                <div class="img-hint" style="margin-top:.5rem;">Recommended: 600×600px &middot; Ratio 1:1 &middot; JPG/PNG/WebP &middot; Max 3MB each<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
 
                                 <div class="pages-save-row">
                                     <button class="btn" id="save-pages-homepage">Save Homepage Images</button>
@@ -925,7 +946,7 @@
                                         <button class="icon-btn danger" id="del-about-hero" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                         <span class="muted-note" id="status-about-hero"></span>
                                     </div>
-                                    <div class="img-hint">Recommended: 1400×600px &middot; Ratio 7:3 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    <div class="img-hint">Recommended: 1400×600px &middot; Ratio 7:3 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     <div style="margin-top:1rem;">
                                         <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.5rem;">Overlay Opacity</label>
                                         <div class="opacity-row">
@@ -945,7 +966,7 @@
                                         <button class="icon-btn danger" id="del-about-mission" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                         <span class="muted-note" id="status-about-mission"></span>
                                     </div>
-                                    <div class="img-hint">Recommended: 560×500px &middot; Ratio 14:12.5 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    <div class="img-hint">Recommended: 560×500px &middot; Ratio 14:12.5 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                 </div>
 
                                 <div class="pages-save-row">
@@ -967,7 +988,7 @@
                                         <button class="icon-btn danger" id="del-contact-hero" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                         <span class="muted-note" id="status-contact-hero"></span>
                                     </div>
-                                    <div class="img-hint">Recommended: 1400×500px &middot; Ratio 14:5 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    <div class="img-hint">Recommended: 1400×500px &middot; Ratio 14:5 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                 </div>
 
                                 <h4 style="font-size:1rem;margin-bottom:1rem;color:var(--primary-color);">Map</h4>
@@ -991,7 +1012,7 @@
                                             <button class="icon-btn danger" id="del-contact-map" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-contact-map"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 560×300px &middot; Ratio 28:15 &middot; JPG/PNG/WebP &middot; Max 5MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 560×300px &middot; Ratio 28:15 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                 </div>
 
@@ -1196,6 +1217,30 @@
         });
     })();
     </script>
+
+    <!-- Payment Verify Confirm Modal -->
+    <div id="verify-confirm-modal" class="admin-modal" style="display:none;">
+        <div class="admin-modal-box" style="max-width:400px;padding:1.75rem 1.5rem;">
+            <div style="text-align:center;margin-bottom:1rem;">
+                <ion-icon name="shield-checkmark-outline" style="font-size:2.8rem;color:#1e7e34;"></ion-icon>
+            </div>
+            <h3 style="margin:0 0 .3rem;font-size:1.05rem;text-align:center;color:var(--text-main);">Verify Payment</h3>
+            <p style="color:var(--text-muted);font-size:.83rem;text-align:center;margin:0 0 1.1rem;">Check your bKash / Nagad app before confirming.</p>
+            <div id="vcp-details" style="background:#f8f7f4;border-radius:10px;padding:.85rem 1rem;font-size:.84rem;line-height:2;margin-bottom:1.1rem;border:1px solid #eceae4;"></div>
+            <label style="display:flex;align-items:flex-start;gap:.6rem;font-size:.84rem;margin-bottom:.65rem;cursor:pointer;">
+                <input type="checkbox" id="vcp-check1" style="margin-top:.22rem;accent-color:#1e7e34;width:15px;height:15px;flex-shrink:0;">
+                <span>Transaction ID is correct and matches the bKash / Nagad app.</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:.6rem;font-size:.84rem;margin-bottom:1.2rem;cursor:pointer;">
+                <input type="checkbox" id="vcp-check2" style="margin-top:.22rem;accent-color:#1e7e34;width:15px;height:15px;flex-shrink:0;">
+                <span>I am sure this payment is valid and want to mark it as verified.</span>
+            </label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;">
+                <button onclick="document.getElementById('verify-confirm-modal').style.display='none';" class="btn btn-outline" style="padding:.55rem;">Cancel</button>
+                <button id="vcp-confirm-btn" onclick="window._confirmVerify()" class="btn" style="background:#1e7e34;border-color:#1e7e34;padding:.55rem;opacity:.45;pointer-events:none;">Yes, Verified ✓</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 

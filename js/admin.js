@@ -27,7 +27,7 @@ let anCustomTo = null;
 let pfSearch = "", pfCategory = "", pfSort = "default";
 const pfFlags = new Set();
 const sectionLoaded = new Set();
-const acknowledgedOrderIds = new Set(JSON.parse(sessionStorage.getItem("ackOrderIds") || "[]"));
+const acknowledgedOrderIds = new Set(JSON.parse(localStorage.getItem("ackOrderIds") || "[]"));
 let galleryImages = [];
 let galleryDragSrc = null;
 let ofSearch = "";
@@ -193,7 +193,7 @@ async function initAdmin(user, profile) {
       notifDrop.style.display = open ? "none" : "";
       if (!open) {
         orders.filter(o => isNewOrder(o)).forEach(o => acknowledgedOrderIds.add(o.id));
-        sessionStorage.setItem("ackOrderIds", JSON.stringify([...acknowledgedOrderIds]));
+        localStorage.setItem("ackOrderIds", JSON.stringify([...acknowledgedOrderIds]));
         updateNotifications();
       }
     });
@@ -268,6 +268,10 @@ function showOrderNotification(order) {
     try { new Notification(title, { body, icon: "product pictures/main logo.png" }); } catch (_) {}
   }
   adminToast(`🛒 New order from ${order.customer?.name || "a customer"} — ৳${order.total}`);
+  const btn = document.getElementById("notif-btn");
+  if (btn) { btn.classList.add("ringing"); btn.addEventListener("animationend", () => btn.classList.remove("ringing"), { once: true }); }
+  const dropdownOpen = document.getElementById("notif-dropdown")?.style.display !== "none";
+  if (dropdownOpen) { acknowledgedOrderIds.add(order.id); localStorage.setItem("ackOrderIds", JSON.stringify([...acknowledgedOrderIds])); }
   updateNotifications();
 }
 
@@ -664,7 +668,13 @@ function renderOrderTable() {
       <td>${escapeHtml(c.name || "")}<br><span class="muted-note">${escapeHtml(c.mobile || "")}</span></td>
       <td style="font-size:.82rem;">${items}</td>
       <td>৳${o.total || 0}</td>
-      <td>${escapeHtml(o.payment?.method || "")}${o.payment?.txnId ? `<br><span class="muted-note">${escapeHtml(o.payment.txnId)}</span>` : ""}</td>
+      <td>${escapeHtml(o.payment?.method || "")}
+        ${o.payment?.senderMobile ? `<br><span class="muted-note">${escapeHtml(o.payment.senderMobile)}</span>` : ""}
+        ${o.payment?.txnId ? `<br><span class="muted-note">${escapeHtml(o.payment.txnId)}</span>` : ""}
+        ${(o.payment?.method === 'bKash' || o.payment?.method === 'Nagad') ? (o.paymentStatus === "verified"
+          ? `<br><span style="color:#1e7e34;font-size:.74rem;font-weight:600;">✓ Verified</span><br><button onclick="window._unverifyPayment('${o.id}')" style="margin-top:.2rem;background:none;color:#9b2226;border:1px solid #d9a5a5;border-radius:4px;padding:.15rem .5rem;font-size:.7rem;cursor:pointer;">Undo</button>`
+          : `<br><button onclick="window._verifyPayment('${o.id}')" style="margin-top:.3rem;background:#e65100;color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.75rem;font-weight:600;cursor:pointer;">Verify Payment</button>`) : ""}
+      </td>
       <td><select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);">${opts(st)}</select></td>
       <td class="muted-note">${fmtDate(o.createdAt)}</td>
     </tr>`;
@@ -674,7 +684,7 @@ function renderOrderTable() {
   });
   tbody.querySelectorAll("tr[data-oid]").forEach(row => {
     row.addEventListener("click", e => {
-      if (e.target.closest("select")) return;
+      if (e.target.closest("select") || e.target.closest("button")) return;
       const order = orders.find(o => o.id === row.dataset.oid);
       if (order) openOrderDetail(order);
     });
@@ -693,9 +703,22 @@ function renderOrderTable() {
     ).join("");
     return `<div class="orc" data-oid="${o.id}">
       <div class="orc-head">
-        <div><div class="orc-ordnum">${ordId}</div><div class="orc-date-pay">${d} · ${escapeHtml(o.payment?.method || "")}</div></div>
+        <div>
+          <div class="orc-ordnum">${ordId}</div>
+          <div class="orc-date-pay">${d} · ${escapeHtml(o.payment?.method || "")}</div>
+        </div>
         <span class="orc-badge st-${st}">${st}</span>
       </div>
+      ${(o.payment?.method === 'bKash' || o.payment?.method === 'Nagad') ? `
+      <div class="orc-pay-strip ${o.paymentStatus === 'verified' ? 'orc-pay-verified' : 'orc-pay-pending'}">
+        <div class="pay-info">
+          ${o.payment?.senderMobile ? `<strong>${escapeHtml(o.payment.senderMobile)}</strong>` : ''}
+          ${o.payment?.txnId ? `<br>TxnID: ${escapeHtml(o.payment.txnId)}` : ''}
+        </div>
+        ${o.paymentStatus === 'verified'
+          ? `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.25rem;"><span class="orc-verified-tag">✓ Verified</span><button class="orc-unverify-btn" data-unverify="${o.id}">Undo</button></div>`
+          : `<button class="orc-verify-btn" data-verify="${o.id}">Verify Payment</button>`}
+      </div>` : ''}
       <div class="orc-customer">
         <div class="orc-av">${initial}</div>
         <div class="orc-cinfo">
@@ -726,10 +749,80 @@ function renderOrderTable() {
   cardsWrap.querySelectorAll("[data-call]").forEach(btn => {
     btn.addEventListener("click", () => { if (btn.dataset.call) window.open("tel:" + btn.dataset.call); });
   });
+  cardsWrap.querySelectorAll("[data-verify]").forEach(btn => {
+    btn.addEventListener("click", () => showVerifyConfirm(btn.dataset.verify));
+  });
+  cardsWrap.querySelectorAll("[data-unverify]").forEach(btn => {
+    btn.addEventListener("click", () => unverifyPayment(btn.dataset.unverify));
+  });
   cardsWrap.querySelectorAll(".orc-status-sel").forEach(sel => {
     sel.addEventListener("change", async () => { sel.disabled = true; await changeOrderStatus(sel.dataset.order, sel.value); });
   });
 }
+
+async function verifyPayment(orderId) {
+  try {
+    await updateDoc(doc(db, "orders", orderId), { paymentStatus: "verified", status: "confirmed" });
+    const idx = orders.findIndex(o => o.id === orderId);
+    if (idx !== -1) { orders[idx].paymentStatus = "verified"; orders[idx].status = "confirmed"; }
+    renderOrderTable();
+    if (currentDetailOrder?.id === orderId) {
+      currentDetailOrder.paymentStatus = "verified";
+      currentDetailOrder.status = "confirmed";
+      openOrderDetail(currentDetailOrder);
+    }
+  } catch (e) { alert("Verify failed: " + (e.code || e.message)); }
+}
+let _pendingVerifyOrderId = null;
+
+function showVerifyConfirm(orderId) {
+  const order = orders.find(o => o.id === orderId);
+  if (!order) return;
+  _pendingVerifyOrderId = orderId;
+  const details = document.getElementById("vcp-details");
+  if (details) {
+    details.innerHTML = `
+      <div><span style="color:var(--text-muted);">Method</span> &nbsp;·&nbsp; <strong>${escapeHtml(order.payment?.method || "")}</strong></div>
+      <div><span style="color:var(--text-muted);">Paid from</span> &nbsp;·&nbsp; <strong>${escapeHtml(order.payment?.senderMobile || "—")}</strong></div>
+      <div><span style="color:var(--text-muted);">Transaction ID</span> &nbsp;·&nbsp; <strong style="font-family:monospace;letter-spacing:.03em;">${escapeHtml(order.payment?.txnId || "—")}</strong></div>
+      <div><span style="color:var(--text-muted);">Amount</span> &nbsp;·&nbsp; <strong>৳${(order.total || 0).toLocaleString()}</strong></div>`;
+  }
+  const c1 = document.getElementById("vcp-check1");
+  const c2 = document.getElementById("vcp-check2");
+  const btn = document.getElementById("vcp-confirm-btn");
+  if (c1) c1.checked = false;
+  if (c2) c2.checked = false;
+  if (btn) { btn.style.opacity = ".45"; btn.style.pointerEvents = "none"; }
+  const toggle = () => {
+    const ok = c1?.checked && c2?.checked;
+    if (btn) { btn.style.opacity = ok ? "1" : ".45"; btn.style.pointerEvents = ok ? "" : "none"; }
+  };
+  if (c1) { c1.onchange = toggle; }
+  if (c2) { c2.onchange = toggle; }
+  document.getElementById("verify-confirm-modal").style.display = "flex";
+}
+window._verifyPayment = showVerifyConfirm;
+
+window._confirmVerify = async function() {
+  document.getElementById("verify-confirm-modal").style.display = "none";
+  if (_pendingVerifyOrderId) { await verifyPayment(_pendingVerifyOrderId); _pendingVerifyOrderId = null; }
+};
+
+async function unverifyPayment(orderId) {
+  if (!confirm("Undo payment verification? Order will return to pending.")) return;
+  try {
+    await updateDoc(doc(db, "orders", orderId), { paymentStatus: "pending", status: "pending" });
+    const idx = orders.findIndex(o => o.id === orderId);
+    if (idx !== -1) { orders[idx].paymentStatus = "pending"; orders[idx].status = "pending"; }
+    renderOrderTable();
+    if (currentDetailOrder?.id === orderId) {
+      currentDetailOrder.paymentStatus = "pending";
+      currentDetailOrder.status = "pending";
+      openOrderDetail(currentDetailOrder);
+    }
+  } catch (e) { alert("Failed: " + (e.code || e.message)); }
+}
+window._unverifyPayment = unverifyPayment;
 
 function renderCustomerTable() {
   const tbody = $("#customer-rows");
@@ -976,7 +1069,7 @@ function renderMessagesTable() {
     return;
   }
   tbody.innerHTML = messages.map(m => {
-    const date = m.sentAt?.toDate ? m.sentAt.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "";
+    const date = m.sentAt?.toDate ? (() => { const d = m.sentAt.toDate(); return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) + ", " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }); })() : "";
     const rowStyle = m.read ? "" : "background:var(--accent-color);font-weight:500;";
     return `<tr style="${rowStyle}">
       <td>${escapeHtml(m.name || "")}</td>
@@ -1093,7 +1186,7 @@ async function handleMultiImageUpload(e) {
     statusEl.textContent = `Uploading…`;
     try {
       const { url } = await uploadImage(blob, { onProgress: p => { statusEl.textContent = `Uploading ${p}%…`; } });
-      galleryImages.push(url);
+      galleryImages.unshift(url);
       uploaded++;
       renderGalleryThumbs();
     } catch (err) { statusEl.textContent = "⚠ " + err.message; break; }
@@ -1521,8 +1614,17 @@ function openOrderDetail(order) {
       <div>
         <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin-bottom:.5rem;">Payment</div>
         <div style="font-size:.9rem;line-height:1.8;">
-          <strong>${escapeHtml(order.payment?.method || "—")}</strong><br>
+          <strong>${escapeHtml(order.payment?.method || "—")}</strong>
+          ${(order.payment?.method === 'bKash' || order.payment?.method === 'Nagad')
+            ? (order.paymentStatus === "verified"
+              ? `<span style="display:inline-block;margin-left:.5rem;background:#e6f4ea;color:#1e7e34;font-size:.72rem;font-weight:700;padding:.1rem .5rem;border-radius:4px;vertical-align:middle;">✓ VERIFIED</span> <button onclick="window._unverifyPayment('${order.id}')" style="background:none;color:#9b2226;border:1px solid #d9a5a5;border-radius:4px;padding:.1rem .45rem;font-size:.72rem;cursor:pointer;font-family:var(--font-sans);">Undo</button>`
+              : `<span style="display:inline-block;margin-left:.5rem;background:#fdecea;color:#9b2226;font-size:.72rem;font-weight:600;padding:.1rem .5rem;border-radius:4px;vertical-align:middle;">⏳ UNVERIFIED</span>`)
+            : ""}<br>
+          ${order.payment?.senderMobile ? `Paid from: <strong>${escapeHtml(order.payment.senderMobile)}</strong><br>` : ""}
           ${order.payment?.txnId ? `TxnID: <code style="font-size:.82rem;background:var(--bg-color);padding:.1rem .3rem;border-radius:4px;">${escapeHtml(order.payment.txnId)}</code><br>` : ""}
+          ${(order.payment?.method === 'bKash' || order.payment?.method === 'Nagad') && order.paymentStatus !== "verified"
+            ? `<button onclick="window._verifyPayment('${order.id}')" style="margin-top:.4rem;background:#1e7e34;color:#fff;border:none;border-radius:6px;padding:.4rem 1rem;font-size:.82rem;cursor:pointer;font-family:var(--font-sans);">✓ Mark as Verified</button><br>`
+            : ""}
           ${couponCode ? `Coupon: <code style="font-size:.82rem;background:#e6f4ea;color:#1e7e34;padding:.1rem .4rem;border-radius:4px;font-weight:600;">${escapeHtml(couponCode)}</code>` : `<span style="color:var(--text-muted);font-size:.85rem;">No coupon</span>`}
         </div>
       </div>
@@ -1570,7 +1672,7 @@ function printOrderInvoice(order) {
   const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0);
   const discount = order.couponDiscount || (typeof order.coupon === "object" ? order.coupon?.discount : 0) || 0;
   const couponCode = typeof order.coupon === "string" ? order.coupon : (order.coupon?.id || order.coupon?.code || "");
-  const dateStr = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "";
+  const dateStr = fmtDate(order.createdAt);
   const orderNumDisplay = order.orderNum ? `#${order.orderNum}` : `#${order.id.slice(0, 8).toUpperCase()}`;
   const logoUrl = window.location.origin + "/product%20pictures/main%20logo.png";
   const statusColor = STATUS_COLORS[order.status || "pending"] || "#888";
@@ -1660,6 +1762,7 @@ function printOrderInvoice(order) {
     <div class="lbl">Payment Details</div>
     <div class="val">
       <strong>${escapeHtml(order.payment?.method || "—")}</strong><br>
+      ${order.payment?.senderMobile ? "Paid from: " + escapeHtml(order.payment.senderMobile) + "<br>" : ""}
       ${order.payment?.txnId ? "Txn ID: " + escapeHtml(order.payment.txnId) + "<br>" : ""}
       ${couponCode ? 'Coupon: <strong style="color:#163E34;">' + escapeHtml(couponCode) + "</strong>" : ""}
     </div>
@@ -1712,7 +1815,7 @@ function updateNotifications() {
   if (!list) return;
 
   if (!total) {
-    list.innerHTML = `<div style="padding:1.1rem 1rem;text-align:center;color:var(--text-muted);font-size:.85rem;">All clear ✓</div>`;
+    list.innerHTML = `<div style="padding:1.6rem 1rem;text-align:center;color:var(--text-muted);font-size:.85rem;"><ion-icon name="checkmark-circle-outline" style="font-size:2rem;display:block;margin:0 auto .4rem;color:#1e7e34;"></ion-icon>All caught up!</div>`;
     return;
   }
 
@@ -1724,10 +1827,11 @@ function updateNotifications() {
       const c = o.customer || {};
       const num = o.orderNum || o.id.slice(0, 8).toUpperCase();
       const ms = o.createdAt?.toMillis ? o.createdAt.toMillis() : (o.createdAt?.seconds || 0) * 1000;
-      return `<div class="notif-item" data-goto="orders" style="display:flex;align-items:center;gap:.7rem;padding:.65rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;">
+      const isNew = !acknowledgedOrderIds.has(o.id);
+      return `<div class="notif-item" data-goto="orders" style="display:flex;align-items:center;gap:.7rem;padding:.65rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;background:${isNew ? '#fffaf5' : '#fff'};">
         <ion-icon name="cart-outline" style="font-size:1.2rem;color:var(--primary-color);flex-shrink:0;"></ion-icon>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:.82rem;font-weight:600;">#${escapeHtml(num)}</div>
+          <div style="font-size:.82rem;font-weight:600;">#${escapeHtml(String(num))}${isNew ? '<span class="notif-new-pill">NEW</span>' : ''}</div>
           <div style="font-size:.74rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c.name || "Customer")} · ৳${(o.total || 0).toLocaleString()}</div>
         </div>
         <span style="font-size:.7rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">${timeAgo(ms)}</span>
@@ -1791,7 +1895,7 @@ function exportCustomersCSV() {
 let pageSettings = { homepage: {}, about: {}, contact: {} };
 let galleryPageImages = [];
 let galleryPageDragSrc = null;
-const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 3 * 1024 * 1024;
 
 async function fetchPageSettings() {
   try {
@@ -1865,7 +1969,7 @@ function bindPageUpload(fileId, previewId, statusId, delId, { aspectRatio = NaN 
     const file = fileInput.files[0];
     if (!file) return;
     if (file.size > MAX_UPLOAD_BYTES) {
-      statusEl.textContent = "File exceeds 5MB limit.";
+      statusEl.textContent = "File exceeds 3MB limit.";
       statusEl.style.color = "#9b2226";
       fileInput.value = "";
       return;
@@ -1921,7 +2025,7 @@ async function handleGalleryPageUpload(e) {
   const statusEl = document.getElementById("status-gallery-multi");
   for (const file of files) {
     if (file.size > MAX_UPLOAD_BYTES) {
-      statusEl.textContent = `"${file.name}" exceeds 5MB limit. Skipped.`;
+      statusEl.textContent = `"${file.name}" exceeds 3MB limit. Skipped.`;
       statusEl.style.color = "#9b2226";
       continue;
     }
@@ -2107,8 +2211,12 @@ async function savePagesContact() {
 
 /* ---- Helpers ----------------------------------------------------------- */
 function fmtDate(ts) {
-  try { return ts && ts.toDate ? ts.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"; }
-  catch { return "—"; }
+  try {
+    if (!ts || !ts.toDate) return "—";
+    const d = ts.toDate();
+    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) +
+      ", " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  } catch { return "—"; }
 }
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

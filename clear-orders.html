@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Clear All Orders — Zahroun Admin</title>
+  <style>
+    body { font-family: sans-serif; max-width: 480px; margin: 4rem auto; padding: 1.5rem; color: #1a1a1a; }
+    h2 { color: #9b2226; }
+    #status { margin-top: 1.5rem; font-size: .95rem; line-height: 1.8; white-space: pre-wrap; }
+    button { background: #9b2226; color: #fff; border: none; border-radius: 8px; padding: .65rem 1.5rem; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .warn { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: .85rem 1rem; font-size: .88rem; margin-bottom: 1.5rem; }
+    #login-section input { display: block; width: 100%; padding: .5rem .75rem; margin-bottom: .6rem; border: 1px solid #ccc; border-radius: 6px; font-size: .95rem; box-sizing: border-box; }
+  </style>
+</head>
+<body>
+  <h2>⚠ Clear All Orders</h2>
+  <div class="warn">This will permanently delete ALL orders from Firestore. This cannot be undone. Log in as admin to proceed.</div>
+
+  <div id="login-section">
+    <input type="email" id="email" placeholder="Admin email" value="marufshehzad5.00@gmail.com">
+    <input type="password" id="password" placeholder="Password">
+    <button id="login-btn" onclick="doLogin()">Log In</button>
+  </div>
+
+  <div id="action-section" style="display:none;">
+    <p id="user-label" style="color:#1e7e34;font-weight:600;"></p>
+    <button id="delete-btn" onclick="deleteAllOrders()">Delete All Orders</button>
+  </div>
+
+  <div id="status"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { initializeFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const app = initializeApp({
+      apiKey: "AIzaSyA8D5-muT5d_kFekNU1lSSYtgZGJI5_OZA",
+      authDomain: "zahroun.firebaseapp.com",
+      projectId: "zahroun",
+      storageBucket: "zahroun.firebasestorage.app",
+      messagingSenderId: "923370845185",
+      appId: "1:923370845185:web:6fd1c3f3c1e235b255bc00"
+    });
+    const auth = getAuth(app);
+    const db = initializeFirestore(app, { experimentalForceLongPolling: true });
+
+    const log = msg => { document.getElementById("status").textContent += msg + "\n"; };
+
+    window.doLogin = async function() {
+      const email = document.getElementById("email").value.trim();
+      const pass = document.getElementById("password").value;
+      const btn = document.getElementById("login-btn");
+      btn.disabled = true; btn.textContent = "Logging in…";
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, pass);
+        document.getElementById("login-section").style.display = "none";
+        document.getElementById("action-section").style.display = "";
+        document.getElementById("user-label").textContent = "Logged in as: " + cred.user.email;
+        log("✓ Login successful.");
+      } catch (e) {
+        btn.disabled = false; btn.textContent = "Log In";
+        log("✗ Login failed: " + (e.code || e.message));
+      }
+    };
+
+    window.deleteAllOrders = async function() {
+      if (!confirm("FINAL WARNING: Delete ALL orders permanently?")) return;
+      const btn = document.getElementById("delete-btn");
+      btn.disabled = true; btn.textContent = "Deleting…";
+      try {
+        log("Fetching orders…");
+        const snap = await getDocs(collection(db, "orders"));
+        const total = snap.docs.length;
+        log(`Found ${total} order(s). Deleting…`);
+        let count = 0;
+        for (const d of snap.docs) {
+          await deleteDoc(doc(db, "orders", d.id));
+          count++;
+          log(`Deleted ${count}/${total}: ${d.id}`);
+        }
+        log(`\n✓ Done. ${count} order(s) deleted.`);
+        log("You can now close this page and delete clear-orders.html");
+        btn.textContent = "Done ✓";
+      } catch (e) {
+        log("✗ Error: " + (e.code || e.message));
+        btn.disabled = false; btn.textContent = "Retry";
+      }
+    };
+  </script>
+</body>
+</html>
