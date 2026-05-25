@@ -1217,6 +1217,30 @@
         });
     })();
     </script>
+
+    <!-- Payment Verify Confirm Modal -->
+    <div id="verify-confirm-modal" class="admin-modal" style="display:none;">
+        <div class="admin-modal-box" style="max-width:400px;padding:1.75rem 1.5rem;">
+            <div style="text-align:center;margin-bottom:1rem;">
+                <ion-icon name="shield-checkmark-outline" style="font-size:2.8rem;color:#1e7e34;"></ion-icon>
+            </div>
+            <h3 style="margin:0 0 .3rem;font-size:1.05rem;text-align:center;color:var(--text-main);">Verify Payment</h3>
+            <p style="color:var(--text-muted);font-size:.83rem;text-align:center;margin:0 0 1.1rem;">Check your bKash / Nagad app before confirming.</p>
+            <div id="vcp-details" style="background:#f8f7f4;border-radius:10px;padding:.85rem 1rem;font-size:.84rem;line-height:2;margin-bottom:1.1rem;border:1px solid #eceae4;"></div>
+            <label style="display:flex;align-items:flex-start;gap:.6rem;font-size:.84rem;margin-bottom:.65rem;cursor:pointer;">
+                <input type="checkbox" id="vcp-check1" style="margin-top:.22rem;accent-color:#1e7e34;width:15px;height:15px;flex-shrink:0;">
+                <span>Transaction ID is correct and matches the bKash / Nagad app.</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:.6rem;font-size:.84rem;margin-bottom:1.2rem;cursor:pointer;">
+                <input type="checkbox" id="vcp-check2" style="margin-top:.22rem;accent-color:#1e7e34;width:15px;height:15px;flex-shrink:0;">
+                <span>I am sure this payment is valid and want to mark it as verified.</span>
+            </label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;">
+                <button onclick="document.getElementById('verify-confirm-modal').style.display='none';" class="btn btn-outline" style="padding:.55rem;">Cancel</button>
+                <button id="vcp-confirm-btn" onclick="window._confirmVerify()" class="btn" style="background:#1e7e34;border-color:#1e7e34;padding:.55rem;opacity:.45;pointer-events:none;">Yes, Verified ✓</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 

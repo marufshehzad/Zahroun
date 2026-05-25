@@ -750,9 +750,7 @@ function renderOrderTable() {
     btn.addEventListener("click", () => { if (btn.dataset.call) window.open("tel:" + btn.dataset.call); });
   });
   cardsWrap.querySelectorAll("[data-verify]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      if (confirm("Payment verified in bKash/Nagad app?")) await verifyPayment(btn.dataset.verify);
-    });
+    btn.addEventListener("click", () => showVerifyConfirm(btn.dataset.verify));
   });
   cardsWrap.querySelectorAll("[data-unverify]").forEach(btn => {
     btn.addEventListener("click", () => unverifyPayment(btn.dataset.unverify));
@@ -775,7 +773,40 @@ async function verifyPayment(orderId) {
     }
   } catch (e) { alert("Verify failed: " + (e.code || e.message)); }
 }
-window._verifyPayment = verifyPayment;
+let _pendingVerifyOrderId = null;
+
+function showVerifyConfirm(orderId) {
+  const order = orders.find(o => o.id === orderId);
+  if (!order) return;
+  _pendingVerifyOrderId = orderId;
+  const details = document.getElementById("vcp-details");
+  if (details) {
+    details.innerHTML = `
+      <div><span style="color:var(--text-muted);">Method</span> &nbsp;·&nbsp; <strong>${escapeHtml(order.payment?.method || "")}</strong></div>
+      <div><span style="color:var(--text-muted);">Paid from</span> &nbsp;·&nbsp; <strong>${escapeHtml(order.payment?.senderMobile || "—")}</strong></div>
+      <div><span style="color:var(--text-muted);">Transaction ID</span> &nbsp;·&nbsp; <strong style="font-family:monospace;letter-spacing:.03em;">${escapeHtml(order.payment?.txnId || "—")}</strong></div>
+      <div><span style="color:var(--text-muted);">Amount</span> &nbsp;·&nbsp; <strong>৳${(order.total || 0).toLocaleString()}</strong></div>`;
+  }
+  const c1 = document.getElementById("vcp-check1");
+  const c2 = document.getElementById("vcp-check2");
+  const btn = document.getElementById("vcp-confirm-btn");
+  if (c1) c1.checked = false;
+  if (c2) c2.checked = false;
+  if (btn) { btn.style.opacity = ".45"; btn.style.pointerEvents = "none"; }
+  const toggle = () => {
+    const ok = c1?.checked && c2?.checked;
+    if (btn) { btn.style.opacity = ok ? "1" : ".45"; btn.style.pointerEvents = ok ? "" : "none"; }
+  };
+  if (c1) { c1.onchange = toggle; }
+  if (c2) { c2.onchange = toggle; }
+  document.getElementById("verify-confirm-modal").style.display = "flex";
+}
+window._verifyPayment = showVerifyConfirm;
+
+window._confirmVerify = async function() {
+  document.getElementById("verify-confirm-modal").style.display = "none";
+  if (_pendingVerifyOrderId) { await verifyPayment(_pendingVerifyOrderId); _pendingVerifyOrderId = null; }
+};
 
 async function unverifyPayment(orderId) {
   if (!confirm("Undo payment verification? Order will return to pending.")) return;
