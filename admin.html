@@ -430,6 +430,19 @@
             .panel, .stat-card { background: #fff !important; color: #1A1A1A !important; }
             .admin-modal-box { background: #fff !important; color: #1A1A1A !important; }
         }
+        @keyframes notif-bell-ring {
+            0%,100% { transform: rotate(0); }
+            15% { transform: rotate(15deg); }
+            35% { transform: rotate(-12deg); }
+            55% { transform: rotate(8deg); }
+            75% { transform: rotate(-5deg); }
+        }
+        #notif-btn.ringing ion-icon { animation: notif-bell-ring .65s ease; transform-origin: top center; display: inline-block; }
+        .notif-item { transition: background .12s; }
+        .notif-item:hover { background: #f8f7f4 !important; }
+        .notif-new-pill { background: #e65100; color: #fff; font-size: .58rem; font-weight: 700; padding: .05rem .38rem; border-radius: 3px; margin-left: .3rem; vertical-align: middle; letter-spacing: .02em; }
+        .orc-unverify-btn { background: none; color: #9b2226; border: 1px solid #d9a5a5; border-radius: 5px; padding: .22rem .6rem; font-size: .72rem; font-weight: 500; cursor: pointer; font-family: var(--font-sans); white-space: nowrap; margin-top: .25rem; }
+        .orc-unverify-btn:hover { background: #fdecea; }
     </style>
 </head>
 <body>

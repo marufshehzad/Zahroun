@@ -27,7 +27,7 @@ let anCustomTo = null;
 let pfSearch = "", pfCategory = "", pfSort = "default";
 const pfFlags = new Set();
 const sectionLoaded = new Set();
-const acknowledgedOrderIds = new Set(JSON.parse(sessionStorage.getItem("ackOrderIds") || "[]"));
+const acknowledgedOrderIds = new Set(JSON.parse(localStorage.getItem("ackOrderIds") || "[]"));
 let galleryImages = [];
 let galleryDragSrc = null;
 let ofSearch = "";
@@ -193,7 +193,7 @@ async function initAdmin(user, profile) {
       notifDrop.style.display = open ? "none" : "";
       if (!open) {
         orders.filter(o => isNewOrder(o)).forEach(o => acknowledgedOrderIds.add(o.id));
-        sessionStorage.setItem("ackOrderIds", JSON.stringify([...acknowledgedOrderIds]));
+        localStorage.setItem("ackOrderIds", JSON.stringify([...acknowledgedOrderIds]));
         updateNotifications();
       }
     });
@@ -268,6 +268,10 @@ function showOrderNotification(order) {
     try { new Notification(title, { body, icon: "product pictures/main logo.png" }); } catch (_) {}
   }
   adminToast(`🛒 New order from ${order.customer?.name || "a customer"} — ৳${order.total}`);
+  const btn = document.getElementById("notif-btn");
+  if (btn) { btn.classList.add("ringing"); btn.addEventListener("animationend", () => btn.classList.remove("ringing"), { once: true }); }
+  const dropdownOpen = document.getElementById("notif-dropdown")?.style.display !== "none";
+  if (dropdownOpen) { acknowledgedOrderIds.add(order.id); localStorage.setItem("ackOrderIds", JSON.stringify([...acknowledgedOrderIds])); }
   updateNotifications();
 }
 
@@ -668,7 +672,7 @@ function renderOrderTable() {
         ${o.payment?.senderMobile ? `<br><span class="muted-note">${escapeHtml(o.payment.senderMobile)}</span>` : ""}
         ${o.payment?.txnId ? `<br><span class="muted-note">${escapeHtml(o.payment.txnId)}</span>` : ""}
         ${(o.payment?.method === 'bKash' || o.payment?.method === 'Nagad') ? (o.paymentStatus === "verified"
-          ? `<br><span style="color:#1e7e34;font-size:.74rem;font-weight:600;">✓ Verified</span>`
+          ? `<br><span style="color:#1e7e34;font-size:.74rem;font-weight:600;">✓ Verified</span><br><button onclick="window._unverifyPayment('${o.id}')" style="margin-top:.2rem;background:none;color:#9b2226;border:1px solid #d9a5a5;border-radius:4px;padding:.15rem .5rem;font-size:.7rem;cursor:pointer;">Undo</button>`
           : `<br><button onclick="window._verifyPayment('${o.id}')" style="margin-top:.3rem;background:#e65100;color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.75rem;font-weight:600;cursor:pointer;">Verify Payment</button>`) : ""}
       </td>
       <td><select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);">${opts(st)}</select></td>
@@ -712,7 +716,7 @@ function renderOrderTable() {
           ${o.payment?.txnId ? `<br>TxnID: ${escapeHtml(o.payment.txnId)}` : ''}
         </div>
         ${o.paymentStatus === 'verified'
-          ? `<span class="orc-verified-tag">✓ Verified</span>`
+          ? `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.25rem;"><span class="orc-verified-tag">✓ Verified</span><button class="orc-unverify-btn" data-unverify="${o.id}">Undo</button></div>`
           : `<button class="orc-verify-btn" data-verify="${o.id}">Verify Payment</button>`}
       </div>` : ''}
       <div class="orc-customer">
@@ -750,6 +754,9 @@ function renderOrderTable() {
       if (confirm("Payment verified in bKash/Nagad app?")) await verifyPayment(btn.dataset.verify);
     });
   });
+  cardsWrap.querySelectorAll("[data-unverify]").forEach(btn => {
+    btn.addEventListener("click", () => unverifyPayment(btn.dataset.unverify));
+  });
   cardsWrap.querySelectorAll(".orc-status-sel").forEach(sel => {
     sel.addEventListener("change", async () => { sel.disabled = true; await changeOrderStatus(sel.dataset.order, sel.value); });
   });
@@ -769,6 +776,22 @@ async function verifyPayment(orderId) {
   } catch (e) { alert("Verify failed: " + (e.code || e.message)); }
 }
 window._verifyPayment = verifyPayment;
+
+async function unverifyPayment(orderId) {
+  if (!confirm("Undo payment verification? Order will return to pending.")) return;
+  try {
+    await updateDoc(doc(db, "orders", orderId), { paymentStatus: "pending", status: "pending" });
+    const idx = orders.findIndex(o => o.id === orderId);
+    if (idx !== -1) { orders[idx].paymentStatus = "pending"; orders[idx].status = "pending"; }
+    renderOrderTable();
+    if (currentDetailOrder?.id === orderId) {
+      currentDetailOrder.paymentStatus = "pending";
+      currentDetailOrder.status = "pending";
+      openOrderDetail(currentDetailOrder);
+    }
+  } catch (e) { alert("Failed: " + (e.code || e.message)); }
+}
+window._unverifyPayment = unverifyPayment;
 
 function renderCustomerTable() {
   const tbody = $("#customer-rows");
@@ -1561,14 +1584,14 @@ function openOrderDetail(order) {
         <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin-bottom:.5rem;">Payment</div>
         <div style="font-size:.9rem;line-height:1.8;">
           <strong>${escapeHtml(order.payment?.method || "—")}</strong>
-          ${order.payment?.method !== "COD"
+          ${(order.payment?.method === 'bKash' || order.payment?.method === 'Nagad')
             ? (order.paymentStatus === "verified"
-              ? `<span style="display:inline-block;margin-left:.5rem;background:#e6f4ea;color:#1e7e34;font-size:.72rem;font-weight:700;padding:.1rem .5rem;border-radius:4px;vertical-align:middle;">✓ VERIFIED</span>`
+              ? `<span style="display:inline-block;margin-left:.5rem;background:#e6f4ea;color:#1e7e34;font-size:.72rem;font-weight:700;padding:.1rem .5rem;border-radius:4px;vertical-align:middle;">✓ VERIFIED</span> <button onclick="window._unverifyPayment('${order.id}')" style="background:none;color:#9b2226;border:1px solid #d9a5a5;border-radius:4px;padding:.1rem .45rem;font-size:.72rem;cursor:pointer;font-family:var(--font-sans);">Undo</button>`
               : `<span style="display:inline-block;margin-left:.5rem;background:#fdecea;color:#9b2226;font-size:.72rem;font-weight:600;padding:.1rem .5rem;border-radius:4px;vertical-align:middle;">⏳ UNVERIFIED</span>`)
             : ""}<br>
           ${order.payment?.senderMobile ? `Paid from: <strong>${escapeHtml(order.payment.senderMobile)}</strong><br>` : ""}
           ${order.payment?.txnId ? `TxnID: <code style="font-size:.82rem;background:var(--bg-color);padding:.1rem .3rem;border-radius:4px;">${escapeHtml(order.payment.txnId)}</code><br>` : ""}
-          ${order.payment?.method !== "COD" && order.paymentStatus !== "verified"
+          ${(order.payment?.method === 'bKash' || order.payment?.method === 'Nagad') && order.paymentStatus !== "verified"
             ? `<button onclick="window._verifyPayment('${order.id}')" style="margin-top:.4rem;background:#1e7e34;color:#fff;border:none;border-radius:6px;padding:.4rem 1rem;font-size:.82rem;cursor:pointer;font-family:var(--font-sans);">✓ Mark as Verified</button><br>`
             : ""}
           ${couponCode ? `Coupon: <code style="font-size:.82rem;background:#e6f4ea;color:#1e7e34;padding:.1rem .4rem;border-radius:4px;font-weight:600;">${escapeHtml(couponCode)}</code>` : `<span style="color:var(--text-muted);font-size:.85rem;">No coupon</span>`}
@@ -1761,7 +1784,7 @@ function updateNotifications() {
   if (!list) return;
 
   if (!total) {
-    list.innerHTML = `<div style="padding:1.1rem 1rem;text-align:center;color:var(--text-muted);font-size:.85rem;">All clear ✓</div>`;
+    list.innerHTML = `<div style="padding:1.6rem 1rem;text-align:center;color:var(--text-muted);font-size:.85rem;"><ion-icon name="checkmark-circle-outline" style="font-size:2rem;display:block;margin:0 auto .4rem;color:#1e7e34;"></ion-icon>All caught up!</div>`;
     return;
   }
 
@@ -1773,10 +1796,11 @@ function updateNotifications() {
       const c = o.customer || {};
       const num = o.orderNum || o.id.slice(0, 8).toUpperCase();
       const ms = o.createdAt?.toMillis ? o.createdAt.toMillis() : (o.createdAt?.seconds || 0) * 1000;
-      return `<div class="notif-item" data-goto="orders" style="display:flex;align-items:center;gap:.7rem;padding:.65rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;">
+      const isNew = !acknowledgedOrderIds.has(o.id);
+      return `<div class="notif-item" data-goto="orders" style="display:flex;align-items:center;gap:.7rem;padding:.65rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;background:${isNew ? '#fffaf5' : '#fff'};">
         <ion-icon name="cart-outline" style="font-size:1.2rem;color:var(--primary-color);flex-shrink:0;"></ion-icon>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:.82rem;font-weight:600;">#${escapeHtml(num)}</div>
+          <div style="font-size:.82rem;font-weight:600;">#${escapeHtml(String(num))}${isNew ? '<span class="notif-new-pill">NEW</span>' : ''}</div>
           <div style="font-size:.74rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c.name || "Customer")} · ৳${(o.total || 0).toLocaleString()}</div>
         </div>
         <span style="font-size:.7rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">${timeAgo(ms)}</span>
