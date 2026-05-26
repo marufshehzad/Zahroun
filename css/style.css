@@ -113,12 +113,12 @@ section:not(.hero) {
 
 /* Header & Nav */
 .header {
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background-color: #163E34;
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.12);
   transition: var(--transition);
   height: 78px;
   min-height: 78px;
@@ -158,6 +158,7 @@ section:not(.hero) {
   font-size: 0.95rem;
   font-weight: 500;
   position: relative;
+  color: #F5F3EF;
 }
 
 .nav-links a::after {
@@ -167,7 +168,7 @@ section:not(.hero) {
   height: 1px;
   bottom: -4px;
   left: 0;
-  background-color: var(--primary-color);
+  background-color: #F5F3EF;
   transition: var(--transition);
 }
 
@@ -187,7 +188,7 @@ section:not(.hero) {
   border: none;
   cursor: pointer;
   position: relative;
-  color: var(--text-main);
+  color: #F5F3EF;
   transition: var(--transition);
   display: flex;
   align-items: center;
@@ -202,15 +203,15 @@ section:not(.hero) {
 }
 
 .nav-icons button:hover {
-  color: var(--primary-color);
+  color: #C9B98F;
 }
 
 .cart-count {
   position: absolute;
   top: -8px;
   right: -8px;
-  background-color: var(--primary-color);
-  color: white;
+  background-color: #FFFFFF;
+  color: var(--primary-color);
   font-size: 0.7rem;
   width: 18px;
   height: 18px;
@@ -543,7 +544,7 @@ section:not(.hero) {
     top: 68px;
     left: 0;
     width: 100%;
-    background: white;
+    background: #163E34;
     flex-direction: column;
     padding: 2rem;
     box-shadow: var(--shadow-md);
@@ -1114,32 +1115,5 @@ section:not(.hero) {
     background-color: #F5F3EF !important;
     color: #1A1A1A !important;
     color-scheme: light !important;
-  }
-  /* Dark header bar so the white logo stays visible in forced-dark browsers */
-  .header {
-    background-color: #122D26 !important;
-    border-bottom-color: #1C3F35 !important;
-  }
-  .logo img {
-    content: url("../product%20pictures/main%20logo%20white.png");
-  }
-  .nav-links a {
-    color: #F5F3EF !important;
-  }
-  .nav-links a::after {
-    background-color: #F5F3EF;
-  }
-  .nav-icons button,
-  .nav-icons ion-icon,
-  #mobile-menu-btn {
-    color: #F5F3EF !important;
-  }
-}
-
-/* Dark mode mobile menu dropdown — keep nav text readable */
-@media (prefers-color-scheme: dark) and (max-width: 768px) {
-  .nav-links {
-    background: #122D26 !important;
-    border-top: 1px solid #1C3F35;
   }
 }
