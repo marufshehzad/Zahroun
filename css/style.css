@@ -113,12 +113,11 @@ section:not(.hero) {
 
 /* Header & Nav */
 .header {
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background-color: var(--primary-color);
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #0F2E27;
   transition: var(--transition);
   height: 78px;
   min-height: 78px;
@@ -158,6 +157,7 @@ section:not(.hero) {
   font-size: 0.95rem;
   font-weight: 500;
   position: relative;
+  color: #F5F3EF;
 }
 
 .nav-links a::after {
@@ -167,7 +167,7 @@ section:not(.hero) {
   height: 1px;
   bottom: -4px;
   left: 0;
-  background-color: var(--primary-color);
+  background-color: #F5F3EF;
   transition: var(--transition);
 }
 
@@ -187,7 +187,7 @@ section:not(.hero) {
   border: none;
   cursor: pointer;
   position: relative;
-  color: var(--text-main);
+  color: #F5F3EF;
   transition: var(--transition);
   display: flex;
   align-items: center;
@@ -202,15 +202,15 @@ section:not(.hero) {
 }
 
 .nav-icons button:hover {
-  color: var(--primary-color);
+  color: #C9B98F;
 }
 
 .cart-count {
   position: absolute;
   top: -8px;
   right: -8px;
-  background-color: var(--primary-color);
-  color: white;
+  background-color: #FFFFFF;
+  color: var(--primary-color);
   font-size: 0.7rem;
   width: 18px;
   height: 18px;
@@ -543,7 +543,7 @@ section:not(.hero) {
     top: 68px;
     left: 0;
     width: 100%;
-    background: white;
+    background: var(--primary-color);
     flex-direction: column;
     padding: 2rem;
     box-shadow: var(--shadow-md);
