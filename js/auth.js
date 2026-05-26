@@ -417,8 +417,8 @@ async function loadSiteSettings() {
     if (s.announcementActive && s.announcement) {
       const bar = document.createElement("div");
       bar.id = "za-announcement";
-      bar.style.cssText = "background:var(--primary-color,#163E34);color:#fff;text-align:center;padding:.55rem 3rem;font-size:.88rem;font-family:var(--font-sans,sans-serif);position:relative;z-index:1000;";
-      bar.innerHTML = `${escapeHtml(s.announcement)}<button onclick="this.parentElement.remove()" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;cursor:pointer;font-size:1.3rem;line-height:1;">×</button>`;
+      bar.style.cssText = "background:#000;color:#D4AF37;text-align:center;padding:.55rem 3rem;font-size:.88rem;font-family:var(--font-sans,sans-serif);position:relative;z-index:1000;";
+      bar.innerHTML = `${escapeHtml(s.announcement)}<button onclick="this.parentElement.remove()" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;color:#D4AF37;cursor:pointer;font-size:1.3rem;line-height:1;">×</button>`;
       document.body.insertBefore(bar, document.body.firstChild);
     }
 
