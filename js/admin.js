@@ -12,6 +12,48 @@ import { uploadImage, optimizedUrl } from "./cloudinary.js";
 
 const $ = (sel) => document.querySelector(sel);
 const gate = $("#admin-gate");
+
+/* ---- EmailJS (order confirmation mail) ---------------------------------- */
+const EMAILJS_PUBLIC_KEY  = "wUGMJ65uoDE5-C0AF";
+const EMAILJS_SERVICE_ID  = "service_y827jxy";
+const EMAILJS_TEMPLATE_ID = "template_7r5991b";
+
+(function initEmailJS() {
+  if (typeof emailjs !== "undefined") emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+})();
+
+async function sendConfirmationEmail(order) {
+  if (typeof emailjs === "undefined") return;
+  if (!order.userEmail) return;
+  try {
+    const items = order.items || [];
+    const itemsList = items.map(i =>
+      `${i.name} (${i.size})  x${i.quantity}  —  BDT ${(i.price * i.quantity).toFixed(2)}`
+    ).join("\n");
+    const discount = order.discount || 0;
+    const discountLine = discount > 0
+      ? `Coupon${order.couponCode ? " (" + order.couponCode + ")" : ""}: -BDT ${(+discount).toFixed(2)}`
+      : "";
+    const orderDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
+      + ", " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email:       order.userEmail,
+      to_name:        order.customer?.name || "",
+      order_id:       order.orderNum ? String(order.orderNum) : order.id.slice(0, 8).toUpperCase(),
+      order_date:     orderDate,
+      items_list:     itemsList,
+      subtotal:       (+( order.subtotal || 0)).toFixed(2),
+      delivery:       (+(order.delivery  || 0)).toFixed(2),
+      discount_line:  discountLine,
+      total:          (+(order.total     || 0)).toFixed(2),
+      payment_method: order.payment?.method || "",
+      address:        order.customer?.address || "",
+      mobile:         order.customer?.mobile  || "",
+    });
+  } catch (err) {
+    console.warn("Confirmation email failed:", err);
+  }
+}
 const gateMsg = $("#gate-msg");
 const app = $("#admin-app");
 
@@ -613,6 +655,7 @@ async function changeOrderStatus(orderId, newStatus) {
     if (newStatus === "cancelled" && prevStatus !== "cancelled") await restoreOrderStock(order);
     await updateDoc(doc(db, "orders", orderId), { status: newStatus });
     if (order) order.status = newStatus;
+    if (newStatus === "confirmed" && prevStatus !== "confirmed") sendConfirmationEmail(order);
     updateOrdersBadge(); renderOrderTable(); renderDashboard(); updateNotifications();
   } catch (e) { alert("Update failed: " + (e.code || e.message)); }
 }
@@ -684,7 +727,7 @@ function renderOrderTable() {
   });
   tbody.querySelectorAll("tr[data-oid]").forEach(row => {
     row.addEventListener("click", e => {
-      if (e.target.closest("select")) return;
+      if (e.target.closest("select") || e.target.closest("button")) return;
       const order = orders.find(o => o.id === row.dataset.oid);
       if (order) openOrderDetail(order);
     });
@@ -762,9 +805,12 @@ function renderOrderTable() {
 
 async function verifyPayment(orderId) {
   try {
+    const order = orders.find(o => o.id === orderId);
+    const wasConfirmed = order?.status === "confirmed";
     await updateDoc(doc(db, "orders", orderId), { paymentStatus: "verified", status: "confirmed" });
     const idx = orders.findIndex(o => o.id === orderId);
     if (idx !== -1) { orders[idx].paymentStatus = "verified"; orders[idx].status = "confirmed"; }
+    if (!wasConfirmed && order) sendConfirmationEmail(order);
     renderOrderTable();
     if (currentDetailOrder?.id === orderId) {
       currentDetailOrder.paymentStatus = "verified";

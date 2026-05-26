@@ -823,7 +823,7 @@ section:not(.hero) {
     line-height: 1;
     margin-bottom: 2rem;
     padding-top: 2rem;
-    overflow: hidden;
+    overflow: visible;
     white-space: nowrap;
 }
 .footer-grid-new {
@@ -1048,7 +1048,7 @@ section:not(.hero) {
   .product-card:hover { transform: none; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
 
   /* Footer brand big text */
-  .footer-massive-brand { font-size: 20vw; }
+  .footer-massive-brand { font-size: 17vw; }
   .footer-grid-new { gap: 2rem; }
 
   /* Form controls: bigger tap targets */

@@ -5,6 +5,8 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | Zahroun</title>
+    <link rel="icon" type="image/png" href="product pictures/favicon.png">
+    <link rel="apple-touch-icon" href="product pictures/favicon.png">
     <meta name="robots" content="noindex, nofollow">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/analytics.js"></script>
@@ -578,12 +580,6 @@
                 });
 
                 if (window.zahrounGA) window.zahrounGA.trackPurchase(orderId, items, total, coupon ? coupon.id : null);
-                // Send invoice email to customer
-                sendInvoiceEmail({
-                    userEmail: user.email,
-                    name, orderId, items, subtotal, delivery: deliveryCharge,
-                    discount, coupon, total, paymentMethod, address, mobile
-                });
                 // Increment coupon usage counter if one was applied
                 if (coupon && window.incrementCouponUsage) await window.incrementCouponUsage(coupon.id).catch(() => {});
                 if (window.clearAppliedCoupon) window.clearAppliedCoupon();

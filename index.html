@@ -4,21 +4,67 @@
     <meta charset="UTF-8">
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zahroun | Luxury Fragrances & Perfumes</title>
+    <title>Zahroun | Luxury Perfumes Bangladesh — Buy Online</title>
+    <link rel="icon" type="image/png" href="product pictures/favicon.png">
+    <link rel="apple-touch-icon" href="product pictures/favicon.png">
     <meta name="description" content="Zahroun crafts niche, luxury fragrances for men and women. Discover long-lasting, premium perfumes with rare botanical ingredients — shop online in Bangladesh.">
-    <meta name="keywords" content="zahroun, luxury perfume bangladesh, niche fragrance, perfume for women, perfume for men, unisex perfume, long lasting perfume dhaka">
-    <meta property="og:title" content="Zahroun | Luxury Fragrances & Perfumes">
-    <meta property="og:description" content="Niche, designer-quality fragrances crafted from the finest ingredients. Long-lasting sillage, premium quality. Shop Zahroun perfumes online.">
+    <meta name="keywords" content="zahroun, zahrun, zahorun, zahroon, zarun, jahroun, jahrun, jahorun, jahroon, jarun, zahron, zehroun, luxury perfume bangladesh, niche fragrance, perfume for women, perfume for men, unisex perfume, long lasting perfume dhaka, best perfume bd, perfume shop bangladesh">
+    <meta property="og:title" content="Zahroun | Luxury Perfumes Bangladesh — Buy Online">
+    <meta property="og:description" content="Buy luxury niche perfumes online in Bangladesh. Long-lasting, premium quality fragrances for women, men & unisex. Fast delivery across BD.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://zahroun.com">
     <meta property="og:image" content="https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png">
     <meta property="og:site_name" content="Zahroun">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Zahroun | Luxury Fragrances & Perfumes">
-    <meta name="twitter:description" content="Zahroun crafts niche, luxury fragrances for men and women. Discover long-lasting, premium perfumes with rare botanical ingredients — shop online in Bangladesh.">
+    <meta name="twitter:title" content="Zahroun | Luxury Perfumes Bangladesh — Buy Online">
+    <meta name="twitter:description" content="Buy luxury niche perfumes online in Bangladesh. Zahroun — long-lasting premium fragrances for women, men & unisex. Fast delivery across BD.">
     <meta name="twitter:image" content="https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png">
     <link rel="canonical" href="https://zahroun.com/">
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"Zahroun","url":"https://zahroun.com","logo":"https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png","telephone":"+8801886936581","email":"hello@zahroun.com","address":{"@type":"PostalAddress","streetAddress":"Dhanmondi","addressLocality":"Dhaka","postalCode":"1205","addressCountry":"BD"},"description":"Zahroun crafts niche, luxury fragrances for men and women. Discover long-lasting, premium perfumes with rare botanical ingredients.","priceRange":"৳৳৳"}</script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": ["Store", "LocalBusiness"],
+      "name": "Zahroun",
+      "alternateName": ["Zahrun", "Zahorun", "Zahroon", "Zarun", "Jahroun", "Jahrun", "Jahorun", "Jahroon", "Jarun", "Zahron", "Zehroun", "Zahroun Perfumes", "Zahroun BD"],
+      "url": "https://zahroun.com",
+      "logo": "https://zahroun.com/product%20pictures/favicon.png",
+      "image": "https://zahroun.com/product%20pictures/favicon.png",
+      "telephone": "+8801886936581",
+      "email": "hello@zahroun.com",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Dhanmondi",
+        "addressLocality": "Dhaka",
+        "postalCode": "1205",
+        "addressCountry": "BD"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 23.7342,
+        "longitude": 90.3757
+      },
+      "description": "Zahroun — luxury niche perfume brand in Bangladesh. Buy long-lasting premium fragrances for women, men, and unisex online. Fast delivery across Bangladesh.",
+      "priceRange": "৳৳৳",
+      "servesCuisine": "Luxury Perfumes",
+      "areaServed": {
+        "@type": "Country",
+        "name": "Bangladesh"
+      },
+      "sameAs": [
+        "https://www.instagram.com/zahroun",
+        "https://www.facebook.com/zahroun"
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Zahroun",
+      "url": "https://zahroun.com",
+      "description": "Buy luxury perfumes online in Bangladesh — Zahroun niche fragrances for women, men, and unisex."
+    }
+    </script>
     <link rel="stylesheet" href="css/style.css">
     <!-- Google Analytics 4 (configure your ID in js/analytics.js) -->
     <script src="js/analytics.js"></script>
@@ -391,7 +437,9 @@
         }
         document.addEventListener('products-ready', () => {
             const grid = document.getElementById('featured-products');
-            const featured = products.slice(0, 4);
+            let featured = products.filter(p => p.featured || p.bestseller);
+            if (!featured.length) featured = products;
+            featured = featured.slice(0, 4);
 
             grid.innerHTML = featured.map(p => {
                 const defaultPrice = (p.prices && p.prices['50ML']) ? p.prices['50ML'] : p.price;
