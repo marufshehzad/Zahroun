@@ -9,7 +9,7 @@
 
 import { db, auth } from "./firebase-config.js";
 import {
-  collection, addDoc, serverTimestamp, doc, updateDoc, increment
+  collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 window.getCurrentUser = () => auth.currentUser;
@@ -29,13 +29,15 @@ window.saveOrder = async function (order) {
     createdAt: serverTimestamp()
   });
 
-  // Decrement stock for each ordered item (best-effort; order is already saved)
+  // Decrement stock only for products that actually have a numeric stock field
   for (const item of order.items || []) {
     if (!item.id || !item.quantity) continue;
     try {
-      await updateDoc(doc(db, "products", String(item.id)), {
-        stock: increment(-(item.quantity))
-      });
+      const prodRef = doc(db, "products", String(item.id));
+      const prodSnap = await getDoc(prodRef);
+      if (prodSnap.exists() && typeof prodSnap.data().stock === "number") {
+        await updateDoc(prodRef, { stock: increment(-(item.quantity)) });
+      }
     } catch {
       // Stock update failed silently — admin can correct manually if needed.
     }
