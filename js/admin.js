@@ -39,6 +39,8 @@ async function sendConfirmationEmail(order) {
     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
       to_email:       order.userEmail,
       to_name:        order.customer?.name || "",
+      from_name:      "Zahroun Orders",
+      reply_to:       "orders@zahroun.com",
       order_id:       order.orderNum ? String(order.orderNum) : order.id.slice(0, 8).toUpperCase(),
       order_date:     orderDate,
       items_list:     itemsList,
