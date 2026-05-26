@@ -2034,6 +2034,7 @@ function bindPageUpload(fileId, previewId, statusId, delId, { aspectRatio = NaN 
       if (delBtn) delBtn.style.display = "";
       statusEl.textContent = "Uploaded.";
       fileInput._uploadedUrl = url;
+      fileInput._deleted = false;
     } catch (err) {
       statusEl.textContent = err.message;
       statusEl.style.color = "#9b2226";
@@ -2046,7 +2047,8 @@ function bindPageUpload(fileId, previewId, statusId, delId, { aspectRatio = NaN 
       preview.src = "";
       preview.classList.remove("has-img");
       delBtn.style.display = "none";
-      if (fileInput._uploadedUrl) fileInput._uploadedUrl = null;
+      fileInput._uploadedUrl = null;
+      fileInput._deleted = true;
       statusEl.textContent = "";
     });
   }
@@ -2065,6 +2067,12 @@ function setPagePreview(previewId, delId, url) {
 function getPageUrl(previewId) {
   const fileInput = document.getElementById(previewId.replace("prev-", "file-"));
   return fileInput?._uploadedUrl || null;
+}
+
+function resolvePageField(previewId, existingValue) {
+  const fileInput = document.getElementById(previewId.replace("prev-", "file-"));
+  if (fileInput?._deleted) return null;
+  return fileInput?._uploadedUrl || existingValue || null;
 }
 
 async function handleGalleryPageUpload(e) {
@@ -2180,14 +2188,14 @@ async function savePagesHomepage() {
   statusEl.textContent = "";
   try {
     const hp = pageSettings.homepage;
-    const heroDesktop = getPageUrl("prev-hero-desktop") || hp.heroDesktop || null;
-    const heroMobile = getPageUrl("prev-hero-mobile") || hp.heroMobile || null;
-    const catForHer = getPageUrl("prev-cat-forher") || hp.catImages?.forHer || null;
-    const catUnisex = getPageUrl("prev-cat-unisex") || hp.catImages?.unisex || null;
-    const catForHim = getPageUrl("prev-cat-forhim") || hp.catImages?.forHim || null;
+    const heroDesktop = resolvePageField("prev-hero-desktop", hp.heroDesktop);
+    const heroMobile = resolvePageField("prev-hero-mobile", hp.heroMobile);
+    const catForHer = resolvePageField("prev-cat-forher", hp.catImages?.forHer);
+    const catUnisex = resolvePageField("prev-cat-unisex", hp.catImages?.unisex);
+    const catForHim = resolvePageField("prev-cat-forhim", hp.catImages?.forHim);
     const prevWhy = hp.whyChoose || [];
     const whyChoose = [0, 1, 2].map(i => ({
-      icon: getPageUrl(`prev-why-${i}`) || prevWhy[i]?.icon || null
+      icon: resolvePageField(`prev-why-${i}`, prevWhy[i]?.icon)
     }));
     const data = {
       heroDesktop,
@@ -2215,9 +2223,9 @@ async function savePagesAbout() {
   statusEl.textContent = "";
   try {
     const ab = pageSettings.about;
-    const heroImage = getPageUrl("prev-about-hero") || ab.heroImage || null;
+    const heroImage = resolvePageField("prev-about-hero", ab.heroImage);
     const heroOpacity = parseFloat(document.getElementById("about-hero-opacity")?.value) || 0.5;
-    const missionImage = getPageUrl("prev-about-mission") || ab.missionImage || null;
+    const missionImage = resolvePageField("prev-about-mission", ab.missionImage);
     const data = { heroImage, heroOpacity, missionImage, updatedAt: serverTimestamp() };
     await setDoc(doc(db, "settings", "about"), data, { merge: true });
     pageSettings.about = { ...ab, ...data };
@@ -2237,13 +2245,13 @@ async function savePagesContact() {
   statusEl.textContent = "";
   try {
     const ct = pageSettings.contact;
-    const heroImage = getPageUrl("prev-contact-hero") || ct.heroImage || null;
+    const heroImage = resolvePageField("prev-contact-hero", ct.heroImage);
     const activeMode = document.querySelector(".map-toggle button.active")?.dataset.mapmode || "iframe";
     let mapEmbed = null, mapImage = null;
     if (activeMode === "iframe") {
       mapEmbed = document.getElementById("contact-map-embed")?.value.trim() || null;
     } else {
-      mapImage = getPageUrl("prev-contact-map") || ct.mapImage || null;
+      mapImage = resolvePageField("prev-contact-map", ct.mapImage);
     }
     const data = { heroImage, mapEmbed, mapImage, updatedAt: serverTimestamp() };
     await setDoc(doc(db, "settings", "contact"), data, { merge: true });
