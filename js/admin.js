@@ -1346,8 +1346,8 @@ async function saveProduct(e) {
   const prices = {};
   [["6ML", f.price6.value], ["15ML", f.price15.value], ["30ML", f.price30.value], ["50ML", f.price50.value]]
     .forEach(([k, v]) => { const n = numOrNull(v); if (n !== null) prices[k] = n; });
-  const image = galleryImages[0] || (editing && editing.image) || "";
-  const images = galleryImages.length ? [...galleryImages] : (editing?.images ? [...editing.images] : (image ? [image] : []));
+  const image = galleryImages[0] || "";
+  const images = [...galleryImages];
   const sizeImages = {};
   SIZE_KEYS.forEach(k => { sizeImages[k] = sizeImagesMap[k] || image; });
   const data = {
