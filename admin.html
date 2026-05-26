@@ -202,6 +202,13 @@
         #crop-ok:hover { background:#0f2820; }
         #crop-cancel { background:none; border:1px solid var(--border-color); padding:.45rem 1rem; border-radius:7px; font-size:.88rem; cursor:pointer; font-family:var(--font-sans); }
 
+        /* Prevent tap-highlight & sticky hover on touch devices */
+        * { -webkit-tap-highlight-color: transparent; }
+        @media (hover: none) {
+            .btn:hover, .btn-outline:hover, button:hover, .ord-pill:hover, .admin-nav button:hover, .link-btn:hover { background-color: revert !important; color: revert !important; transform: none !important; box-shadow: none !important; }
+        }
+        button:focus, .btn:focus, a.btn:focus, a:focus { outline: none; }
+
         /* Mobile hamburger */
         #admin-menu-toggle { display:none; background:none; border:1px solid var(--border-color); border-radius:8px; padding:.35rem .55rem; font-size:1.4rem; cursor:pointer; color:var(--primary-color); align-items:center; line-height:1; flex-shrink:0; }
         #admin-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:199; }
