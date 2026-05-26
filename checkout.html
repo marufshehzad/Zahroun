@@ -433,8 +433,10 @@
 
             const coupon = window.appliedCoupon || null;
             const discount = coupon ? (coupon.discount || 0) : 0;
+            const freeDelivery = !!(coupon && coupon.freeDelivery);
+            const effectiveDelivery = freeDelivery ? 0 : deliveryCharge;
 
-            const total = (subtotal - discount) + deliveryCharge;
+            const total = (subtotal - discount) + effectiveDelivery;
 
             document.getElementById('summary-subtotal').textContent = subtotal.toFixed(2) + ' BDT';
 
@@ -448,7 +450,9 @@
                 discountRow.style.display = 'none';
             }
 
-            document.getElementById('summary-delivery').textContent = deliveryCharge + ' BDT';
+            document.getElementById('summary-delivery').textContent = freeDelivery
+                ? 'FREE' + (deliveryCharge ? ` (was ${deliveryCharge} BDT)` : '')
+                : deliveryCharge + ' BDT';
             document.getElementById('summary-total').textContent = total.toFixed(2) + ' BDT';
         }
 
@@ -536,7 +540,9 @@
             const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.selectedPrice) * item.quantity), 0);
             const coupon = window.appliedCoupon || null;
             const discount = coupon ? (coupon.discount || 0) : 0;
-            const total = (subtotal - discount) + deliveryCharge;
+            const freeDelivery = !!(coupon && coupon.freeDelivery);
+            const effectiveDelivery = freeDelivery ? 0 : deliveryCharge;
+            const total = (subtotal - discount) + effectiveDelivery;
 
             // Build the order items snapshot
             const items = cart.map(item => ({
@@ -557,7 +563,8 @@
             message += `Name: ${name}\nMobile: ${mobile}\nAddress: ${address}\nDelivery Area: ${deliveryAreaText}\n\n`;
             message += `*Items:*\n${itemList}\nSubtotal: ${subtotal.toFixed(2)} BDT\n`;
             if (discount > 0 && coupon) message += `Coupon (${coupon.id}): -${discount.toFixed(2)} BDT\n`;
-            message += `Delivery: ${deliveryCharge} BDT\n*Total:* ${total.toFixed(2)} BDT\n\n*Payment Method:* ${paymentMethod}\n`;
+            if (freeDelivery && coupon) message += `Coupon (${coupon.id}): FREE delivery\n`;
+            message += `Delivery: ${freeDelivery ? 'FREE' : effectiveDelivery + ' BDT'}\n*Total:* ${total.toFixed(2)} BDT\n\n*Payment Method:* ${paymentMethod}\n`;
             if (senderMobile) message += `*Paid From:* ${senderMobile}\n`;
             if (txnId) message += `*Transaction ID:* ${txnId}\n`;
             const whatsappUrl = `https://wa.me/8801886936581?text=${encodeURIComponent(message)}`;
@@ -573,7 +580,7 @@
                     subtotal: +subtotal.toFixed(2),
                     discount: +discount.toFixed(2),
                     couponCode: coupon ? coupon.id : null,
-                    delivery: deliveryCharge,
+                    delivery: effectiveDelivery,
                     total: +total.toFixed(2),
                     payment: { method: paymentMethod, txnId: txnId || null, senderMobile: senderMobile || null },
                     paymentStatus: paymentMethod === 'COD' ? 'cod' : 'pending'

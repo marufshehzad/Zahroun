@@ -955,7 +955,7 @@ function renderCouponTable() {
   const tbody = $("#coupon-rows");
   if (!coupons.length) { tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No coupons yet.</td></tr>`; return; }
   tbody.innerHTML = coupons.map(c => {
-    const discountText = c.type === "percent" ? `${c.value}% off` : `৳${c.value} off`;
+    const discountText = c.type === "freeship" ? "Free delivery" : c.type === "percent" ? `${c.value}% off` : `৳${c.value} off`;
     const isExpired = c.expiresAt && c.expiresAt.toDate && c.expiresAt.toDate() < new Date();
     const expiryText = c.expiresAt ? (c.expiresAt.toDate ? c.expiresAt.toDate().toLocaleDateString("en-GB") : c.expiresAt) : "No expiry";
     const maxText = c.maxUses ? `${c.usedCount || 0}/${c.maxUses}` : `${c.usedCount || 0}/∞`;
@@ -1015,11 +1015,17 @@ async function saveCoupon(e) {
   btn.disabled = true; btn.textContent = "Saving…";
   const code = f.querySelector("[name=code]").value.trim().toUpperCase();
   if (!code) { alert("Code is required"); btn.disabled = false; btn.textContent = "Save Coupon"; return; }
+  const couponType = f.querySelector("[name=type]").value;
+  const couponValue = parseFloat(f.querySelector("[name=value]").value) || 0;
+  if (couponType !== "freeship" && couponValue <= 0) {
+    alert("Discount value is required for this coupon type.");
+    btn.disabled = false; btn.textContent = "Save Coupon"; return;
+  }
   const expiresVal = f.querySelector("[name=expiresAt]").value;
   try {
     await setDoc(doc(db, "coupons", code), {
-      type: f.querySelector("[name=type]").value,
-      value: parseFloat(f.querySelector("[name=value]").value) || 0,
+      type: couponType,
+      value: couponValue,
       minOrder: parseFloat(f.querySelector("[name=minOrder]").value) || 0,
       maxUses: parseInt(f.querySelector("[name=maxUses]").value) || 0,
       active: f.querySelector("[name=active]").checked,

@@ -22,12 +22,15 @@ window.validateAndApplyCoupon = async function (code, subtotal) {
   if (c.minOrder && subtotal < c.minOrder) return { valid: false, msg: `Minimum order ৳${c.minOrder} required for this coupon.` };
   if (c.maxUses && (c.usedCount || 0) >= c.maxUses) return { valid: false, msg: "This coupon's usage limit has been reached." };
 
-  const discount = c.type === "percent"
-    ? Math.round(subtotal * c.value / 100 * 100) / 100
-    : Math.min(c.value, subtotal);
+  const freeDelivery = c.type === "freeship";
+  const discount = freeDelivery
+    ? 0
+    : c.type === "percent"
+      ? Math.round(subtotal * c.value / 100 * 100) / 100
+      : Math.min(c.value, subtotal);
 
-  window.appliedCoupon = { id: code.trim().toUpperCase(), ...c, discount };
-  const label = c.type === "percent" ? `${c.value}% off` : `৳${c.value} off`;
+  window.appliedCoupon = { id: code.trim().toUpperCase(), ...c, discount, freeDelivery };
+  const label = freeDelivery ? "Free delivery" : c.type === "percent" ? `${c.value}% off` : `৳${c.value} off`;
   if (window.zahrounGA) window.zahrounGA.trackCouponApply(code.trim().toUpperCase(), discount);
   return { valid: true, discount, msg: `Coupon applied: ${label}` };
 };
