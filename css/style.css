@@ -113,11 +113,14 @@ section:not(.hero) {
 
 /* Header & Nav */
 .header {
-  background-color: var(--primary-color);
+  background-color: rgba(22, 62, 52, 0.72);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid #0F2E27;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 2px 18px rgba(0, 0, 0, 0.12);
   transition: var(--transition);
   height: 78px;
   min-height: 78px;
@@ -543,7 +546,9 @@ section:not(.hero) {
     top: 68px;
     left: 0;
     width: 100%;
-    background: var(--primary-color);
+    background: rgba(22, 62, 52, 0.92);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
     flex-direction: column;
     padding: 2rem;
     box-shadow: var(--shadow-md);
