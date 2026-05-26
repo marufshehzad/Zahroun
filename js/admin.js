@@ -12,6 +12,50 @@ import { uploadImage, optimizedUrl } from "./cloudinary.js";
 
 const $ = (sel) => document.querySelector(sel);
 const gate = $("#admin-gate");
+
+/* ---- EmailJS (order confirmation mail) ---------------------------------- */
+const EMAILJS_PUBLIC_KEY  = "wUGMJ65uoDE5-C0AF";
+const EMAILJS_SERVICE_ID  = "service_y827jxy";
+const EMAILJS_TEMPLATE_ID = "template_7r5991b";
+
+(function initEmailJS() {
+  if (typeof emailjs !== "undefined") emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+})();
+
+async function sendConfirmationEmail(order) {
+  if (typeof emailjs === "undefined") return;
+  if (!order.userEmail) return;
+  try {
+    const items = order.items || [];
+    const itemsList = items.map(i =>
+      `${i.name} (${i.size})  x${i.quantity}  —  BDT ${(i.price * i.quantity).toFixed(2)}`
+    ).join("\n");
+    const discount = order.discount || 0;
+    const discountLine = discount > 0
+      ? `Coupon${order.couponCode ? " (" + order.couponCode + ")" : ""}: -BDT ${(+discount).toFixed(2)}`
+      : "";
+    const orderDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
+      + ", " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email:       order.userEmail,
+      to_name:        order.customer?.name || "",
+      from_name:      "Zahroun Orders",
+      reply_to:       "orders@zahroun.com",
+      order_id:       order.orderNum ? String(order.orderNum) : order.id.slice(0, 8).toUpperCase(),
+      order_date:     orderDate,
+      items_list:     itemsList,
+      subtotal:       (+( order.subtotal || 0)).toFixed(2),
+      delivery:       (+(order.delivery  || 0)).toFixed(2),
+      discount_line:  discountLine,
+      total:          (+(order.total     || 0)).toFixed(2),
+      payment_method: order.payment?.method || "",
+      address:        order.customer?.address || "",
+      mobile:         order.customer?.mobile  || "",
+    });
+  } catch (err) {
+    console.warn("Confirmation email failed:", err);
+  }
+}
 const gateMsg = $("#gate-msg");
 const app = $("#admin-app");
 
@@ -613,6 +657,7 @@ async function changeOrderStatus(orderId, newStatus) {
     if (newStatus === "cancelled" && prevStatus !== "cancelled") await restoreOrderStock(order);
     await updateDoc(doc(db, "orders", orderId), { status: newStatus });
     if (order) order.status = newStatus;
+    if (newStatus === "confirmed" && prevStatus !== "confirmed") sendConfirmationEmail(order);
     updateOrdersBadge(); renderOrderTable(); renderDashboard(); updateNotifications();
   } catch (e) { alert("Update failed: " + (e.code || e.message)); }
 }
@@ -762,9 +807,12 @@ function renderOrderTable() {
 
 async function verifyPayment(orderId) {
   try {
+    const order = orders.find(o => o.id === orderId);
+    const wasConfirmed = order?.status === "confirmed";
     await updateDoc(doc(db, "orders", orderId), { paymentStatus: "verified", status: "confirmed" });
     const idx = orders.findIndex(o => o.id === orderId);
     if (idx !== -1) { orders[idx].paymentStatus = "verified"; orders[idx].status = "confirmed"; }
+    if (!wasConfirmed && order) sendConfirmationEmail(order);
     renderOrderTable();
     if (currentDetailOrder?.id === orderId) {
       currentDetailOrder.paymentStatus = "verified";
@@ -907,7 +955,7 @@ function renderCouponTable() {
   const tbody = $("#coupon-rows");
   if (!coupons.length) { tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No coupons yet.</td></tr>`; return; }
   tbody.innerHTML = coupons.map(c => {
-    const discountText = c.type === "percent" ? `${c.value}% off` : `৳${c.value} off`;
+    const discountText = c.type === "freeship" ? "Free delivery" : c.type === "percent" ? `${c.value}% off` : `৳${c.value} off`;
     const isExpired = c.expiresAt && c.expiresAt.toDate && c.expiresAt.toDate() < new Date();
     const expiryText = c.expiresAt ? (c.expiresAt.toDate ? c.expiresAt.toDate().toLocaleDateString("en-GB") : c.expiresAt) : "No expiry";
     const maxText = c.maxUses ? `${c.usedCount || 0}/${c.maxUses}` : `${c.usedCount || 0}/∞`;
@@ -967,11 +1015,17 @@ async function saveCoupon(e) {
   btn.disabled = true; btn.textContent = "Saving…";
   const code = f.querySelector("[name=code]").value.trim().toUpperCase();
   if (!code) { alert("Code is required"); btn.disabled = false; btn.textContent = "Save Coupon"; return; }
+  const couponType = f.querySelector("[name=type]").value;
+  const couponValue = parseFloat(f.querySelector("[name=value]").value) || 0;
+  if (couponType !== "freeship" && couponValue <= 0) {
+    alert("Discount value is required for this coupon type.");
+    btn.disabled = false; btn.textContent = "Save Coupon"; return;
+  }
   const expiresVal = f.querySelector("[name=expiresAt]").value;
   try {
     await setDoc(doc(db, "coupons", code), {
-      type: f.querySelector("[name=type]").value,
-      value: parseFloat(f.querySelector("[name=value]").value) || 0,
+      type: couponType,
+      value: couponValue,
       minOrder: parseFloat(f.querySelector("[name=minOrder]").value) || 0,
       maxUses: parseInt(f.querySelector("[name=maxUses]").value) || 0,
       active: f.querySelector("[name=active]").checked,
@@ -1298,8 +1352,8 @@ async function saveProduct(e) {
   const prices = {};
   [["6ML", f.price6.value], ["15ML", f.price15.value], ["30ML", f.price30.value], ["50ML", f.price50.value]]
     .forEach(([k, v]) => { const n = numOrNull(v); if (n !== null) prices[k] = n; });
-  const image = galleryImages[0] || (editing && editing.image) || "";
-  const images = galleryImages.length ? [...galleryImages] : (editing?.images ? [...editing.images] : (image ? [image] : []));
+  const image = galleryImages[0] || "";
+  const images = [...galleryImages];
   const sizeImages = {};
   SIZE_KEYS.forEach(k => { sizeImages[k] = sizeImagesMap[k] || image; });
   const data = {
@@ -1986,6 +2040,7 @@ function bindPageUpload(fileId, previewId, statusId, delId, { aspectRatio = NaN 
       if (delBtn) delBtn.style.display = "";
       statusEl.textContent = "Uploaded.";
       fileInput._uploadedUrl = url;
+      fileInput._deleted = false;
     } catch (err) {
       statusEl.textContent = err.message;
       statusEl.style.color = "#9b2226";
@@ -1998,7 +2053,8 @@ function bindPageUpload(fileId, previewId, statusId, delId, { aspectRatio = NaN 
       preview.src = "";
       preview.classList.remove("has-img");
       delBtn.style.display = "none";
-      if (fileInput._uploadedUrl) fileInput._uploadedUrl = null;
+      fileInput._uploadedUrl = null;
+      fileInput._deleted = true;
       statusEl.textContent = "";
     });
   }
@@ -2017,6 +2073,12 @@ function setPagePreview(previewId, delId, url) {
 function getPageUrl(previewId) {
   const fileInput = document.getElementById(previewId.replace("prev-", "file-"));
   return fileInput?._uploadedUrl || null;
+}
+
+function resolvePageField(previewId, existingValue) {
+  const fileInput = document.getElementById(previewId.replace("prev-", "file-"));
+  if (fileInput?._deleted) return null;
+  return fileInput?._uploadedUrl || existingValue || null;
 }
 
 async function handleGalleryPageUpload(e) {
@@ -2132,14 +2194,14 @@ async function savePagesHomepage() {
   statusEl.textContent = "";
   try {
     const hp = pageSettings.homepage;
-    const heroDesktop = getPageUrl("prev-hero-desktop") || hp.heroDesktop || null;
-    const heroMobile = getPageUrl("prev-hero-mobile") || hp.heroMobile || null;
-    const catForHer = getPageUrl("prev-cat-forher") || hp.catImages?.forHer || null;
-    const catUnisex = getPageUrl("prev-cat-unisex") || hp.catImages?.unisex || null;
-    const catForHim = getPageUrl("prev-cat-forhim") || hp.catImages?.forHim || null;
+    const heroDesktop = resolvePageField("prev-hero-desktop", hp.heroDesktop);
+    const heroMobile = resolvePageField("prev-hero-mobile", hp.heroMobile);
+    const catForHer = resolvePageField("prev-cat-forher", hp.catImages?.forHer);
+    const catUnisex = resolvePageField("prev-cat-unisex", hp.catImages?.unisex);
+    const catForHim = resolvePageField("prev-cat-forhim", hp.catImages?.forHim);
     const prevWhy = hp.whyChoose || [];
     const whyChoose = [0, 1, 2].map(i => ({
-      icon: getPageUrl(`prev-why-${i}`) || prevWhy[i]?.icon || null
+      icon: resolvePageField(`prev-why-${i}`, prevWhy[i]?.icon)
     }));
     const data = {
       heroDesktop,
@@ -2167,9 +2229,9 @@ async function savePagesAbout() {
   statusEl.textContent = "";
   try {
     const ab = pageSettings.about;
-    const heroImage = getPageUrl("prev-about-hero") || ab.heroImage || null;
+    const heroImage = resolvePageField("prev-about-hero", ab.heroImage);
     const heroOpacity = parseFloat(document.getElementById("about-hero-opacity")?.value) || 0.5;
-    const missionImage = getPageUrl("prev-about-mission") || ab.missionImage || null;
+    const missionImage = resolvePageField("prev-about-mission", ab.missionImage);
     const data = { heroImage, heroOpacity, missionImage, updatedAt: serverTimestamp() };
     await setDoc(doc(db, "settings", "about"), data, { merge: true });
     pageSettings.about = { ...ab, ...data };
@@ -2189,13 +2251,13 @@ async function savePagesContact() {
   statusEl.textContent = "";
   try {
     const ct = pageSettings.contact;
-    const heroImage = getPageUrl("prev-contact-hero") || ct.heroImage || null;
+    const heroImage = resolvePageField("prev-contact-hero", ct.heroImage);
     const activeMode = document.querySelector(".map-toggle button.active")?.dataset.mapmode || "iframe";
     let mapEmbed = null, mapImage = null;
     if (activeMode === "iframe") {
       mapEmbed = document.getElementById("contact-map-embed")?.value.trim() || null;
     } else {
-      mapImage = getPageUrl("prev-contact-map") || ct.mapImage || null;
+      mapImage = resolvePageField("prev-contact-map", ct.mapImage);
     }
     const data = { heroImage, mapEmbed, mapImage, updatedAt: serverTimestamp() };
     await setDoc(doc(db, "settings", "contact"), data, { merge: true });

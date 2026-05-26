@@ -5,6 +5,8 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details | Zahroun</title>
+    <link rel="icon" type="image/png" href="product pictures/favicon.png">
+    <link rel="apple-touch-icon" href="product pictures/favicon.png">
     <meta name="description" content="Discover Zahroun luxury perfumes — niche fragrances for men, women, and unisex. Long-lasting, premium quality. Shop online in Bangladesh.">
     <meta property="og:site_name" content="Zahroun">
     <meta property="og:type" content="product">
@@ -519,6 +521,29 @@
             const pid = new URLSearchParams(location.search).get("id") || "";
             document.querySelector('meta[name="description"]').content = `${product.name} — ${(product.description || "").slice(0,120)}. Shop Zahroun luxury perfumes online in Bangladesh.`;
             document.head.insertAdjacentHTML("beforeend", `<link rel="canonical" href="https://zahroun.com/product.html?id=${pid}"><meta property="og:title" content="${product.name} | Zahroun"><meta property="og:description" content="${(product.description || "").slice(0,120)}"><meta property="og:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}"><meta property="og:url" content="https://zahroun.com/product.html?id=${pid}"><meta name="twitter:title" content="${product.name} | Zahroun"><meta name="twitter:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}">`);
+
+            // Product rich result schema — shows price + availability in Google search
+            const _price = (product.prices && product.prices["50ML"]) ? product.prices["50ML"] : (product.price || 0);
+            const _schema = document.createElement("script");
+            _schema.type = "application/ld+json";
+            _schema.textContent = JSON.stringify({
+                "@context": "https://schema.org/",
+                "@type": "Product",
+                "name": product.name,
+                "image": [product.image],
+                "description": product.description || `${product.name} — luxury niche perfume by Zahroun. Buy online in Bangladesh.`,
+                "brand": { "@type": "Brand", "name": "Zahroun" },
+                "sku": String(product.id),
+                "offers": {
+                    "@type": "Offer",
+                    "url": `https://zahroun.com/product.html?id=${pid}`,
+                    "priceCurrency": "BDT",
+                    "price": _price,
+                    "availability": "https://schema.org/InStock",
+                    "seller": { "@type": "Organization", "name": "Zahroun", "url": "https://zahroun.com" }
+                }
+            });
+            document.head.appendChild(_schema);
 
 
             // Populate Upsell Grid

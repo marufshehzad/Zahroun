@@ -823,7 +823,7 @@ section:not(.hero) {
     line-height: 1;
     margin-bottom: 2rem;
     padding-top: 2rem;
-    overflow: hidden;
+    overflow: visible;
     white-space: nowrap;
 }
 .footer-grid-new {
@@ -1048,7 +1048,7 @@ section:not(.hero) {
   .product-card:hover { transform: none; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
 
   /* Footer brand big text */
-  .footer-massive-brand { font-size: 20vw; }
+  .footer-massive-brand { font-size: 17vw; }
   .footer-grid-new { gap: 2rem; }
 
   /* Form controls: bigger tap targets */
@@ -1114,5 +1114,32 @@ section:not(.hero) {
     background-color: #F5F3EF !important;
     color: #1A1A1A !important;
     color-scheme: light !important;
+  }
+  /* Dark header bar so the white logo stays visible in forced-dark browsers */
+  .header {
+    background-color: #122D26 !important;
+    border-bottom-color: #1C3F35 !important;
+  }
+  .logo img {
+    content: url("../product%20pictures/main%20logo%20white.png");
+  }
+  .nav-links a {
+    color: #F5F3EF !important;
+  }
+  .nav-links a::after {
+    background-color: #F5F3EF;
+  }
+  .nav-icons button,
+  .nav-icons ion-icon,
+  #mobile-menu-btn {
+    color: #F5F3EF !important;
+  }
+}
+
+/* Dark mode mobile menu dropdown — keep nav text readable */
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+  .nav-links {
+    background: #122D26 !important;
+    border-top: 1px solid #1C3F35;
   }
 }

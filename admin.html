@@ -8,6 +8,7 @@
     <meta name="robots" content="noindex, nofollow">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
@@ -201,6 +202,13 @@
         #crop-ok:hover { background:#0f2820; }
         #crop-cancel { background:none; border:1px solid var(--border-color); padding:.45rem 1rem; border-radius:7px; font-size:.88rem; cursor:pointer; font-family:var(--font-sans); }
 
+        /* Prevent tap-highlight & sticky hover on touch devices */
+        * { -webkit-tap-highlight-color: transparent; }
+        @media (hover: none) {
+            .btn:hover, .btn-outline:hover, button:hover, .ord-pill:hover, .admin-nav button:hover, .link-btn:hover { background-color: revert !important; color: revert !important; transform: none !important; box-shadow: none !important; }
+        }
+        button:focus, .btn:focus, a.btn:focus, a:focus { outline: none; }
+
         /* Mobile hamburger */
         #admin-menu-toggle { display:none; background:none; border:1px solid var(--border-color); border-radius:8px; padding:.35rem .55rem; font-size:1.4rem; cursor:pointer; color:var(--primary-color); align-items:center; line-height:1; flex-shrink:0; }
         #admin-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:199; }
@@ -212,7 +220,7 @@
             .admin-main { margin-left:0; padding:1.25rem 1rem; }
             #admin-menu-toggle { display:flex; }
             .qa-grid, .grid2, .grid4 { grid-template-columns:1fr 1fr; }
-            .admin-top .actions a[href="index.html"], .admin-top .who { display:none; }
+            .admin-top .who { display:none; }
             .panel { overflow-x:auto; }
             .admin-top h1 { font-size:1.3rem; }
         }
@@ -500,7 +508,7 @@
                                 <div id="notif-list"></div>
                             </div>
                         </div>
-                        <a href="index.html" target="_blank" class="btn btn-outline" style="padding:.4rem .9rem;">View Site</a>
+                        <a href="index.html" target="_blank" class="btn btn-outline" style="padding:.4rem .9rem; white-space:nowrap; display:inline-flex; align-items:center; gap:.35rem;"><ion-icon name="storefront-outline" style="font-size:1rem;"></ion-icon> View Site</a>
                         <button class="btn" id="admin-logout" style="padding:.4rem .9rem;">Logout</button>
                     </div>
                 </div>
@@ -1031,7 +1039,7 @@
                         <div class="panel-head"><h3>Store Settings</h3></div>
                         <form id="settings-form">
                             <div class="fg"><label>WhatsApp Number (with country code)</label><input type="text" name="whatsapp" placeholder="8801886936581"></div>
-                            <div class="fg"><label>Contact Email</label><input type="email" name="contactEmail" placeholder="hello@zahroun.com"></div>
+                            <div class="fg"><label>Contact Email</label><input type="email" name="contactEmail" placeholder="support@zahroun.com"></div>
                             <div class="fg"><label>Announcement Bar Text</label><input type="text" name="announcement" placeholder="Free shipping over ৳5000!"></div>
                             <div class="fg" style="display:flex;align-items:center;gap:.6rem;"><input type="checkbox" name="announcementActive" id="ann-chk" style="width:auto;margin:0;"><label for="ann-chk" style="margin:0;font-size:.9rem;color:var(--text-main);">Show Announcement Bar</label></div>
                             <div class="fg"><label>Hero Title (Homepage banner)</label><input type="text" name="heroTitle" placeholder="Discover Your Scent"></div>
@@ -1165,11 +1173,12 @@
                     <select name="type">
                         <option value="percent">Percentage (%)</option>
                         <option value="flat">Flat Amount (৳)</option>
+                        <option value="freeship">Free Delivery</option>
                     </select>
                 </div>
             </div>
             <div class="grid2">
-                <div class="fg"><label>Discount Value</label><input type="number" name="value" min="1" required placeholder="10"></div>
+                <div class="fg"><label>Discount Value <span class="muted-note" style="font-weight:400;">(ignored for Free Delivery)</span></label><input type="number" name="value" min="0" placeholder="10"></div>
                 <div class="fg"><label>Minimum Order (৳)</label><input type="number" name="minOrder" min="0" value="0"></div>
             </div>
             <div class="grid2">
