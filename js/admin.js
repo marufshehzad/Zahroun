@@ -40,47 +40,52 @@ async function sendConfirmationEmail(order) {
 
     const fmtNum = v => (+v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    /* ── Items HTML — one <table> per item ─────────────────────────── */
-    const itemsHtml = items.map(item => {
-      const rawImg    = item.image || item.imageUrl || item.img || item.images?.[0] || "";
-      // Relative paths and non-HTTPS URLs do not load in email clients — filter them out
-      const imgUrl    = (rawImg && typeof rawImg === "string" && rawImg.startsWith("https://")) ? rawImg : "";
+    /* ── Items HTML — all items in one card table ──────────────────── */
+    const itemRows = items.map((item, idx) => {
+      const rawImg = item.image || item.imageUrl || item.img || item.images?.[0] || "";
+      const imgUrl = (rawImg && typeof rawImg === "string" && rawImg.startsWith("https://")) ? rawImg : "";
       if (rawImg && !imgUrl) console.warn("[Email] Skipping non-HTTPS image for:", item.name, "|", String(rawImg).slice(0, 120));
-      const imgTag    = imgUrl
-        ? `<img src="${imgUrl}" alt="${item.name}" width="70" height="70" style="width:70px;height:70px;border-radius:10px;object-fit:cover;display:block;">`
-        : `<div style="width:70px;height:70px;border-radius:10px;background:rgba(10,58,49,0.55);border:1px solid rgba(212,166,74,0.18);"></div>`;
-      const size      = item.size || item.selectedSize || "";
+      const imgContent = imgUrl
+        ? `<img src="${imgUrl}" alt="${item.name}" width="80" height="80" style="width:80px;height:80px;object-fit:cover;display:block;">`
+        : `<div style="width:80px;height:80px;background:rgba(10,58,49,0.55);border:1px solid rgba(212,166,74,0.18);"></div>`;
+      const imgCell = `<div style="width:80px;height:80px;border-radius:10px;overflow:hidden;">${imgContent}</div>`;
+      const size    = item.size || item.selectedSize || "";
+      const isLast  = idx === items.length - 1;
+      const sep     = isLast ? "" : `<tr><td colspan="3" style="padding:0 20px;"><div style="height:1px;background:rgba(212,166,74,0.10);"></div></td></tr>`;
+
       if (item.isFreeGift) {
         const origPrice = parseFloat(item.originalPrice) || 0;
-        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom:1px solid rgba(212,166,74,0.12);background:rgba(10,58,49,0.18);">
-  <tr>
-    <td width="70" valign="top" style="padding:14px 0;">${imgTag}</td>
-    <td valign="top" style="padding:14px 16px;">
-      <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;margin-bottom:4px;">${item.name}${size ? " (" + size + ")" : ""}</div>
-      <div style="display:inline-block;margin-top:5px;padding:2px 8px;background:#D4A64A;color:#041A16;font-size:10px;font-weight:800;letter-spacing:3px;text-transform:uppercase;border-radius:3px;font-family:'Inter',Arial,sans-serif;">Complimentary Gift</div>
-    </td>
-    <td align="right" valign="top" style="padding:14px 0;white-space:nowrap;">
-      ${origPrice > 0 ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:#9E9E9E;text-decoration:line-through;">BDT ${fmtNum(origPrice)}</div>` : ""}
-      <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:800;color:#D4A64A;">FREE</div>
-    </td>
-  </tr>
-</table>`;
+        return `<tr style="background:rgba(10,58,49,0.22);">
+  <td width="100" valign="middle" style="padding:20px 0 20px 20px;">${imgCell}</td>
+  <td valign="middle" style="padding:20px 14px;">
+    <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;line-height:1.4;margin-bottom:5px;">${item.name}</div>
+    ${size ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:600;color:#9E9E9E;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;">${size}</div>` : ""}
+    <div style="display:inline-block;padding:3px 9px;background:#D4A64A;color:#041A16;font-family:'Inter',Arial,sans-serif;font-size:9px;font-weight:800;letter-spacing:3px;text-transform:uppercase;border-radius:3px;">Complimentary Gift</div>
+  </td>
+  <td align="right" valign="middle" style="padding:20px 20px 20px 0;white-space:nowrap;">
+    ${origPrice > 0 ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:#9E9E9E;text-decoration:line-through;margin-bottom:4px;">BDT&nbsp;${fmtNum(origPrice)}</div>` : ""}
+    <div style="font-family:'Playfair Display',Georgia,serif;font-size:16px;font-weight:700;color:#D4A64A;letter-spacing:1px;">FREE</div>
+  </td>
+</tr>${sep}`;
       }
+
       const unitPrice = parseFloat(item.selectedPrice || item.price) || 0;
       const rowTotal  = fmtNum(unitPrice * item.quantity);
-      return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom:1px solid rgba(212,166,74,0.12);">
-  <tr>
-    <td width="70" valign="top" style="padding:14px 0;">${imgTag}</td>
-    <td valign="top" style="padding:14px 16px;">
-      <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;margin-bottom:4px;">${item.name}${size ? " (" + size + ")" : ""}</div>
-      <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:#CFCFCF;margin-top:5px;">Quantity: ${item.quantity}</div>
-    </td>
-    <td align="right" valign="top" style="padding:14px 0;white-space:nowrap;">
-      <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#EDEDED;">BDT ${rowTotal}</div>
-    </td>
-  </tr>
-</table>`;
+      return `<tr>
+  <td width="100" valign="middle" style="padding:20px 0 20px 20px;">${imgCell}</td>
+  <td valign="middle" style="padding:20px 14px;">
+    <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;line-height:1.4;margin-bottom:5px;">${item.name}</div>
+    ${size ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:600;color:#9E9E9E;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">${size}</div>` : ""}
+    <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:#8A8A8A;">Qty&nbsp;&times;&nbsp;${item.quantity}</div>
+  </td>
+  <td align="right" valign="middle" style="padding:20px 20px 20px 0;white-space:nowrap;">
+    <div style="font-family:'Playfair Display',Georgia,serif;font-size:16px;font-weight:600;color:#D4A64A;letter-spacing:0.5px;">BDT&nbsp;${rowTotal}</div>
+    ${item.quantity > 1 ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:#8A8A8A;margin-top:4px;">${fmtNum(unitPrice)}&nbsp;each</div>` : ""}
+  </td>
+</tr>${sep}`;
     }).join("");
+    const itemsHtml = `<table width="100%" cellpadding="0" cellspacing="0" border="0"
+        style="border:1px solid rgba(212,166,74,0.14);border-radius:14px;overflow:hidden;background:rgba(4,16,12,0.2);">${itemRows}</table>`;
 
     /* ── Discount HTML — standalone block above summary card ───────── */
     let discountHtml = "";
