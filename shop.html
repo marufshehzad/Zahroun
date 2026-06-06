@@ -1,12 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buy Perfume Online Bangladesh | Zahroun Luxury Shop</title>
-    <link rel="icon" type="image/png" href="product pictures/favicon.png">
-    <link rel="apple-touch-icon" href="product pictures/favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
     <meta name="description" content="Buy luxury perfumes online in Bangladesh. Zahroun offers niche fragrances for women, men, and unisex — long-lasting, premium quality. Fast delivery across Bangladesh.">
     <meta name="keywords" content="buy perfume online bangladesh, perfume shop bangladesh, luxury perfume dhaka, niche perfume bd, best perfume bangladesh, perfume for women bangladesh, perfume for men bangladesh, long lasting perfume dhaka, zahroun, zahrun, jahroun">
     <meta property="og:title" content="Buy Perfume Online Bangladesh | Zahroun Luxury Shop">
@@ -37,119 +37,201 @@
       }
     }
     </script>
+    <!-- Resource hints: pre-connect to external origins before CSS/JS needs them -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/analytics.js"></script>
+    <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/broadcast.js"></script>
+    <script type="module" src="js/wishlist.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <style>
-        .shop-header {
-            background-color: var(--accent-color);
-            padding: 4rem 0;
-            text-align: center;
-        }
+        /* ── Page background ── */
+        body { background-color: #FAF7F0; }
+        @keyframes _skShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        .skel-card{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+        .skel-img{height:260px;background:linear-gradient(90deg,#f0ede8 25%,#e5e0d8 50%,#f0ede8 75%);background-size:200% 100%;animation:_skShimmer 1.5s infinite;}
+        .skel-line{height:14px;margin:12px 12px 0;border-radius:4px;background:linear-gradient(90deg,#f0ede8 25%,#e5e0d8 50%,#f0ede8 75%);background-size:200% 100%;animation:_skShimmer 1.5s infinite;margin-bottom:12px;}
+
+        /* ── Layout ── */
         .shop-container {
             display: flex;
             gap: 2rem;
-            margin-top: 2rem;
+            align-items: flex-start;
+            padding-top: 2rem;
+            padding-bottom: 5rem;
         }
-        .sidebar {
-            width: 250px;
+
+        /* ── Sidebar Card ── */
+        .sidebar-card {
+            width: 248px;
             flex-shrink: 0;
+            background: #fff;
+            border-radius: 16px;
+            padding: 1.5rem 1.2rem;
+            box-shadow: 0 2px 24px rgba(0,0,0,.07);
+            position: sticky;
+            top: 85px;
         }
-        .sidebar h3 {
-            margin-bottom: 1rem;
-            font-size: 1.2rem;
-        }
-        .filter-list {
-            list-style: none;
-            margin-bottom: 2rem;
-        }
-        .filter-list li {
-            margin-bottom: 0.5rem;
-        }
-        .filter-list button {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-family: var(--font-sans);
-            font-size: 1rem;
-            transition: var(--transition);
-        }
-        .filter-list button:hover, .filter-list button.active {
-            color: var(--primary-color);
-            font-weight: 500;
-        }
-        .search-box {
+
+        /* Search */
+        .search-wrap { position: relative; margin-bottom: 1.5rem; }
+        #search-input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            margin-bottom: 1rem;
+            box-sizing: border-box;
+            padding: .65rem 2.5rem .65rem 1rem;
+            border: 1.5px solid #EAE4D9;
+            border-radius: 10px;
+            background: #F9F6F0;
+            font-size: .9rem;
+            font-family: var(--font-sans);
+            color: #333;
+            transition: border-color .2s, background .2s;
         }
+        #search-input:focus { outline: none; border-color: var(--primary-color); background: #fff; }
+        #search-input::placeholder { color: #B0A898; }
+        .srch-icon {
+            position: absolute; right: .85rem; top: 50%; transform: translateY(-50%);
+            font-size: 1rem; color: #C0B9AE; pointer-events: none;
+        }
+
+        /* Flash sale banner */
+        #sidebar-flash-banner { border-radius: 10px; margin-bottom: 1.25rem; }
+
+        /* Section label */
+        .sb-label {
+            font-size: .63rem; font-weight: 700; letter-spacing: .11em;
+            text-transform: uppercase; color: #B8AFA3; margin: 0 0 .5rem;
+        }
+
+        /* Category list */
+        .cat-list { list-style: none; padding: 0; margin: 0; }
+        .cat-list li { margin: 0; }
+
+        /* Filter button */
+        .cat-btn {
+            display: flex; align-items: center; gap: .65rem;
+            width: 100%; background: none; border: none;
+            padding: .52rem .65rem; border-radius: 8px;
+            cursor: pointer; font-family: var(--font-sans);
+            font-size: .9rem; color: #555; text-align: left;
+            transition: background .15s;
+        }
+        .cat-btn:hover { background: rgba(212,175,55,.07); }
+        .cat-btn.active { background: rgba(212,175,55,.11); }
+        .cat-icon {
+            width: 26px; height: 26px; display: flex;
+            align-items: center; justify-content: center;
+            font-size: 1rem; color: #AAA; flex-shrink: 0;
+            transition: color .15s;
+        }
+        .cat-btn.active .cat-icon { color: var(--primary-color, #D4AF37); }
+        .cat-label { font-size: .88rem; line-height: 1; transition: color .15s; }
+        .cat-btn.active .cat-label { font-weight: 600; color: #1A1A1A; }
+
+        /* Featured divider */
+        .sb-feat-divider {
+            display: flex; align-items: center; gap: .45rem;
+            margin: 1rem 0 .6rem; color: #B8AFA3;
+            font-size: .6rem; font-weight: 700;
+            letter-spacing: .12em; text-transform: uppercase;
+        }
+        .sb-feat-divider::before, .sb-feat-divider::after {
+            content: ''; flex: 1; height: 1px; background: #EAE4D9;
+        }
+
+        /* ── Main column ── */
+        .shop-main { flex: 1; min-width: 0; }
+
+        /* Title area */
+        .shop-title-area { text-align: center; margin-bottom: 2.25rem; }
+        .shop-page-title {
+            font-family: var(--font-serif, Georgia, serif);
+            font-size: 3.5rem;
+            color: #1A1A1A; margin: 0 0 .25rem; line-height: 1.05;
+        }
+        .shop-orn {
+            display: flex; align-items: center; justify-content: center;
+            gap: .75rem; color: var(--primary-color, #D4AF37);
+            font-size: .55rem; margin: .2rem 0 .5rem;
+        }
+        .shop-orn::before, .shop-orn::after {
+            content: ''; width: 100px; height: 1px;
+            background: var(--primary-color, #D4AF37); display: block;
+        }
+        .shop-page-sub { color: #999; font-size: .92rem; margin: 0; font-family: var(--font-sans); }
+
+        /* Product grid — 3 columns on desktop */
+        #shop-products { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+        /* Image hover */
         .product-img { transition: opacity .15s ease; }
+
+        /* ── Mobile ── */
         @media (max-width: 768px) {
-            .shop-header {
-                padding: 2rem 0;
-            }
             .shop-container {
                 flex-direction: column;
-                gap: 1rem;
-                margin-top: 1rem;
+                gap: .75rem;
+                padding-top: 1rem;
+                padding-bottom: 2rem;
             }
-            .sidebar {
+            .sidebar-card {
                 width: 100%;
-                text-align: left;
-                max-width: 100%;
-                margin: 0;
-                background: var(--surface-color);
-                border-radius: 10px;
-                padding: .75rem 1rem;
+                border-radius: 12px;
+                padding: .9rem 1rem;
+                position: static;
+                box-shadow: 0 2px 14px rgba(0,0,0,.06);
             }
-            .sidebar h3 {
-                font-size: 1rem;
-                margin-bottom: .5rem;
+            .search-wrap { margin-bottom: .8rem; }
+            .sb-label { margin-bottom: .35rem; font-size: .6rem; }
+            .cat-list {
+                display: flex; flex-wrap: nowrap;
+                overflow-x: auto; gap: .4rem;
+                padding-bottom: 2px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
             }
-            .filter-list {
-                display: flex;
-                flex-wrap: wrap;
-                gap: .4rem .75rem;
-                margin-bottom: .5rem;
+            .cat-list::-webkit-scrollbar { display: none; }
+            .cat-list li { flex-shrink: 0; margin: 0; }
+            .cat-btn {
+                padding: .35rem .85rem; border-radius: 20px; font-size: .82rem;
+                gap: .35rem; width: auto; background: #F5F2EB;
+                border: 1px solid #E5DDD0; white-space: nowrap;
             }
-            .filter-list li {
-                margin-bottom: 0;
+            .cat-btn:hover { background: #F0EBE0; }
+            .cat-btn.active {
+                background: var(--primary-color, #163E34);
+                border-color: var(--primary-color, #163E34);
             }
-            .filter-list button {
-                background: var(--accent-color);
-                border-radius: 20px;
-                padding: .3rem .85rem;
-                font-size: .85rem;
-                border: 1px solid transparent;
-            }
-            .filter-list button.active {
-                background: var(--primary-color);
-                color: white;
-                border-color: var(--primary-color);
-            }
-            .search-box {
-                margin-bottom: .75rem;
-                font-size: .9rem;
-            }
+            .cat-btn.active .cat-label { color: #fff; font-weight: 700; }
+            .cat-btn.active .cat-icon { color: #fff; }
+            .cat-icon { width: 17px; height: 17px; font-size: .8rem; }
+            .sb-feat-divider { margin: .55rem 0 .35rem; font-size: .56rem; }
+            #special-filter { flex-direction: row !important; flex-wrap: nowrap; overflow-x: auto; gap: .4rem; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+            #special-filter::-webkit-scrollbar { display: none; }
+            .shop-title-area { margin-bottom: 1.25rem; }
+            .shop-page-title { font-size: 1.9rem; }
+            #shop-products { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            .shop-orn::before, .shop-orn::after { width: 35px; }
             #shop-products {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: .75rem;
             }
-            #shop-products .product-card {
-                max-width: none;
-                margin: 0;
-            }
-            .container.py-4 {
-                padding-left: 12px;
-                padding-right: 12px;
-            }
+            #shop-products .product-card { max-width: none; margin: 0; }
+            .container.py-4 { padding-left: 12px; padding-right: 12px; }
         }
     </style>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </head>
 <body>
     <!-- Header -->
@@ -175,32 +257,97 @@
         </div>
     </header>
 
-    <div class="shop-header">
-        <div class="container">
-            <h1>All Products</h1>
-            <p>Elevate your routine with our natural formulations.</p>
-        </div>
-    </div>
-
     <div class="container py-4">
         <div class="shop-container">
-            <aside class="sidebar">
-                <input type="text" id="search-input" class="search-box" placeholder="Search products...">
-                
-                <h3>Categories</h3>
-                <ul class="filter-list" id="category-filter">
-                    <li><button class="active" data-filter="all">All</button></li>
-                    <li><button data-filter="Men">Men</button></li>
-                    <li><button data-filter="Women">Women</button></li>
-                    <li><button data-filter="Unisex">Unisex</button></li>
+
+            <!-- ── Sidebar ── -->
+            <aside class="sidebar-card">
+
+                <!-- Search -->
+                <div class="search-wrap">
+                    <input type="text" id="search-input" placeholder="Search products...">
+                    <ion-icon name="search-outline" class="srch-icon"></ion-icon>
+                </div>
+
+                <!-- Flash Sale Banner -->
+                <a href="sale.html" id="sidebar-flash-banner" style="display:none;align-items:center;gap:.6rem;background:linear-gradient(135deg,#7b1921 0%,#c0392b 100%);color:#fff;border-radius:10px;padding:.8rem 1rem;margin-bottom:1.25rem;text-decoration:none;overflow:hidden;position:relative;box-shadow:0 4px 12px rgba(192,57,43,.3);">
+                    <span style="font-size:1.4rem;flex-shrink:0;">⚡</span>
+                    <div>
+                        <div style="font-weight:700;font-size:.92rem;letter-spacing:.04em;">FLASH SALE</div>
+                        <div style="font-size:.75rem;opacity:.85;">Limited-time discounts</div>
+                    </div>
+                    <ion-icon name="chevron-forward-outline" style="position:absolute;right:.75rem;font-size:1rem;opacity:.7;"></ion-icon>
+                </a>
+
+                <!-- Categories -->
+                <p class="sb-label">Categories</p>
+                <ul class="cat-list" id="category-filter">
+                    <li><button class="cat-btn active" data-filter="all">
+                        <span class="cat-icon"><ion-icon name="grid-outline"></ion-icon></span>
+                        <span class="cat-label">All Products</span>
+                    </button></li>
+                    <li><button class="cat-btn" data-filter="Men">
+                        <span class="cat-icon"><ion-icon name="person-outline"></ion-icon></span>
+                        <span class="cat-label">Men</span>
+                    </button></li>
+                    <li><button class="cat-btn" data-filter="Women">
+                        <span class="cat-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M24 4C15 4 9 10 9 20C9 29 13 34 18 36.5"/>
+                                <path d="M24 4C33 4 39 10 39 20C39 29 35.5 33.5 32.5 35.5"/>
+                                <path d="M32.5 35.5C34.5 34 35.5 31.5 34 29.5C32.5 27.5 30.5 28.5 31 30.5"/>
+                                <path d="M24 9C19 9 16 13 16 20C16 27 19.5 31.5 24 32.5C28.5 31.5 32 27 32 20C32 13 29 9 24 9"/>
+                                <path d="M20.5 32.5L20 38M27.5 32.5L28 38"/>
+                                <path d="M20 38L24 41.5L28 38"/>
+                                <path d="M8 47C10 44.5 14.5 41.5 20 39.5M28 39.5C33.5 41.5 38 44.5 40 47"/>
+                            </svg>
+                        </span>
+                        <span class="cat-label">Women</span>
+                    </button></li>
+                    <li><button class="cat-btn" data-filter="Unisex">
+                        <span class="cat-icon"><ion-icon name="male-female-outline"></ion-icon></span>
+                        <span class="cat-label">Unisex</span>
+                    </button></li>
                 </ul>
+
+                <!-- Featured divider -->
+                <div class="sb-feat-divider"><span>Featured</span></div>
+
+                <!-- Special filters -->
+                <div id="special-filter" style="display:flex;flex-direction:column;">
+                    <button data-filter="new-arrivals" class="cat-btn">
+                        <span class="cat-icon"><ion-icon name="star-outline"></ion-icon></span>
+                        <span class="cat-label">New Arrivals</span>
+                    </button>
+                    <button data-filter="gift-sets" class="cat-btn">
+                        <span class="cat-icon"><ion-icon name="gift-outline"></ion-icon></span>
+                        <span class="cat-label">Gift Sets</span>
+                    </button>
+                </div>
+
             </aside>
-            
-            <div style="flex: 1;">
+
+            <!-- ── Main Content ── -->
+            <div class="shop-main">
+
+                <!-- Page title -->
+                <div class="shop-title-area">
+                    <h1 class="shop-page-title">All Products</h1>
+                    <div class="shop-orn">❖</div>
+                    <p class="shop-page-sub">Elevate your routine with our natural formulations.</p>
+                </div>
+
                 <div class="product-grid" id="shop-products">
-                    <!-- Products injected here -->
+                    <!-- Skeleton shown while products load -->
+                    <div class="skel-card"><div class="skel-img"></div><div class="skel-line"></div><div class="skel-line" style="width:55%;height:12px;"></div></div>
+                    <div class="skel-card"><div class="skel-img"></div><div class="skel-line"></div><div class="skel-line" style="width:55%;height:12px;"></div></div>
+                    <div class="skel-card"><div class="skel-img"></div><div class="skel-line"></div><div class="skel-line" style="width:55%;height:12px;"></div></div>
+                    <div class="skel-card"><div class="skel-img"></div><div class="skel-line"></div><div class="skel-line" style="width:55%;height:12px;"></div></div>
+                    <div class="skel-card"><div class="skel-img"></div><div class="skel-line"></div><div class="skel-line" style="width:55%;height:12px;"></div></div>
+                    <div class="skel-card"><div class="skel-img"></div><div class="skel-line"></div><div class="skel-line" style="width:55%;height:12px;"></div></div>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -242,7 +389,7 @@
                 </form>
                 <p style="color: #666; font-size: 0.95rem;">By subscribing, you agree to our Privacy Policy. Unsubscribe anytime.</p>
             </div>
-            
+
             <div class="footer-col-2">
                 <p style="font-family: var(--font-serif); font-size: 1.2rem; line-height: 1.6;">The finest fragrances in the world. By the ml. For you.</p>
             </div>
@@ -252,6 +399,7 @@
                 <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
                     <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Explore Fragrance DNAs</a></li>
                     <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Best Sellers</a></li>
+                    <li><a href="sale.html" style="color: #ccc; font-size: 1rem;">Flash Sale</a></li>
                     <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Blog</a></li>
                     <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Reviews</a></li>
                 </ul>
@@ -263,23 +411,26 @@
                     <li><a href="about.html" style="color: #ccc; font-size: 1rem;">How It Works</a></li>
                     <li><a href="contact.html" style="color: #ccc; font-size: 1rem;">Contact Us</a></li>
                     <li><a href="contact.html" style="color: #ccc; font-size: 1rem;">Shipping</a></li>
+                    <li><a href="track.html" style="color: #ccc; font-size: 1rem;">Track Order</a></li>
+                    <li><a href="faq.html" style="color: #ccc; font-size: 1rem;">FAQ</a></li>
+                    <li><a href="policy.html" style="color: #ccc; font-size: 1rem;">Policies</a></li>
                     <li><a href="checkout.html" style="color: #ccc; font-size: 1rem;">Payment Methods</a></li>
                 </ul>
             </div>
         </div>
-        <div class="footer-bottom-new" style="border-top: 1px solid #222; margin-top: 4rem; padding-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+        <div class="footer-bottom-new" style="border-top: 1px solid #222; margin-top: 4rem; padding-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; width: 100%; box-sizing: border-box; overflow: hidden;">
             <div style="display: flex; gap: 1.5rem; color: white; font-size: 1.2rem;">
-                <a href="https://www.facebook.com/zahroun" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-facebook"></ion-icon></a>
-                <a href="https://www.instagram.com/zahroun" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-instagram"></ion-icon></a>
+                <a href="https://www.facebook.com/profile.php?id=61586401509792" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-facebook"></ion-icon></a>
+                <a href="https://www.instagram.com/zahroun_?igsh=b3hrNTFia2xzZG5y" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-instagram"></ion-icon></a>
                 <a href="#"><ion-icon name="logo-youtube"></ion-icon></a>
             </div>
-            <p style="color: #666; font-size: 0.95rem;">Dhanmondi, Dhaka, Bangladesh, 1205 | WhatsApp: +880 1886-936581</p>
+            <p style="color: #666; font-size: 0.95rem; text-align: center; word-break: break-word; overflow-wrap: break-word; max-width: 100%; padding: 0 0.5rem; box-sizing: border-box;">Dhanmondi, Dhaka, Bangladesh, 1205<br><a id="whatsapp-link" href="https://wa.me/8801886936581?text=Hi%20Zahroun%2C%20I'm%20interested%20in%20your%20perfumes%20%F0%9F%8C%B9" target="_blank" rel="noopener" style="color:#1e7e34;font-weight:500;white-space:nowrap;">WhatsApp: +880 1886-936581</a> &nbsp;|&nbsp; <a href="mailto:support@zahroun.com" style="color:#1e7e34;font-weight:500;white-space:nowrap;">support@zahroun.com</a></p>
             <p style="color: #666; font-size: 0.95rem;">&copy; 2026 Zahroun. All rights reserved.</p>
         </div>
     </footer>
 
     <!-- Cart Modal -->
-    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;">
         <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
                 <h3>Your Cart</h3>
@@ -297,17 +448,27 @@
     </div>
 
     <script type="module" src="js/store.js"></script>
-    <script src="js/cart.js"></script>
-    <script src="js/ui.js"></script>
+    <script type="module" src="js/promotions.js"></script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
     <script type="module">
         import { db } from "./js/firebase-config.js";
-        import { collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { collection, getDocs, getDoc, doc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
         const filterList = document.getElementById("category-filter");
         const grid = document.getElementById("shop-products");
         const searchInput = document.getElementById("search-input");
         const categoryParam = new URLSearchParams(window.location.search).get("category");
+
+        // Icon map for categories
+        const _catIconMap = { all:'grid-outline', men:'person-outline', unisex:'male-female-outline' };
+        const _womanSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 4C15 4 9 10 9 20C9 29 13 34 18 36.5"/><path d="M24 4C33 4 39 10 39 20C39 29 35.5 33.5 32.5 35.5"/><path d="M32.5 35.5C34.5 34 35.5 31.5 34 29.5C32.5 27.5 30.5 28.5 31 30.5"/><path d="M24 9C19 9 16 13 16 20C16 27 19.5 31.5 24 32.5C28.5 31.5 32 27 32 20C32 13 29 9 24 9"/><path d="M20.5 32.5L20 38M27.5 32.5L28 38"/><path d="M20 38L24 41.5L28 38"/><path d="M8 47C10 44.5 14.5 41.5 20 39.5M28 39.5C33.5 41.5 38 44.5 40 47"/></svg>`;
+        function _catIconHtml(n) {
+            if (n.toLowerCase() === 'women') return _womanSVG;
+            const name = _catIconMap[n.toLowerCase()] || 'pricetag-outline';
+            return `<ion-icon name="${name}"></ion-icon>`;
+        }
 
         // Delegated hover — swaps to second image on card hover
         grid.addEventListener("mouseenter", e => {
@@ -333,6 +494,22 @@
         let catsReady = false;
         let productsReady = typeof products !== "undefined" && products.length > 0;
 
+        function applyFlashSaleShop(flashData) {
+            const banner = document.getElementById("sidebar-flash-banner");
+            if (banner) banner.style.display = flashData.enabled ? "flex" : "none";
+            const existingLi = filterList.querySelector('button[data-filter="flash-sale"]')?.closest("li");
+            if (flashData.enabled) {
+                if (!existingLi) {
+                    const li = document.createElement("li");
+                    li.innerHTML = `<button class="cat-btn" data-filter="flash-sale"><span class="cat-icon"><ion-icon name="flash-outline" style="color:#c0392b;"></ion-icon></span><span class="cat-label" style="color:#c0392b;font-weight:600;">Flash Sale</span></button>`;
+                    filterList.insertBefore(li, filterList.firstChild);
+                }
+            } else {
+                if (existingLi) existingLi.remove();
+                if (currentFilter === "flash-sale") { currentFilter = "all"; renderProducts(); }
+            }
+        }
+
         function cardImg(url) {
             if (!url || !url.includes("/upload/")) return url || "";
             return url.replace("/upload/", "/upload/w_400,h_533,c_fill,f_auto,q_auto/");
@@ -340,31 +517,68 @@
 
         function renderProducts() {
             if (typeof products === "undefined" || !products.length) return;
-            const filtered = products.filter(p =>
-                (currentFilter === "all" || p.category === currentFilter) &&
-                p.name.toLowerCase().includes(searchQuery.toLowerCase())
-            );
+            const flashItems = (window.zahFlashSale && window.zahFlashSale.items) || [];
+            const salePriceMap = {};
+            flashItems.forEach(it => { salePriceMap[it.productId] = it.salePrice; });
+
+            let filtered;
+            if (currentFilter === "flash-sale") {
+                const saleIds = new Set(flashItems.map(it => it.productId));
+                filtered = products.filter(p => saleIds.has(p.id) && p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            } else if (currentFilter === "new-arrivals") {
+                filtered = products.filter(p => p.newArrival && p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            } else if (currentFilter === "gift-sets") {
+                filtered = products.filter(p => p.productType === "combo" && p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            } else {
+                filtered = products.filter(p =>
+                    (currentFilter === "all" || p.category === currentFilter) &&
+                    p.name.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+            }
             if (!filtered.length) { grid.innerHTML = `<p style="color:var(--text-muted)">No products found.</p>`; return; }
-            grid.innerHTML = filtered.map(p => {
-                const price = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : p.price;
+            function priceRange(p) {
+                const active = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
+                const vals = p.prices
+                    ? Object.entries(p.prices).filter(([k,v]) => active.includes(k) && typeof v === 'number' && v > 0).map(([,v]) => v)
+                    : [];
+                if (!vals.length) return `৳${(p.basePrice || p.price || 0).toLocaleString()}`;
+                const mn = Math.min(...vals), mx = Math.max(...vals);
+                return mn === mx ? `৳${mn.toLocaleString()}` : `৳${mn.toLocaleString()} – ৳${mx.toLocaleString()}`;
+            }
+            grid.innerHTML = filtered.map((p, _idx) => {
+                const active = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
+                const bestSize = ["50ML","30ML","15ML","6ML"].find(s => active.includes(s)) || "50ML";
+                const regularPrice = (p.prices && p.prices[bestSize]) ? p.prices[bestSize] : (p.basePrice || p.price || 0);
+                const isSale = currentFilter === "flash-sale" && salePriceMap[p.id];
+                const price = isSale ? salePriceMap[p.id] : regularPrice;
+                const discPct = isSale && regularPrice > price ? Math.round((regularPrice - price) / regularPrice * 100) : 0;
                 const outOfStock = p.stock !== undefined && p.stock !== null && p.stock === 0;
                 const oosBadge = outOfStock ? `<span style="position:absolute;top:.5rem;left:.5rem;background:#9b2226;color:#fff;font-size:.68rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;letter-spacing:.04em;z-index:1;">OUT OF STOCK</span>` : "";
+                const newBadge = (!outOfStock && p.newArrival) ? `<span style="position:absolute;top:.6rem;left:.6rem;background:linear-gradient(120deg,#D4AF37 0%,#f0cc5e 50%,#c9a227 100%);color:#1a0e00;font-size:.58rem;font-weight:800;padding:.24rem .62rem;border-radius:20px;letter-spacing:.1em;z-index:1;box-shadow:0 2px 10px rgba(212,175,55,.5);text-transform:uppercase;">NEW</span>` : "";
+                const comboBadge = p.productType === "combo" ? `<span style="position:absolute;${p.newArrival && !outOfStock ? 'top:.5rem;left:3.5rem' : 'top:.5rem;left:.5rem'};background:#E07B2E;color:#fff;font-size:.6rem;font-weight:700;padding:.18rem .48rem;border-radius:4px;letter-spacing:.05em;z-index:1;">GIFT SET</span>` : "";
+                const cartSize = active.length > 0 ? bestSize : "Set";
                 const cartBtn = outOfStock
                     ? `<button class="add-to-cart-quick" disabled style="cursor:not-allowed;opacity:.7;background:#aaa;">Out of Stock</button>`
-                    : `<button class="add-to-cart-quick" onclick="event.stopPropagation();addToCart(${p.id},'50ML',${price});window.showAddedToast&&window.showAddedToast('${esc(p.name)}')">Add to Cart</button>`;
+                    : `<button class="add-to-cart-quick" onclick="event.stopPropagation();addToCart(${p.id},'${cartSize}',${price});window.showAddedToast&&window.showAddedToast('${esc(p.name)}')">Add to Cart</button>`;
+                const priceHtml = isSale
+                    ? `<div class="product-price" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span style="color:#e63946;font-weight:700;">৳${price.toLocaleString()}</span><span style="font-size:.78rem;color:var(--text-muted);text-decoration:line-through;">৳${regularPrice.toLocaleString()}</span>${discPct > 0 ? `<span style="background:#fdecea;color:#e63946;font-size:.65rem;font-weight:700;padding:.1rem .35rem;border-radius:3px;">${discPct}% OFF</span>` : ""}</div>`
+                    : `<div class="product-price">${priceRange(p)}</div>`;
                 const src1 = cardImg(p.image);
                 const img2 = (p.images && p.images.length > 1) ? cardImg(p.images[1]) : "";
                 const wrapAttrs = img2 ? ` data-img1="${esc(src1)}" data-img2="${esc(img2)}"` : "";
+                const inWish = window.Wishlist ? window.Wishlist.isIn(p.id) : false;
+                const wishBtn = `<button class="wish-btn${inWish ? ' active' : ''}" data-pid="${p.id}" onclick="event.stopPropagation();window.Wishlist&&window.Wishlist.toggle(${p.id})" title="Add to wishlist" aria-label="Wishlist" style="position:absolute;top:.5rem;right:.5rem;background:rgba(255,255,255,.85);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.15rem;color:${inWish?'#c0392b':'#888'};box-shadow:0 1px 4px rgba(0,0,0,.12);z-index:2;transition:all .2s;"><ion-icon name="${inWish?'heart':'heart-outline'}"></ion-icon></button>`;
                 return `<div class="product-card">
                     <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;position:relative;"${wrapAttrs}>
-                        <img src="${esc(src1)}" alt="${esc(p.name)}" class="product-img" style="background-color:#FFFFFF;${outOfStock ? "opacity:.75;" : ""}">
-                        ${oosBadge}
+                        <img src="${esc(src1)}" alt="${esc(p.name)}" class="product-img" loading="${_idx < 4 ? 'eager' : 'lazy'}"${_idx === 0 ? ' fetchpriority="high"' : ''} style="background-color:#FFFFFF;${outOfStock ? "opacity:.75;" : ""}">
+                        ${oosBadge}${newBadge}${comboBadge}
+                        ${wishBtn}
                         ${cartBtn}
                     </div>
                     <div class="product-info">
                         <span class="product-category">${esc(p.category)}</span>
                         <h3 class="product-title"><a href="product.html?id=${p.id}">${esc(p.name)}</a></h3>
-                        <div class="product-price">${price} BDT</div>
+                        ${priceHtml}
                     </div>
                 </div>`;
             }).join("");
@@ -375,14 +589,38 @@
         }
 
         document.addEventListener("products-ready", () => { productsReady = true; tryRender(); });
+        document.addEventListener("wishlist-ready", () => { if (productsReady) renderProducts(); });
+        // Wishlist change: only update button states, avoid full re-render
+        document.addEventListener("wishlist-changed", () => {
+            if (!productsReady) return;
+            grid.querySelectorAll(".wish-btn[data-pid]").forEach(btn => {
+                const pid = Number(btn.dataset.pid);
+                const isIn = window.Wishlist ? window.Wishlist.isIn(pid) : false;
+                btn.classList.toggle("active", isIn);
+                btn.style.color = isIn ? "#c0392b" : "#888";
+                const ic = btn.querySelector("ion-icon");
+                if (ic) ic.setAttribute("name", isIn ? "heart" : "heart-outline");
+            });
+        });
 
-        // Fetch categories dynamically from Firestore
-        getDocs(collection(db, "categories")).then(snap => {
-            const cats = snap.docs.map(d => d.data()).sort((a, b) => (a.order || 0) - (b.order || 0));
+        // Fetch categories — sessionStorage cache to skip Firestore on repeat visits
+        const _CKEY = "zah_cats_v2";
+        function _buildCatList(cats) {
             if (cats.length) {
-                filterList.innerHTML = `<li><button class="active" data-filter="all">All</button></li>` +
-                    cats.map(c => `<li><button data-filter="${esc(c.name)}">${esc(c.name)}</button></li>`).join("");
+                filterList.innerHTML = `<li><button class="cat-btn active" data-filter="all"><span class="cat-icon"><ion-icon name="grid-outline"></ion-icon></span><span class="cat-label">All Products</span></button></li>` +
+                    cats.map(c => `<li><button class="cat-btn" data-filter="${esc(c.name)}"><span class="cat-icon">${_catIconHtml(c.name)}</span><span class="cat-label">${esc(c.name)}</span></button></li>`).join("");
             }
+        }
+        const _cachedCats = (() => { try { const r = sessionStorage.getItem(_CKEY); return r ? JSON.parse(r) : null; } catch { return null; } })();
+        const _catsPromise = _cachedCats
+            ? Promise.resolve(_cachedCats)
+            : getDocs(collection(db, "categories")).then(snap => {
+                const cats = snap.docs.map(d => d.data()).sort((a, b) => (a.order || 0) - (b.order || 0));
+                try { sessionStorage.setItem(_CKEY, JSON.stringify(cats)); } catch {}
+                return cats;
+            });
+        _catsPromise.then(cats => {
+            _buildCatList(cats);
             // Apply URL category param
             if (categoryParam) {
                 const hit = filterList.querySelector(`button[data-filter="${CSS.escape(categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1).toLowerCase())}"]`) ||
@@ -401,17 +639,40 @@
             }
         }).finally(() => {
             // Event delegation — works for both hardcoded and dynamically built buttons
-            filterList.addEventListener("click", e => {
-                const btn = e.target.closest("button[data-filter]");
-                if (!btn) return;
-                filterList.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                currentFilter = btn.dataset.filter;
-                renderProducts();
+            const allFilterContainers = [filterList, document.getElementById("special-filter")].filter(Boolean);
+            allFilterContainers.forEach(fl => {
+                fl.addEventListener("click", e => {
+                    const btn = e.target.closest("button[data-filter]");
+                    if (!btn) return;
+                    allFilterContainers.forEach(c => c.querySelectorAll("button").forEach(b => b.classList.remove("active")));
+                    btn.classList.add("active");
+                    currentFilter = btn.dataset.filter;
+                    renderProducts();
+                });
             });
-            searchInput.addEventListener("input", e => { searchQuery = e.target.value; renderProducts(); });
+            // Handle ?filter=new URL param
+            const filterParam = new URLSearchParams(window.location.search).get("filter");
+            if (filterParam === "new") {
+                const newBtn = document.querySelector('#special-filter button[data-filter="new-arrivals"]');
+                if (newBtn) { currentFilter = "new-arrivals"; newBtn.classList.add("active"); filterList.querySelectorAll("button").forEach(b => b.classList.remove("active")); }
+            }
+            // Handle ?q= search param (from header search overlay on other pages)
+            const qParam = new URLSearchParams(window.location.search).get("q");
+            if (qParam) { searchQuery = qParam; searchInput.value = qParam; }
+            let _st; searchInput.addEventListener("input", e => { const v = e.target.value; clearTimeout(_st); _st = setTimeout(() => { searchQuery = v; renderProducts(); }, 200); });
             catsReady = true;
             tryRender();
+            // Fetch Flash Sale status — prefer sessionStorage cache set by auth.js
+            (async () => {
+                try {
+                    let flashData = null;
+                    try { const r = sessionStorage.getItem('zhr_flash_v1'); if (r) { const { data, ts } = JSON.parse(r); if (Date.now() - ts < 30 * 60 * 1000) flashData = data; } } catch {}
+                    if (!flashData) { const snap = await getDoc(doc(db, "settings", "flashSale")); flashData = snap.exists() ? snap.data() : { enabled: false, items: [] }; }
+                    flashData.items = flashData.items || [];
+                    window.zahFlashSale = flashData;
+                    applyFlashSaleShop(flashData);
+                } catch {}
+            })();
         });
 
         // Cart toast (exposed globally for inline onclick)
@@ -452,4 +713,3 @@
     </script>
 </body>
 </html>
-

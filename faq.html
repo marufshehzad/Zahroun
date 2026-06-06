@@ -1,0 +1,279 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ | Zahroun</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <meta name="description" content="Frequently asked questions about Zahroun luxury perfumes — delivery, returns, payments, and more.">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="css/style.css">
+    <script defer src="js/analytics.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/broadcast.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .page-head { background-color: var(--accent-color); padding: 3.5rem 0 3rem; text-align: center; }
+        .page-head h1 { margin-bottom: .5rem; }
+        .page-head p { color: var(--text-muted); max-width: 520px; margin: 0 auto; }
+
+        .faq-wrap { max-width: 720px; margin: 0 auto; }
+
+        .faq-search-wrap {
+            position: relative;
+            margin-bottom: 2.5rem;
+        }
+        .faq-search-wrap ion-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        .faq-search-wrap input {
+            width: 100%;
+            padding: .8rem 1rem .8rem 2.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: var(--font-sans);
+            font-size: .95rem;
+            background: var(--surface-color);
+            color: var(--text-main);
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color .2s;
+        }
+        .faq-search-wrap input:focus { border-color: var(--primary-color); }
+
+        .faq-item {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: .75rem;
+            background: var(--surface-color);
+            overflow: hidden;
+            transition: box-shadow .2s;
+        }
+        .faq-item:hover { box-shadow: var(--shadow-sm); }
+        .faq-item.open { border-color: var(--primary-color); box-shadow: 0 4px 16px rgba(22,62,52,.08); }
+
+        .faq-q {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            padding: 1.1rem 1.25rem;
+            font-family: var(--font-sans);
+            font-size: .95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            line-height: 1.5;
+        }
+        .faq-q:hover { color: var(--primary-color); }
+        .faq-item.open .faq-q { color: var(--primary-color); }
+
+        .faq-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--text-muted);
+            font-size: 1rem;
+            transition: all .2s;
+        }
+        .faq-item.open .faq-icon {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #fff;
+            transform: rotate(45deg);
+        }
+
+        .faq-a {
+            display: none;
+            padding: 0 1.25rem 1.25rem;
+            font-size: .9rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+            border-top: 1px solid var(--border-color);
+            margin-top: 0;
+            white-space: pre-line;
+        }
+        .faq-item.open .faq-a { display: block; }
+
+        .faq-empty {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: var(--text-muted);
+        }
+        .faq-empty ion-icon { font-size: 3rem; display: block; margin: 0 auto .75rem; opacity: .35; }
+
+        .faq-contact-cta {
+            text-align: center;
+            background: var(--accent-color);
+            border-radius: 14px;
+            padding: 2.5rem 1.5rem;
+            margin-top: 3rem;
+        }
+        .faq-contact-cta h3 { margin-bottom: .5rem; font-size: 1.25rem; }
+        .faq-contact-cta p { color: var(--text-muted); margin-bottom: 1.5rem; font-size: .95rem; }
+
+        @media (max-width: 540px) {
+            .faq-q { font-size: .88rem; padding: 1rem; }
+            .faq-a { padding: 0 1rem 1rem; font-size: .85rem; }
+        }
+    </style>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+</head>
+<body>
+    <header class="header">
+        <div class="container nav-container">
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="nav-icons">
+                <button aria-label="Search" onclick="window.location.href='shop.html'"><ion-icon name="search-outline"></ion-icon></button>
+                <button aria-label="Cart" id="cart-icon"><ion-icon name="bag-outline"></ion-icon><span class="cart-count" id="cart-count">0</span></button>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu"><ion-icon name="menu-outline"></ion-icon></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-head">
+        <div class="container">
+            <h1>Frequently Asked Questions</h1>
+            <p>Everything you need to know about orders, delivery, and our fragrances</p>
+        </div>
+    </div>
+
+    <div class="container py-8" style="margin-top: 60px;">
+        <div class="faq-wrap">
+
+            <div class="faq-search-wrap">
+                <ion-icon name="search-outline"></ion-icon>
+                <input type="text" id="faq-search" placeholder="Search questions…" autocomplete="off">
+            </div>
+
+            <div id="faq-list">
+                <p style="text-align:center;color:var(--text-muted);padding:3rem 0;">Loading…</p>
+            </div>
+
+            <div class="faq-contact-cta">
+                <h3>Still have questions?</h3>
+                <p>Our team is happy to help — reach out and we'll get back to you quickly.</p>
+                <a href="contact.html" class="btn">Contact Us</a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" style="display:none;position:fixed;top:0;right:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100000;">
+        <div style="position:absolute;top:0;right:0;width:400px;max-width:100%;height:100%;background:white;padding:2rem;display:flex;flex-direction:column;box-shadow:-5px 0 15px rgba(0,0,0,0.1);transform:translateX(100%);transition:transform 0.3s;" id="cart-content-wrapper">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-color);padding-bottom:1rem;margin-bottom:1rem;">
+                <h3>Your Cart</h3>
+                <button id="close-cart" style="background:none;border:none;font-size:1.5rem;cursor:pointer;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div id="cart-items" style="flex:1;overflow-y:auto;"></div>
+            <div style="border-top:1px solid var(--border-color);padding-top:1rem;margin-top:1rem;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-weight:600;font-size:1.2rem;"><span>Total</span><span id="cart-total">0 BDT</span></div>
+                <button class="btn" style="width:100%;" onclick="window.location.href='checkout.html'">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/store.js"></script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script type="module">
+        import { db } from "./js/firebase-config.js";
+        import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+        const listEl = document.getElementById("faq-list");
+        const searchEl = document.getElementById("faq-search");
+        let allFaqs = [];
+
+        function renderFaqs(items) {
+            if (!items.length) {
+                listEl.innerHTML = `<div class="faq-empty">
+                    <ion-icon name="help-circle-outline"></ion-icon>
+                    <p style="font-weight:600;margin-bottom:.3rem;">No results found</p>
+                    <p style="font-size:.85rem;">Try a different search term or <a href="contact.html" style="color:var(--primary-color);">contact us</a></p>
+                </div>`;
+                return;
+            }
+            listEl.innerHTML = items.map((f, i) => `
+                <div class="faq-item" id="faq-${i}">
+                    <button class="faq-q" onclick="toggleFaq(${i})">
+                        <span>${esc(f.question)}</span>
+                        <span class="faq-icon"><ion-icon name="add-outline"></ion-icon></span>
+                    </button>
+                    <div class="faq-a">${esc(f.answer)}</div>
+                </div>`).join("");
+        }
+
+        window.toggleFaq = function(i) {
+            const item = document.getElementById("faq-" + i);
+            if (!item) return;
+            const isOpen = item.classList.contains("open");
+            // Close all
+            document.querySelectorAll(".faq-item.open").forEach(el => el.classList.remove("open"));
+            if (!isOpen) item.classList.add("open");
+        };
+
+        searchEl.addEventListener("input", () => {
+            const q = searchEl.value.toLowerCase().trim();
+            const filtered = q ? allFaqs.filter(f =>
+                f.question.toLowerCase().includes(q) || f.answer.toLowerCase().includes(q)
+            ) : allFaqs;
+            renderFaqs(filtered);
+        });
+
+        const DEFAULT_FAQS = [
+            { question: "How do I place an order?", answer: "Browse our collection, select a fragrance and size, then click 'Add to Cart'. Once you're ready, go to Cart and click 'Checkout'. Fill in your delivery details and choose your payment method — Bkash, Nagad, or Cash on Delivery." },
+            { question: "What payment methods do you accept?", answer: "We accept:\n• Bkash\n• Nagad\n• Cash on Delivery (COD)\n\nFor Bkash and Nagad, send the payment to our number and enter the transaction ID at checkout." },
+            { question: "How long does delivery take?", answer: "• Dhaka: 1–2 business days\n• Outside Dhaka: 3–5 business days\n\nOrders are processed within 24 hours. You will receive a confirmation WhatsApp message once your order is dispatched." },
+            { question: "What is the delivery charge?", answer: "• Inside Dhaka: ৳60\n• Outside Dhaka: ৳120\n\nFree delivery may be available during special promotions. Check the announcement bar at the top of the page for current offers." },
+            { question: "Can I return or exchange a product?", answer: "Yes. We accept returns and exchanges within 3 days of delivery if the product is:\n• Unopened and in original packaging\n• Damaged during shipping\n\nContact us on WhatsApp with your order number and we will arrange the return. Refunds are processed within 3–5 business days." },
+            { question: "How do I track my order?", answer: "Visit our Track Order page and enter your Order Number and the Phone Number you used at checkout. You can also find the track link in your order confirmation message." },
+            { question: "Are your perfumes original?", answer: "Yes, all Zahroun fragrances are 100% authentic. We source our ingredients from premium suppliers and every bottle is quality-checked before shipping." },
+            { question: "What sizes are available?", answer: "Most fragrances are available in:\n• 6ML (travel size)\n• 15ML\n• 30ML\n• 50ML\n\nAvailability varies by fragrance. Check the product page for current sizes." },
+            { question: "Can I send a gift to someone else?", answer: "Absolutely! At checkout, enter the recipient's delivery address. You can also add a personalised Gift Message in the order form — it will be included with the package." },
+            { question: "How do I contact customer support?", answer: "You can reach us via:\n• WhatsApp: +880 1886-936581\n• Email: support@zahroun.com\n• Contact Form: zahroun.com/contact.html\n\nWe reply within a few hours during business hours (9 AM – 9 PM, every day)." }
+        ];
+
+        try {
+            const snap = await getDocs(query(collection(db, "faqs"), where("active", "!=", false)));
+            allFaqs = snap.docs.map(d => d.data())
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+            if (!allFaqs.length) allFaqs = DEFAULT_FAQS;
+            renderFaqs(allFaqs);
+        } catch (err) {
+            allFaqs = DEFAULT_FAQS;
+            renderFaqs(allFaqs);
+        }
+    </script>
+</body>
+</html>
+

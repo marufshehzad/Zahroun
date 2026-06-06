@@ -9,7 +9,7 @@ import {
 
 window.appliedCoupon = null;
 
-window.validateAndApplyCoupon = async function (code, subtotal) {
+window.validateAndApplyCoupon = async function (code, subtotal, cartItems) {
   if (!code) return { valid: false, msg: "Please enter a coupon code." };
   const snap = await getDoc(doc(db, "coupons", code.trim().toUpperCase()));
   if (!snap.exists()) return { valid: false, msg: "Coupon not found." };
@@ -21,6 +21,14 @@ window.validateAndApplyCoupon = async function (code, subtotal) {
   }
   if (c.minOrder && subtotal < c.minOrder) return { valid: false, msg: `Minimum order ৳${c.minOrder} required for this coupon.` };
   if (c.maxUses && (c.usedCount || 0) >= c.maxUses) return { valid: false, msg: "This coupon's usage limit has been reached." };
+
+  // Check if coupon is blocked on sale products
+  if (c.allowOnSaleProducts === false && cartItems && cartItems.length) {
+    const flashIds = new Set(((window.zahFlashSale && window.zahFlashSale.items) || []).map(it => it.productId));
+    if (flashIds.size > 0 && cartItems.some(item => flashIds.has(item.id))) {
+      return { valid: false, msg: "This coupon cannot be applied to sale products." };
+    }
+  }
 
   const freeDelivery = c.type === "freeship";
   const discount = freeDelivery

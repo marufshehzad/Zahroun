@@ -18,6 +18,9 @@ import { db } from "./firebase-config.js";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { seedProducts } from "./products.js";
 
+const _PROD_KEY = 'zhr_products_v1';
+const _PROD_TTL = 2 * 60 * 1000; // 2 minutes — balances nav speed vs. stock accuracy
+
 function normalize(p) {
   const id = typeof p.id === "number" ? p.id : Number(p.id);
   return { ...p, id };
@@ -38,15 +41,28 @@ function publish(list, source) {
 // 1) Instant render with bundled data — never an empty storefront.
 publish(seedProducts.map(normalize).sort((a, b) => a.id - b.id), "bundled");
 
-// 2) Upgrade to Firestore data when available.
+// 2) Upgrade to live data: sessionStorage cache → Firestore.
 (async () => {
   try {
+    // Fast path: reuse products fetched earlier in this session (cross-page cache)
+    try {
+      const raw = sessionStorage.getItem(_PROD_KEY);
+      if (raw) {
+        const { data, ts } = JSON.parse(raw);
+        if (Date.now() - ts < _PROD_TTL && Array.isArray(data) && data.length) {
+          publish(data.map(normalize).sort((a, b) => a.id - b.id), "cache");
+          return;
+        }
+      }
+    } catch {}
+
     const snap = await getDocs(collection(db, "products"));
     if (!snap.empty) {
       const list = snap.docs
         .map(d => normalize({ id: d.id, ...d.data() }))
-        .filter(p => p.hidden !== true)        // admins can hide products
+        .filter(p => p.hidden !== true)
         .sort((a, b) => a.id - b.id);
+      try { sessionStorage.setItem(_PROD_KEY, JSON.stringify({ data: list, ts: Date.now() })); } catch {}
       publish(list, "firestore");
     }
   } catch (err) {

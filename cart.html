@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart | Zahroun</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="robots" content="noindex">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="css/style.css">
+    <script defer src="js/analytics.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/broadcast.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        body { background-color: #FAF7F0; }
+        .cart-page { max-width: 900px; margin: 2.5rem auto; padding: 0 1rem 5rem; }
+        .cart-page-title { font-family: var(--font-serif); font-size: 1.8rem; margin-bottom: 1.75rem; color: var(--primary-color); }
+        .cart-layout { display: grid; grid-template-columns: 1fr 320px; gap: 2rem; align-items: start; }
+        @media (max-width: 700px) { .cart-layout { grid-template-columns: 1fr; } }
+
+        /* Cart items panel */
+        .cart-items-panel { background: #fff; border-radius: 14px; box-shadow: 0 2px 16px rgba(0,0,0,.06); overflow: hidden; }
+        .cart-item { display: flex; gap: 1rem; align-items: flex-start; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); }
+        .cart-item:last-child { border-bottom: none; }
+        .cart-item img { width: 72px; height: 72px; object-fit: contain; background: var(--bg-color); border-radius: 8px; flex-shrink: 0; }
+        .cart-item-info { flex: 1; }
+        .cart-item-name { font-weight: 600; font-size: .95rem; margin-bottom: .2rem; color: var(--text-main); }
+        .cart-item-meta { font-size: .8rem; color: var(--text-muted); margin-bottom: .5rem; }
+        .qty-row { display: flex; align-items: center; gap: .5rem; margin-top: .4rem; }
+        .qty-btn { width: 28px; height: 28px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: background .15s, color .15s; }
+        .qty-btn:hover { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+        .qty-val { min-width: 28px; text-align: center; font-weight: 600; font-size: .9rem; }
+        .line-price { font-weight: 700; color: var(--primary-color); font-size: .9rem; margin-left: .5rem; }
+        .remove-item-btn { margin-left: auto; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; padding: .3rem; transition: color .15s; flex-shrink: 0; }
+        .remove-item-btn:hover { color: #c0392b; }
+
+        /* Summary panel */
+        .cart-summary { background: #fff; border-radius: 14px; box-shadow: 0 2px 16px rgba(0,0,0,.06); padding: 1.5rem; position: sticky; top: 100px; }
+        .cart-summary h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: .75rem; color: var(--text-main); }
+        .summary-row { display: flex; justify-content: space-between; font-size: .9rem; margin-bottom: .5rem; color: var(--text-muted); }
+        .summary-row.total-row { font-weight: 700; font-size: 1.05rem; color: var(--text-main); border-top: 1px solid var(--border-color); padding-top: .75rem; margin-top: .5rem; }
+        .checkout-cta { display: block; width: 100%; margin-top: 1.25rem; text-align: center; padding: .9rem; font-size: 1rem; font-weight: 600; background: var(--primary-color); color: #fff; border: none; border-radius: 10px; cursor: pointer; text-decoration: none; transition: background .2s; letter-spacing: .02em; }
+        .checkout-cta:hover { background: var(--primary-hover); color: #fff; }
+        .continue-link { display: block; text-align: center; margin-top: .75rem; font-size: .85rem; color: var(--text-muted); text-decoration: none; transition: color .15s; }
+        .continue-link:hover { color: var(--primary-color); }
+
+        /* Empty state */
+        .cart-empty { text-align: center; padding: 5rem 1rem; }
+        .cart-empty ion-icon { font-size: 4rem; color: var(--border-color); display: block; margin: 0 auto 1rem; }
+        .cart-empty p { color: var(--text-muted); margin-bottom: 1.5rem; font-size: .95rem; }
+    </style>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+</head>
+<body>
+    <header class="header">
+        <div class="container nav-container">
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="nav-icons">
+                <button aria-label="Search"><ion-icon name="search-outline"></ion-icon></button>
+                <button aria-label="Cart" id="cart-icon">
+                    <ion-icon name="bag-outline"></ion-icon>
+                    <span class="cart-count" id="cart-count">0</span>
+                </button>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="cart-page">
+        <h1 class="cart-page-title">Your Cart</h1>
+        <div id="cart-page-content"></div>
+    </div>
+
+    <!-- Sidebar cart modal (same as all pages) -->
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;">
+        <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <h3>Your Cart</h3>
+                <button id="close-cart" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div id="cart-items" style="flex: 1; overflow-y: auto;"></div>
+            <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
+                    <span>Total</span>
+                    <span id="cart-total">0 BDT</span>
+                </div>
+                <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/store.js"></script>
+    <script type="module" src="js/promotions.js"></script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script>
+    (function renderCartPage() {
+        const wrap = document.getElementById("cart-page-content");
+        if (!wrap) return;
+        const cartData = JSON.parse(localStorage.getItem("zahroun_cart") || "[]");
+
+        function esc(s) {
+            return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+        }
+
+        function saveAndRender(newCart) {
+            localStorage.setItem("zahroun_cart", JSON.stringify(newCart));
+            renderCartPage();
+        }
+
+        if (!cartData.length) {
+            wrap.innerHTML = `<div class="cart-empty">
+                <ion-icon name="bag-outline"></ion-icon>
+                <p>Your cart is empty.</p>
+                <a href="shop.html" class="btn">Browse Fragrance Collection</a>
+            </div>`;
+            return;
+        }
+
+        const subtotal = cartData.reduce((s, i) => s + (parseFloat(i.selectedPrice) || i.price || 0) * (i.quantity || 1), 0);
+        const FREE_THRESHOLD = 5000;
+        const delivery = subtotal >= FREE_THRESHOLD ? 0 : 70;
+        const total = subtotal + delivery;
+        const itemCount = cartData.reduce((s, i) => s + (i.quantity || 1), 0);
+
+        wrap.innerHTML = `
+        <div class="cart-layout">
+            <div class="cart-items-panel">
+                ${cartData.map((item, idx) => {
+                    const price = parseFloat(item.selectedPrice) || item.price || 0;
+                    const lineTotal = price * (item.quantity || 1);
+                    return `<div class="cart-item">
+                        <img src="${esc(item.image)}" alt="${esc(item.name)}" loading="lazy">
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">${esc(item.name)}</div>
+                            <div class="cart-item-meta">${esc(item.size || "50ML")} &middot; ৳${price.toLocaleString()} each</div>
+                            <div class="qty-row">
+                                <button class="qty-btn" data-action="dec" data-idx="${idx}"><ion-icon name="remove-outline"></ion-icon></button>
+                                <span class="qty-val">${item.quantity || 1}</span>
+                                <button class="qty-btn" data-action="inc" data-idx="${idx}"><ion-icon name="add-outline"></ion-icon></button>
+                                <span class="line-price">৳${lineTotal.toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <button class="remove-item-btn" data-action="remove" data-idx="${idx}" title="Remove item">
+                            <ion-icon name="trash-outline"></ion-icon>
+                        </button>
+                    </div>`;
+                }).join("")}
+            </div>
+            <div class="cart-summary">
+                <h3>Order Summary</h3>
+                <div class="summary-row">
+                    <span>Subtotal (${itemCount} item${itemCount !== 1 ? "s" : ""})</span>
+                    <span>৳${subtotal.toLocaleString()}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Delivery</span>
+                    <span>${delivery === 0 ? '<span style="color:#1e7e34;font-weight:600;">Free</span>' : "৳" + delivery}</span>
+                </div>
+                ${delivery > 0 ? `<div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.4rem;">Add ৳${(FREE_THRESHOLD - subtotal).toLocaleString()} more for free delivery</div>` : ""}
+                <div class="summary-row total-row">
+                    <span>Total</span>
+                    <span>৳${total.toLocaleString()}</span>
+                </div>
+                <button class="checkout-cta" onclick="checkBxgyAndProceed()">Proceed to Checkout</button>
+                <a href="shop.html" class="continue-link">&larr; Continue Shopping</a>
+            </div>
+        </div>`;
+
+        wrap.querySelectorAll("[data-action]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const idx = parseInt(btn.dataset.idx);
+                const action = btn.dataset.action;
+                const freshCart = JSON.parse(localStorage.getItem("zahroun_cart") || "[]");
+                if (action === "inc") {
+                    freshCart[idx].quantity = (freshCart[idx].quantity || 1) + 1;
+                    saveAndRender(freshCart);
+                } else if (action === "dec") {
+                    freshCart[idx].quantity = (freshCart[idx].quantity || 1) - 1;
+                    if (freshCart[idx].quantity <= 0) freshCart.splice(idx, 1);
+                    saveAndRender(freshCart);
+                } else if (action === "remove") {
+                    freshCart.splice(idx, 1);
+                    saveAndRender(freshCart);
+                }
+            });
+        });
+    })();
+    </script>
+</body>
+</html>

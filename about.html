@@ -5,8 +5,8 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Story | Zahroun Luxury Perfumes</title>
-    <link rel="icon" type="image/png" href="product pictures/favicon.png">
-    <link rel="apple-touch-icon" href="product pictures/favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
     <meta name="description" content="Zahroun was born from a passion for scent and memory. We craft niche luxury fragrances from the rarest organic botanicals, designed to evoke confidence and timeless elegance.">
     <meta property="og:title" content="Our Story | Zahroun Luxury Perfumes">
     <meta property="og:description" content="The heritage and philosophy behind Zahroun — luxury perfumery crafted with rare botanical ingredients from around the world.">
@@ -20,11 +20,18 @@
     <meta name="twitter:image" content="https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png">
     <link rel="canonical" href="https://zahroun.com/about.html">
     <meta name="keywords" content="zahroun about, zahroun story, luxury perfume brand bangladesh, niche fragrance brand dhaka, zahroun perfumes, zahrun, jahroun, perfume brand bangladesh">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/analytics.js"></script>
+    <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/broadcast.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </head>
 <body>
     <header class="header">
@@ -52,8 +59,19 @@
     <div class="about-hero" id="about-hero-section" style="background: url('product pictures/New product pic and price/Home.jpg') center/cover no-repeat; padding: 10rem 0; text-align: center; position: relative;">
         <div id="about-hero-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6));"></div>
         <div class="container fade-in" style="position: relative; z-index: 2; max-width: 800px;">
-            <h1 class="about-hero-title" style="font-size: 4rem; color: white; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 2px;">Our Heritage</h1>
-            <p style="font-size: 1.2rem; color: rgba(255,255,255,0.85); letter-spacing: 1px;">Crafting memories through the art of perfumery.</p>
+            <div style="
+                display: inline-block;
+                padding: 2.5rem 3.5rem;
+                background: rgba(0,0,0,0.28);
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+                border: 1px solid rgba(255,255,255,0.12);
+                border-radius: 20px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+            ">
+                <h1 class="about-hero-title" style="font-size: 4rem; color: white; margin-bottom: .75rem; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 20px rgba(0,0,0,0.3);">Our Heritage</h1>
+                <p style="font-size: 1.15rem; color: rgba(255,255,255,0.88); letter-spacing: 1px; text-shadow: 0 1px 8px rgba(0,0,0,0.3);">Crafting memories through the art of perfumery.</p>
+            </div>
         </div>
     </div>
 
@@ -61,7 +79,7 @@
         <div class="section-title">
             <h2 style="font-size: 2.5rem; color: var(--primary-color);">Brand Story</h2>
         </div>
-        <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+        <div class="about-content-text" style="max-width: 800px; margin: 0 auto; text-align: center;">
             <p style="font-size: 1.2rem; color: var(--text-main); line-height: 2; margin-bottom: 2rem;">
                 Zahroun was born from a passion for the profound emotional connection between scent and memory. We believe that a fragrance is more than a blend of notes; it is an invisible signature that lingers long after you've left the room. By sourcing the rarest organic botanicals from around the world, we craft olfactory masterpieces designed to evoke confidence and timeless elegance.
             </p>
@@ -73,7 +91,7 @@
             <div class="about-image-frame" style="border-radius: 12px; overflow: hidden; height: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.12);">
                  <img src="product pictures/New product pic and price/last .jpeg" alt="Zahroun Philosophy" id="about-mission-img" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
             </div>
-            <div>
+            <div class="about-content-text">
                 <h2 class="about-section-heading" style="font-size: 2.5rem; margin-bottom: 1.5rem; color: var(--primary-color);">Mission & Vision</h2>
                 <p style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 1.5rem;">
                     <strong>Our Mission:</strong> To democratize luxury perfumery by offering niche, designer-quality fragrances crafted from the finest ingredients, ensuring extraordinary longevity and sillage without the traditional luxury markup.
@@ -117,6 +135,7 @@
                 <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
                     <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Explore Fragrance DNAs</a></li>
                     <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Best Sellers</a></li>
+                    <li><a href="sale.html" style="color: #ccc; font-size: 1rem;">Flash Sale</a></li>
                     <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Blog</a></li>
                     <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Reviews</a></li>
                 </ul>
@@ -128,23 +147,26 @@
                     <li><a href="about.html" style="color: #ccc; font-size: 1rem;">How It Works</a></li>
                     <li><a href="contact.html" style="color: #ccc; font-size: 1rem;">Contact Us</a></li>
                     <li><a href="contact.html" style="color: #ccc; font-size: 1rem;">Shipping</a></li>
+                    <li><a href="track.html" style="color: #ccc; font-size: 1rem;">Track Order</a></li>
+                    <li><a href="faq.html" style="color: #ccc; font-size: 1rem;">FAQ</a></li>
+                    <li><a href="policy.html" style="color: #ccc; font-size: 1rem;">Policies</a></li>
                     <li><a href="checkout.html" style="color: #ccc; font-size: 1rem;">Payment Methods</a></li>
                 </ul>
             </div>
         </div>
-        <div class="footer-bottom-new" style="border-top: 1px solid #222; margin-top: 4rem; padding-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+        <div class="footer-bottom-new" style="border-top: 1px solid #222; margin-top: 4rem; padding-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; width: 100%; box-sizing: border-box; overflow: hidden;">
             <div style="display: flex; gap: 1.5rem; color: white; font-size: 1.2rem;">
-                <a href="https://www.facebook.com/zahroun" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-facebook"></ion-icon></a>
-                <a href="https://www.instagram.com/zahroun" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-instagram"></ion-icon></a>
+                <a href="https://www.facebook.com/profile.php?id=61586401509792" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-facebook"></ion-icon></a>
+                <a href="https://www.instagram.com/zahroun_?igsh=b3hrNTFia2xzZG5y" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-instagram"></ion-icon></a>
                 <a href="#"><ion-icon name="logo-youtube"></ion-icon></a>
             </div>
-            <p style="color: #666; font-size: 0.95rem;">Dhanmondi, Dhaka, Bangladesh, 1205 | WhatsApp: +880 1886-936581</p>
+            <p style="color: #666; font-size: 0.95rem; text-align: center; word-break: break-word; overflow-wrap: break-word; max-width: 100%; padding: 0 0.5rem; box-sizing: border-box;">Dhanmondi, Dhaka, Bangladesh, 1205<br><a id="whatsapp-link" href="https://wa.me/8801886936581?text=Hi%20Zahroun%2C%20I'm%20interested%20in%20your%20perfumes%20%F0%9F%8C%B9" target="_blank" rel="noopener" style="color:#1e7e34;font-weight:500;white-space:nowrap;">WhatsApp: +880 1886-936581</a> &nbsp;|&nbsp; <a href="mailto:support@zahroun.com" style="color:#1e7e34;font-weight:500;white-space:nowrap;">support@zahroun.com</a></p>
             <p style="color: #666; font-size: 0.95rem;">&copy; 2026 Zahroun. All rights reserved.</p>
         </div>
     </footer>
 
     <!-- Reusing Cart Modal Structure -->
-    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;">
         <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
                 <h3>Your Cart</h3>
@@ -162,8 +184,8 @@
     </div>
 
     <script type="module" src="js/store.js"></script>
-    <script src="js/cart.js"></script>
-    <script src="js/ui.js"></script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
     <script type="module">
         import { db } from "./js/firebase-config.js";
         import { getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -222,6 +244,7 @@
     </script>
 </body>
 </html>
+
 
 
 

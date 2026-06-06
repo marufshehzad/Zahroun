@@ -5,11 +5,16 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Wishlist | Zahroun</title>
-    <link rel="icon" type="image/png" href="product pictures/favicon.png">
-    <link rel="apple-touch-icon" href="product pictures/favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
     <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/analytics.js"></script>
+    <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
@@ -26,6 +31,7 @@
         .wl-remove:hover { background: #fdecea; }
         .login-cta { text-align: center; padding: 4rem 1rem; }
     </style>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </head>
 <body>
     <header class="header">
@@ -59,7 +65,7 @@
     </div>
 
     <!-- Cart Modal -->
-    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;">
         <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
                 <h3>Your Cart</h3>
@@ -74,8 +80,8 @@
     </div>
 
     <script type="module" src="js/store.js"></script>
-    <script src="js/cart.js"></script>
-    <script src="js/ui.js"></script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
     <script type="module">
         import { db, auth } from "./js/firebase-config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -122,14 +128,20 @@
                     }
 
                     countEl.textContent = `${wishlisted.length} saved item${wishlisted.length !== 1 ? "s" : ""}`;
+                    const priceRange = p => {
+                        const vals = p.prices ? Object.values(p.prices).filter(v => typeof v === 'number' && v > 0) : [];
+                        if (!vals.length) return `৳${(p.price || 0).toLocaleString()}`;
+                        const mn = Math.min(...vals), mx = Math.max(...vals);
+                        return mn === mx ? `৳${mn.toLocaleString()}` : `৳${mn.toLocaleString()} – ৳${mx.toLocaleString()}`;
+                    };
                     content.innerHTML = `<div class="wl-grid">${wishlisted.map(p => {
                         const price = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : p.price;
                         return `<div class="wl-card">
-                            <a href="product.html?id=${p.id}"><img src="${esc(p.image)}" alt="${esc(p.name)}"></a>
+                            <a href="product.html?id=${p.id}"><img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy"></a>
                             <button class="wl-remove" data-remove="${p.id}" title="Remove from wishlist"><ion-icon name="heart"></ion-icon></button>
                             <div class="wl-card-body">
                                 <h3><a href="product.html?id=${p.id}" style="color:inherit;text-decoration:none;">${esc(p.name)}</a></h3>
-                                <div class="price">৳${price}</div>
+                                <div class="price">${priceRange(p)}</div>
                                 <div class="wl-actions">
                                     <button class="btn" style="flex:1;font-size:.85rem;padding:.55rem;" onclick="addToCart(${p.id},'50ML',${price})">Add to Cart</button>
                                     <a href="product.html?id=${p.id}" class="btn btn-outline" style="font-size:.85rem;padding:.55rem;">View</a>

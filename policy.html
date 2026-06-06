@@ -1,0 +1,284 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policies | Zahroun</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <meta name="description" content="Zahroun store policies — Return & Refund, Privacy Policy, and Terms & Conditions.">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="css/style.css">
+    <script defer src="js/analytics.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/broadcast.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        .page-head { background-color: var(--accent-color); padding: 3.5rem 0 3rem; text-align: center; }
+        .page-head h1 { margin-bottom: .5rem; }
+        .page-head p { color: var(--text-muted); max-width: 520px; margin: 0 auto; }
+
+        .policy-wrap { max-width: 760px; margin: 0 auto; }
+
+        /* Tab navigation */
+        .policy-tabs {
+            display: flex;
+            gap: .5rem;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 2.5rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .policy-tabs::-webkit-scrollbar { display: none; }
+        .policy-tab {
+            padding: .7rem 1.25rem;
+            border: none;
+            background: none;
+            font-family: var(--font-sans);
+            font-size: .88rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: color .2s, border-color .2s;
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .policy-tab:hover { color: var(--text-main); }
+        .policy-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: 600; }
+
+        /* Policy content panel */
+        .policy-panel { display: none; }
+        .policy-panel.active { display: block; }
+
+        .policy-panel-head {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .policy-panel-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            background: var(--accent-color);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--primary-color); font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+        .policy-panel-head h2 { font-size: 1.25rem; margin: 0; }
+        .policy-panel-head p { font-size: .8rem; color: var(--text-muted); margin: .2rem 0 0; }
+
+        .policy-text {
+            font-size: .92rem;
+            line-height: 1.9;
+            color: var(--text-muted);
+            white-space: pre-line;
+        }
+
+        .policy-empty {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+        .policy-empty ion-icon { font-size: 2.5rem; display: block; margin: 0 auto .75rem; opacity: .3; }
+
+        .policy-updated {
+            font-size: .75rem;
+            color: var(--text-muted);
+            margin-top: 2.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 540px) {
+            .policy-tab { font-size: .8rem; padding: .6rem .9rem; }
+            .policy-panel-head h2 { font-size: 1.1rem; }
+        }
+    </style>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+</head>
+<body>
+    <header class="header">
+        <div class="container nav-container">
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="nav-icons">
+                <button aria-label="Search" onclick="window.location.href='shop.html'"><ion-icon name="search-outline"></ion-icon></button>
+                <button aria-label="Cart" id="cart-icon"><ion-icon name="bag-outline"></ion-icon><span class="cart-count" id="cart-count">0</span></button>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu"><ion-icon name="menu-outline"></ion-icon></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-head">
+        <div class="container">
+            <h1>Store Policies</h1>
+            <p>Our commitment to transparency — how we handle returns, your data, and our terms</p>
+        </div>
+    </div>
+
+    <div class="container py-8" style="margin-top: 60px;">
+        <div class="policy-wrap">
+
+            <div class="policy-tabs">
+                <button class="policy-tab active" data-policy="return">
+                    <ion-icon name="refresh-circle-outline"></ion-icon> Return &amp; Refund
+                </button>
+                <button class="policy-tab" data-policy="privacy">
+                    <ion-icon name="lock-closed-outline"></ion-icon> Privacy Policy
+                </button>
+                <button class="policy-tab" data-policy="terms">
+                    <ion-icon name="document-text-outline"></ion-icon> Terms &amp; Conditions
+                </button>
+            </div>
+
+            <!-- Return & Refund -->
+            <div class="policy-panel active" data-panel="return">
+                <div class="policy-panel-head">
+                    <div class="policy-panel-icon"><ion-icon name="refresh-circle-outline"></ion-icon></div>
+                    <div>
+                        <h2>Return &amp; Refund Policy</h2>
+                        <p>How we handle returns and refunds</p>
+                    </div>
+                </div>
+                <div class="policy-text" id="text-return"></div>
+                <p class="policy-updated" id="updated-return"></p>
+            </div>
+
+            <!-- Privacy Policy -->
+            <div class="policy-panel" data-panel="privacy">
+                <div class="policy-panel-head">
+                    <div class="policy-panel-icon"><ion-icon name="lock-closed-outline"></ion-icon></div>
+                    <div>
+                        <h2>Privacy Policy</h2>
+                        <p>How we collect, use, and protect your data</p>
+                    </div>
+                </div>
+                <div class="policy-text" id="text-privacy"></div>
+                <p class="policy-updated" id="updated-privacy"></p>
+            </div>
+
+            <!-- Terms & Conditions -->
+            <div class="policy-panel" data-panel="terms">
+                <div class="policy-panel-head">
+                    <div class="policy-panel-icon"><ion-icon name="document-text-outline"></ion-icon></div>
+                    <div>
+                        <h2>Terms &amp; Conditions</h2>
+                        <p>Rules and guidelines for using our services</p>
+                    </div>
+                </div>
+                <div class="policy-text" id="text-terms"></div>
+                <p class="policy-updated" id="updated-terms"></p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" style="display:none;position:fixed;top:0;right:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100000;">
+        <div style="position:absolute;top:0;right:0;width:400px;max-width:100%;height:100%;background:white;padding:2rem;display:flex;flex-direction:column;box-shadow:-5px 0 15px rgba(0,0,0,0.1);transform:translateX(100%);transition:transform 0.3s;" id="cart-content-wrapper">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-color);padding-bottom:1rem;margin-bottom:1rem;">
+                <h3>Your Cart</h3>
+                <button id="close-cart" style="background:none;border:none;font-size:1.5rem;cursor:pointer;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div id="cart-items" style="flex:1;overflow-y:auto;"></div>
+            <div style="border-top:1px solid var(--border-color);padding-top:1rem;margin-top:1rem;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-weight:600;font-size:1.2rem;"><span>Total</span><span id="cart-total">0 BDT</span></div>
+                <button class="btn" style="width:100%;" onclick="window.location.href='checkout.html'">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/store.js"></script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script type="module">
+        import { db } from "./js/firebase-config.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+        // Tab switching
+        document.querySelectorAll(".policy-tab").forEach(tab => {
+            tab.addEventListener("click", () => {
+                const key = tab.dataset.policy;
+                document.querySelectorAll(".policy-tab").forEach(t => t.classList.remove("active"));
+                document.querySelectorAll(".policy-panel").forEach(p => p.classList.remove("active"));
+                tab.classList.add("active");
+                document.querySelector(`.policy-panel[data-panel="${key}"]`)?.classList.add("active");
+            });
+        });
+
+        // Check URL hash for direct linking
+        const hash = location.hash.replace("#","");
+        if (["return","privacy","terms"].includes(hash)) {
+            document.querySelectorAll(".policy-tab").forEach(t => t.classList.remove("active"));
+            document.querySelectorAll(".policy-panel").forEach(p => p.classList.remove("active"));
+            document.querySelector(`.policy-tab[data-policy="${hash}"]`)?.classList.add("active");
+            document.querySelector(`.policy-panel[data-panel="${hash}"]`)?.classList.add("active");
+        }
+
+        const DEFAULTS = {
+            policyReturn: `Return & Refund Policy\nLast updated: June 2025\n\nAt Zahroun, your satisfaction is our priority. Please read our return and refund policy carefully.\n\nEligibility for Returns\nWe accept returns within 3 days of delivery if:\n• The product is unopened and in its original packaging\n• The product was damaged during shipping\n• You received the wrong item\n\nNon-Returnable Items\n• Opened or used perfumes\n• Products without original packaging\n• Items purchased during clearance sales\n\nHow to Initiate a Return\n1. Contact us on WhatsApp (+880 1886-936581) within 3 days of delivery\n2. Provide your Order Number and photos of the product\n3. We will confirm eligibility and arrange pickup or return shipping\n\nRefund Process\n• Approved refunds are processed within 3–5 business days\n• Refunds are issued via Bkash or Nagad to the original payment number\n• For Cash on Delivery orders, refunds are sent via Bkash or Nagad\n\nExchange Policy\nWe offer exchanges for the same or different fragrance of equal or greater value. Shipping charges for exchanges are covered by the customer.\n\nDamaged or Wrong Items\nIf you received a damaged or wrong item, we will arrange a free replacement or full refund at no additional cost to you.`,
+
+            policyPrivacy: `Privacy Policy\nLast updated: June 2025\n\nZahroun ("we", "us", "our") is committed to protecting your personal information. This policy explains how we collect, use, and protect your data.\n\nInformation We Collect\n• Name, phone number, and delivery address (required for order processing)\n• Email address (optional, for account creation)\n• Payment transaction IDs (for order verification only)\n• Browser and device information (via analytics)\n\nHow We Use Your Information\n• To process and deliver your orders\n• To send order confirmations and delivery updates via WhatsApp\n• To improve our website and customer service\n• To send promotional offers (only with your consent)\n\nData Security\n• All data is stored securely on Google Firebase servers\n• We do not sell or share your personal information with third parties\n• Payment details (Bkash/Nagad numbers) are used only for transaction verification\n\nCookies\nOur website uses cookies to:\n• Remember your cart items\n• Analyse website traffic (via Google Analytics)\nYou can disable cookies in your browser settings, though some features may not work correctly.\n\nYour Rights\nYou have the right to:\n• Request access to your personal data\n• Request correction or deletion of your data\n• Opt out of marketing communications\n\nContact Us\nFor any privacy-related questions, contact us at support@zahroun.com or via WhatsApp: +880 1886-936581.`,
+
+            policyTerms: `Terms & Conditions\nLast updated: June 2025\n\nBy using the Zahroun website (zahroun.com), you agree to the following terms and conditions.\n\n1. General\nZahroun is a luxury perfume brand based in Dhaka, Bangladesh. These terms govern your use of our website and purchase of our products.\n\n2. Products & Pricing\n• All prices are listed in Bangladeshi Taka (BDT)\n• Prices may change without prior notice\n• Product images are for illustrative purposes; actual products may vary slightly\n• We reserve the right to limit quantities of any product\n\n3. Orders & Payment\n• Orders are confirmed once payment is verified\n• For Bkash/Nagad, payment must be sent before dispatch\n• Cash on Delivery is available in selected areas\n• We reserve the right to cancel orders in case of pricing errors or stock unavailability\n\n4. Delivery\n• Delivery times are estimates and may vary due to location, weather, or courier delays\n• We are not responsible for delays caused by third-party couriers\n• Risk of loss passes to the customer upon delivery\n\n5. Intellectual Property\nAll content on this website — including logos, images, and text — is the property of Zahroun and may not be used without written permission.\n\n6. Limitation of Liability\nZahroun shall not be liable for any indirect, incidental, or consequential damages arising from the use of our website or products.\n\n7. Governing Law\nThese terms are governed by the laws of Bangladesh. Any disputes shall be resolved in the courts of Dhaka, Bangladesh.\n\n8. Changes to Terms\nWe reserve the right to update these terms at any time. Continued use of the website constitutes acceptance of the updated terms.\n\nContact: support@zahroun.com | WhatsApp: +880 1886-936581`
+        };
+
+        function renderPolicyText(html, text) {
+            return text ? text.split("\n").map(line =>
+                line.startsWith("•") ? `<li style="margin:.2rem 0;">${esc(line.slice(1).trim())}</li>`
+                : line.match(/^\d+\./) ? `<h4 style="margin:1.25rem 0 .4rem;color:var(--text-main);font-size:.95rem;">${esc(line)}</h4>`
+                : line.length > 40 && !line.includes(":") ? `<p style="margin:.5rem 0 1rem;">${esc(line)}</p>`
+                : line ? `<p style="margin:.25rem 0;">${esc(line)}</p>`
+                : `<br>`
+            ).join("") : "";
+        }
+
+        try {
+            const snap = await getDoc(doc(db, "settings", "store"));
+            const data = snap.exists() ? snap.data() : {};
+            const updatedStr = data.updatedAt?.toDate
+                ? "Last updated: " + data.updatedAt.toDate().toLocaleDateString("en-GB", {day:"2-digit",month:"long",year:"numeric"})
+                : "";
+
+            const set = (id, key, updId) => {
+                const el = document.getElementById(id);
+                const upEl = document.getElementById(updId);
+                const text = data[key] || DEFAULTS[key] || "";
+                if (el) el.innerHTML = renderPolicyText(el, text);
+                if (upEl) upEl.textContent = updatedStr || "Last updated: June 2025";
+            };
+
+            set("text-return",  "policyReturn",  "updated-return");
+            set("text-privacy", "policyPrivacy", "updated-privacy");
+            set("text-terms",   "policyTerms",   "updated-terms");
+        } catch (err) {
+            ["return","privacy","terms"].forEach(k => {
+                const el = document.getElementById("text-" + k);
+                if (el) el.innerHTML = renderPolicyText(el, DEFAULTS["policy" + k.charAt(0).toUpperCase() + k.slice(1)] || "");
+                const upEl = document.getElementById("updated-" + k);
+                if (upEl) upEl.textContent = "Last updated: June 2025";
+            });
+        }
+    </script>
+</body>
+</html>
+

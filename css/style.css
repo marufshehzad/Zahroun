@@ -23,6 +23,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  min-width: 0;
 }
 
 html {
@@ -38,6 +39,7 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
   max-width: 100%;
+  padding-top: 78px;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -74,6 +76,7 @@ img {
 .mb-4 { margin-bottom: 2rem; }
 .py-4 { padding: 2rem 0; }
 .py-8 { padding: 4rem 0; }
+
 
 section:not(.hero) {
   margin-top: 100px;
@@ -114,12 +117,15 @@ section:not(.hero) {
 /* Header & Nav */
 .header {
   background-color: #163E34;
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 99997;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.12);
-  transition: var(--transition);
+  transition: top 0.2s ease, box-shadow var(--transition);
   height: 78px;
   min-height: 78px;
   padding: 0;
@@ -228,7 +234,7 @@ section:not(.hero) {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: var(--text-main);
+  color: #fff;
 }
 
 /* Hero Section */
@@ -373,7 +379,8 @@ section:not(.hero) {
   background-color: var(--surface-color);
   border-radius: 12px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+  will-change: transform;
   position: relative;
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
@@ -529,6 +536,10 @@ section:not(.hero) {
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
+  body {
+    background-attachment: scroll;
+    background-size: 200% auto;
+  }
   .container {
     padding-left: 16px;
     padding-right: 16px;
@@ -555,6 +566,10 @@ section:not(.hero) {
     display: flex;
   }
 
+  .nav-links .flash-nav-link {
+    align-self: center;
+  }
+
   .nav-icons .mobile-menu-btn {
     display: flex;
   }
@@ -572,6 +587,10 @@ section:not(.hero) {
   .nav-container {
     height: 68px;
     min-height: 68px;
+  }
+
+  body {
+    padding-top: 68px;
   }
 
   .logo img {
@@ -600,10 +619,12 @@ section:not(.hero) {
   }
 
   .hero-title {
-    font-size: 26px !important;
-    line-height: 1.1;
+    font-size: clamp(20px, 5.5vw, 26px) !important;
+    line-height: 1.15;
     margin-bottom: 12px;
     white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 
   .hero-desc {
@@ -621,8 +642,10 @@ section:not(.hero) {
   }
 
   .about-hero-title {
-    font-size: 2.4rem !important;
+    font-size: 2rem !important;
     line-height: 1.15;
+    letter-spacing: 0 !important;
+    word-break: break-word;
   }
 
   .about-story-grid {
@@ -696,8 +719,30 @@ section:not(.hero) {
   .product-grid {
     gap: .6rem;
   }
-  /* Even tighter image on very small screens */
   .product-img-wrapper { padding-top: 90% !important; }
+
+  /* About page — prevent text overflow on small screens */
+  .about-hero-title {
+    font-size: 1.6rem !important;
+    letter-spacing: 0 !important;
+  }
+  .about-section-heading {
+    font-size: 1.5rem !important;
+  }
+  .about-quote-text {
+    font-size: 1.1rem !important;
+  }
+
+  /* Footer brand text — clip at viewport edge */
+  .footer-massive-brand {
+    font-size: 14vw;
+  }
+
+  /* Global: long words should wrap */
+  h1, h2, h3, h4, p {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
 }
 
 @media (max-width: 380px) {
@@ -814,6 +859,7 @@ section:not(.hero) {
     background-color: #000;
     color: white;
     padding: 0 0 4rem 0;
+    overflow: hidden;
 }
 .footer-massive-brand {
     font-family: var(--font-serif);
@@ -824,7 +870,7 @@ section:not(.hero) {
     line-height: 1;
     margin-bottom: 2rem;
     padding-top: 2rem;
-    overflow: visible;
+    overflow: hidden;
     white-space: nowrap;
 }
 .footer-grid-new {
@@ -1036,6 +1082,10 @@ section:not(.hero) {
   .section-title h2 { font-size: 1.5rem !important; word-break: break-word; overflow-wrap: break-word; }
   .section-title p { font-size: .9rem; }
 
+  /* About page: text breathing room on mobile */
+  .about-content-text { padding: 0 8px; }
+  .about-content-text p { font-size: 1rem !important; line-height: 1.8 !important; }
+
   /* Contact info box */
   .contact-info { padding: 1.5rem !important; }
 
@@ -1096,6 +1146,31 @@ section:not(.hero) {
   /* Benefits bar: 1 per row on very small */
   .benefits-grid { grid-template-columns: 1fr 1fr; gap: .5rem .5rem; }
   .benefit-item { font-size: .78rem; }
+}
+
+/* ===== Footer contact line — mobile safe ===== */
+.footer-bottom-new {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.footer-bottom-new p {
+  text-align: center;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+@media (max-width: 600px) {
+  .footer-bottom-new p {
+    font-size: 0.82rem !important;
+    line-height: 1.7;
+  }
+  .footer-bottom-new p .wa-text,
+  .footer-bottom-new p .mail-text {
+    display: inline-block;
+  }
 }
 
 /* ===== FORCE LIGHT MODE — block Samsung / Chrome dark mode ===== */

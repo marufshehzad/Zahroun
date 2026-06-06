@@ -53,15 +53,19 @@ service cloud.firestore {
     match /coupons/{id} {
       allow read:  if true;
       allow create, delete: if isAdmin();
-      // Admin can update anything; logged-in customers can only increment usedCount
+      // Admin can update anything; anyone (incl. guests) can only increment usedCount
       allow update: if isAdmin()
-                    || (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']));
+                    || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']);
     }
 
     // ---- Orders --------------------------------------------------------
     match /orders/{id} {
-      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
-      allow read:   if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      // Logged-in: uid must match auth uid
+      // Guest: isGuest==true and uid==null (no account required)
+      allow create: if (isSignedIn() && request.resource.data.uid == request.auth.uid)
+                    || (!isSignedIn() && request.resource.data.isGuest == true
+                        && request.resource.data.uid == null);
+      allow read:   if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid) || true;
       allow update, delete: if isAdmin();
     }
 
@@ -94,9 +98,42 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // ---- FAQs (public read, admin write) ----------------------------------
+    match /faqs/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // ---- Stock history log (admin write, no customer access) ---------------
     match /stockHistory/{id} {
       allow read, write: if isAdmin();
+    }
+
+    // ---- Bundle deals (public read, admin write) ----------------------------
+    match /bundles/{id} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- Loyalty points (owner read/write, admin full access) ---------------
+    match /loyaltyPoints/{uid} {
+      allow read:   if isOwner(uid) || isAdmin();
+      allow write:  if isOwner(uid) || isAdmin();
+    }
+
+    // ---- Loyalty history log (owner read, admin full) -----------------------
+    match /loyaltyHistory/{id} {
+      allow read:   if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isAdmin() || (isSignedIn() && request.resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    // ---- Referral codes (owner read/write, public code lookup for validation)
+    match /referrals/{uid} {
+      allow read:   if true;
+      allow create: if isOwner(uid) || isAdmin();
+      allow update: if isOwner(uid) || isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }

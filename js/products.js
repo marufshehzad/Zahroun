@@ -1,11 +1,11 @@
-const productImageBase = "product pictures/New product pic and price/";
+const CDN = "https://res.cloudinary.com/dj3nmxfj0/image/upload/zahroun/products";
 
 const commonImages = {
-    men6: productImageBase + "men 6ml.PNG",
-    men15: productImageBase + "men 15ml size.PNG",
-    women6: productImageBase + "women 6ml .PNG",
-    women15: productImageBase + "women 15ml size.PNG",
-    premium50: productImageBase + "IMG_4061.PNG"
+    men6:     CDN + "/common-men-6ml.png",
+    men15:    CDN + "/common-men-15ml.png",
+    women6:   CDN + "/common-women-6ml.png",
+    women15:  CDN + "/common-women-15ml.png",
+    premium50: CDN + "/common-premium-50ml.png"
 };
 
 const products = [
@@ -16,12 +16,12 @@ const products = [
         price: 2490,
         prices: { "6ML": 790, "15ML": 1290, "30ML": 1890, "50ML": 2490 },
         sizeImages: {
-            "6ML": commonImages.men6,
+            "6ML":  commonImages.men6,
             "15ML": commonImages.men15,
-            "30ML": productImageBase + "Sahraa Oudh 30ml.PNG",
-            "50ML": productImageBase + "Sahraa Oudh 50ml.PNG"
+            "30ML": CDN + "/sahraa-oudh-30ml.png",
+            "50ML": CDN + "/sahraa-oudh-50ml.png"
         },
-        image: productImageBase + "Sahraa Oudh 50ml.PNG",
+        image: CDN + "/sahraa-oudh-50ml.png",
         description: "A deep oud fragrance with floral, resinous, and musky warmth.",
         ingredients: "Oud, Patchouli, Rose, Jasmine, Saffron, Mandarin, Amberwood, Ambergris, Fir Resin, Cedar, Musk.",
         tags: { gender: "For him", type: "Spray", concentration: "Eau de parfum" },
@@ -36,12 +36,12 @@ const products = [
         price: 2450,
         prices: { "6ML": 750, "15ML": 1250, "30ML": 1850, "50ML": 2450 },
         sizeImages: {
-            "6ML": commonImages.men6,
+            "6ML":  commonImages.men6,
             "15ML": commonImages.men15,
-            "30ML": productImageBase + "Dulce Oud 30ml.PNG",
-            "50ML": productImageBase + "Dulce Oud 50ml.PNG"
+            "30ML": CDN + "/dulce-oud-30ml.png",
+            "50ML": CDN + "/dulce-oud-50ml.png"
         },
-        image: productImageBase + "Dulce Oud 50ml.PNG",
+        image: CDN + "/dulce-oud-50ml.png",
         description: "A sweet amber-oud profile balanced with saffron, jasmine, cedar, and moss.",
         ingredients: "Saffron, Jasmine, Amberwood, Ambergris, Oud, Hedione, Fir Resin, Cedar, Sugar, Ambroxan, Oakmoss.",
         tags: { gender: "Unisex", type: "Spray", concentration: "Eau de parfum" },
@@ -56,12 +56,12 @@ const products = [
         price: 1790,
         prices: { "6ML": 550, "15ML": 850, "30ML": 1200, "50ML": 1790 },
         sizeImages: {
-            "6ML": commonImages.women6,
+            "6ML":  commonImages.women6,
             "15ML": commonImages.women15,
-            "30ML": productImageBase + "women Rosy Diva 30ml.PNG",
-            "50ML": productImageBase + "women Rosy Diva 50ml.PNG"
+            "30ML": CDN + "/rosy-diva-30ml.png",
+            "50ML": CDN + "/rosy-diva-50ml.png"
         },
-        image: productImageBase + "women Rosy Diva 50ml.PNG",
+        image: CDN + "/rosy-diva-50ml.png",
         description: "A bright feminine rose scent with lychee, pear, pink pepper, flowers, musk, and soft woods.",
         ingredients: "Lychee, Pear, Bergamot Essence, Pink Pepper, Turkish Rose, Peony, Flowers, White Musk, Soft Wood, Haitian Vetiver.",
         tags: { gender: "For her", type: "Spray", concentration: "Eau de parfum" },
@@ -76,9 +76,9 @@ const products = [
         price: 1490,
         prices: { "6ML": 450, "15ML": 750, "30ML": 990, "50ML": 1490 },
         sizeImages: {
-            "6ML": commonImages.men6,
+            "6ML":  commonImages.men6,
             "15ML": commonImages.men15,
-            "30ML": productImageBase + "IMG_5952.PNG",
+            "30ML": CDN + "/alpha-core-30ml.png",
             "50ML": commonImages.premium50
         },
         image: commonImages.premium50,
@@ -96,12 +96,12 @@ const products = [
         price: 2590,
         prices: { "6ML": 790, "15ML": 1390, "30ML": 1990, "50ML": 2590 },
         sizeImages: {
-            "6ML": commonImages.men6,
+            "6ML":  commonImages.men6,
             "15ML": commonImages.men15,
-            "30ML": productImageBase + "AL Khayran 30ml.PNG",
-            "50ML": productImageBase + "AL Khayran 50ml.PNG"
+            "30ML": CDN + "/al-khayran-30ml.png",
+            "50ML": CDN + "/al-khayran-50ml.png"
         },
-        image: productImageBase + "AL Khayran 50ml.PNG",
+        image: CDN + "/al-khayran-50ml.png",
         description: "A rich masculine blend with warm amber, leather, honey, white florals, and musky depth.",
         ingredients: "Woody, Amber, Sweet, Warm Spicy, White Floral, Animalic, Musky, Wood, Leather, Honey.",
         tags: { gender: "For him", type: "Spray", concentration: "Eau de parfum" },
@@ -116,12 +116,12 @@ const products = [
         price: 1690,
         prices: { "6ML": 500, "15ML": 800, "30ML": 1090, "50ML": 1690 },
         sizeImages: {
-            "6ML": commonImages.men6,
+            "6ML":  commonImages.men6,
             "15ML": commonImages.men15,
-            "30ML": productImageBase + "Chivas 30ml.PNG",
-            "50ML": productImageBase + "Chivas 50ml.PNG"
+            "30ML": CDN + "/chivas-30ml.jpg",
+            "50ML": CDN + "/chivas-50ml.png"
         },
-        image: productImageBase + "Chivas 50ml.PNG",
+        image: CDN + "/chivas-50ml.png",
         description: "A smooth aromatic fragrance with rum accord, lavender, vanilla, chestnut, cedarwood, and patchouli.",
         ingredients: "Rum Accord, Bergamot, Mandarin Orange, Lavender, Davana, Violet, Vanilla, Chestnut, Cedarwood, Patchouli.",
         tags: { gender: "For him", type: "Spray", concentration: "Eau de parfum" },
@@ -136,9 +136,9 @@ const products = [
         price: 1400,
         prices: { "6ML": 390, "15ML": 600, "30ML": 890, "50ML": 1400 },
         sizeImages: {
-            "6ML": commonImages.men6,
+            "6ML":  commonImages.men6,
             "15ML": commonImages.men15,
-            "30ML": productImageBase + "IMG_5965.PNG",
+            "30ML": CDN + "/solvane-30ml.png",
             "50ML": commonImages.premium50
         },
         image: commonImages.premium50,
@@ -156,12 +156,12 @@ const products = [
         price: 1700,
         prices: { "6ML": 500, "15ML": 800, "30ML": 1000, "50ML": 1700 },
         sizeImages: {
-            "6ML": commonImages.women6,
+            "6ML":  commonImages.women6,
             "15ML": commonImages.women15,
-            "30ML": productImageBase + "women pink sapphire 30ml.PNG",
-            "50ML": productImageBase + "women pink sapphire 50ml.PNG"
+            "30ML": CDN + "/pink-sapphire-30ml.png",
+            "50ML": CDN + "/pink-sapphire-50ml.png"
         },
-        image: productImageBase + "women pink sapphire 50ml.PNG",
+        image: CDN + "/pink-sapphire-50ml.png",
         description: "A sparkling feminine scent with pear blossom, red berries, gardenia, jasmine, brown sugar, and patchouli.",
         ingredients: "Pear Blossom, Red Berries, Italian Mandarin, White Gardenia, Jasmine, Frangipani, Brown Sugar, Patchouli.",
         tags: { gender: "For her", type: "Spray", concentration: "Eau de parfum" },
@@ -176,12 +176,12 @@ const products = [
         price: 1700,
         prices: { "6ML": 500, "15ML": 800, "30ML": 1000, "50ML": 1700 },
         sizeImages: {
-            "6ML": commonImages.women6,
+            "6ML":  commonImages.women6,
             "15ML": commonImages.women15,
-            "30ML": productImageBase + "women Elifra 30ml.PNG",
-            "50ML": productImageBase + "women Elifra 50ml.PNG"
+            "30ML": CDN + "/elifra-30ml.png",
+            "50ML": CDN + "/elifra-50ml.png"
         },
-        image: productImageBase + "women Elifra 50ml.PNG",
+        image: CDN + "/elifra-50ml.png",
         description: "A gourmand floral composition with almond, coffee, jasmine, rose, vanilla, cacao, woods, and musk.",
         ingredients: "Almond, Coffee, Bergamot, Lemon, Jasmine Sambac, Tuberose, Orris, Bulgarian Rose, Orange Blossom, Cacao, Vanilla, Sandalwood, Amber, Musk, Cashmere Wood, Cinnamon, Patchouli, Cedar.",
         tags: { gender: "For her", type: "Spray", concentration: "Eau de parfum" },
@@ -196,9 +196,9 @@ const products = [
         price: 1550,
         prices: { "6ML": 450, "15ML": 750, "30ML": 950, "50ML": 1550 },
         sizeImages: {
-            "6ML": commonImages.women6,
+            "6ML":  commonImages.women6,
             "15ML": commonImages.women15,
-            "30ML": productImageBase + "women piyora 30ml.PNG",
+            "30ML": CDN + "/piyora-30ml.png",
             "50ML": commonImages.premium50
         },
         image: commonImages.premium50,
@@ -216,12 +216,12 @@ const products = [
         price: 1690,
         prices: { "6ML": 500, "15ML": 800, "30ML": 1090, "50ML": 1690 },
         sizeImages: {
-            "6ML": commonImages.women6,
+            "6ML":  commonImages.women6,
             "15ML": commonImages.women15,
-            "30ML": productImageBase + "women Bellavie 30ml.PNG",
-            "50ML": productImageBase + "Women Bellavie 50ml.PNG"
+            "30ML": CDN + "/bellavie-30ml.png",
+            "50ML": CDN + "/bellavie-50ml.png"
         },
-        image: productImageBase + "Women Bellavie 50ml.PNG",
+        image: CDN + "/bellavie-50ml.png",
         description: "A fruity floral scent with passion fruit, grapefruit, pineapple, strawberry, vanilla orchid, jasmine, musk, and woods.",
         ingredients: "Purple Passion Fruit, Grapefruit, Pineapple, Tangerine, Big Strawberry, Vanilla Orchid, Red Berries, Jasmine, Lily, Musk, Woody.",
         tags: { gender: "For her", type: "Spray", concentration: "Eau de parfum" },

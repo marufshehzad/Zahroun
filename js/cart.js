@@ -1,4 +1,5 @@
 let cart = JSON.parse(localStorage.getItem('zahroun_cart')) || [];
+let _prevCartCount = 0;
 
 // Reconcile saved cart items against the live product list (refresh prices /
 // images, drop deleted products). Runs only once products are loaded, so it
@@ -29,6 +30,19 @@ function saveCart() {
     updateCartUI();
 }
 
+function cartToast(msg) {
+    const el = document.getElementById("cart-toast");
+    if (!el) {
+        const t = document.createElement("div");
+        t.id = "cart-toast";
+        t.style.cssText = "position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#163E34;color:#fff;padding:.55rem 1.2rem;border-radius:20px;font-size:.85rem;font-weight:500;z-index:200001;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.18);";
+        document.body.appendChild(t);
+        t.textContent = msg;
+        setTimeout(() => t.style.opacity = "1", 10);
+        setTimeout(() => { t.style.opacity = "0"; setTimeout(() => t.remove(), 300); }, 2200);
+    }
+}
+
 window.addToCart = function(productId, size = '50ML', price = null) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
@@ -37,15 +51,16 @@ window.addToCart = function(productId, size = '50ML', price = null) {
     if (itemPrice === null || isNaN(itemPrice)) {
         itemPrice = (product.prices && product.prices[size]) ? product.prices[size] : product.price;
     }
-    
-    // Check if same product AND size exists
+
     const existingItem = cart.find(item => item.id === productId && item.size === size);
     if (existingItem) {
         existingItem.quantity += 1;
+        cartToast("Quantity updated ✓");
     } else {
         cart.push({ ...product, size: size, selectedPrice: itemPrice, quantity: 1 });
+        cartToast("Added to cart ✓");
     }
-    
+
     saveCart();
     openCart();
     if (window.zahrounGA) window.zahrounGA.trackAddToCart(product, size, itemPrice);
@@ -70,49 +85,12 @@ window.updateQuantity = function(productId, size, newQuantity) {
     }
 }
 
-let appliedVoucher = localStorage.getItem('zahroun_voucher') || null;
-
 function getCartSubtotal() {
     return cart.reduce((total, item) => total + (parseFloat(item.selectedPrice) * parseInt(item.quantity)), 0);
 }
 
 function getCartTotal() {
-    const subtotal = getCartSubtotal();
-    if (appliedVoucher === 'myzahroun10' && subtotal >= 4000) {
-        return subtotal * 0.9;
-    }
-    return subtotal;
-}
-
-window.applyVoucher = function() {
-    const code = document.getElementById('voucher-input').value.trim().toLowerCase();
-    const msg = document.getElementById('voucher-msg');
-    const subtotal = getCartSubtotal();
-    
-    if (code === 'myzahroun10') {
-        if (subtotal >= 4000) {
-            appliedVoucher = 'myzahroun10';
-            localStorage.setItem('zahroun_voucher', 'myzahroun10');
-            msg.textContent = 'Voucher Applied! You got 10% off.';
-            msg.style.color = '#27ae60';
-            if (window.zahrounGA) window.zahrounGA.trackCouponApply('myzahroun10', subtotal * 0.1);
-        } else {
-            appliedVoucher = null;
-            localStorage.removeItem('zahroun_voucher');
-            msg.textContent = 'The discount condition has not been met yet.';
-            msg.style.color = '#FF0000';
-        }
-    } else if (code === '') {
-        appliedVoucher = null;
-        localStorage.removeItem('zahroun_voucher');
-        msg.textContent = '';
-    } else {
-        appliedVoucher = null;
-        localStorage.removeItem('zahroun_voucher');
-        msg.textContent = 'Invalid voucher code';
-        msg.style.color = '#FF0000';
-    }
-    updateCartUI();
+    return getCartSubtotal();
 }
 
 function getCartCount() {
@@ -120,16 +98,37 @@ function getCartCount() {
 }
 
 function updateCartUI() {
+    if (!document.getElementById('_cart-bounce-css')) {
+        const s = document.createElement('style');
+        s.id = '_cart-bounce-css';
+        s.textContent = '@keyframes _cartBounce{0%,100%{transform:scale(1)}30%{transform:scale(1.5)}60%{transform:scale(.9)}80%{transform:scale(1.15)}} .cart-bounce{animation:_cartBounce .5s ease!important;}';
+        document.head.appendChild(s);
+    }
     // Update count badge
+    const newCount = getCartCount();
     const countElements = document.querySelectorAll('.cart-count');
     countElements.forEach(el => {
-        el.textContent = getCartCount();
-        if (getCartCount() > 0) {
+        el.textContent = newCount;
+        if (newCount > 0) {
             el.style.display = 'flex';
         } else {
             el.style.display = 'none';
         }
+        if (newCount > _prevCartCount) {
+            el.classList.remove('cart-bounce');
+            void el.offsetWidth;
+            el.classList.add('cart-bounce');
+            setTimeout(() => el.classList.remove('cart-bounce'), 600);
+        }
     });
+    _prevCartCount = newCount;
+
+    // Trigger broadcast bar update with promo info
+    if (window.ZahrounPromos && newCount > 0) {
+      window.ZahrounPromos.getFreeShippingInfo(getCartSubtotal())
+        .then(info => window.dispatchEvent(new CustomEvent('zahroun-cart-promo', { detail: { fsInfo: info, subtotal: getCartSubtotal() } })))
+        .catch(() => {});
+    }
 
     // Update cart modal items
     const cartItemsContainer = document.getElementById('cart-items');
@@ -146,9 +145,9 @@ function updateCartUI() {
                     <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Size: ${item.size}</span>
                     <div style="color: var(--primary-color); font-weight: 600; margin-bottom: 0.5rem;">${item.selectedPrice} BDT</div>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <button onclick="updateQuantity(${item.id}, '${item.size}', ${item.quantity - 1})" style="width: 24px; height: 24px; border: 1px solid var(--border-color); background: none; cursor: pointer; border-radius: 2px;">-</button>
-                        <span style="font-size: 0.9rem;">${item.quantity}</span>
-                        <button onclick="updateQuantity(${item.id}, '${item.size}', ${item.quantity + 1})" style="width: 24px; height: 24px; border: 1px solid var(--border-color); background: none; cursor: pointer; border-radius: 2px;">+</button>
+                        <button onclick="updateQuantity(${item.id}, '${item.size}', ${item.quantity - 1})" style="width: 36px; height: 36px; border: 1px solid var(--border-color); background: none; cursor: pointer; border-radius: 8px; font-size: 1.1rem; display:flex; align-items:center; justify-content:center; touch-action:manipulation;">−</button>
+                        <span style="font-size: 0.95rem; font-weight:600; min-width:20px; text-align:center;">${item.quantity}</span>
+                        <button onclick="updateQuantity(${item.id}, '${item.size}', ${item.quantity + 1})" style="width: 36px; height: 36px; border: 1px solid var(--border-color); background: none; cursor: pointer; border-radius: 8px; font-size: 1.1rem; display:flex; align-items:center; justify-content:center; touch-action:manipulation;">+</button>
                     </div>
                 </div>
                 <button onclick="removeFromCart(${item.id}, '${item.size}')" style="background: none; border: none; cursor: pointer; color: var(--text-muted); align-self: flex-start;"><ion-icon name="trash-outline"></ion-icon></button>
@@ -156,66 +155,135 @@ function updateCartUI() {
         `).join('');
     }
 
-    const voucherContainer = document.getElementById('voucher-container') || (() => {
-        const c = document.createElement('div');
-        c.id = 'voucher-container';
-        c.style.marginBottom = '1rem';
-        c.innerHTML = `
-            <div style="display: flex; gap: 0.5rem;">
-                <input type="text" id="voucher-input" placeholder="Voucher code" style="flex: 1; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-family: var(--font-sans);">
-                <button type="button" onclick="applyVoucher()" class="btn btn-outline" style="padding: 0.5rem 1rem;">Apply</button>
-            </div>
-            <p id="voucher-msg" style="font-size: 0.8rem; margin-top: 0.5rem; font-family: var(--font-sans);"></p>
-            <p id="spend-more-msg" style="font-size: 0.85rem; margin-top: 0.5rem; font-weight: 600; color: #000000; font-family: Arial, Helvetica, sans-serif;"></p>
-        `;
-        // Insert before total
-        const totalDiv = document.querySelector('#cart-content-wrapper > div:last-child');
-        totalDiv.insertBefore(c, totalDiv.firstChild);
-        return c;
-    })();
-
-    const subtotal = getCartSubtotal();
-    const spendMoreMsg = document.getElementById('spend-more-msg');
-    const voucherMsg = document.getElementById('voucher-msg');
-    
-    // Automatically invalidate voucher if subtotal drops below 4000
-    if (appliedVoucher === 'myzahroun10' && subtotal < 4000) {
-        appliedVoucher = null;
-        localStorage.removeItem('zahroun_voucher');
-        if (document.getElementById('voucher-input') && document.getElementById('voucher-input').value.trim().toLowerCase() === 'myzahroun10') {
-            voucherMsg.textContent = 'The discount condition has not been met yet.';
-            voucherMsg.style.color = '#FF0000';
-        }
-    } else if (appliedVoucher === 'myzahroun10' && subtotal >= 4000) {
-        voucherMsg.textContent = 'Voucher Applied! You got 10% off.';
-        voucherMsg.style.color = '#27ae60';
-        // Ensure input field shows the code if it's applied via localStorage
-        if (document.getElementById('voucher-input') && !document.getElementById('voucher-input').value) {
-            document.getElementById('voucher-input').value = 'myzahroun10';
-        }
-    }
-
-    if (subtotal < 4000 && subtotal > 0) {
-        const diff = 4000 - subtotal;
-        spendMoreMsg.textContent = `ADD ${diff.toFixed(2)} BDT MORE TO GET A 10% DISCOUNT!`;
-        spendMoreMsg.style.color = '#000000';
-        spendMoreMsg.style.display = 'block';
-    } else if (subtotal >= 4000) {
-        spendMoreMsg.textContent = "10% Discount Unlocked! Apply code 'myzahroun10' now.";
-        spendMoreMsg.style.color = '#27ae60';
-        spendMoreMsg.style.display = 'block';
-    } else {
-        spendMoreMsg.style.display = 'none';
-    }
-
     const totalEl = document.getElementById('cart-total');
-    if (totalEl) {
-        if (appliedVoucher === 'myzahroun10' && subtotal >= 4000) {
-            totalEl.innerHTML = `<span style="text-decoration: line-through; color: #999; font-size: 0.9rem; margin-right: 0.5rem;">${subtotal.toFixed(2)} BDT</span> ${getCartTotal().toFixed(2)} BDT`;
-        } else {
-            totalEl.textContent = getCartTotal().toFixed(2) + ' BDT';
+    if (totalEl) totalEl.textContent = getCartTotal().toFixed(2) + ' BDT';
+
+    // Buy X Get Y — free item selector
+    renderBxgySelector();
+}
+
+// Dummy — no in-cart UI needed, checkout intercept handles everything
+function renderBxgySelector() {}
+
+/* ── Buy X Get Y — Checkout Intercept ─────────────────────────────── */
+
+// Step 1: wait for window.ZahrounPromos to exist (module loads async)
+function waitForPromos(timeout = 5000) {
+    return new Promise(resolve => {
+        if (window.ZahrounPromos) { resolve(window.ZahrounPromos); return; }
+        const start = Date.now();
+        const interval = setInterval(() => {
+            if (window.ZahrounPromos) {
+                clearInterval(interval);
+                resolve(window.ZahrounPromos);
+            } else if (Date.now() - start >= timeout) {
+                clearInterval(interval);
+                resolve(null);
+            }
+        }, 40);
+    });
+}
+
+async function checkBxgyAndProceed() {
+    // Synchronous check — no polling, no timeout.
+    // If promotions.js is not loaded on this page window.ZahrounPromos is absent;
+    // navigate immediately rather than waiting 5 s for waitForPromos to time out.
+    const P = window.ZahrounPromos || null;
+    if (!P) { window.location.href = 'checkout.html'; return; }
+
+    // Join the background config load — never starts a second loadConfig() call.
+    // P.ready resolves once when module-init loadConfig() finishes (cache, IDB, or network).
+    // After this await _cfg is always set; P.getConfig() is synchronous.
+    await P.ready;
+    const cfg = P.getConfig();
+
+    // If Firestore was unreachable AND no cache existed, _cfgFromFirestore is false
+    // (cfg is DEFAULTS). Skip BXGY so the customer reaches checkout unblocked.
+    if (!P.isConfigReady()) {
+        localStorage.removeItem('zahroun_bxgy_free');
+        window.location.href = 'checkout.html';
+        return;
+    }
+
+    const bxgy = cfg?.buyXGetY;
+
+    if (!bxgy?.enabled) {
+        localStorage.removeItem('zahroun_bxgy_free');
+        window.location.href = 'checkout.html';
+        return;
+    }
+
+    const totalQty = cart.reduce((s, i) => s + (i.quantity || 1), 0);
+    const rules = [...(bxgy.rules || [])].sort((a, b) => b.buy - a.buy);
+    const rule = rules.find(r => totalQty >= r.buy);
+
+    // "select" scope → redirect to premium gift selection page
+    if (bxgy.freeItemScope === 'select') {
+        const hasFreeItems = !!(bxgy.freeProductSizes?.length || bxgy.freeProductIds?.length);
+        if (hasFreeItems && rule) {
+            window.location.href = 'free-gift-selection.html';
+            return;
+        }
+        localStorage.removeItem('zahroun_bxgy_free');
+        window.location.href = 'checkout.html';
+        return;
+    }
+
+    // "any" (cheapest) scope → show upsell popup if one item short of qualifying
+    if (!rule) {
+        const nearestRule = rules.find(r => totalQty === r.buy - 1);
+        if (nearestRule) {
+            showUpsellPopup(nearestRule);
+            return;
         }
     }
+
+    localStorage.removeItem('zahroun_bxgy_free');
+    window.location.href = 'checkout.html';
+}
+
+function showUpsellPopup(rule) {
+    const overlay = document.createElement('div');
+    overlay.id = '_bxgy-upsell-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300000;display:flex;align-items:center;justify-content:center;padding:1.25rem;backdrop-filter:blur(4px);';
+
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:16px;width:100%;max-width:400px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.28);">
+        <div style="background:linear-gradient(150deg,#081c14,#163E34);padding:1.85rem 1.75rem 1.6rem;text-align:center;color:#fff;">
+          <div style="width:52px;height:52px;border:1.5px solid rgba(201,168,76,.5);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .9rem;">
+            <ion-icon name="gift-outline" style="font-size:1.55rem;color:#c9a84c;"></ion-icon>
+          </div>
+          <div style="font-family:var(--font-serif,'Georgia',serif);font-size:1.15rem;font-weight:400;letter-spacing:.03em;margin-bottom:.5rem;">You Qualify for a Free Gift</div>
+          <div style="width:32px;height:1px;background:rgba(201,168,76,.45);margin:.55rem auto 0;"></div>
+        </div>
+        <div style="padding:1.5rem 1.75rem 1.75rem;">
+          <p style="font-size:.875rem;line-height:1.85;color:#555;margin-bottom:1.5rem;">
+            Great news!<br><br>
+            Your order qualifies for our <strong>Buy ${rule.buy} Get ${rule.getFree} Free</strong> promotion.
+            Add one more fragrance to your cart now and receive the lowest-priced item completely free.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:.65rem;">
+            <button id="_upsell-shop-btn" style="width:100%;padding:.85rem;background:#163E34;color:#fff;border:none;border-radius:10px;font-size:.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-family:var(--font-sans,sans-serif);">Continue Shopping</button>
+            <button id="_upsell-skip-btn" style="width:100%;padding:.75rem;background:#fff;color:#999;border:1.5px solid #e0e0e0;border-radius:10px;font-size:.78rem;cursor:pointer;font-family:var(--font-sans,sans-serif);">Proceed Anyway</button>
+          </div>
+        </div>
+      </div>`;
+
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+
+    overlay.querySelector('#_upsell-shop-btn').addEventListener('click', () => {
+        document.body.style.overflow = '';
+        overlay.remove();
+        window.location.href = 'shop.html';
+    });
+
+    overlay.querySelector('#_upsell-skip-btn').addEventListener('click', () => {
+        localStorage.removeItem('zahroun_bxgy_free');
+        document.body.style.overflow = '';
+        overlay.remove();
+        window.location.href = 'checkout.html';
+    });
 }
 
 function openCart() {
@@ -267,14 +335,28 @@ document.addEventListener('DOMContentLoaded', () => {
             checkoutBtn = btn;
         }
     });
-    
+
     if (checkoutBtn) {
+        checkoutBtn.removeAttribute('onclick'); // prevent inline onclick from navigating before modal can show
         checkoutBtn.addEventListener('click', () => {
             if (cart.length === 0) {
                 alert('Your cart is empty!');
                 return;
             }
-            window.location.href = 'checkout.html';
+            checkBxgyAndProceed();
         });
+    }
+
+    // "View Cart" link — shows full cart page
+    const cartFooter = document.querySelector('#cart-content-wrapper > div:last-child');
+    if (cartFooter && !cartFooter.querySelector('.view-cart-link')) {
+        const viewLink = document.createElement('a');
+        viewLink.href = 'cart.html';
+        viewLink.className = 'view-cart-link';
+        viewLink.textContent = 'View Full Cart';
+        viewLink.style.cssText = 'display:block;text-align:center;margin-top:.5rem;font-size:.82rem;color:var(--text-muted);text-decoration:none;';
+        viewLink.addEventListener('mouseenter', () => viewLink.style.color = 'var(--primary-color)');
+        viewLink.addEventListener('mouseleave', () => viewLink.style.color = 'var(--text-muted)');
+        cartFooter.appendChild(viewLink);
     }
 });

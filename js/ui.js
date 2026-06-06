@@ -19,11 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const header = document.querySelector('.header');
     if (header) {
         window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                header.style.boxShadow = 'var(--shadow-sm)';
-            } else {
-                header.style.boxShadow = 'none';
-            }
+            header.style.boxShadow = window.scrollY > 50 ? 'var(--shadow-sm)' : 'none';
         });
     }
 

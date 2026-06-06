@@ -1,0 +1,448 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Sale | Zahroun</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <meta name="description" content="Zahroun Flash Sale — limited-time discounts on luxury fragrances. Shop now before the offer ends.">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="css/style.css">
+    <script defer src="js/analytics.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/broadcast.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        /* ---- Sale Hero ---- */
+        .sale-hero {
+            background: linear-gradient(135deg, #0f2820 0%, #163E34 50%, #1e5040 100%);
+            padding: 4rem 0 3.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .sale-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 60% 40%, rgba(212,175,55,.12) 0%, transparent 65%);
+            pointer-events: none;
+        }
+        .sale-badge-pill {
+            display: inline-block;
+            background: #d4af37;
+            color: #0f2820;
+            font-size: .72rem;
+            font-weight: 800;
+            letter-spacing: .12em;
+            padding: .3rem .9rem;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+        .sale-hero h1 {
+            color: #fff;
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            margin-bottom: .6rem;
+            letter-spacing: .02em;
+        }
+        .sale-hero p {
+            color: rgba(255,255,255,.72);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ---- Countdown ---- */
+        .countdown-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.15);
+            border-radius: 14px;
+            padding: 1rem 1.5rem;
+            backdrop-filter: blur(8px);
+        }
+        .cd-unit { text-align: center; min-width: 52px; }
+        .cd-num {
+            display: block;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #d4af37;
+            font-family: var(--font-sans);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+        .cd-label { display: block; font-size: .65rem; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .08em; margin-top: .25rem; }
+        .cd-sep { color: #d4af37; font-size: 1.6rem; font-weight: 700; line-height: 1; padding-bottom: .5rem; }
+
+        .sale-ended-msg {
+            display: inline-block;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.18);
+            color: rgba(255,255,255,.9);
+            padding: 1.1rem 2rem;
+            border-radius: 12px;
+            text-align: center;
+            backdrop-filter: blur(6px);
+        }
+        .sale-ended-msg .sem-label {
+            font-size: .65rem;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.45);
+            margin-bottom: .3rem;
+        }
+        .sale-ended-msg .sem-title {
+            font-size: .98rem;
+            font-weight: 600;
+            font-family: var(--font-serif, serif);
+            color: #d4af37;
+            margin-bottom: .2rem;
+        }
+        .sale-ended-msg .sem-sub {
+            font-size: .78rem;
+            color: rgba(255,255,255,.5);
+        }
+
+        /* ---- Products Grid ---- */
+        .sale-section { padding: 3rem 0 4rem; }
+        .sale-section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: .75rem;
+        }
+        .sale-section-head h2 { font-size: 1.4rem; }
+        .sale-section-head .sale-count { font-size: .85rem; color: var(--text-muted); }
+
+        .sale-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .sale-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: transform .25s, box-shadow .25s;
+            position: relative;
+        }
+        .sale-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+
+        .sale-card-badge {
+            position: absolute;
+            top: .75rem;
+            left: .75rem;
+            background: #e63946;
+            color: #fff;
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            padding: .25rem .65rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+            z-index: 2;
+        }
+        .sale-card-img {
+            background: var(--bg-color);
+            padding: 1.5rem;
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sale-card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform .3s;
+        }
+        .sale-card:hover .sale-card-img img { transform: scale(1.05); }
+
+        .sale-card-body { padding: 1rem; }
+        .sale-card-name { font-size: .9rem; font-weight: 600; color: var(--text-main); margin-bottom: .3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sale-card-cat { font-size: .75rem; color: var(--text-muted); margin-bottom: .7rem; }
+        .sale-price-row { display: flex; align-items: center; gap: .6rem; margin-bottom: .9rem; flex-wrap: wrap; }
+        .sale-price { font-size: 1.15rem; font-weight: 700; color: #e63946; }
+        .sale-orig { font-size: .85rem; color: var(--text-muted); text-decoration: line-through; }
+        .sale-discount-tag {
+            font-size: .7rem;
+            font-weight: 700;
+            background: #fdecea;
+            color: #e63946;
+            padding: .15rem .45rem;
+            border-radius: 4px;
+        }
+        .sale-card .btn { width: 100%; font-size: .85rem; padding: .6rem 1rem; }
+
+        /* No sale / loading states */
+        .sale-state {
+            text-align: center;
+            padding: 5rem 1rem;
+        }
+        .sale-state ion-icon { font-size: 3.5rem; display: block; margin: 0 auto 1rem; opacity: .3; }
+        .sale-state h2 { margin-bottom: .5rem; font-size: 1.5rem; }
+        .sale-state p { color: var(--text-muted); margin-bottom: 1.5rem; }
+
+        @media (max-width: 520px) {
+            .countdown-wrap { gap: .3rem; padding: .75rem 1rem; }
+            .cd-num { font-size: 1.5rem; }
+            .cd-unit { min-width: 40px; }
+            .sale-hero { padding: 3rem 0 2.5rem; }
+        }
+    </style>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+</head>
+<body>
+    <header class="header">
+        <div class="container nav-container">
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="nav-icons">
+                <button aria-label="Search" onclick="window.location.href='shop.html'"><ion-icon name="search-outline"></ion-icon></button>
+                <button aria-label="Cart" id="cart-icon"><ion-icon name="bag-outline"></ion-icon><span class="cart-count" id="cart-count">0</span></button>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu"><ion-icon name="menu-outline"></ion-icon></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sale Hero (shown when active) -->
+    <div id="sale-hero-wrap" style="display:none;">
+        <div class="sale-hero">
+            <div class="container">
+                <div class="sale-badge-pill" id="sale-badge-pill">FLASH SALE</div>
+                <h1 id="sale-hero-title">Flash Sale</h1>
+                <p id="sale-hero-subtitle"></p>
+                <div id="sale-timer-wrap">
+                    <div class="countdown-wrap" id="countdown-wrap">
+                        <div class="cd-unit"><span class="cd-num" id="cd-days">00</span><span class="cd-label">Days</span></div>
+                        <div class="cd-sep">:</div>
+                        <div class="cd-unit"><span class="cd-num" id="cd-hrs">00</span><span class="cd-label">Hours</span></div>
+                        <div class="cd-sep">:</div>
+                        <div class="cd-unit"><span class="cd-num" id="cd-min">00</span><span class="cd-label">Mins</span></div>
+                        <div class="cd-sep">:</div>
+                        <div class="cd-unit"><span class="cd-num" id="cd-sec">00</span><span class="cd-label">Secs</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container sale-section">
+            <div class="sale-section-head">
+                <h2>Sale Products</h2>
+                <span class="sale-count" id="sale-product-count"></span>
+            </div>
+            <div class="sale-grid" id="sale-grid">
+                <p style="color:var(--text-muted);">Loading products…</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- No active sale state -->
+    <div id="sale-inactive-wrap" style="display:none;">
+        <div class="container">
+            <div class="sale-state">
+                <ion-icon name="flash-outline"></ion-icon>
+                <h2>No Active Sale</h2>
+                <p>There's no flash sale running right now.<br>Check back soon or explore our full collection.</p>
+                <a href="shop.html" class="btn">Browse All Products</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="sale-loading-wrap" class="container">
+        <div class="sale-state">
+            <ion-icon name="hourglass-outline"></ion-icon>
+            <h2>Loading…</h2>
+            <p>Fetching sale details</p>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" style="display:none;position:fixed;top:0;right:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100000;">
+        <div style="position:absolute;top:0;right:0;width:400px;max-width:100%;height:100%;background:white;padding:2rem;display:flex;flex-direction:column;box-shadow:-5px 0 15px rgba(0,0,0,0.1);transform:translateX(100%);transition:transform 0.3s;" id="cart-content-wrapper">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-color);padding-bottom:1rem;margin-bottom:1rem;">
+                <h3>Your Cart</h3>
+                <button id="close-cart" style="background:none;border:none;font-size:1.5rem;cursor:pointer;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div id="cart-items" style="flex:1;overflow-y:auto;"></div>
+            <div style="border-top:1px solid var(--border-color);padding-top:1rem;margin-top:1rem;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-weight:600;font-size:1.2rem;"><span>Total</span><span id="cart-total">0 BDT</span></div>
+                <button class="btn" style="width:100%;" onclick="window.location.href='checkout.html'">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/store.js"></script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script type="module">
+        import { db } from "./js/firebase-config.js";
+        import { doc, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+        let _timerInterval = null;
+
+        function show(id)  { const el = document.getElementById(id); if (el) el.style.display = ""; }
+        function hide(id)  { const el = document.getElementById(id); if (el) el.style.display = "none"; }
+
+        function startCountdown(endDate) {
+            const timerWrap = document.getElementById("sale-timer-wrap");
+            if (!endDate) { if (timerWrap) timerWrap.style.display = "none"; return; }
+
+            const pad = n => String(Math.max(0, n)).padStart(2, "0");
+            function tick() {
+                const diff = endDate.getTime() - Date.now();
+                if (diff <= 0) {
+                    clearInterval(_timerInterval);
+                    const cw = document.getElementById("countdown-wrap");
+                    if (cw) cw.innerHTML = `<div class="sale-ended-msg"><div class="sem-label">Offer Status</div><div class="sem-title">This exclusive offer has concluded.</div><div class="sem-sub">Products are still available at regular pricing.</div></div>`;
+                    return;
+                }
+                const d = Math.floor(diff / 86400000);
+                const h = Math.floor((diff % 86400000) / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                document.getElementById("cd-days").textContent = pad(d);
+                document.getElementById("cd-hrs").textContent  = pad(h);
+                document.getElementById("cd-min").textContent  = pad(m);
+                document.getElementById("cd-sec").textContent  = pad(s);
+            }
+            tick();
+            _timerInterval = setInterval(tick, 1000);
+        }
+
+        function renderSaleProducts(saleItems, allProducts, badgeText) {
+            const grid = document.getElementById("sale-grid");
+            const countEl = document.getElementById("sale-product-count");
+            if (!grid) return;
+
+            const saleProducts = saleItems
+                .map(item => {
+                    const p = allProducts.find(x => x.id === item.productId);
+                    if (!p) return null;
+                    return { ...p, salePrice: item.salePrice };
+                })
+                .filter(Boolean);
+
+            if (countEl) countEl.textContent = `${saleProducts.length} product${saleProducts.length !== 1 ? "s" : ""}`;
+
+            if (!saleProducts.length) {
+                grid.innerHTML = `<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:2rem;">No products in this sale yet.</p>`;
+                return;
+            }
+
+            grid.innerHTML = saleProducts.map(p => {
+                const reg = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : (p.price || 0);
+                const discPct = reg > 0 ? Math.round((reg - p.salePrice) / reg * 100) : 0;
+                return `<div class="sale-card">
+                    <div class="sale-card-badge">${esc(badgeText || "SALE")}</div>
+                    <a href="product.html?id=${p.id}" class="sale-card-img">
+                        <img src="${esc(p.image || "")}" alt="${esc(p.name)}" loading="lazy">
+                    </a>
+                    <div class="sale-card-body">
+                        <div class="sale-card-cat">${esc(p.category || "")}</div>
+                        <div class="sale-card-name">${esc(p.name)}</div>
+                        <div class="sale-price-row">
+                            <span class="sale-price">৳${p.salePrice.toLocaleString()}</span>
+                            <span class="sale-orig">৳${reg.toLocaleString()}</span>
+                            ${discPct > 0 ? `<span class="sale-discount-tag">${discPct}% OFF</span>` : ""}
+                        </div>
+                        <button class="btn" onclick="addToCart(${p.id}, '50ML', ${p.salePrice}); if(window.showToast) window.showToast('Added to cart!');">
+                            <ion-icon name="bag-add-outline" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>Add to Cart
+                        </button>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        // Load flash sale data + products
+        try {
+            const snap = await getDoc(doc(db, "settings", "flashSale"));
+            const sale = snap.exists() ? snap.data() : null;
+
+            hide("sale-loading-wrap");
+
+            if (!sale || !sale.enabled) {
+                show("sale-inactive-wrap");
+                document.title = "Sale | Zahroun";
+            } else {
+                // Check if sale has ended
+                const endDate = sale.endDate?.toDate ? sale.endDate.toDate() : (sale.endDate ? new Date(sale.endDate) : null);
+                const saleEnded = endDate && endDate.getTime() < Date.now();
+
+                document.title = `${sale.title || "Flash Sale"} | Zahroun`;
+
+                if (saleEnded && !sale.items?.length) {
+                    show("sale-inactive-wrap");
+                } else {
+                    show("sale-hero-wrap");
+
+                    // Populate hero
+                    const badgeEl = document.getElementById("sale-badge-pill");
+                    const titleEl = document.getElementById("sale-hero-title");
+                    const subtitleEl = document.getElementById("sale-hero-subtitle");
+                    if (badgeEl) badgeEl.textContent = sale.badgeText || "FLASH SALE";
+                    if (titleEl) titleEl.textContent = sale.title || "Flash Sale";
+                    if (subtitleEl) subtitleEl.textContent = sale.subtitle || "";
+
+                    // Start countdown
+                    if (!saleEnded) startCountdown(endDate);
+                    else {
+                        const timerWrap = document.getElementById("sale-timer-wrap");
+                        if (timerWrap) timerWrap.innerHTML = `<div class="sale-ended-msg"><div class="sem-label">Offer Status</div><div class="sem-title">This exclusive offer has concluded.</div><div class="sem-sub">Products are still available at regular pricing.</div></div>`;
+                    }
+
+                    // Fetch sale products directly from Firestore by their IDs
+                    // (avoids race condition with bundled vs Firestore product IDs)
+                    const saleItems = sale.items || [];
+                    if (saleItems.length) {
+                        try {
+                            const idStrings = saleItems.map(i => String(i.productId));
+                            const pSnap = await getDocs(query(collection(db, "products"), where("__name__", "in", idStrings)));
+                            const fetchedProds = pSnap.docs.map(d => ({ id: Number(d.id), ...d.data() }));
+                            renderSaleProducts(saleItems, fetchedProds, sale.badgeText);
+                        } catch {
+                            // Fallback to window.products if direct fetch fails
+                            const tryRender = () => {
+                                if (window.products?.length) renderSaleProducts(saleItems, window.products, sale.badgeText);
+                            };
+                            document.addEventListener("products-ready", tryRender);
+                            if (window.products?.length) tryRender();
+                        }
+                    } else {
+                        document.getElementById("sale-grid").innerHTML =
+                            `<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:2rem;">No products in this sale yet.</p>`;
+                    }
+                }
+            }
+        } catch (err) {
+            hide("sale-loading-wrap");
+            show("sale-inactive-wrap");
+            console.error("Flash sale load error:", err);
+        }
+    </script>
+</body>
+</html>
+

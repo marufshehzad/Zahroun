@@ -2,6 +2,8 @@ User-agent: *
 Allow: /
 
 Disallow: /admin.html
+Disallow: /checkout.html
+Disallow: /account.html
 Disallow: /seed.html
 Disallow: /test_images.html
 

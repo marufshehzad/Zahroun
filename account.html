@@ -1,33 +1,170 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Account | Zahroun</title>
-    <link rel="icon" type="image/png" href="product pictures/favicon.png">
-    <link rel="apple-touch-icon" href="product pictures/favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
     <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/analytics.js"></script>
+    <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/broadcast.js"></script>
+    <script type="module" src="js/wishlist.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <style>
-        .account-head { background-color: var(--accent-color); padding: 3rem 0; text-align: center; }
-        .order-card { background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 12px;
-            padding: 1.5rem; margin-bottom: 1.25rem; }
-        .order-card .top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
-            gap: .5rem; border-bottom: 1px solid var(--border-color); padding-bottom: .9rem; margin-bottom: .9rem; }
-        .order-card .oid { font-family: var(--font-sans, sans-serif); color: var(--primary-color); font-weight: 600; letter-spacing: .04em; }
+        /* ---- Account Layout ---- */
+        .account-head {
+            background: #0b231a;
+            padding: 3rem 0 2.6rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .account-head::before {
+            content: '✦';
+            position: absolute; left: 8%; top: 30%;
+            font-size: .75rem; color: rgba(255,255,255,.32); pointer-events: none;
+        }
+        .account-head::after {
+            content: '✦';
+            position: absolute; right: 11%; top: 22%;
+            font-size: 1.05rem; color: rgba(201,168,76,.28); pointer-events: none;
+        }
+        .account-head h1 {
+            color: #fff;
+            margin-bottom: .45rem;
+            font-size: 1.75rem;
+            font-family: var(--font-serif);
+            text-transform: uppercase;
+            letter-spacing: .14em;
+            font-weight: 400;
+        }
+        .account-head p { color: rgba(255,255,255,.48); font-size: .875rem; margin: 0; }
+
+        .account-avatar {
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            background: transparent;
+            border: 1.5px solid rgba(201,168,76,.58);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; font-weight: 400; color: rgba(255,255,255,.9);
+            font-family: var(--font-serif);
+            margin: 0 auto 1.35rem;
+        }
+
+        /* ---- Tabs ---- */
+        .acc-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--border-color);
+            overflow-x: auto;
+            scrollbar-width: none;
+            background: var(--surface-color);
+        }
+        .acc-tabs::-webkit-scrollbar { display: none; }
+        .acc-tab {
+            padding: .85rem 1.4rem;
+            border: none;
+            background: none;
+            font-family: var(--font-sans);
+            font-size: .88rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: color .2s, border-color .2s;
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .acc-tab:hover { color: var(--text-main); }
+        .acc-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: 600; }
+
+        .acc-panel { display: none; }
+        .acc-panel.active { display: block; }
+
+        /* ---- Order cards ---- */
+        .order-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+        .order-card .top {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: .5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: .9rem; margin-bottom: .9rem;
+        }
+        .order-card .oid { font-family: var(--font-sans); color: var(--primary-color); font-weight: 600; letter-spacing: .04em; }
         .o-status { font-size: .75rem; padding: .25rem .7rem; border-radius: 20px; text-transform: capitalize; background: var(--accent-color); }
         .o-status.delivered { background: #e6f4ea; color: #1e7e34; }
         .o-status.cancelled { background: #fdecea; color: #9b2226; }
         .o-status.confirmed, .o-status.shipped { background: #e8f0fe; color: #1a56b8; }
         .o-item { display: flex; gap: 1rem; align-items: center; margin-bottom: .6rem; }
         .o-item img { width: 48px; height: 48px; object-fit: contain; background: var(--bg-color); border-radius: 6px; }
+
+        /* ---- Profile & Address forms ---- */
+        .acc-form-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.75rem;
+            max-width: 560px;
+        }
+        .acc-form-card h3 { font-size: 1.05rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: .5rem; }
+        .acc-field { margin-bottom: 1.1rem; }
+        .acc-field label { display: block; font-size: .82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .35rem; }
+        .acc-field input, .acc-field select, .acc-field textarea {
+            width: 100%; padding: .7rem .9rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: var(--font-sans); font-size: .92rem;
+            background: var(--bg-color); color: var(--text-main);
+            outline: none; box-sizing: border-box;
+            transition: border-color .2s;
+        }
+        .acc-field input:focus, .acc-field select:focus, .acc-field textarea:focus { border-color: var(--primary-color); }
+        .acc-field input:disabled { background: var(--accent-color); color: var(--text-muted); cursor: not-allowed; }
+        .acc-field textarea { resize: vertical; min-height: 80px; }
+        .acc-save-row { display: flex; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+        .acc-save-status { font-size: .82rem; color: var(--primary-color); }
+        .acc-save-status.err { color: #9b2226; }
+
+        /* ---- Wishlist grid ---- */
+        .wish-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.25rem;
+        }
+        .wish-empty {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: var(--text-muted);
+        }
+        .wish-empty ion-icon { font-size: 3rem; display: block; margin: 0 auto .75rem; opacity: .3; }
+
         .login-cta { text-align: center; padding: 4rem 1rem; }
+        .login-cta ion-icon { font-size: 3rem; color: var(--primary-color); display: block; margin: 0 auto 1rem; }
+
+        @media (max-width: 540px) {
+            .acc-tab { font-size: .8rem; padding: .75rem 1rem; }
+            .acc-form-card { padding: 1.25rem; }
+        }
     </style>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </head>
 <body>
     <header class="header">
@@ -48,20 +185,207 @@
     </header>
 
     <div class="account-head">
+        <span aria-hidden="true" style="position:absolute;left:22%;top:68%;font-size:.55rem;color:rgba(255,255,255,.22);">✦</span>
+        <span aria-hidden="true" style="position:absolute;right:22%;top:72%;font-size:.65rem;color:rgba(255,255,255,.18);">✦</span>
+        <span aria-hidden="true" style="position:absolute;left:48%;top:10%;font-size:.45rem;color:rgba(201,168,76,.22);">✦</span>
         <div class="container">
-            <h1>My Account</h1>
-            <p id="account-greeting" style="color: var(--text-muted);">Your orders and details</p>
+            <div class="account-avatar" id="acc-avatar">?</div>
+            <h1 id="account-greeting">My Account</h1>
+            <p id="account-email"></p>
         </div>
     </div>
 
-    <div class="container py-8" style="max-width: 820px; margin-top: 60px;">
-        <div id="account-content">
-            <p class="muted-note" style="text-align:center; padding:3rem; color:var(--text-muted);">Loading…</p>
+    <!-- Tab bar -->
+    <div class="acc-tabs" id="acc-tabs" style="display:none;">
+        <button class="acc-tab active" data-tab="orders"><ion-icon name="bag-outline"></ion-icon> Orders</button>
+        <button class="acc-tab" data-tab="profile"><ion-icon name="person-outline"></ion-icon> Profile</button>
+        <button class="acc-tab" data-tab="address"><ion-icon name="location-outline"></ion-icon> Saved Address</button>
+        <button class="acc-tab" data-tab="wishlist"><ion-icon name="heart-outline"></ion-icon> Wishlist</button>
+        <button class="acc-tab" data-tab="rewards" id="rewards-tab" style="display:none;"><ion-icon name="diamond-outline"></ion-icon> Rewards</button>
+    </div>
+
+    <div class="container py-8" style="max-width: 860px; margin-top: 40px;" id="acc-main">
+        <!-- Login CTA (shown when not logged in) -->
+        <div id="login-cta" class="login-cta">
+            <ion-icon name="person-circle-outline"></ion-icon>
+            <h3 style="margin-bottom:1rem;">Please log in to view your account</h3>
+            <button class="btn" id="acc-login-btn">Log in</button>
+        </div>
+
+        <!-- ORDERS tab -->
+        <div class="acc-panel active" id="panel-orders"></div>
+
+        <!-- PROFILE tab -->
+        <div class="acc-panel" id="panel-profile">
+            <div class="acc-form-card">
+                <h3><ion-icon name="person-outline" style="color:var(--primary-color);"></ion-icon> Edit Profile</h3>
+                <div class="acc-field">
+                    <label>Display Name</label>
+                    <input type="text" id="prof-name" placeholder="Your name">
+                </div>
+                <div class="acc-field">
+                    <label>Email Address</label>
+                    <input type="email" id="prof-email" disabled>
+                </div>
+                <div class="acc-save-row">
+                    <button class="btn" id="prof-save-btn">Save Changes</button>
+                    <span class="acc-save-status" id="prof-status"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAVED ADDRESS tab -->
+        <div class="acc-panel" id="panel-address">
+            <div class="acc-form-card">
+                <h3><ion-icon name="location-outline" style="color:var(--primary-color);"></ion-icon> Saved Delivery Address</h3>
+                <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1.25rem;">This address will be pre-filled at checkout for faster ordering.</p>
+                <div class="acc-field">
+                    <label>Full Name</label>
+                    <input type="text" id="addr-name" placeholder="Recipient name">
+                </div>
+                <div class="acc-field">
+                    <label>Phone Number</label>
+                    <input type="tel" id="addr-phone" placeholder="+880 1XXXXXXXXX">
+                </div>
+                <div class="acc-field">
+                    <label>Area</label>
+                    <select id="addr-area">
+                        <option value="">Select area…</option>
+                        <option value="Dhaka">Inside Dhaka</option>
+                        <option value="Outside Dhaka">Outside Dhaka</option>
+                    </select>
+                </div>
+                <div class="acc-field">
+                    <label>Full Address</label>
+                    <textarea id="addr-address" placeholder="House/Flat, Road, Area, City…"></textarea>
+                </div>
+                <div class="acc-save-row">
+                    <button class="btn" id="addr-save-btn">Save Address</button>
+                    <span class="acc-save-status" id="addr-status"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- WISHLIST tab -->
+        <div class="acc-panel" id="panel-wishlist">
+            <div id="wish-content">
+                <p style="text-align:center;color:var(--text-muted);padding:3rem 0;">Loading wishlist…</p>
+            </div>
+        </div>
+
+        <!-- REWARDS tab -->
+        <div class="acc-panel" id="panel-rewards">
+            <!-- Loyalty skeleton — shown while data loads, hidden by initRewardsTab -->
+            <div id="loyalty-skeleton" style="margin-bottom:1.5rem;">
+                <style>
+                    @keyframes _lskShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+                    .lsk{border-radius:8px;background:linear-gradient(90deg,#f0ede8 25%,#e5e0d8 50%,#f0ede8 75%);background-size:200% 100%;animation:_lskShimmer 1.5s infinite;}
+                </style>
+                <div class="lsk" style="height:130px;border-radius:14px 14px 0 0;margin-bottom:0;"></div>
+                <div style="background:#fff;border:1px solid #eceae4;border-top:none;border-radius:0 0 14px 14px;padding:1rem 1.25rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+                    <div class="lsk" style="height:48px;border-radius:8px;"></div>
+                    <div class="lsk" style="height:48px;border-radius:8px;"></div>
+                    <div class="lsk" style="height:48px;border-radius:8px;"></div>
+                </div>
+                <div class="lsk" style="height:14px;width:60%;border-radius:4px;margin-top:1.25rem;"></div>
+                <div class="lsk" style="height:14px;width:80%;border-radius:4px;margin-top:.65rem;"></div>
+            </div>
+
+            <!-- Section heading -->
+            <div style="margin-bottom:1.75rem;">
+                <h2 style="font-family:var(--font-serif);text-transform:uppercase;letter-spacing:.1em;font-size:1.22rem;font-weight:400;color:var(--text-main);margin:0 0 .55rem;">Rewards &amp; Loyalty</h2>
+                <div style="display:flex;align-items:center;gap:.5rem;">
+                    <div style="width:36px;height:1px;background:#c9a84c;opacity:.5;"></div>
+                    <div style="width:7px;height:7px;background:#c9a84c;transform:rotate(45deg);opacity:.7;flex-shrink:0;"></div>
+                    <div style="width:36px;height:1px;background:#c9a84c;opacity:.5;"></div>
+                </div>
+            </div>
+
+            <!-- Loyalty Hero Card -->
+            <div id="loyalty-card" style="display:none;margin-bottom:1.5rem;">
+                <!-- Tier + Points Banner -->
+                <div style="background:linear-gradient(135deg,#0b231a 0%,#163E34 100%);border-radius:16px 16px 0 0;padding:1.5rem 1.75rem;position:relative;overflow:hidden;">
+                    <div style="position:absolute;top:-18px;right:-18px;width:120px;height:120px;border-radius:50%;background:rgba(201,168,76,.08);pointer-events:none;"></div>
+                    <div style="position:absolute;bottom:-30px;left:30%;width:80px;height:80px;border-radius:50%;background:rgba(201,168,76,.05);pointer-events:none;"></div>
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+                        <div>
+                            <div id="rw-tier-badge" style="display:inline-flex;align-items:center;gap:.4rem;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.35);border-radius:20px;padding:.25rem .75rem;margin-bottom:.65rem;">
+                                <span id="rw-tier-icon" style="font-size:.9rem;">🥈</span>
+                                <span id="rw-tier-label" style="font-size:.72rem;font-weight:700;color:#c9a84c;letter-spacing:.08em;text-transform:uppercase;">Silver Member</span>
+                            </div>
+                            <div style="font-family:var(--font-serif);color:#fff;font-size:1.05rem;font-weight:400;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.2rem;">Loyalty Points</div>
+                            <div style="font-size:.8rem;color:rgba(255,255,255,.5);">Earn points on every delivered order</div>
+                        </div>
+                        <div style="text-align:right;flex-shrink:0;">
+                            <div id="rewards-points" style="font-size:3rem;font-weight:800;color:#c9a84c;line-height:1;font-family:'Inter',sans-serif;letter-spacing:-.02em;">0</div>
+                            <div style="font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.08em;margin-top:.15rem;">Points</div>
+                            <div id="rw-redeem-value" style="font-size:.9rem;font-weight:600;color:rgba(201,168,76,.85);margin-top:.3rem;">৳0 value</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Row -->
+                <div style="background:#fff;display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--border-color);border-top:none;">
+                    <div style="padding:.85rem 1rem;text-align:center;border-right:1px solid var(--border-color);">
+                        <div id="rw-lifetime-earned" style="font-size:1.3rem;font-weight:700;color:#0b231a;">0</div>
+                        <div style="font-size:.67rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.15rem;">Lifetime Earned</div>
+                    </div>
+                    <div style="padding:.85rem 1rem;text-align:center;border-right:1px solid var(--border-color);">
+                        <div id="rw-lifetime-redeemed" style="font-size:1.3rem;font-weight:700;color:#0b231a;">0</div>
+                        <div style="font-size:.67rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.15rem;">Lifetime Redeemed</div>
+                    </div>
+                    <div style="padding:.85rem 1rem;text-align:center;">
+                        <div id="rw-available-val" style="font-size:1.3rem;font-weight:700;color:#163E34;">৳0</div>
+                        <div style="font-size:.67rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.15rem;">Redeemable</div>
+                    </div>
+                </div>
+
+                <!-- Tier Progress -->
+                <div id="rw-tier-progress-wrap" style="background:#faf8f4;border:1px solid var(--border-color);border-top:none;border-radius:0 0 16px 16px;padding:1rem 1.25rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.55rem;">
+                        <div style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;">Tier Progress</div>
+                        <div id="rw-tier-next-label" style="font-size:.78rem;color:var(--text-muted);"></div>
+                    </div>
+                    <div style="background:var(--border-color);border-radius:20px;height:7px;overflow:hidden;margin-bottom:.5rem;">
+                        <div id="rw-tier-bar" style="height:100%;background:linear-gradient(90deg,#163E34,#c9a84c);border-radius:20px;transition:width .5s ease;width:0%;"></div>
+                    </div>
+                    <div id="rw-tier-next-msg" style="font-size:.78rem;color:var(--text-muted);"></div>
+                </div>
+
+                <!-- Info Rows -->
+                <div id="rewards-lp-info" style="margin-top:.85rem;"></div>
+            </div>
+
+            <!-- Dynamic Loyalty Program Guide (rendered by JS from Firestore settings) -->
+            <div id="loyalty-guide-section" style="display:none;margin-bottom:1.75rem;"></div>
+
+            <!-- Referral Card -->
+            <div id="referral-card" style="display:none;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.07);padding:1.5rem;">
+                <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+                    <div style="width:44px;height:44px;background:linear-gradient(135deg,#1a56b8,#2563eb);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <ion-icon name="people-outline" style="font-size:1.4rem;color:#fff;"></ion-icon>
+                    </div>
+                    <div>
+                        <div style="font-weight:700;font-size:1rem;">Refer a Friend</div>
+                        <div style="font-size:.8rem;color:var(--text-muted);">Share your code, both of you save!</div>
+                    </div>
+                </div>
+                <div id="rewards-ref-info" style="font-size:.82rem;color:var(--text-muted);margin-bottom:.85rem;line-height:1.6;"></div>
+                <div style="display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:160px;background:var(--bg-color);border:2px dashed var(--primary-color);border-radius:10px;padding:.65rem 1rem;text-align:center;">
+                        <div style="font-size:.72rem;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.2rem;">Your Referral Code</div>
+                        <div id="my-referral-code" style="font-size:1.2rem;font-weight:800;color:var(--primary-color);letter-spacing:.1em;">—</div>
+                    </div>
+                    <button id="copy-ref-btn" class="btn btn-outline" style="display:flex;align-items:center;gap:.35rem;font-size:.85rem;white-space:nowrap;">
+                        <ion-icon name="copy-outline"></ion-icon> Copy Code
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Cart Modal -->
-    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;">
         <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
                 <h3>Your Cart</h3>
@@ -76,62 +400,659 @@
     </div>
 
     <script type="module" src="js/store.js"></script>
-    <script src="js/cart.js"></script>
-    <script src="js/ui.js"></script>
+    <script type="module" src="js/promotions.js"></script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
     <script type="module">
         import { db, auth } from "./js/firebase-config.js";
-        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        const content = document.getElementById("account-content");
         const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
         const fmtDate = (ts) => { try { return ts?.toDate ? ts.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : ""; } catch { return ""; } };
 
+        const loginCta   = document.getElementById("login-cta");
+        const tabsEl     = document.getElementById("acc-tabs");
+        const panels     = { orders: document.getElementById("panel-orders"), profile: document.getElementById("panel-profile"), address: document.getElementById("panel-address"), wishlist: document.getElementById("panel-wishlist"), rewards: document.getElementById("panel-rewards") };
+
+        /* ---- Tab switching ---- */
+        function switchTab(key) {
+            document.querySelectorAll(".acc-tab").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".acc-panel").forEach(p => p.classList.remove("active"));
+            const btn = document.querySelector(`.acc-tab[data-tab="${key}"]`);
+            if (btn) btn.classList.add("active");
+            if (panels[key]) panels[key].classList.add("active");
+            if (key === "wishlist") renderWishlist();
+        }
+        document.querySelectorAll(".acc-tab").forEach(btn => {
+            btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+        });
+        // Support URL hash: account.html#wishlist, account.html#address etc.
+        const hashTab = location.hash.replace("#", "");
+        if (["orders","profile","address","wishlist","rewards"].includes(hashTab)) switchTab(hashTab);
+
+        /* ---- Auth state ---- */
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
-                content.innerHTML = `<div class="login-cta">
-                    <ion-icon name="person-circle-outline" style="font-size:3rem;color:var(--primary-color);"></ion-icon>
-                    <h3 style="margin:1rem 0;">Please log in to view your account</h3>
-                    <button class="btn" id="acc-login">Log in</button></div>`;
-                document.getElementById("acc-login").onclick = () => window.zahrounAuth && window.zahrounAuth.openModal();
+                loginCta.style.display = "";
+                tabsEl.style.display = "none";
+                Object.values(panels).forEach(p => p.classList.remove("active"));
+                document.getElementById("acc-login-btn").onclick = () => window.zahrounAuth?.openModal();
                 return;
             }
-            document.getElementById("account-greeting").textContent = `Hello, ${user.displayName || user.email}`;
+            loginCta.style.display = "none";
+            tabsEl.style.display = "";
+            panels.orders.classList.add("active");
+
+            // Avatar & greeting
+            const initials = (user.displayName || user.email || "?")[0].toUpperCase();
+            document.getElementById("acc-avatar").textContent = initials;
+            document.getElementById("account-greeting").textContent = user.displayName || user.email;
+            document.getElementById("account-email").textContent = user.email;
+
+            // Load orders
+            await loadOrders(user);
+
+            // Rewards tab (loyalty + referral) — wrapped so errors don't block the page
+            try { initRewardsTab(user); } catch(e) { console.warn("Rewards tab error:", e); }
+
+            // Profile tab
+            document.getElementById("prof-name").value = user.displayName || "";
+            document.getElementById("prof-email").value = user.email || "";
+            document.getElementById("prof-save-btn").onclick = async () => {
+                const name = document.getElementById("prof-name").value.trim();
+                const status = document.getElementById("prof-status");
+                if (!name) { status.textContent = "Name cannot be empty."; status.className = "acc-save-status err"; return; }
+                try {
+                    await updateProfile(user, { displayName: name });
+                    document.getElementById("account-greeting").textContent = name;
+                    document.getElementById("acc-avatar").textContent = name[0].toUpperCase();
+                    status.textContent = "Profile updated!"; status.className = "acc-save-status";
+                } catch (e) { status.textContent = "Failed: " + (e.code || e.message); status.className = "acc-save-status err"; }
+            };
+
+            // Saved Address tab — load existing
+            try {
+                const uSnap = await getDoc(doc(db, "users", user.uid));
+                if (uSnap.exists()) {
+                    const addr = uSnap.data().savedAddress || {};
+                    document.getElementById("addr-name").value    = addr.name    || "";
+                    document.getElementById("addr-phone").value   = addr.phone   || "";
+                    document.getElementById("addr-area").value    = addr.area    || "";
+                    document.getElementById("addr-address").value = addr.address || "";
+                }
+            } catch (_) {}
+
+            document.getElementById("addr-save-btn").onclick = async () => {
+                const status = document.getElementById("addr-status");
+                const data = {
+                    name:    document.getElementById("addr-name").value.trim(),
+                    phone:   document.getElementById("addr-phone").value.trim(),
+                    area:    document.getElementById("addr-area").value,
+                    address: document.getElementById("addr-address").value.trim()
+                };
+                try {
+                    await setDoc(doc(db, "users", user.uid), { savedAddress: data, updatedAt: serverTimestamp() }, { merge: true });
+                    status.textContent = "Address saved!"; status.className = "acc-save-status";
+                } catch (e) { status.textContent = "Failed: " + (e.code || e.message); status.className = "acc-save-status err"; }
+            };
+        });
+
+        /* ---- Load orders ---- */
+        async function loadOrders(user) {
+            const panel = panels.orders;
             try {
                 const snap = await getDocs(query(collection(db, "orders"), where("uid", "==", user.uid)));
                 const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }))
                     .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
                 if (!orders.length) {
-                    content.innerHTML = `<div class="login-cta">
-                        <ion-icon name="bag-outline" style="font-size:3rem;color:var(--text-muted);"></ion-icon>
-                        <h3 style="margin:1rem 0;">No orders yet</h3>
+                    panel.innerHTML = `<div class="login-cta">
+                        <ion-icon name="bag-outline" style="font-size:3rem;color:var(--text-muted);display:block;margin:0 auto 1rem;"></ion-icon>
+                        <h3 style="margin-bottom:1rem;">No orders yet</h3>
                         <a href="shop.html" class="btn">Start Shopping</a></div>`;
                     return;
                 }
-                content.innerHTML = `<h2 style="margin-bottom:1.5rem;">Order History</h2>` + orders.map(o => `
+                panel.innerHTML = `<h2 style="margin-bottom:1.5rem;font-size:1.1rem;">Order History <span style="font-size:.85rem;font-weight:400;color:var(--text-muted);">(${orders.length} order${orders.length > 1 ? "s" : ""})</span></h2>` + orders.map(o => {
+                    const trackUrl = o.orderNum
+                        ? `track.html?order=${o.orderNum}&phone=${encodeURIComponent(o.customer?.mobile || "")}`
+                        : "track.html";
+                    return `
                     <div class="order-card">
                         <div class="top">
-                            <div><span class="oid">${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</span> <span class="muted-note" style="color:var(--text-muted);">· ${fmtDate(o.createdAt)}</span></div>
+                            <div><span class="oid">${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</span> <span style="color:var(--text-muted);font-size:.82rem;">· ${fmtDate(o.createdAt)}</span></div>
                             <span class="o-status ${esc(o.status)}">${esc(o.status || "pending")}</span>
                         </div>
-                        ${(o.items || []).map(i => `
+                        ${(o.items || []).map(i => i.isFreeGift ? `
+                            <div class="o-item" style="background:#f4f9f6;border-radius:8px;border:1px solid #c3dfd2;padding:.5rem .65rem;">
+                                <img src="${esc(i.image)}" alt="" loading="lazy" style="border:1px solid #c3dfd2;">
+                                <div style="flex:1;">
+                                    <strong style="font-size:.95rem;">${esc(i.name)}</strong><br>
+                                    <span style="color:var(--text-muted);font-size:.82rem;">${esc(i.size)} · Qty 1</span><br>
+                                    <span style="display:inline-block;margin-top:.25rem;font-size:.62rem;font-weight:800;background:#0b231a;color:#c9a84c;border-radius:3px;padding:.15rem .45rem;letter-spacing:.1em;text-transform:uppercase;">Free Item</span>
+                                </div>
+                                <div style="text-align:right;">
+                                    ${i.originalPrice > 0 ? `<span style="color:var(--text-muted);font-size:.8rem;text-decoration:line-through;">৳${i.originalPrice}</span><br>` : ""}
+                                    <strong style="color:#163E34;">FREE</strong>
+                                </div>
+                            </div>` : `
                             <div class="o-item">
-                                <img src="${esc(i.image)}" alt="">
+                                <img src="${esc(i.image)}" alt="" loading="lazy">
                                 <div style="flex:1;"><strong style="font-size:.95rem;">${esc(i.name)}</strong><br>
-                                <span class="muted-note" style="color:var(--text-muted);font-size:.82rem;">${esc(i.size)} · Qty ${i.quantity}</span></div>
+                                <span style="color:var(--text-muted);font-size:.82rem;">${esc(i.size)} · Qty ${i.quantity}</span></div>
                                 <div>৳${i.price * i.quantity}</div>
                             </div>`).join("")}
-                        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border-color);padding-top:.8rem;margin-top:.6rem;">
-                            <span class="muted-note" style="color:var(--text-muted);">${esc(o.payment?.method || "")} · ${esc(o.customer?.area || "")}</span>
-                            <strong>Total: ৳${o.total}</strong>
+                        ${o.giftMessage ? `<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:.5rem .75rem;margin-top:.4rem;font-size:.82rem;color:#7a5800;display:flex;gap:.45rem;align-items:flex-start;"><ion-icon name="gift-outline" style="flex-shrink:0;font-size:.9rem;margin-top:.1rem;"></ion-icon><span><em>"${esc(o.giftMessage)}"</em></span></div>` : ""}
+                        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border-color);padding-top:.8rem;margin-top:.6rem;flex-wrap:wrap;gap:.5rem;">
+                            <span style="color:var(--text-muted);font-size:.82rem;">${esc(o.payment?.method || "")} · ${esc(o.customer?.area || "")}</span>
+                            <div style="display:flex;align-items:center;gap:.75rem;">
+                                <strong>Total: ৳${o.total}</strong>
+                                <button class="btn-reorder" data-oid="${o.id}" style="display:inline-flex;align-items:center;gap:.3rem;font-size:.8rem;font-weight:600;border:1px solid var(--border-color);border-radius:6px;padding:.25rem .7rem;background:none;cursor:pointer;color:var(--text-main);"><ion-icon name="refresh-outline" style="font-size:.9rem;"></ion-icon>Reorder</button>
+                                <a href="${trackUrl}" style="display:inline-flex;align-items:center;gap:.3rem;font-size:.8rem;color:var(--primary-color);font-weight:600;border:1px solid var(--primary-color);border-radius:6px;padding:.25rem .7rem;"><ion-icon name="locate-outline" style="font-size:.9rem;"></ion-icon>Track</a>
+                            </div>
                         </div>
-                    </div>`).join("");
+                    </div>`;
+                }).join("");
+                // Wire up reorder buttons
+                const ordersMap = Object.fromEntries(orders.map(o => [o.id, o]));
+                panel.querySelectorAll(".btn-reorder").forEach(btn => {
+                    btn.addEventListener("click", e => {
+                        e.stopPropagation();
+                        const o = ordersMap[btn.dataset.oid];
+                        if (!o?.items?.length) return;
+                        o.items.forEach(i => { if (i.id) window.addToCart?.(Number(i.id), i.size || "50ML", i.price); });
+                        window.openCart?.();
+                    });
+                });
             } catch (e) {
-                content.innerHTML = `<p style="color:#9b2226;text-align:center;padding:2rem;">Could not load orders: ${esc(e.code || e.message)}</p>`;
+                panel.innerHTML = `<p style="color:#9b2226;text-align:center;padding:2rem;">Could not load orders: ${esc(e.code || e.message)}</p>`;
             }
+        }
+
+        /* ---- Wishlist tab ---- */
+        function _cardImg(url) {
+            if (!url || !url.includes("/upload/")) return url || "";
+            return url.replace("/upload/", "/upload/w_400,h_533,c_fill,f_auto,q_auto/");
+        }
+
+        async function renderWishlist() {
+            const container = document.getElementById("wish-content");
+            const ids = window.Wishlist ? window.Wishlist.get() : [];
+            if (!ids.length) {
+                container.innerHTML = `<div class="wish-empty">
+                    <ion-icon name="heart-outline"></ion-icon>
+                    <p style="font-weight:600;margin-bottom:.3rem;">Your wishlist is empty</p>
+                    <p style="font-size:.85rem;margin-bottom:1.5rem;">Save products you love and find them here.</p>
+                    <a href="shop.html" class="btn btn-outline">Browse Products</a>
+                </div>`;
+                return;
+            }
+
+            // Get products from window.products or Firestore
+            let prods = [];
+            if (window.products?.length) {
+                prods = ids.map(id => window.products.find(p => p.id === Number(id))).filter(Boolean);
+            }
+            if (!prods.length) {
+                container.innerHTML = `<p style="text-align:center;color:var(--text-muted);padding:2rem;">Loading…</p>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <h2 style="margin-bottom:1.5rem;font-size:1.1rem;">My Wishlist <span style="font-size:.85rem;font-weight:400;color:var(--text-muted);">(${prods.length} item${prods.length !== 1 ? "s" : ""})</span></h2>
+                <div class="wish-grid">
+                    ${prods.map(p => {
+                        const price = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : p.price;
+                        return `<div class="product-card">
+                            <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;position:relative;">
+                                <img src="${esc(_cardImg(p.image || ""))}" alt="${esc(p.name)}" class="product-img" loading="lazy" style="background:#fff;">
+                                <button class="wish-btn active" data-pid="${p.id}" onclick="event.stopPropagation();window.Wishlist&&window.Wishlist.toggle(${p.id});setTimeout(renderWishlistTab,300)" title="Remove from wishlist" style="position:absolute;top:.5rem;right:.5rem;background:rgba(255,255,255,.85);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.15rem;color:#c0392b;box-shadow:0 1px 4px rgba(0,0,0,.12);z-index:2;"><ion-icon name="heart"></ion-icon></button>
+                                <button class="add-to-cart-quick" onclick="event.stopPropagation();addToCart(${p.id},'50ML',${price});window.showToast&&window.showToast('Added to cart')">Add to Cart</button>
+                            </div>
+                            <div class="product-info">
+                                <span class="product-category">${esc(p.category || "")}</span>
+                                <h3 class="product-title"><a href="product.html?id=${p.id}">${esc(p.name)}</a></h3>
+                                <div class="product-price">${price} BDT</div>
+                            </div>
+                        </div>`;
+                    }).join("")}
+                </div>`;
+        }
+
+        // Expose so wishlist heart button in the list can call it
+        window.renderWishlistTab = renderWishlist;
+
+        // Re-render wishlist when wishlist changes and that tab is active
+        document.addEventListener("wishlist-changed", () => {
+            const activeTab = document.querySelector(".acc-tab.active");
+            if (activeTab?.dataset.tab === "wishlist") renderWishlist();
         });
+        document.addEventListener("products-ready", () => {
+            const activeTab = document.querySelector(".acc-tab.active");
+            if (activeTab?.dataset.tab === "wishlist") renderWishlist();
+        });
+
+        async function initRewardsTab(user) {
+            try {
+            const P = window.ZahrounPromos;
+            if (!P) { document.getElementById('loyalty-skeleton')?.remove(); return; }
+            const cfg = await P.load().catch(() => null);
+            if (!cfg) return;
+            const lpEnabled  = cfg.loyaltyPoints?.enabled;
+            const refEnabled = cfg.referral?.enabled;
+
+            // If loyalty is fully off, hide the loyalty card and show "Coming Soon"
+            if (!lpEnabled) {
+                document.getElementById('loyalty-skeleton')?.remove();
+                const loyaltyCard = document.getElementById("loyalty-card");
+                if (loyaltyCard) loyaltyCard.style.display = "none";
+                const guideSection = document.getElementById("loyalty-guide-section");
+                if (guideSection) {
+                    guideSection.style.display = "";
+                    guideSection.innerHTML = '<div style="background:#faf8f4;border:1px dashed var(--border-color);border-radius:14px;padding:2rem 1.5rem;text-align:center;">' +
+                        '<div style="font-size:2rem;margin-bottom:.75rem;">🏆</div>' +
+                        '<div style="font-family:var(--font-serif);font-size:1rem;color:var(--text-main);font-weight:400;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.45rem;">Loyalty Program</div>' +
+                        '<div style="font-size:.85rem;color:var(--text-muted);">Our rewards program is coming soon. Stay tuned for exciting points, tiers, and exclusive member benefits!</div>' +
+                        '</div>';
+                }
+                if (!refEnabled) return;
+            }
+
+            if (!lpEnabled && !refEnabled) return;
+
+            const tab = document.getElementById("rewards-tab");
+            if (tab) tab.style.display = "";
+
+            function lpInfoRows(rows) {
+                return '<div style="background:#faf6ee;border-radius:10px;padding:.8rem 1rem;display:flex;flex-direction:column;gap:.55rem;">' +
+                    rows.map(r =>
+                        '<div style="display:flex;align-items:flex-start;gap:.7rem;">' +
+                        '<ion-icon name="' + r.icon + '" style="font-size:.95rem;color:#c9a84c;flex-shrink:0;margin-top:.15rem;"></ion-icon>' +
+                        '<span style="font-size:.82rem;color:var(--text-muted);line-height:1.5;">' + r.text + '</span>' +
+                        '</div>'
+                    ).join('') + '</div>';
+            }
+
+            if (lpEnabled) {
+                const lp = cfg.loyaltyPoints;
+                document.getElementById('loyalty-skeleton')?.remove();
+                const card = document.getElementById("loyalty-card");
+                if (card) card.style.display = "";
+
+                const lpRef        = doc(db, "loyaltyPoints", user.uid);
+                const isApproveMode = lp.enrollMode === "approve";
+                const rv           = lp.redeemValue || 1;
+
+                const ptsEl    = document.getElementById("rewards-points");
+                const earnedEl = document.getElementById("rw-lifetime-earned");
+                const redmEl   = document.getElementById("rw-lifetime-redeemed");
+                const availEl  = document.getElementById("rw-available-val");
+                const redValEl = document.getElementById("rw-redeem-value");
+                const info     = document.getElementById("rewards-lp-info");
+
+                function renderTierProgress(totalSpend) {
+                    const tiers = lp.tiers;
+                    if (!tiers?.enabled) {
+                        const wrap = document.getElementById("rw-tier-progress-wrap");
+                        if (wrap) wrap.style.display = "none";
+                        return;
+                    }
+                    const goldMin = tiers.gold?.minSpend || 8000;
+                    const platMin = tiers.platinum?.minSpend || 15000;
+                    const spend = totalSpend || 0;
+
+                    let tierIcon = "🥈", tierLabel = "Silver Member";
+                    let nextLabel = "", pct = 0, nextMsg = "";
+
+                    if (spend >= platMin) {
+                        tierIcon = "💎"; tierLabel = "Platinum Member";
+                        pct = 100;
+                        nextMsg = "You have reached the highest tier!";
+                    } else if (spend >= goldMin) {
+                        tierIcon = "🥇"; tierLabel = "Gold Member";
+                        const toPlat = platMin - spend;
+                        pct = Math.round(((spend - goldMin) / (platMin - goldMin)) * 100);
+                        nextLabel = "Progress to Platinum";
+                        nextMsg = `Spend ৳${toPlat.toLocaleString()} more to reach Platinum`;
+                    } else {
+                        const toGold = goldMin - spend;
+                        pct = Math.round((spend / goldMin) * 100);
+                        nextLabel = "Progress to Gold";
+                        nextMsg = `Spend ৳${toGold.toLocaleString()} more to reach Gold`;
+                    }
+
+                    const iconEl  = document.getElementById("rw-tier-icon");
+                    const lbEl    = document.getElementById("rw-tier-label");
+                    const barEl   = document.getElementById("rw-tier-bar");
+                    const nlEl    = document.getElementById("rw-tier-next-label");
+                    const nmEl    = document.getElementById("rw-tier-next-msg");
+                    if (iconEl) iconEl.textContent = tierIcon;
+                    if (lbEl)   lbEl.textContent   = tierLabel;
+                    if (barEl)  barEl.style.width   = pct + "%";
+                    if (nlEl)   nlEl.textContent    = nextLabel;
+                    if (nmEl)   nmEl.textContent    = nextMsg;
+                }
+
+                // Calculate total spend from user's delivered orders (5-min session cache)
+                let totalSpend = 0;
+                let _spendCached = false;
+                const _spendKey = 'zhr_lp_spend_' + user.uid;
+                try {
+                    const _spendRaw = sessionStorage.getItem(_spendKey);
+                    if (_spendRaw) { const { v, ts } = JSON.parse(_spendRaw); if (Date.now() - ts < 5 * 60 * 1000) { totalSpend = v; _spendCached = true; } }
+                } catch {}
+                if (!_spendCached) try {
+                    const oSnap = await getDocs(query(collection(db, "orders"), where("uid", "==", user.uid), where("status", "==", "delivered")));
+                    oSnap.forEach(d => { totalSpend += (d.data().total || 0); });
+                    try { sessionStorage.setItem(_spendKey, JSON.stringify({ v: totalSpend, ts: Date.now() })); } catch {}
+                } catch {}
+
+                // ── Render loyalty status (called by onSnapshot for real-time updates) ──
+                let _lpJoinListenerAdded = false;
+                function renderLpStatus(lpData) {
+                    const status = lpData?.status || null;
+
+                    if (isApproveMode && !lpData) {
+                        // Not yet enrolled — show Request to Join
+                        if (ptsEl) ptsEl.textContent = "—";
+                        if (redValEl) redValEl.textContent = "";
+                        if (earnedEl) earnedEl.textContent = "0";
+                        if (redmEl) redmEl.textContent = "0";
+                        if (availEl) availEl.textContent = "৳0";
+                        renderTierProgress(totalSpend);
+                        if (info) info.innerHTML =
+                            '<div style="background:#faf6ee;border-radius:10px;padding:.9rem 1rem;font-size:.82rem;color:var(--text-muted);line-height:1.6;">' +
+                            'Join our <strong style="color:var(--text-main);">Loyalty Program</strong> to earn points on every delivered order!<br>' +
+                            'Earn <strong style="color:var(--text-main);">1 point</strong> per <strong style="color:var(--text-main);">৳' + lp.earnPer + '</strong> spent. ' +
+                            'Redeem at checkout — min <strong style="color:var(--text-main);">' + lp.minRedeem + ' pts</strong> (1 pt = ৳' + rv + ').' +
+                            '<br><button id="lp-join-btn" class="btn" style="margin-top:.75rem;padding:.45rem 1.2rem;font-size:.83rem;">Request to Join</button></div>';
+                        if (!_lpJoinListenerAdded) {
+                            _lpJoinListenerAdded = true;
+                            document.getElementById("lp-join-btn")?.addEventListener("click", async () => {
+                                const btn = document.getElementById("lp-join-btn");
+                                btn.disabled = true; btn.textContent = "Sending...";
+                                try {
+                                    await setDoc(lpRef, { uid: user.uid, points: 0, status: "pending", email: user.email || "", name: user.displayName || "", lastUpdated: new Date().toISOString() });
+                                    // onSnapshot will fire and switch to pending state automatically
+                                } catch { btn.disabled = false; btn.textContent = "Request to Join"; }
+                            });
+                        }
+                    } else if (isApproveMode && status === "pending") {
+                        // Waiting for admin approval
+                        if (ptsEl) ptsEl.textContent = "⏳";
+                        if (redValEl) redValEl.textContent = "Pending approval";
+                        renderTierProgress(totalSpend);
+                        if (info) info.innerHTML = lpInfoRows([
+                            { icon: "time-outline", text: "<strong style='color:var(--text-main);'>Your enrollment is pending admin approval.</strong> You'll be notified once approved." },
+                            { icon: "cash-outline", text: "Once approved, earn <strong style='color:var(--text-main);'>1 point</strong> per <strong style='color:var(--text-main);'>৳" + lp.earnPer + "</strong> spent on delivered orders." },
+                            { icon: "gift-outline", text: "Redeem points at checkout for discounts (1 pt = ৳" + rv + ")." }
+                        ]);
+                    } else if (isApproveMode && status === "rejected") {
+                        if (ptsEl) ptsEl.textContent = "—";
+                        if (redValEl) redValEl.textContent = "";
+                        if (info) info.innerHTML = lpInfoRows([
+                            { icon: "close-circle-outline", text: "Your enrollment request was not approved. Please contact us for assistance." }
+                        ]);
+                    } else {
+                        // Active member (auto mode OR approved in manual mode)
+                        const bal              = lpData?.points || 0;
+                        const lifetimeEarned   = lpData?.lifetimeEarned || 0;
+                        const lifetimeRedeemed = lpData?.lifetimeRedeemed || 0;
+
+                        if (ptsEl)    ptsEl.textContent    = bal.toLocaleString();
+                        if (redValEl) redValEl.textContent  = "৳" + (bal * rv).toFixed(0) + " value";
+                        if (earnedEl) earnedEl.textContent  = lifetimeEarned.toLocaleString();
+                        if (redmEl)   redmEl.textContent    = lifetimeRedeemed.toLocaleString();
+                        if (availEl)  availEl.textContent   = "৳" + (bal * rv).toFixed(0);
+
+                        renderTierProgress(totalSpend);
+
+                        const canRedeem = bal >= (lp.minRedeem || 50);
+                        if (info) info.innerHTML = lpInfoRows([
+                            { icon: "cash-outline", text: "Earn <strong style='color:var(--text-main);'>1 point</strong> for every <strong style='color:var(--text-main);'>৳" + lp.earnPer + "</strong> spent — credited after order is <strong style='color:var(--text-main);'>delivered</strong>." },
+                            { icon: "gift-outline", text: "Redeem at checkout → Order Summary → <strong style='color:var(--text-main);'>Loyalty Points</strong> section." },
+                            { icon: "star-outline", text: "Min <strong style='color:var(--text-main);'>" + lp.minRedeem + " pts</strong> to redeem · 1 pt = ৳" + rv + (lp.maxRedeemPct ? " · Max " + lp.maxRedeemPct + "% of order" : "") + "." }
+                        ]) + (canRedeem
+                            ? `<a href="index.html" style="display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.85rem;padding:.75rem 1.25rem;background:linear-gradient(135deg,#163E34,#0b231a);color:#c9a84c;border-radius:10px;font-weight:700;font-size:.9rem;text-decoration:none;letter-spacing:.03em;transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'"><ion-icon name="bag-handle-outline" style="font-size:1.1rem;"></ion-icon> Shop Now &amp; Use ${bal} Points</a>`
+                            : `<div style="margin-top:.75rem;padding:.65rem 1rem;background:#faf8f4;border-radius:10px;border:1px dashed var(--border-color);font-size:.8rem;color:var(--text-muted);text-align:center;">Earn <strong style="color:var(--text-main);">${(lp.minRedeem||50) - bal} more points</strong> to start redeeming at checkout.</div>`);
+                    }
+                }
+
+                // Use onSnapshot so admin approval reflects instantly without page refresh
+                onSnapshot(lpRef, snap => {
+                    renderLpStatus(snap.exists() ? snap.data() : null);
+                }, () => {
+                    // Fallback: try one-shot read if listener fails
+                    getDoc(lpRef).then(s => renderLpStatus(s.exists() ? s.data() : null)).catch(() => renderLpStatus(null));
+                });
+
+                // ── Dynamic Loyalty Program Guide ─────────────────────────────
+                renderLoyaltyGuide(lp, isApproveMode);
+            }
+
+            if (refEnabled) {
+                const code = await P.getReferralCode(user.uid);
+                const card = document.getElementById("referral-card");
+                if (card) card.style.display = "";
+                const codeEl = document.getElementById("my-referral-code");
+                if (codeEl && code) codeEl.textContent = code;
+                const info = document.getElementById("rewards-ref-info");
+                const rc = cfg.referral;
+                if (info) info.innerHTML = `Share your code with friends. When they place their first order:<br><strong>They get ৳${rc.refereeAmt} off</strong> · <strong>You earn loyalty points worth ৳${rc.referrerAmt}!</strong>`;
+                const copyBtn = document.getElementById("copy-ref-btn");
+                if (copyBtn) copyBtn.addEventListener("click", () => {
+                    navigator.clipboard.writeText(code || "").then(() => {
+                        copyBtn.textContent = "Copied!";
+                        setTimeout(() => { copyBtn.innerHTML = '<ion-icon name="copy-outline"></ion-icon> Copy Code'; }, 2000);
+                    });
+                });
+            }
+            } catch(e) { console.warn("initRewardsTab error:", e); }
+        }
+
+        /* ── Dynamic Loyalty Program Guide ─────────────────────────────────── */
+        function renderLoyaltyGuide(lp, isApproveMode) {
+            const container = document.getElementById("loyalty-guide-section");
+            if (!container) return;
+            container.style.display = "";
+
+            const rv        = lp.redeemValue   || 1;
+            const minRedeem = lp.minRedeem      || 50;
+            const earnPer   = lp.earnPer        || 100;
+
+            // Helper: build accordion item
+            function accordion(id, title, bodyHtml, openByDefault) {
+                return `<div style="border:1px solid var(--border-color);border-radius:10px;overflow:hidden;margin-bottom:.6rem;">
+                    <button type="button" onclick="(function(btn){var b=btn.nextElementSibling;var open=b.style.display!=='none';b.style.display=open?'none':'block';btn.querySelector('.lg-chevron').style.transform=open?'rotate(0deg)':'rotate(180deg)';})(this)"
+                        style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:.75rem;background:#163E34;color:#c9a84c;padding:.85rem 1.25rem;border:none;cursor:pointer;text-align:left;font-family:var(--font-sans);font-size:.88rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;">
+                        <span>${title}</span>
+                        <ion-icon name="chevron-down-outline" class="lg-chevron" style="font-size:1rem;flex-shrink:0;transition:transform .25s;transform:${openByDefault ? 'rotate(180deg)' : 'rotate(0deg)'}"></ion-icon>
+                    </button>
+                    <div style="background:#fff;border-top:1px solid var(--border-color);display:${openByDefault ? 'block' : 'none'};">
+                        <div style="padding:1rem 1.25rem;">${bodyHtml}</div>
+                    </div>
+                </div>`;
+            }
+
+            // Helper: check/cross row
+            function checkRow(text) {
+                return `<div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;">
+                    <span style="color:#c9a84c;font-weight:700;flex-shrink:0;font-size:1rem;line-height:1.45;">✓</span>
+                    <span style="font-size:.84rem;color:var(--text-muted);line-height:1.55;">${text}</span>
+                </div>`;
+            }
+            function crossRow(text) {
+                return `<div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;">
+                    <span style="color:#c0392b;font-weight:700;flex-shrink:0;font-size:1rem;line-height:1.45;">✗</span>
+                    <span style="font-size:.84rem;color:var(--text-muted);line-height:1.55;">${text}</span>
+                </div>`;
+            }
+            function numRow(n, text) {
+                return `<div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.55rem;">
+                    <span style="background:#163E34;color:#c9a84c;font-size:.72rem;font-weight:700;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.1rem;">${n}</span>
+                    <span style="font-size:.84rem;color:var(--text-muted);line-height:1.55;">${text}</span>
+                </div>`;
+            }
+
+            // Section title
+            const guideTitle = `<div style="margin-bottom:1.1rem;">
+                <div style="font-family:var(--font-serif);font-size:1rem;color:var(--text-main);text-transform:uppercase;letter-spacing:.1em;font-weight:400;margin-bottom:.4rem;">Zahroun Rewards Guide</div>
+                <div style="height:2px;width:40px;background:#c9a84c;border-radius:2px;"></div>
+            </div>`;
+
+            // Light-colored helpers for use inside dark invitation card
+            function checkRowLight(text) {
+                return `<div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;">
+                    <span style="color:#c9a84c;font-weight:700;flex-shrink:0;font-size:1rem;line-height:1.45;">✓</span>
+                    <span style="font-size:.84rem;color:rgba(255,255,255,.82);line-height:1.55;">${text}</span>
+                </div>`;
+            }
+            function numRowLight(n, text) {
+                return `<div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.55rem;">
+                    <span style="background:rgba(201,168,76,.25);color:#c9a84c;font-size:.72rem;font-weight:700;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.1rem;">${n}</span>
+                    <span style="font-size:.84rem;color:rgba(255,255,255,.82);line-height:1.55;">${text}</span>
+                </div>`;
+            }
+
+            if (isApproveMode) {
+                const cond = lp.enrollConditions || {};
+                const condMinPurchase = cond.minPurchase || 0;
+                const condText        = cond.text        || '';
+                const condBlock = (condMinPurchase > 0 || condText)
+                    ? `<div style="background:rgba(255,255,255,.07);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1rem;">
+                        <div style="font-size:.78rem;font-weight:700;color:#c9a84c;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;">Approval Conditions</div>
+                        ${condMinPurchase > 0 ? `<div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;"><span style="color:#c9a84c;font-size:1rem;line-height:1.45;">→</span><span style="font-size:.84rem;color:rgba(255,255,255,.82);line-height:1.55;">You must have a minimum total purchase of <strong style="color:#fff;">৳${condMinPurchase.toLocaleString()}</strong> to be eligible to apply.</span></div>` : ''}
+                        ${condText ? `<div style="font-size:.82rem;color:rgba(255,255,255,.75);line-height:1.65;margin-top:${condMinPurchase > 0 ? '.5rem' : '0'};">${condText}</div>` : ''}
+                    </div>` : '';
+
+                // ── Invite-only / approval mode ──
+                container.innerHTML = guideTitle + `
+                <div style="background:linear-gradient(135deg,#0b231a,#163E34);border-radius:14px;padding:1.5rem 1.75rem;color:#fff;margin-bottom:1rem;">
+                    <div style="font-family:var(--font-serif);font-size:.95rem;letter-spacing:.08em;text-transform:uppercase;color:#c9a84c;margin-bottom:.65rem;">Invitation-Based Loyalty Program</div>
+                    <div style="font-size:.84rem;color:rgba(255,255,255,.65);line-height:1.65;margin-bottom:1.1rem;">This loyalty program requires approval from Zahroun. Only verified customers are enrolled.</div>
+                    <div style="background:rgba(255,255,255,.06);border:1px solid rgba(201,168,76,.22);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1rem;">
+                        <div style="font-size:.78rem;font-weight:700;color:#c9a84c;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;">How to Join</div>
+                        ${numRowLight(1,'Create an account on Zahroun.')}
+                        ${numRowLight(2,'Request loyalty membership by clicking "Request to Join" above.')}
+                        ${numRowLight(3,'Wait for admin approval — you will be notified.')}
+                        ${numRowLight(4,'After approval, start earning and redeeming points!')}
+                    </div>
+                    ${condBlock}
+                    <div style="background:rgba(255,255,255,.06);border:1px solid rgba(201,168,76,.22);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1rem;">
+                        <div style="font-size:.78rem;font-weight:700;color:#c9a84c;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;">Benefits After Approval</div>
+                        ${checkRowLight('Earn <strong style="color:#e8d5a0;">1 point</strong> for every <strong style="color:#e8d5a0;">৳' + earnPer + '</strong> spent on delivered orders.')}
+                        ${checkRowLight('Redeem points at checkout for instant discounts (1 pt = ৳' + rv + ').')}
+                        ${lp.tiers?.enabled ? checkRowLight('Access Silver / Gold / Platinum tier rewards with higher multipliers.') : ''}
+                        ${checkRowLight('Exclusive member benefits and priority support.')}
+                    </div>
+                    <div style="font-size:.78rem;color:rgba(255,255,255,.38);font-style:italic;">Only verified customers are enrolled in the loyalty program.</div>
+                </div>`;
+            } else {
+                // ── Auto enrollment mode ──
+                let sections = '';
+
+                // Section 1: How It Works
+                const howItWorks =
+                    checkRow('Every logged-in customer automatically joins Zahroun Rewards.') +
+                    checkRow('Points are earned only after an order is <strong style="color:var(--text-main);">Delivered</strong>.') +
+                    checkRow('Cancelled or refunded orders do not earn points.') +
+                    checkRow('Points can be redeemed during checkout in the Order Summary.') +
+                    checkRow('Minimum redeem: <strong style="color:var(--text-main);">' + minRedeem + ' pts</strong>') +
+                    checkRow('Point value: <strong style="color:var(--text-main);">1 pt = ৳' + rv + '</strong>') +
+                    checkRow('Earn rate: Earn <strong style="color:var(--text-main);">1 point</strong> for every <strong style="color:var(--text-main);">৳' + earnPer + '</strong> spent.');
+                sections += accordion('how-it-works', '✦  How It Works', howItWorks, true);
+
+                // Section 2: Membership Tiers (only if tiers enabled)
+                if (lp.tiers?.enabled) {
+                    const t = lp.tiers;
+                    const silver   = t.silver   || { minSpend: 0,     mult: 1 };
+                    const gold     = t.gold     || { minSpend: 8000,  mult: 2 };
+                    const platinum = t.platinum || { minSpend: 15000, mult: 3 };
+                    const tierCards =
+                        `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.65rem;margin-bottom:.25rem;">
+                            <div style="border-radius:10px;overflow:hidden;border:2px solid #b0b0b0;background:linear-gradient(160deg,#f8f8f8,#e8e8e8);">
+                                <div style="background:linear-gradient(135deg,#9e9e9e,#bdbdbd);padding:.6rem .75rem;text-align:center;">
+                                    <span style="font-size:1.3rem;">🥈</span>
+                                    <div style="font-size:.72rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem;">Silver</div>
+                                </div>
+                                <div style="padding:.65rem .75rem;">
+                                    <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">Spend ৳${(silver.minSpend||0).toLocaleString()}+</div>
+                                    <div style="font-size:.9rem;font-weight:700;color:#0b231a;">×${silver.mult || 1} multiplier</div>
+                                </div>
+                            </div>
+                            <div style="border-radius:10px;overflow:hidden;border:2px solid #c9a84c;background:linear-gradient(160deg,#fffdf4,#fff3cc);">
+                                <div style="background:linear-gradient(135deg,#c9a84c,#e0b84c);padding:.6rem .75rem;text-align:center;">
+                                    <span style="font-size:1.3rem;">🥇</span>
+                                    <div style="font-size:.72rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem;">Gold</div>
+                                </div>
+                                <div style="padding:.65rem .75rem;">
+                                    <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">Spend ৳${(gold.minSpend||0).toLocaleString()}+</div>
+                                    <div style="font-size:.9rem;font-weight:700;color:#0b231a;">×${gold.mult || 2} multiplier</div>
+                                </div>
+                            </div>
+                            <div style="border-radius:10px;overflow:hidden;border:2px solid #7986cb;background:linear-gradient(160deg,#f3f4fd,#e8eaf6);">
+                                <div style="background:linear-gradient(135deg,#5c6bc0,#7986cb);padding:.6rem .75rem;text-align:center;">
+                                    <span style="font-size:1.3rem;">💎</span>
+                                    <div style="font-size:.72rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem;">Platinum</div>
+                                </div>
+                                <div style="padding:.65rem .75rem;">
+                                    <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">Spend ৳${(platinum.minSpend||0).toLocaleString()}+</div>
+                                    <div style="font-size:.9rem;font-weight:700;color:#0b231a;">×${platinum.mult || 3} multiplier</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="font-size:.75rem;color:var(--text-muted);margin-top:.35rem;">Tier is based on your total delivered order spend. Higher tiers earn more points per ৳${earnPer} spent.</div>`;
+                    sections += accordion('tiers', '🏅  Membership Tiers', tierCards, false);
+                }
+
+                // Section 3: How to Redeem
+                const howToRedeem =
+                    numRow(1, 'Add items to your cart and go to <strong style="color:var(--text-main);">Checkout</strong>.') +
+                    numRow(2, 'In the Order Summary panel, find the <strong style="color:var(--text-main);">Loyalty Points</strong> section.') +
+                    numRow(3, 'Enter how many points you want to use — or click <strong style="color:var(--text-main);">"Use All"</strong> to apply your maximum redeemable points.') +
+                    numRow(4, 'Click <strong style="color:var(--text-main);">"Apply"</strong> — the discount is applied instantly to your total.') +
+                    `<div style="margin-top:.65rem;padding:.6rem .9rem;background:#f0f7f4;border-radius:8px;border-left:3px solid #c9a84c;font-size:.8rem;color:var(--text-muted);">
+                        Minimum <strong style="color:var(--text-main);">${minRedeem} pts</strong> required to redeem. 1 pt = ৳${rv}.
+                        ${lp.maxRedeemPct ? ' Max <strong style="color:var(--text-main);">' + lp.maxRedeemPct + '%</strong> of order value can be covered by points.' : ''}
+                    </div>`;
+                sections += accordion('how-to-redeem', '🛒  How to Redeem', howToRedeem, false);
+
+                // Section 4: Promotion & Coupon Rules
+                const promoRows =
+                    (lp.allowDuringPromos
+                        ? checkRow('Loyalty points <strong style="color:var(--text-main);">can</strong> be used with active promotional discounts.')
+                        : crossRow('Loyalty points <strong style="color:var(--text-main);">cannot</strong> be used during promotional offers.')) +
+                    (lp.allowWithCoupon
+                        ? checkRow('Coupons and loyalty points <strong style="color:var(--text-main);">can</strong> be combined in one order.')
+                        : crossRow('You may use <strong style="color:var(--text-main);">either</strong> a coupon or loyalty points — not both simultaneously.')) +
+                    (lp.allowWithFreeGift
+                        ? checkRow('Loyalty points <strong style="color:var(--text-main);">can</strong> be used alongside Buy X Get Y free gift offers.')
+                        : crossRow('Loyalty points <strong style="color:var(--text-main);">cannot</strong> be used when a free gift offer is active in your cart.'));
+                sections += accordion('promo-rules', '⚡  Promotion & Coupon Rules', promoRows, false);
+
+                // Section 5: FAQ
+                const faqItems = [
+                    { q: 'When are points credited to my account?', a: 'Points are credited automatically after your order status changes to <strong style="color:var(--text-main);">Delivered</strong>. Pending or confirmed orders do not earn points yet.' },
+                    { q: 'Do loyalty points expire?', a: 'Points do not expire as long as your Zahroun account remains active.' },
+                    { q: 'Can I use points on discounted items?', a: lp.allowDuringPromos
+                        ? 'Yes — loyalty points can be used even on orders that already have promotional discounts applied.'
+                        : 'Loyalty points cannot be applied when there are active promotional discounts on your order. Remove the promotion or use your points on a full-price order.' },
+                    { q: 'What if I cancel an order after redeeming points?', a: 'If your order is cancelled or refunded, your redeemed points will be restored to your account.' },
+                    { q: 'Is there a limit to how many points I can redeem at once?', a: lp.maxRedeemPct
+                        ? `Yes — you can redeem up to <strong style="color:var(--text-main);">${lp.maxRedeemPct}%</strong> of your order value in points per order. For example, on a ৳1,000 order, you can use up to ${lp.maxRedeemPct} pts (৳${Math.floor(1000 * lp.maxRedeemPct / 100)}).`
+                        : 'You can redeem all your available points in a single order, subject to the minimum redeem threshold of ' + minRedeem + ' pts.' }
+                ];
+                const faqHtml = faqItems.map(f =>
+                    `<div style="margin-bottom:.85rem;padding-bottom:.85rem;border-bottom:1px solid var(--border-color);">
+                        <div style="font-size:.84rem;font-weight:700;color:var(--text-main);margin-bottom:.3rem;">Q: ${f.q}</div>
+                        <div style="font-size:.82rem;color:var(--text-muted);line-height:1.6;">A: ${f.a}</div>
+                    </div>`
+                ).join('') + '';
+                sections += accordion('faq', '❓  Frequently Asked Questions', faqHtml, false);
+
+                container.innerHTML = guideTitle + sections;
+            }
+        }
     </script>
 </body>
 </html>
-

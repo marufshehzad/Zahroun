@@ -6,7 +6,7 @@ import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   collection, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, addDoc,
-  serverTimestamp, Timestamp, query, limit, onSnapshot, where, orderBy
+  serverTimestamp, Timestamp, query, limit, onSnapshot, where, orderBy, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { uploadImage, optimizedUrl } from "./cloudinary.js";
 
@@ -26,31 +26,120 @@ async function sendConfirmationEmail(order) {
   if (typeof emailjs === "undefined") return;
   if (!order.userEmail) return;
   try {
-    const items = order.items || [];
-    const itemsList = items.map(i =>
-      `${i.name} (${i.size})  x${i.quantity}  —  BDT ${(i.price * i.quantity).toFixed(2)}`
-    ).join("\n");
-    const discount = order.discount || 0;
-    const discountLine = discount > 0
-      ? `Coupon${order.couponCode ? " (" + order.couponCode + ")" : ""}: -BDT ${(+discount).toFixed(2)}`
-      : "";
-    const orderDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
+    const items      = order.items || [];
+    const name       = order.customer?.name || "";
+    const ordShort   = order.orderNum ? String(order.orderNum) : order.id.slice(0, 8).toUpperCase();
+    const subtotal   = +(order.subtotal || 0);
+    const delivery   = +(order.delivery || 0);
+    const discount   = +(order.discount || 0);
+    const total      = +(order.total || 0);
+    const loyaltyPts = +(order.loyaltyRedeemedPoints || 0);
+    const loyaltyAmt = +(order.loyaltyDiscountAmount || 0);
+    const orderDate  = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
       + ", " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+
+    const fmtNum = v => (+v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    /* ── Items HTML — all items in one card table ──────────────────── */
+    const itemRows = items.map((item, idx) => {
+      const rawImg = item.image || item.imageUrl || item.img || item.images?.[0] || "";
+      let imgUrl = (rawImg && typeof rawImg === "string" && rawImg.startsWith("https://")) ? rawImg : "";
+      // Order snapshot may have legacy relative-path URL — fall back to current product in memory
+      if (!imgUrl && item.id) {
+        const cur = products.find(p => String(p.id) === String(item.id));
+        const fb  = cur?.image || cur?.images?.[0] || "";
+        if (fb && fb.startsWith("https://")) imgUrl = fb;
+      }
+      const imgContent = imgUrl
+        ? `<img src="${imgUrl}" alt="${item.name}" width="80" height="80" style="width:80px;height:80px;object-fit:cover;display:block;">`
+        : `<div style="width:80px;height:80px;background:rgba(10,58,49,0.55);border:1px solid rgba(212,166,74,0.18);"></div>`;
+      const imgCell = `<div style="width:80px;height:80px;border-radius:10px;overflow:hidden;">${imgContent}</div>`;
+      const size    = item.size || item.selectedSize || "";
+      const isLast  = idx === items.length - 1;
+      const sep     = isLast ? "" : `<tr><td colspan="3" style="padding:0 20px;"><div style="height:1px;background:rgba(212,166,74,0.10);"></div></td></tr>`;
+
+      if (item.isFreeGift) {
+        const origPrice = parseFloat(item.originalPrice) || 0;
+        return `<tr style="background:rgba(10,58,49,0.22);">
+  <td width="100" valign="middle" style="padding:20px 0 20px 20px;">${imgCell}</td>
+  <td valign="middle" style="padding:20px 14px;">
+    <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;line-height:1.4;margin-bottom:5px;">${item.name}</div>
+    ${size ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:600;color:#9E9E9E;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;">${size}</div>` : ""}
+    <div style="display:inline-block;padding:3px 9px;background:#D4A64A;color:#041A16;font-family:'Inter',Arial,sans-serif;font-size:9px;font-weight:800;letter-spacing:3px;text-transform:uppercase;border-radius:3px;">Complimentary Gift</div>
+  </td>
+  <td align="right" valign="middle" style="padding:20px 20px 20px 0;white-space:nowrap;">
+    ${origPrice > 0 ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:#9E9E9E;text-decoration:line-through;margin-bottom:4px;">BDT&nbsp;${fmtNum(origPrice)}</div>` : ""}
+    <div style="font-family:'Playfair Display',Georgia,serif;font-size:16px;font-weight:700;color:#D4A64A;letter-spacing:1px;">FREE</div>
+  </td>
+</tr>${sep}`;
+      }
+
+      const unitPrice = parseFloat(item.selectedPrice || item.price) || 0;
+      const rowTotal  = fmtNum(unitPrice * item.quantity);
+      return `<tr>
+  <td width="100" valign="middle" style="padding:20px 0 20px 20px;">${imgCell}</td>
+  <td valign="middle" style="padding:20px 14px;">
+    <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;line-height:1.4;margin-bottom:5px;">${item.name}</div>
+    ${size ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:600;color:#9E9E9E;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">${size}</div>` : ""}
+    <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:#8A8A8A;">Qty&nbsp;&times;&nbsp;${item.quantity}</div>
+  </td>
+  <td align="right" valign="middle" style="padding:20px 20px 20px 0;white-space:nowrap;">
+    <div style="font-family:'Playfair Display',Georgia,serif;font-size:16px;font-weight:600;color:#D4A64A;letter-spacing:0.5px;">BDT&nbsp;${rowTotal}</div>
+    ${item.quantity > 1 ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:#8A8A8A;margin-top:4px;">${fmtNum(unitPrice)}&nbsp;each</div>` : ""}
+  </td>
+</tr>${sep}`;
+    }).join("");
+    const itemsHtml = `<table width="100%" cellpadding="0" cellspacing="0" border="0"
+        style="border:1px solid rgba(212,166,74,0.14);border-radius:14px;overflow:hidden;background:rgba(4,16,12,0.2);">${itemRows}</table>`;
+
+    /* ── Discount HTML — standalone block above summary card ───────── */
+    let discountHtml = "";
+    const hasDiscount  = discount > 0;
+    const hasLoyalty   = loyaltyPts > 0 && loyaltyAmt > 0;
+    if (hasDiscount || hasLoyalty) {
+      let rows = "";
+      if (hasDiscount) {
+        rows += `<tr>
+  <td style="padding:13px 22px;border-bottom:1px solid rgba(255,255,255,0.05);">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#CFCFCF;">Coupon Discount${order.couponCode ? " (" + order.couponCode + ")" : ""}</td>
+      <td align="right" style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#EDEDED;font-weight:500;">-BDT ${fmtNum(discount)}</td>
+    </tr></table>
+  </td>
+</tr>`;
+      }
+      if (hasLoyalty) {
+        rows += `<tr>
+  <td style="padding:13px 22px;border-bottom:1px solid rgba(255,255,255,0.05);">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#49C16D;">Loyalty Points (${loyaltyPts} pts redeemed)</td>
+      <td align="right" style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#49C16D;font-weight:500;">-BDT ${fmtNum(loyaltyAmt)}</td>
+    </tr></table>
+  </td>
+</tr>`;
+      }
+      discountHtml = `<table width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="background:rgba(4,16,12,0.55);border:1px solid rgba(212,166,74,0.15);border-radius:12px;overflow:hidden;">
+    <tr><td style="padding:10px 22px 4px;">
+      <span style="font-family:'Inter',Arial,sans-serif;font-size:9px;font-weight:700;color:#9E9E9E;letter-spacing:2px;text-transform:uppercase;">DISCOUNTS APPLIED</span>
+    </td></tr>
+    ${rows}
+  </table>`;
+    }
+
     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
       to_email:       order.userEmail,
-      to_name:        order.customer?.name || "",
-      from_name:      "Zahroun Orders",
-      reply_to:       "orders@zahroun.com",
-      order_id:       order.orderNum ? String(order.orderNum) : order.id.slice(0, 8).toUpperCase(),
+      to_name:        name,
+      order_id:       ordShort,
       order_date:     orderDate,
-      items_list:     itemsList,
-      subtotal:       (+( order.subtotal || 0)).toFixed(2),
-      delivery:       (+(order.delivery  || 0)).toFixed(2),
-      discount_line:  discountLine,
-      total:          (+(order.total     || 0)).toFixed(2),
+      items_html:     itemsHtml,
+      subtotal:       fmtNum(subtotal),
+      delivery:       fmtNum(delivery),
+      discount_html:  discountHtml,
+      total:          fmtNum(total),
       payment_method: order.payment?.method || "",
       address:        order.customer?.address || "",
-      mobile:         order.customer?.mobile  || "",
+      mobile:         order.customer?.mobile || "",
     });
   } catch (err) {
     console.warn("Confirmation email failed:", err);
@@ -72,6 +161,9 @@ let pfSearch = "", pfCategory = "", pfSort = "default";
 const pfFlags = new Set();
 const sectionLoaded = new Set();
 const acknowledgedOrderIds = new Set(JSON.parse(localStorage.getItem("ackOrderIds") || "[]"));
+let _reviewListenerUnsub = null;
+let _knownReviewIds = null;
+let _newPendingReviews = 0;
 let galleryImages = [];
 let galleryDragSrc = null;
 let ofSearch = "";
@@ -170,11 +262,17 @@ const SUBTITLES = {
   customers: "Your registered customers",
   categories: "Organise your collections",
   coupons: "Discount codes & promotions",
+  promotions: "Manage all promotional features — Buy X Get Y, Spin to Win, Seasonal & more",
+  loyalty: "Configure the points program and manage member enrollments",
+  "flash-sale": "Limited-time offers with countdown timer",
+  "broadcast": "Site-wide announcement banner for all visitors",
+  "faq-manager": "Add, edit, and delete FAQ items shown on the FAQ page",
   reviews: "Moderate customer reviews",
   messages: "Contact form submissions",
   analytics: "Traffic & sales insights",
   pages: "Manage hero banners, category cards & gallery images",
-  settings: "Store configuration"
+  settings: "Store configuration",
+  admins: "Manage who has admin access to this panel"
 };
 const ORDER_STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 const STATUS_COLORS = { pending: "#f0b429", confirmed: "#1a56b8", shipped: "#7c3aed", delivered: "#1e7e34", cancelled: "#9b2226" };
@@ -185,17 +283,34 @@ onAuthStateChanged(auth, async (user) => {
     gateMsg.innerHTML = 'Please <a href="index.html" style="color:var(--primary-color);">log in</a> first, then open the Admin Panel from the account menu.';
     return;
   }
-  try {
-    const snap = await getDoc(doc(db, "users", user.uid));
-    if (!snap.exists() || snap.data().role !== "admin") {
-      gateMsg.innerHTML = 'Access denied — this account is not an admin.<br><a href="index.html" style="color:var(--primary-color);">Back to site</a>';
+  // Retry up to 3 times — handles stale/expired auth tokens and race conditions
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 600));
+      await user.getIdToken(attempt > 1); // force-refresh token on retry
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (!snap.exists()) {
+        gateMsg.innerHTML = 'Access denied — profile not found.<br><a href="index.html" style="color:var(--primary-color);">Back to site</a>';
+        return;
+      }
+      const data = snap.data();
+      if (data.role !== "admin") {
+        gateMsg.innerHTML = 'Access denied — role: <strong>' + (data.role || "none") + '</strong>.<br><a href="index.html" style="color:var(--primary-color);">Back to site</a>';
+        return;
+      }
+      gate.style.display = "none";
+      app.style.display = "block";
+      initAdmin(user, data);
       return;
+    } catch (e) {
+      if (e.code === "permission-denied" && attempt < 3) {
+        gateMsg.textContent = "Verifying access… (" + (attempt + 1) + "/3)";
+        continue;
+      }
+      console.warn("Admin verification failed (attempt " + attempt + "):", e.code || e.message);
+      gateMsg.innerHTML = "Could not verify access: " + (e.code || e.message) +
+        '<br><button onclick="location.reload()" style="margin-top:.75rem;background:var(--primary-color);color:#fff;border:none;border-radius:8px;padding:.45rem 1.1rem;cursor:pointer;font-size:.9rem;">Retry</button>';
     }
-    gate.style.display = "none";
-    app.style.display = "block";
-    initAdmin(user, snap.data());
-  } catch (e) {
-    gateMsg.textContent = "Could not verify access: " + (e.code || e.message);
   }
 });
 
@@ -225,26 +340,70 @@ async function initAdmin(user, profile) {
     SIZE_KEYS.forEach(k => { sizeImagesMap[k] = mainImg; });
     renderSizeImageGrid();
   });
+
+  // Size on/off toggles
+  SIZE_KEYS.forEach(sz => {
+    const cb  = document.getElementById(`sizeOn-${sz}`);
+    const num = sz.replace("ML","");
+    const inp = document.querySelector(`#product-form input[name="price${num}"]`);
+    if (cb && inp) cb.addEventListener("change", () => {
+      inp.disabled = !cb.checked;
+      inp.closest(".fg").style.opacity = cb.checked ? "1" : "0.42";
+    });
+  });
+
+  // Product type → show/hide combo fields
+  document.getElementById("product-type-sel")?.addEventListener("change", () => {
+    const isCombo = document.getElementById("product-type-sel").value === "combo";
+    document.getElementById("combo-items-row").style.display = isCombo ? "" : "none";
+    document.getElementById("base-price-row").style.display  = isCombo ? "" : "none";
+  });
+
   $("#product-form").addEventListener("submit", saveProduct);
 
   // Notification bell
   const notifBtn = document.getElementById("notif-btn");
   const notifDrop = document.getElementById("notif-dropdown");
+  function positionNotifDrop() {
+    const r = notifBtn.getBoundingClientRect();
+    const dropW = 320;
+    const margin = 10;
+    const vw = window.innerWidth;
+    // Prefer aligning right edge to button right; clamp so it doesn't go off left edge
+    let left = r.right - dropW;
+    if (left < margin) left = margin;
+    if (left + dropW > vw - margin) left = vw - dropW - margin;
+    notifDrop.style.position = "fixed";
+    notifDrop.style.top = (r.bottom + 6) + "px";
+    notifDrop.style.left = left + "px";
+    notifDrop.style.right = "auto";
+    notifDrop.style.width = dropW + "px";
+  }
   if (notifBtn) {
     notifBtn.addEventListener("click", e => {
       e.stopPropagation();
       const open = notifDrop.style.display !== "none";
-      notifDrop.style.display = open ? "none" : "";
-      if (!open) {
+      if (open) {
+        notifDrop.style.display = "none";
+      } else {
+        notifDrop.style.display = "";
+        positionNotifDrop();
         orders.filter(o => isNewOrder(o)).forEach(o => acknowledgedOrderIds.add(o.id));
         localStorage.setItem("ackOrderIds", JSON.stringify([...acknowledgedOrderIds]));
         updateNotifications();
       }
     });
+    window.addEventListener("resize", () => { if (notifDrop.style.display !== "none") positionNotifDrop(); });
     document.addEventListener("click", e => {
       if (!document.getElementById("notif-wrap")?.contains(e.target)) notifDrop.style.display = "none";
     });
   }
+  document.getElementById("notif-mark-all")?.addEventListener("click", e => {
+    e.stopPropagation();
+    orders.forEach(o => acknowledgedOrderIds.add(o.id));
+    localStorage.setItem("ackOrderIds", JSON.stringify([...acknowledgedOrderIds]));
+    updateNotifications();
+  });
 
   // Order detail modal close
   document.getElementById("od-close")?.addEventListener("click", () => document.getElementById("order-detail-modal")?.classList.remove("open"));
@@ -273,12 +432,15 @@ async function initAdmin(user, profile) {
 
   // Fetch all data once at startup (needed for dashboard stats)
   await Promise.all([fetchProducts(), fetchOrders(), fetchCustomers()]);
+  fetchFlashSale().then(updateFlashNavBadge).catch(() => {});
+  fetchBroadcast().then(updateBroadcastBadge).catch(() => {});
   renderDashboard();
   updateNotifications();
   // Show unread messages badge without blocking
   fetchMessages().catch(() => {});
   // Real-time new-order notifications
   startOrderListener();
+  startReviewListener();
 }
 
 /* ---- Real-time order listener + browser notifications ------------------ */
@@ -342,15 +504,50 @@ function startOrderListener() {
   }, err => console.warn("Order listener:", err));
 }
 
+/* ---- Real-time review listener ----------------------------------------- */
+function startReviewListener() {
+  if (_reviewListenerUnsub) _reviewListenerUnsub();
+  // No orderBy — avoids requiring a composite Firestore index (failed-precondition fix).
+  const q = query(collection(db, "reviews"), where("status", "==", "pending"), limit(50));
+  getDocs(q).then(s => {
+    _knownReviewIds = new Set(s.docs.map(d => d.id));
+  }).catch(() => { _knownReviewIds = new Set(); });
+
+  _reviewListenerUnsub = onSnapshot(q, snap => {
+    if (_knownReviewIds === null) return;
+    snap.docChanges().forEach(change => {
+      if (change.type === "added" && !_knownReviewIds.has(change.doc.id)) {
+        _knownReviewIds.add(change.doc.id);
+        const rv = change.doc.data();
+        _newPendingReviews++;
+        updateReviewBadge();
+        adminToast(`⭐ New review from ${rv.reviewerName || "a customer"} on "${rv.productName || "a product"}"`);
+      }
+    });
+  }, err => console.warn("Review listener:", err));
+}
+
+function updateReviewBadge() {
+  const badge = document.getElementById("nav-reviews-badge");
+  if (!badge) return;
+  if (_newPendingReviews > 0) { badge.textContent = _newPendingReviews; badge.style.display = ""; }
+  else { badge.style.display = "none"; }
+}
+
 /* ---- Section switcher — lazy render ------------------------------------ */
 function switchSection(name) {
   document.querySelectorAll("#admin-nav button").forEach(b => b.classList.toggle("active", b.dataset.section === name));
   document.querySelectorAll("[data-panel]").forEach(p => p.style.display = p.dataset.panel === name ? "" : "none");
-  $("#section-title").textContent = name.charAt(0).toUpperCase() + name.slice(1);
+  const titleMap = { "flash-sale": "Flash Sale", "broadcast": "Broadcast", "faq-manager": "FAQ Manager" };
+  $("#section-title").textContent = titleMap[name] || (name.charAt(0).toUpperCase() + name.slice(1));
   $("#section-subtitle").textContent = SUBTITLES[name] || "";
 
   if (name === "dashboard") {
     renderDashboard();
+  } else if (name === "loyalty") {
+    initLoyaltyMembersSection();
+  } else if (name === "admins") {
+    loadAdminsSection();
   } else if (name === "analytics") {
     if (!sectionLoaded.has("analytics")) {
       sectionLoaded.add("analytics");
@@ -365,7 +562,11 @@ function switchSection(name) {
     else if (name === "customers") renderCustomerTable();
     else if (name === "categories") fetchCategories().then(renderCategoryTable);
     else if (name === "coupons") fetchCoupons().then(renderCouponTable);
-    else if (name === "reviews") fetchReviews().then(renderReviewTable);
+    else if (name === "promotions") initPromotionsPanel();
+    else if (name === "flash-sale") fetchFlashSale().then(renderFlashSaleForm);
+    else if (name === "broadcast") fetchBroadcast().then(renderBroadcastForm);
+    else if (name === "faq-manager") initFaqManager();
+    else if (name === "reviews") { _newPendingReviews = 0; updateReviewBadge(); fetchReviews().then(renderReviewTable); }
     else if (name === "messages") fetchMessages().then(renderMessagesTable);
     else if (name === "settings") fetchSettings().then(renderSettingsForm);
     else if (name === "pages") fetchPageSettings().then(renderPagesSection);
@@ -489,11 +690,13 @@ function updateOrdersBadge() {
 
 /* ---- Dashboard --------------------------------------------------------- */
 function renderDashboard() {
-  const weekAgo = Date.now() / 1000 - 7 * 86400;
+  const now = Date.now();
+  const weekAgo = now / 1000 - 7 * 86400;
   const inWeek = (ts) => ts && ts.seconds >= weekAgo;
   const active = orders.filter(o => o.status !== "cancelled");
   const totalRevenue = active.reduce((s, o) => s + (o.total || 0), 0);
 
+  // Basic stats
   $("#stat-orders").textContent = orders.length;
   $("#stat-revenue").textContent = "৳" + totalRevenue.toLocaleString();
 
@@ -506,6 +709,45 @@ function renderDashboard() {
   $("#delta-revenue").textContent = totalRevenue ? `↑ ${Math.round(revenueWk / totalRevenue * 100)}% this week` : "—";
   $("#delta-revenue").className = "delta" + (totalRevenue ? "" : " flat");
   setDelta("#delta-customers", custWk, "this week", "—");
+
+  // Avg Order Value
+  const avgOrder = orders.length ? Math.round(totalRevenue / orders.length) : 0;
+  const el_avg = $("#stat-avg-order");
+  if (el_avg) el_avg.textContent = "৳" + avgOrder.toLocaleString();
+  const el_avgD = $("#delta-avg-order");
+  if (el_avgD) { el_avgD.textContent = orders.length ? `from ${orders.length} orders` : "—"; el_avgD.className = "delta flat"; }
+
+  // Pending Payments (bKash/Nagad not yet verified)
+  const pendingPay = orders.filter(o => o.paymentStatus === "pending" && o.payment?.method !== "COD");
+  const el_pp = $("#stat-pending-pay");
+  if (el_pp) el_pp.textContent = pendingPay.length;
+  const el_ppD = $("#delta-pending-pay");
+  if (el_ppD) {
+    el_ppD.textContent = pendingPay.length ? "Needs verification" : "All verified ✓";
+    el_ppD.className = "delta" + (pendingPay.length ? "" : " flat");
+  }
+
+  // This Month revenue
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+  const monthSec = monthStart.getTime() / 1000;
+  const lastMonthStart = new Date(monthStart); lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
+  const lastMonthSec = lastMonthStart.getTime() / 1000;
+  const monthRev = active.filter(o => o.createdAt && o.createdAt.seconds >= monthSec).reduce((s, o) => s + (o.total || 0), 0);
+  const lastMonthRev = active.filter(o => o.createdAt && o.createdAt.seconds >= lastMonthSec && o.createdAt.seconds < monthSec).reduce((s, o) => s + (o.total || 0), 0);
+  const el_mr = $("#stat-month-revenue");
+  if (el_mr) el_mr.textContent = "৳" + monthRev.toLocaleString();
+  const el_mrD = $("#delta-month-revenue");
+  if (el_mrD) {
+    if (lastMonthRev > 0) {
+      const pct = Math.round((monthRev - lastMonthRev) / lastMonthRev * 100);
+      el_mrD.textContent = (pct >= 0 ? "↑ " : "↓ ") + Math.abs(pct) + "% vs last month";
+      el_mrD.className = "delta" + (pct >= 0 ? "" : " flat");
+    } else {
+      el_mrD.textContent = monthRev ? "First month data" : "No orders yet";
+      el_mrD.className = "delta flat";
+    }
+  }
+
   updateOrdersBadge();
   renderRevenueChart();
   renderStatusChart();
@@ -513,6 +755,7 @@ function renderDashboard() {
   renderTopSelling();
   setDateRange();
   renderStockAlerts();
+  checkDailyStockAlert();
 }
 
 function setDelta(sel, n, unit, flatText) {
@@ -604,6 +847,8 @@ function getFilteredProducts() {
   if (pfFlags.has("bestseller")) result = result.filter(p => p.bestseller);
   if (pfFlags.has("lowstock")) result = result.filter(p => p.stock !== undefined && p.stock !== null && p.stock < 10);
   if (pfFlags.has("hidden")) result = result.filter(p => p.hidden);
+  if (pfFlags.has("new-arrival")) result = result.filter(p => p.newArrival);
+  if (pfFlags.has("gift-sets")) result = result.filter(p => p.productType === "combo");
   if (pfSort === "name") result.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   else if (pfSort === "price-asc") result.sort((a, b) => (a.price || 0) - (b.price || 0));
   else if (pfSort === "price-desc") result.sort((a, b) => (b.price || 0) - (a.price || 0));
@@ -618,13 +863,14 @@ function renderProductTable() {
   const countEl = document.getElementById("pf-count");
   if (countEl) countEl.textContent = filtered.length !== products.length ? `${filtered.length} of ${products.length} products` : `${products.length} product${products.length !== 1 ? "s" : ""}`;
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="muted-note" style="padding:2rem;text-align:center;">${products.length ? "No products match your filters." : "No products yet."}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="muted-note" style="padding:2rem;text-align:center;">${products.length ? "No products match your filters." : "No products yet."}</td></tr>`;
     return;
   }
   tbody.innerHTML = filtered.map((p, i) => {
     const price = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : (p.price || 0);
-    const flags = [p.featured ? `<span class="badge green">Featured</span>` : "", p.bestseller ? `<span class="badge">Bestseller</span>` : "", p.hidden ? `<span class="badge">Hidden</span>` : ""].join(" ");
-    return `<tr>
+    const flags = [p.featured ? `<span class="badge green">Featured</span>` : "", p.bestseller ? `<span class="badge">Bestseller</span>` : "", p.newArrival ? `<span class="badge" style="background:#1a1a1a;color:#D4AF37;">New</span>` : "", p.productType === "combo" ? `<span class="badge" style="background:#E07B2E;color:#fff;">Gift Set</span>` : "", p.hidden ? `<span class="badge">Hidden</span>` : ""].join(" ");
+    return `<tr data-pid="${p.id}">
+      <td style="padding-left:.75rem;"><input type="checkbox" class="bulk-chk" data-pid="${p.id}"></td>
       <td style="color:var(--text-muted);font-size:.8rem;text-align:center;width:2.5rem;">${i + 1}</td>
       <td><img src="${optimizedUrl(p.image, 80)}" alt=""></td>
       <td>${escapeHtml(p.name)}</td>
@@ -640,6 +886,71 @@ function renderProductTable() {
   }).join("");
   tbody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => openForm(products.find(p => p.id === Number(b.dataset.edit)))));
   tbody.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", () => deleteProduct(Number(b.dataset.del))));
+
+  // Bulk selection logic
+  const bulkBar = document.getElementById("bulk-bar");
+  const bulkCount = document.getElementById("bulk-count");
+  const selectAll = document.getElementById("bulk-select-all");
+  const updateBulkBar = () => {
+    const checked = tbody.querySelectorAll(".bulk-chk:checked");
+    if (bulkBar) bulkBar.style.display = checked.length ? "flex" : "none";
+    if (bulkCount) bulkCount.textContent = `${checked.length} selected`;
+    if (selectAll) selectAll.indeterminate = checked.length > 0 && checked.length < tbody.querySelectorAll(".bulk-chk").length;
+    if (selectAll) selectAll.checked = checked.length > 0 && checked.length === tbody.querySelectorAll(".bulk-chk").length;
+  };
+  tbody.querySelectorAll(".bulk-chk").forEach(chk => chk.addEventListener("change", updateBulkBar));
+  if (selectAll && !selectAll._bulkWired) {
+    selectAll._bulkWired = true;
+    selectAll.addEventListener("change", () => {
+      tbody.querySelectorAll(".bulk-chk").forEach(chk => chk.checked = selectAll.checked);
+      updateBulkBar();
+    });
+  }
+  const cancelBtn = document.getElementById("bulk-cancel");
+  if (cancelBtn && !cancelBtn._bulkWired) {
+    cancelBtn._bulkWired = true;
+    cancelBtn.addEventListener("click", () => {
+      tbody.querySelectorAll(".bulk-chk").forEach(c => c.checked = false);
+      if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+      if (bulkBar) bulkBar.style.display = "none";
+    });
+  }
+  const applyBtn = document.getElementById("bulk-apply");
+  if (applyBtn && !applyBtn._bulkWired) {
+    applyBtn._bulkWired = true;
+    applyBtn.addEventListener("click", async () => {
+      const action = document.getElementById("bulk-action").value;
+      if (!action) { adminToast("Choose an action first."); return; }
+      const ids = [...tbody.querySelectorAll(".bulk-chk:checked")].map(c => Number(c.dataset.pid));
+      if (!ids.length) return;
+      if (action === "delete" && !await zahrounConfirm(`Delete ${ids.length} product(s)? This cannot be undone.`, { title: "Delete Products", ok: "Delete", danger: true })) return;
+      applyBtn.disabled = true; applyBtn.textContent = "Working…";
+      try {
+        for (const id of ids) {
+          const ref = doc(db, "products", String(id));
+          if (action === "featured-on")  await updateDoc(ref, { featured: true });
+          else if (action === "featured-off") await updateDoc(ref, { featured: false });
+          else if (action === "hide")    await updateDoc(ref, { hidden: true });
+          else if (action === "show")    await updateDoc(ref, { hidden: false });
+          else if (action === "delete")  await deleteDoc(ref);
+        }
+        if (action === "delete") products = products.filter(p => !ids.includes(p.id));
+        else ids.forEach(id => {
+          const p = products.find(x => x.id === id);
+          if (p) {
+            if (action === "featured-on")  p.featured = true;
+            if (action === "featured-off") p.featured = false;
+            if (action === "hide")   p.hidden = true;
+            if (action === "show")   p.hidden = false;
+          }
+        });
+        adminToast(`${ids.length} product(s) updated.`);
+        renderProductTable();
+        renderStockAlerts();
+      } catch (e) { adminToast("Bulk action failed: " + (e.code || e.message), "error"); }
+      finally { applyBtn.disabled = false; applyBtn.textContent = "Apply"; }
+    });
+  }
 }
 
 function isNewOrder(o) {
@@ -649,16 +960,119 @@ function isNewOrder(o) {
   } catch { return false; }
 }
 
+async function awardLoyaltyPointsForOrder(order) {
+  try {
+    const settingsSnap = await getDoc(doc(db, "settings", "promotions"));
+    const cfg = settingsSnap.exists() ? settingsSnap.data() : {};
+    const lp = cfg.loyaltyPoints || {};
+    if (!lp.enabled || !order.uid || !order.total) return;
+
+    if (lp.enrollMode === "approve") {
+      const lpSnap = await getDoc(doc(db, "loyaltyPoints", order.uid));
+      if (!lpSnap.exists() || lpSnap.data().status !== "approved") return;
+    }
+
+    const deliveredOrders = orders.filter(o => o.uid === order.uid && o.status === "delivered");
+    const userTotalSpend = deliveredOrders.reduce((s, o) => s + (o.total || 0), 0);
+
+    let mult = 1;
+    if (lp.tiers?.enabled) {
+      const t = lp.tiers;
+      if (userTotalSpend >= (t.platinum?.minSpend || 15000)) mult = t.platinum?.mult || 3;
+      else if (userTotalSpend >= (t.gold?.minSpend || 8000)) mult = t.gold?.mult || 2;
+      else mult = t.silver?.mult || 1;
+    }
+
+    const basePoints = Math.floor(order.total / (lp.earnPer || 100));
+    const points = Math.floor(basePoints * mult);
+    if (points <= 0) return;
+
+    const tier = lp.tiers?.enabled ? (
+      userTotalSpend >= (lp.tiers.platinum?.minSpend || 15000) ? "platinum" :
+      userTotalSpend >= (lp.tiers.gold?.minSpend || 8000) ? "gold" : "silver"
+    ) : null;
+
+    const ref = doc(db, "loyaltyPoints", order.uid);
+    const snap = await getDoc(ref);
+    const now = new Date().toISOString();
+    if (snap.exists()) {
+      const prev = snap.data();
+      const update = {
+        points: (prev.points || 0) + points,
+        lifetimeEarned: (prev.lifetimeEarned || 0) + points,
+        lastEarnedDate: now,
+        lastUpdated: now
+      };
+      if (tier) update.tier = tier;
+      await updateDoc(ref, update);
+    } else {
+      const newDoc = {
+        uid: order.uid, points, lifetimeEarned: points,
+        lastEarnedDate: now, lastUpdated: now,
+        status: lp.enrollMode === "approve" ? "pending" : "approved"
+      };
+      if (tier) newDoc.tier = tier;
+      await setDoc(ref, newDoc);
+    }
+    await updateDoc(doc(db, "orders", order.id), { loyaltyPointsAwarded: true, loyaltyPointsEarned: points });
+    if (order) { order.loyaltyPointsAwarded = true; order.loyaltyPointsEarned = points; }
+    adminToast(`✓ ${points} loyalty point${points !== 1 ? "s" : ""} awarded to customer`);
+  } catch (e) { console.warn("Loyalty award failed:", e); }
+}
+
+async function reverseLoyaltyPointsForOrder(order) {
+  if (!order?.uid) return;
+  try {
+    const settingsSnap = await getDoc(doc(db, "settings", "promotions"));
+    const cfg = settingsSnap.exists() ? settingsSnap.data() : {};
+    const lp = cfg.loyaltyPoints || {};
+    if (!lp.enabled) return;
+
+    const ref = doc(db, "loyaltyPoints", order.uid);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const prev = snap.data();
+    const now = new Date().toISOString();
+    const updates = { lastUpdated: now };
+
+    // Reverse earned points if any were awarded
+    if (order.loyaltyPointsAwarded && order.loyaltyPointsEarned > 0) {
+      updates.points = Math.max(0, (prev.points || 0) - order.loyaltyPointsEarned);
+      updates.lifetimeEarned = Math.max(0, (prev.lifetimeEarned || 0) - order.loyaltyPointsEarned);
+    }
+
+    // Restore redeemed points if customer used them on this order
+    if (order.loyaltyRedeemedPoints > 0) {
+      updates.points = (updates.points ?? (prev.points || 0)) + order.loyaltyRedeemedPoints;
+    }
+
+    if (Object.keys(updates).length > 1) await updateDoc(ref, updates);
+    await updateDoc(doc(db, "orders", order.id), { loyaltyPointsAwarded: false });
+    if (order) order.loyaltyPointsAwarded = false;
+  } catch (e) { console.warn("Loyalty reversal failed:", e); }
+}
+
 async function changeOrderStatus(orderId, newStatus) {
   const order = orders.find(o => o.id === orderId);
   const prevStatus = order?.status || "pending";
   try {
     if (newStatus === "confirmed" && prevStatus !== "confirmed") await deductOrderStock(order);
     if (newStatus === "cancelled" && prevStatus !== "cancelled") await restoreOrderStock(order);
-    await updateDoc(doc(db, "orders", orderId), { status: newStatus });
-    if (order) order.status = newStatus;
+    const histEntry = { status: newStatus, at: new Date().toISOString() };
+    await updateDoc(doc(db, "orders", orderId), { status: newStatus, statusHistory: arrayUnion(histEntry) });
+    if (order) { order.status = newStatus; order.statusHistory = [...(order.statusHistory || []), histEntry]; }
     if (newStatus === "confirmed" && prevStatus !== "confirmed") sendConfirmationEmail(order);
+
+    // Loyalty: award on delivery, reverse on cancellation
+    if (newStatus === "delivered" && prevStatus !== "delivered" && order?.uid && !order?.loyaltyPointsAwarded) {
+      awardLoyaltyPointsForOrder(order).catch(e => console.warn("LP award:", e));
+    } else if (newStatus === "cancelled" && prevStatus !== "cancelled" && (order?.loyaltyPointsAwarded || order?.loyaltyRedeemedPoints > 0)) {
+      reverseLoyaltyPointsForOrder(order).catch(e => console.warn("LP reverse:", e));
+    }
+
     updateOrdersBadge(); renderOrderTable(); renderDashboard(); updateNotifications();
+    const _c = order?.customer || {};
+    if (_c.mobile && newStatus !== "pending") showWaNotifyToast(order, newStatus);
   } catch (e) { alert("Update failed: " + (e.code || e.message)); }
 }
 
@@ -707,9 +1121,10 @@ function renderOrderTable() {
   tbody.innerHTML = visible.map(o => {
     const c = o.customer || {};
     const st = o.status || "pending";
+    const isNew = isNewOrder(o) && st === "pending";
     const items = (o.items || []).map(i => `${escapeHtml(i.name)} (${i.size}) ×${i.quantity}`).join("<br>");
-    return `<tr data-oid="${o.id}" style="cursor:pointer;">
-      <td><strong>${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</strong></td>
+    return `<tr data-oid="${o.id}" ${isNew ? 'class="new-order-row"' : ''} style="cursor:pointer;">
+      <td><strong>${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</strong>${isNew ? '<span class="new-order-badge">New</span>' : ''}</td>
       <td>${escapeHtml(c.name || "")}<br><span class="muted-note">${escapeHtml(c.mobile || "")}</span></td>
       <td style="font-size:.82rem;">${items}</td>
       <td>৳${o.total || 0}</td>
@@ -720,12 +1135,27 @@ function renderOrderTable() {
           ? `<br><span style="color:#1e7e34;font-size:.74rem;font-weight:600;">✓ Verified</span><br><button onclick="window._unverifyPayment('${o.id}')" style="margin-top:.2rem;background:none;color:#9b2226;border:1px solid #d9a5a5;border-radius:4px;padding:.15rem .5rem;font-size:.7rem;cursor:pointer;">Undo</button>`
           : `<br><button onclick="window._verifyPayment('${o.id}')" style="margin-top:.3rem;background:#e65100;color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.75rem;font-weight:600;cursor:pointer;">Verify Payment</button>`) : ""}
       </td>
-      <td><select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);">${opts(st)}</select></td>
+      <td>${(()=>{const nm={pending:{s:'confirmed',l:'Confirm',bg:'#163E34'},confirmed:{s:'shipped',l:'Ship',bg:'#1a56b8'},shipped:{s:'delivered',l:'Delivered',bg:'#1e7e34'}};const nx=nm[st];return `<select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);width:100%;">${opts(st)}</select>${nx?`<button class="tbl-quickact" data-oid="${o.id}" data-next="${nx.s}" style="display:block;margin-top:.3rem;width:100%;background:${nx.bg};color:#fff;border:none;border-radius:5px;padding:.28rem .5rem;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font-sans);">${nx.l}</button>`:''}`})()}</td>
       <td class="muted-note">${fmtDate(o.createdAt)}</td>
     </tr>`;
   }).join("");
   tbody.querySelectorAll("select[data-order]").forEach(sel => {
-    sel.addEventListener("change", async () => { sel.disabled = true; await changeOrderStatus(sel.dataset.order, sel.value); });
+    sel.addEventListener("change", async () => {
+      const prev = sel.dataset.prev || sel.querySelector("option[selected]")?.value || sel.defaultValue;
+      if (!await zahrounConfirm(`Change order status to "${sel.value}"?`, { title: "Update Order Status", ok: "Yes, Update", danger: false })) { sel.value = prev; return; }
+      sel.dataset.prev = sel.value;
+      sel.disabled = true; await changeOrderStatus(sel.dataset.order, sel.value);
+    });
+    sel.dataset.prev = sel.value;
+  });
+  tbody.querySelectorAll(".tbl-quickact").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const nextSt = btn.dataset.next;
+      const labels = { confirmed: "Confirm", shipped: "Ship", delivered: "Mark as Delivered" };
+      if (!await zahrounConfirm(`Mark this order as "${nextSt}"?`, { title: labels[nextSt] || "Update Status", ok: labels[nextSt] || "Confirm", danger: false })) return;
+      btn.disabled = true;
+      await changeOrderStatus(btn.dataset.oid, nextSt);
+    });
   });
   tbody.querySelectorAll("tr[data-oid]").forEach(row => {
     row.addEventListener("click", e => {
@@ -740,16 +1170,17 @@ function renderOrderTable() {
   cardsWrap.innerHTML = visible.map(o => {
     const c = o.customer || {};
     const st = o.status || "pending";
+    const isNewCard = isNewOrder(o) && st === "pending";
     const ordId = o.orderNum ? "#" + String(o.orderNum).padStart(6,"0") : "#" + o.id.slice(0,6).toUpperCase();
     const initial = (c.name || "?")[0].toUpperCase();
     const d = fmtDate(o.createdAt);
     const itemsHtml = (o.items || []).map(i =>
       `<div class="orc-item"><span>${escapeHtml(i.name)} <span class="orc-size">(${i.size})</span></span><span class="orc-qty">×${i.quantity}</span></div>`
     ).join("");
-    return `<div class="orc" data-oid="${o.id}">
+    return `<div class="orc" data-oid="${o.id}" ${isNewCard ? 'style="border-left:3px solid #e63946;"' : ''}>
       <div class="orc-head">
         <div>
-          <div class="orc-ordnum">${ordId}</div>
+          <div class="orc-ordnum">${ordId}${isNewCard ? '<span class="new-order-badge" style="font-size:.58rem;padding:.14rem .45rem;">New</span>' : ''}</div>
           <div class="orc-date-pay">${d} · ${escapeHtml(o.payment?.method || "")}</div>
         </div>
         <span class="orc-badge st-${st}">${st}</span>
@@ -774,6 +1205,7 @@ function renderOrderTable() {
         <div class="orc-amount">৳${(o.total || 0).toLocaleString()}</div>
       </div>
       <div class="orc-items-block">${itemsHtml}</div>
+      ${(()=>{ const nm={pending:{s:'confirmed',l:'Confirm',ic:'checkmark-circle-outline',bg:'#163E34'},confirmed:{s:'shipped',l:'Ship',ic:'car-outline',bg:'#1a56b8'},shipped:{s:'delivered',l:'Delivered',ic:'bag-check-outline',bg:'#1e7e34'}};const nx=nm[st];return nx?`<div style="padding:.4rem .85rem .1rem;"><button class="orc-quickact" data-oid="${o.id}" data-next="${nx.s}" style="width:100%;background:${nx.bg};color:#fff;border:none;border-radius:8px;padding:.5rem;font-size:.84rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;font-family:var(--font-sans);"><ion-icon name="${nx.ic}" style="font-size:1rem;"></ion-icon>${nx.l}</button></div>`:'';})()}
       <div class="orc-actions">
         <button class="orc-act-btn" data-view="${o.id}"><ion-icon name="eye-outline"></ion-icon> View</button>
         <button class="orc-act-btn" data-call="${escapeHtml(c.mobile || "")}"><ion-icon name="call-outline"></ion-icon> Call</button>
@@ -801,7 +1233,22 @@ function renderOrderTable() {
     btn.addEventListener("click", () => unverifyPayment(btn.dataset.unverify));
   });
   cardsWrap.querySelectorAll(".orc-status-sel").forEach(sel => {
-    sel.addEventListener("change", async () => { sel.disabled = true; await changeOrderStatus(sel.dataset.order, sel.value); });
+    sel.addEventListener("change", async () => {
+      const prev = sel.dataset.prev || sel.value;
+      if (!await zahrounConfirm(`Change order status to "${sel.value}"?`, { title: "Update Order Status", ok: "Yes, Update", danger: false })) { sel.value = prev; return; }
+      sel.dataset.prev = sel.value;
+      sel.disabled = true; await changeOrderStatus(sel.dataset.order, sel.value);
+    });
+    sel.dataset.prev = sel.value;
+  });
+  cardsWrap.querySelectorAll(".orc-quickact").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const nextSt = btn.dataset.next;
+      const labels = { confirmed: "Confirm", shipped: "Ship", delivered: "Mark as Delivered" };
+      if (!await zahrounConfirm(`Mark this order as "${nextSt}"?`, { title: labels[nextSt] || "Update Status", ok: labels[nextSt] || "Confirm", danger: false })) return;
+      btn.disabled = true;
+      await changeOrderStatus(btn.dataset.oid, nextSt);
+    });
   });
 }
 
@@ -857,7 +1304,7 @@ window._confirmVerify = async function() {
 };
 
 async function unverifyPayment(orderId) {
-  if (!confirm("Undo payment verification? Order will return to pending.")) return;
+  if (!await zahrounConfirm("Undo payment verification? Order will return to pending.", { title: "Undo Verification", ok: "Undo", danger: true })) return;
   try {
     await updateDoc(doc(db, "orders", orderId), { paymentStatus: "pending", status: "pending" });
     const idx = orders.findIndex(o => o.id === orderId);
@@ -874,16 +1321,60 @@ window._unverifyPayment = unverifyPayment;
 
 function renderCustomerTable() {
   const tbody = $("#customer-rows");
-  $("#customers-count").textContent = `${customers.length} user(s)`;
-  if (!customers.length) { tbody.innerHTML = `<tr><td colspan="4" class="muted-note" style="padding:2rem;text-align:center;">No users.</td></tr>`; return; }
-  tbody.innerHTML = customers.map(u => `<tr>
-    <td>${escapeHtml(u.name || "—")}</td>
-    <td>${escapeHtml(u.email || "—")}</td>
-    <td><span class="badge ${u.role === "admin" ? "green" : ""}">${escapeHtml(u.role || "customer")}</span></td>
-    <td class="muted-note">${fmtDate(u.createdAt)}</td>
+
+  // Registered users
+  const regRows = customers.map(u => {
+    const spent = orders
+      .filter(o => o.status !== "cancelled" && (o.uid === u.uid || (u.email && o.userEmail === u.email)))
+      .reduce((s, o) => s + (o.total || 0), 0);
+    const orderCount = orders.filter(o => o.uid === u.uid || (u.email && o.userEmail === u.email)).length;
+    return { name: u.name || "—", email: u.email || "—", role: u.role || "customer", joined: fmtDate(u.createdAt), spent, orderCount, isGuest: false };
+  });
+
+  // Guest customers — group by mobile (always present) falling back to email
+  const guestMap = {};
+  const regUids = new Set(customers.map(u => u.uid).filter(Boolean));
+  const regEmails = new Set(customers.map(u => u.email).filter(Boolean));
+  orders.forEach(o => {
+    // Include orders with no registered-user match (isGuest true, or no uid and email not registered)
+    const isUnmatched = o.isGuest || (!o.uid && !(o.userEmail && regEmails.has(o.userEmail)));
+    if (!isUnmatched) return;
+    const mobile = o.customer?.mobile || "";
+    const email  = o.userEmail || o.guestEmail || "—";
+    const key    = mobile || email;
+    if (!guestMap[key]) guestMap[key] = { name: o.customer?.name || "Guest", email, mobile, spent: 0, orderCount: 0, joined: fmtDate(o.createdAt) };
+    if (o.status !== "cancelled") guestMap[key].spent += (o.total || 0);
+    guestMap[key].orderCount++;
+  });
+  const guestRows = Object.values(guestMap).map(g => ({ ...g, role: "guest", isGuest: true }));
+
+  const allRows = [...regRows, ...guestRows];
+  $("#customers-count").textContent = `${allRows.length} customer(s)`;
+  if (!allRows.length) { tbody.innerHTML = `<tr><td colspan="5" class="muted-note" style="padding:2rem;text-align:center;">No users.</td></tr>`; return; }
+
+  tbody.innerHTML = allRows.map(u => `<tr>
+    <td>${escapeHtml(u.name)}</td>
+    <td>${u.isGuest
+      ? `${u.mobile ? `<span style="font-weight:500;">${escapeHtml(u.mobile)}</span>` : ""}${u.email !== "—" ? `<br><span class="muted-note" style="font-size:.78rem;">${escapeHtml(u.email)}</span>` : ""}`
+      : escapeHtml(u.email)}</td>
+    <td><span class="badge" style="${u.isGuest ? "background:#f0f0f0;color:#555;" : u.role==="admin" ? "background:#163E34;color:#fff;" : ""}">${escapeHtml(u.role)}</span></td>
+    <td class="muted-note">${u.joined}</td>
+    <td><strong style="color:var(--primary-color);">৳${u.spent.toLocaleString()}</strong>${u.orderCount ? `<br><span class="muted-note" style="font-size:.75rem;">${u.orderCount} order${u.orderCount > 1 ? "s" : ""}</span>` : ""}</td>
   </tr>`).join("");
+
   const expBtn = document.getElementById("export-customers-btn");
   if (expBtn && !expBtn._wired) { expBtn._wired = true; expBtn.addEventListener("click", exportCustomersCSV); }
+
+  const searchInput = document.getElementById("customer-search");
+  if (searchInput && !searchInput._wired) {
+    searchInput._wired = true;
+    searchInput.addEventListener("input", () => {
+      const q = searchInput.value.trim().toLowerCase();
+      tbody.querySelectorAll("tr").forEach(tr => {
+        tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? "" : "none";
+      });
+    });
+  }
 }
 
 /* ---- Categories -------------------------------------------------------- */
@@ -945,7 +1436,7 @@ async function saveCat(e) {
 }
 
 async function deleteCat(id) {
-  if (!confirm("Delete this category?")) return;
+  if (!await zahrounConfirm("Delete this category? This action cannot be undone.", { title: "Delete Category", ok: "Delete", danger: true })) return;
   try { await deleteDoc(doc(db, "categories", id)); await fetchCategories(); renderCategoryTable(); }
   catch (err) { alert("Delete failed: " + (err.code || err.message)); }
 }
@@ -953,13 +1444,14 @@ async function deleteCat(id) {
 /* ---- Coupons ----------------------------------------------------------- */
 function renderCouponTable() {
   const tbody = $("#coupon-rows");
-  if (!coupons.length) { tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No coupons yet.</td></tr>`; return; }
+  if (!coupons.length) { tbody.innerHTML = `<tr><td colspan="8" class="muted-note" style="padding:2rem;text-align:center;">No coupons yet.</td></tr>`; return; }
   tbody.innerHTML = coupons.map(c => {
     const discountText = c.type === "freeship" ? "Free delivery" : c.type === "percent" ? `${c.value}% off` : `৳${c.value} off`;
     const isExpired = c.expiresAt && c.expiresAt.toDate && c.expiresAt.toDate() < new Date();
     const expiryText = c.expiresAt ? (c.expiresAt.toDate ? c.expiresAt.toDate().toLocaleDateString("en-GB") : c.expiresAt) : "No expiry";
     const maxText = c.maxUses ? `${c.usedCount || 0}/${c.maxUses}` : `${c.usedCount || 0}/∞`;
     const statusLabel = isExpired ? "expired" : (c.active ? "active" : "inactive");
+    const saleAllowed = c.allowOnSaleProducts !== false;
     return `<tr>
       <td><code style="font-size:.9rem;font-weight:700;letter-spacing:1px;">${escapeHtml(c.id)}</code></td>
       <td>${discountText}</td>
@@ -967,6 +1459,7 @@ function renderCouponTable() {
       <td>${maxText}</td>
       <td class="${isExpired ? "muted-note" : ""}">${expiryText}</td>
       <td><span class="badge ${c.active && !isExpired ? "green" : ""}">${statusLabel}</span></td>
+      <td><span class="badge ${saleAllowed ? "green" : ""}" title="${saleAllowed ? "Works on sale products" : "Blocked on sale products"}">${saleAllowed ? "Yes" : "No"}</span></td>
       <td style="white-space:nowrap;">
         <button class="icon-btn" data-toggle-coupon="${escapeHtml(c.id)}" title="${c.active ? "Deactivate" : "Activate"}"><ion-icon name="${c.active ? "pause-outline" : "play-outline"}"></ion-icon></button>
         <button class="icon-btn" data-coupon-edit="${escapeHtml(c.id)}" title="Edit"><ion-icon name="create-outline"></ion-icon></button>
@@ -986,6 +1479,12 @@ async function toggleCoupon(id) {
   catch (err) { alert("Failed: " + (err.code || err.message)); }
 }
 
+function genCouponCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const suffix = Array.from({length: 6}, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  return "ZAH-" + suffix;
+}
+
 function openCouponForm(coupon) {
   editingCoupon = coupon || null;
   const f = $("#coupon-form");
@@ -999,14 +1498,28 @@ function openCouponForm(coupon) {
     f.querySelector("[name=minOrder]").value = coupon.minOrder || 0;
     f.querySelector("[name=maxUses]").value = coupon.maxUses || 0;
     f.querySelector("[name=active]").checked = !!coupon.active;
+    f.querySelector("[name=allowOnSaleProducts]").checked = coupon.allowOnSaleProducts !== false;
     if (coupon.expiresAt && coupon.expiresAt.toDate) f.querySelector("[name=expiresAt]").value = coupon.expiresAt.toDate().toISOString().split("T")[0];
   } else {
     codeInput.readOnly = false;
     f.querySelector("[name=active]").checked = true;
+    f.querySelector("[name=allowOnSaleProducts]").checked = true;
+  }
+  const genBtn = document.getElementById("gen-coupon-btn");
+  if (genBtn && !genBtn._wired) {
+    genBtn._wired = true;
+    genBtn.addEventListener("click", () => {
+      const inp = f.querySelector("[name=code]");
+      if (!inp.readOnly) inp.value = genCouponCode();
+    });
   }
   $("#coupon-modal").classList.add("open");
 }
-function closeCouponForm() { $("#coupon-modal").classList.remove("open"); }
+function closeCouponForm() {
+  $("#coupon-modal").classList.remove("open");
+  const genBtn = document.getElementById("gen-coupon-btn");
+  if (genBtn) genBtn._wired = false;
+}
 
 async function saveCoupon(e) {
   e.preventDefault();
@@ -1029,6 +1542,7 @@ async function saveCoupon(e) {
       minOrder: parseFloat(f.querySelector("[name=minOrder]").value) || 0,
       maxUses: parseInt(f.querySelector("[name=maxUses]").value) || 0,
       active: f.querySelector("[name=active]").checked,
+      allowOnSaleProducts: f.querySelector("[name=allowOnSaleProducts]").checked,
       expiresAt: expiresVal ? Timestamp.fromDate(new Date(expiresVal)) : null,
       usedCount: editingCoupon ? (editingCoupon.usedCount || 0) : 0,
       updatedAt: serverTimestamp(),
@@ -1049,7 +1563,7 @@ async function saveCoupon(e) {
 }
 
 async function deleteCoupon(id) {
-  if (!confirm(`Delete coupon "${id}"?`)) return;
+  if (!await zahrounConfirm(`Delete coupon "${id}"? This action cannot be undone.`, { title: "Delete Coupon", ok: "Delete", danger: true })) return;
   try { await deleteDoc(doc(db, "coupons", id)); await fetchCoupons(); renderCouponTable(); }
   catch (err) { alert("Delete failed: " + (err.code || err.message)); }
 }
@@ -1057,18 +1571,27 @@ async function deleteCoupon(id) {
 /* ---- Reviews ----------------------------------------------------------- */
 function renderReviewTable() {
   const tbody = $("#review-rows");
-  if (!reviews.length) { tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No reviews yet.</td></tr>`; return; }
+  if (!reviews.length) { tbody.innerHTML = `<tr><td colspan="8" class="muted-note" style="padding:2rem;text-align:center;">No reviews yet.</td></tr>`; return; }
   tbody.innerHTML = reviews.map(r => {
     const stars = "★".repeat(r.rating || 0) + "☆".repeat(5 - (r.rating || 0));
     const isPending = !r.status || r.status === "pending";
     const isApproved = r.status === "approved";
+    const hasReply = !!r.adminReply;
     return `<tr>
       <td style="font-size:.85rem;">${escapeHtml(r.productName || "—")}</td>
       <td style="font-size:.85rem;">${escapeHtml(r.reviewerName || "—")}<br><span class="muted-note">${escapeHtml(r.reviewerEmail || "")}</span></td>
       <td style="color:#f0b429;letter-spacing:1px;font-size:.9rem;">${stars}</td>
-      <td style="font-size:.82rem;max-width:200px;word-break:break-word;">${escapeHtml(r.text || "")}</td>
+      <td style="font-size:.82rem;max-width:180px;word-break:break-word;">${escapeHtml(r.text || "")}</td>
       <td><span class="badge ${isApproved ? "green" : r.status === "rejected" ? "" : ""}" style="${r.status === "rejected" ? "background:#fdecea;color:#9b2226;" : ""}">${r.status || "pending"}</span></td>
       <td class="muted-note">${fmtDate(r.createdAt)}</td>
+      <td style="min-width:160px;">
+        ${hasReply
+          ? `<span style="font-size:.78rem;color:#1e7e34;font-style:italic;">"${escapeHtml(r.adminReply.slice(0,60))}${r.adminReply.length > 60 ? "…" : ""}"</span>
+             <button class="link-btn" style="font-size:.73rem;margin-top:.2rem;display:block;" data-rv-edit-reply="${r.id}">Edit</button>`
+          : `<textarea data-rv-reply="${r.id}" placeholder="Reply to review…" rows="2" style="width:100%;font-size:.78rem;padding:.3rem .5rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);resize:vertical;box-sizing:border-box;"></textarea>
+             <button class="icon-btn" data-rv-save-reply="${r.id}" style="margin-top:.2rem;font-size:.75rem;padding:.25rem .6rem;" title="Save reply"><ion-icon name="checkmark-outline"></ion-icon> Reply</button>`
+        }
+      </td>
       <td style="white-space:nowrap;">
         ${!isApproved ? `<button class="icon-btn" data-rv-approve="${r.id}" title="Approve"><ion-icon name="checkmark-outline"></ion-icon></button>` : ""}
         ${r.status !== "rejected" ? `<button class="icon-btn" data-rv-reject="${r.id}" title="Reject"><ion-icon name="close-outline"></ion-icon></button>` : ""}
@@ -1079,6 +1602,91 @@ function renderReviewTable() {
   tbody.querySelectorAll("[data-rv-approve]").forEach(b => b.addEventListener("click", () => updateReviewStatus(b.dataset.rvApprove, "approved")));
   tbody.querySelectorAll("[data-rv-reject]").forEach(b => b.addEventListener("click", () => updateReviewStatus(b.dataset.rvReject, "rejected")));
   tbody.querySelectorAll("[data-rv-del]").forEach(b => b.addEventListener("click", () => deleteReview(b.dataset.rvDel)));
+
+  // Mobile: tap row → bottom sheet with full review
+  tbody.querySelectorAll("[data-rv-save-reply]").forEach(b => b.addEventListener("click", async () => {
+    const id = b.dataset.rvSaveReply;
+    const ta = tbody.querySelector(`textarea[data-rv-reply="${id}"]`);
+    const reply = ta ? ta.value.trim() : "";
+    if (!reply) return;
+    b.disabled = true;
+    try {
+      await updateDoc(doc(db, "reviews", id), { adminReply: reply });
+      const r = reviews.find(x => x.id === id);
+      if (r) r.adminReply = reply;
+      renderReviewTable();
+      adminToast("Reply saved.");
+    } catch (e) { adminToast("Failed to save reply.", "error"); b.disabled = false; }
+  }));
+  tbody.querySelectorAll("[data-rv-edit-reply]").forEach(b => b.addEventListener("click", () => {
+    const id = b.dataset.rvEditReply;
+    const r = reviews.find(x => x.id === id);
+    if (!r) return;
+    const td = b.closest("td");
+    td.innerHTML = `<textarea data-rv-reply="${id}" rows="2" style="width:100%;font-size:.78rem;padding:.3rem .5rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);resize:vertical;box-sizing:border-box;">${escapeHtml(r.adminReply || "")}</textarea>
+      <button data-rv-save-reply="${id}" style="margin-top:.2rem;font-size:.75rem;padding:.25rem .6rem;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;"><ion-icon name="checkmark-outline"></ion-icon> Update</button>`;
+    td.querySelector(`[data-rv-save-reply="${id}"]`).addEventListener("click", async (ev) => {
+      const reply = td.querySelector("textarea").value.trim();
+      ev.target.disabled = true;
+      try {
+        await updateDoc(doc(db, "reviews", id), { adminReply: reply });
+        const rx = reviews.find(x => x.id === id);
+        if (rx) rx.adminReply = reply;
+        renderReviewTable(); adminToast("Reply updated.");
+      } catch { adminToast("Failed.", "error"); ev.target.disabled = false; }
+    });
+  }));
+
+  // Mobile: tap row → bottom sheet with full review
+  if (window.innerWidth <= 620) {
+    tbody.querySelectorAll("tr").forEach(tr => {
+      tr.style.cursor = "pointer";
+      tr.addEventListener("click", e => {
+        if (e.target.closest("button, textarea, select, a")) return;
+        const approveBtn = tr.querySelector("[data-rv-approve]");
+        const delBtn = tr.querySelector("[data-rv-del]");
+        const id = approveBtn?.dataset?.rvApprove || delBtn?.dataset?.rvDel;
+        const r = id ? reviews.find(x => x.id === id) : null;
+        if (!r) return;
+        showReviewSheet(r);
+      });
+    });
+  }
+}
+
+function showReviewSheet(r) {
+  document.getElementById("rv-sheet")?.remove();
+  const stars = "★".repeat(r.rating || 0) + "☆".repeat(5 - (r.rating || 0));
+  const sheet = document.createElement("div");
+  sheet.id = "rv-sheet";
+  sheet.style.cssText = "position:fixed;inset:0;z-index:200000;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(0,0,0,.45);";
+  sheet.innerHTML = `
+    <div style="background:#fff;border-radius:18px 18px 0 0;padding:1.5rem 1.25rem 2rem;max-height:80vh;overflow-y:auto;">
+      <div style="width:36px;height:4px;background:#ddd;border-radius:4px;margin:0 auto 1.25rem;"></div>
+      <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:.3rem;">${escapeHtml(r.productName || "")}</div>
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:.3rem;">${escapeHtml(r.reviewerName || "Anonymous")}</div>
+      <div style="color:#f0b429;letter-spacing:1px;font-size:1rem;margin-bottom:.75rem;">${stars}</div>
+      <p style="font-size:.9rem;line-height:1.65;color:var(--text-main);margin-bottom:1rem;">${escapeHtml(r.text || "")}</p>
+      ${r.adminReply ? `<div style="background:#f5f3ef;border-left:3px solid var(--primary-color);padding:.6rem .9rem;border-radius:0 8px 8px 0;font-size:.82rem;font-style:italic;color:var(--primary-color);margin-bottom:1rem;">Reply: ${escapeHtml(r.adminReply)}</div>` : ""}
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+        ${r.status !== "approved" ? `<button class="btn" style="flex:1;padding:.55rem;" data-sheet-approve="${r.id}">Approve</button>` : ""}
+        ${r.status !== "rejected" ? `<button class="btn btn-outline" style="flex:1;padding:.55rem;" data-sheet-reject="${r.id}">Reject</button>` : ""}
+        <button class="btn" style="background:#9b2226;border-color:#9b2226;flex:1;padding:.55rem;" data-sheet-del="${r.id}">Delete</button>
+      </div>
+      <button style="margin-top:.75rem;width:100%;padding:.5rem;background:none;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;cursor:pointer;" id="rv-sheet-close">Close</button>
+    </div>`;
+  document.body.appendChild(sheet);
+  sheet.querySelector("#rv-sheet-close").addEventListener("click", () => sheet.remove());
+  sheet.addEventListener("click", e => { if (e.target === sheet) sheet.remove(); });
+  sheet.querySelector("[data-sheet-approve]")?.addEventListener("click", async () => {
+    await updateReviewStatus(r.id, "approved"); sheet.remove();
+  });
+  sheet.querySelector("[data-sheet-reject]")?.addEventListener("click", async () => {
+    await updateReviewStatus(r.id, "rejected"); sheet.remove();
+  });
+  sheet.querySelector("[data-sheet-del]")?.addEventListener("click", async () => {
+    await deleteReview(r.id); sheet.remove();
+  });
 }
 
 async function updateReviewStatus(id, status) {
@@ -1092,12 +1700,1013 @@ async function updateReviewStatus(id, status) {
 }
 
 async function deleteReview(id) {
-  if (!confirm("Delete this review permanently?")) return;
+  if (!await zahrounConfirm("Delete this review permanently? This action cannot be undone.", { title: "Delete Review", ok: "Delete", danger: true })) return;
   try {
     await deleteDoc(doc(db, "reviews", id));
     reviews = reviews.filter(r => r.id !== id);
     renderReviewTable();
   } catch (err) { alert("Failed: " + (err.code || err.message)); }
+}
+
+/* ---- FAQ --------------------------------------------------------------- */
+let faqs = [];
+let editingFaq = null;
+
+async function fetchFaqs() {
+  try {
+    const snap = await getDocs(collection(db, "faqs"));
+    faqs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+  } catch (e) { console.error("fetchFaqs:", e); }
+}
+
+function renderFaqTable() {
+  const tbody = $("#faq-rows");
+  if (!tbody) return;
+  if (!faqs.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="muted-note" style="padding:2rem;text-align:center;">No FAQs yet. Click "Add Question" to get started.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = faqs.map(f => `<tr>
+    <td style="font-size:.85rem;max-width:220px;word-break:break-word;">${escapeHtml(f.question || "")}</td>
+    <td style="font-size:.82rem;color:var(--text-muted);max-width:260px;">${escapeHtml((f.answer || "").slice(0, 90))}${(f.answer || "").length > 90 ? "…" : ""}</td>
+    <td><span class="badge ${f.active !== false ? "green" : ""}">${f.active !== false ? "Active" : "Hidden"}</span></td>
+    <td style="font-size:.85rem;">${f.order || 0}</td>
+    <td style="white-space:nowrap;">
+      <button class="icon-btn" data-faq-edit="${f.id}" title="Edit"><ion-icon name="create-outline"></ion-icon></button>
+      <button class="icon-btn danger" data-faq-del="${f.id}" title="Delete"><ion-icon name="trash-outline"></ion-icon></button>
+    </td>
+  </tr>`).join("");
+  tbody.querySelectorAll("[data-faq-edit]").forEach(b => b.addEventListener("click", () => openFaqModal(faqs.find(f => f.id === b.dataset.faqEdit))));
+  tbody.querySelectorAll("[data-faq-del]").forEach(b => b.addEventListener("click", () => deleteFaqModal(b.dataset.faqDel)));
+}
+
+function openFaqModal(faq) {
+  editingFaq = faq || null;
+  const f = $("#faq-form");
+  f.reset();
+  $("#faq-form-title").textContent = faq ? "Edit FAQ" : "Add FAQ";
+  if (faq) {
+    f.querySelector("[name=question]").value = faq.question || "";
+    f.querySelector("[name=answer]").value = faq.answer || "";
+    f.querySelector("[name=order]").value = faq.order ?? 0;
+    f.querySelector("[name=active]").checked = faq.active !== false;
+  } else {
+    f.querySelector("[name=order]").value = faqs.length;
+    f.querySelector("[name=active]").checked = true;
+  }
+  $("#faq-modal").classList.add("open");
+}
+
+function closeFaqModal() { $("#faq-modal").classList.remove("open"); }
+
+async function saveFaqModal(e) {
+  e.preventDefault();
+  const f = e.target;
+  const data = {
+    question: f.querySelector("[name=question]").value.trim(),
+    answer: f.querySelector("[name=answer]").value.trim(),
+    order: parseInt(f.querySelector("[name=order]").value) || 0,
+    active: f.querySelector("[name=active]").checked,
+    updatedAt: serverTimestamp()
+  };
+  if (!data.question || !data.answer) { adminToast("Question and answer are required."); return; }
+  const btn = f.querySelector("button[type=submit]");
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    if (editingFaq) {
+      await updateDoc(doc(db, "faqs", editingFaq.id), data);
+      const idx = faqs.findIndex(x => x.id === editingFaq.id);
+      if (idx !== -1) Object.assign(faqs[idx], data);
+    } else {
+      const ref = await addDoc(collection(db, "faqs"), { ...data, createdAt: serverTimestamp() });
+      faqs.push({ id: ref.id, ...data });
+    }
+    faqs.sort((a, b) => (a.order || 0) - (b.order || 0));
+    renderFaqTable();
+    closeFaqModal();
+    adminToast(editingFaq ? "FAQ updated." : "FAQ added.");
+  } catch (err) { alert("Failed: " + (err.code || err.message)); }
+  finally { btn.disabled = false; btn.textContent = "Save FAQ"; }
+}
+
+async function deleteFaqModal(id) {
+  if (!await zahrounConfirm("Delete this FAQ permanently? This action cannot be undone.", { title: "Delete FAQ", ok: "Delete", danger: true })) return;
+  try {
+    await deleteDoc(doc(db, "faqs", id));
+    faqs = faqs.filter(f => f.id !== id);
+    renderFaqTable();
+    adminToast("FAQ deleted.");
+  } catch (err) { alert("Delete failed: " + (err.code || err.message)); }
+}
+
+/* ---- Policies ---------------------------------------------------------- */
+function renderPoliciesForm() {
+  const ret = document.getElementById("policy-return");
+  const prv = document.getElementById("policy-privacy");
+  const trm = document.getElementById("policy-terms");
+  if (ret) ret.value = settings.policyReturn || "";
+  if (prv) prv.value = settings.policyPrivacy || "";
+  if (trm) trm.value = settings.policyTerms || "";
+}
+
+async function savePolicies() {
+  const btn = document.getElementById("save-policies");
+  const status = document.getElementById("status-policies");
+  const data = {
+    policyReturn: document.getElementById("policy-return").value.trim(),
+    policyPrivacy: document.getElementById("policy-privacy").value.trim(),
+    policyTerms: document.getElementById("policy-terms").value.trim(),
+    updatedAt: serverTimestamp()
+  };
+  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+  if (status) status.textContent = "";
+  try {
+    await setDoc(doc(db, "settings", "store"), data, { merge: true });
+    Object.assign(settings, data);
+    if (status) status.textContent = "✓ Saved";
+    adminToast("Policies saved.");
+    setTimeout(() => { if (status) status.textContent = ""; }, 3000);
+  } catch (err) { alert("Failed: " + (err.code || err.message)); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = "Save Policies"; } }
+}
+
+/* ---- Flash Sale --------------------------------------------------------- */
+let flashSaleData = { enabled: false, items: [] };
+
+async function fetchFlashSale() {
+  try {
+    const snap = await getDoc(doc(db, "settings", "flashSale"));
+    flashSaleData = snap.exists() ? snap.data() : { enabled: false, items: [] };
+    flashSaleData.items = flashSaleData.items || [];
+  } catch (e) { console.error("fetchFlashSale:", e); }
+}
+
+function updateFlashNavBadge() {
+  const badge = document.getElementById("nav-flash-badge");
+  const liveBadge = document.getElementById("flash-live-badge");
+  const on = !!flashSaleData.enabled;
+  if (badge) badge.style.display = on ? "" : "none";
+  if (liveBadge) liveBadge.style.display = on ? "" : "none";
+}
+
+function renderFlashSaleForm() {
+  document.getElementById("flash-enabled").checked = !!flashSaleData.enabled;
+  document.getElementById("flash-title").value = flashSaleData.title || "";
+  document.getElementById("flash-badge").value = flashSaleData.badgeText || "";
+  document.getElementById("flash-subtitle").value = flashSaleData.subtitle || "";
+
+  if (flashSaleData.endDate) {
+    try {
+      const d = flashSaleData.endDate.toDate ? flashSaleData.endDate.toDate() : new Date(flashSaleData.endDate);
+      const pad = n => String(n).padStart(2, "0");
+      document.getElementById("flash-end-date").value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      document.getElementById("flash-end-time").value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch { /* invalid date */ }
+  }
+
+  updateFlashNavBadge();
+  buildFlashProductRows();
+
+  document.getElementById("flash-enabled").onchange = updateFlashNavBadge;
+  document.getElementById("save-flash-sale").onclick = saveFlashSale;
+  fetchSaleAnalytics();
+}
+
+function buildFlashProductRows() {
+  const tbody = document.getElementById("flash-product-rows");
+  if (!tbody) return;
+  const items = flashSaleData.items || [];
+  let selectedCount = 0;
+
+  tbody.innerHTML = products.filter(p => !p.hidden).map(p => {
+    const item = items.find(i => i.productId === p.id);
+    const checked = !!item;
+    if (checked) selectedCount++;
+    const regularPrice = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : (p.price || 0);
+    const salePrice = item?.salePrice || "";
+    const saving = (item && item.salePrice && regularPrice > item.salePrice)
+      ? `<span style="color:#1e7e34;font-weight:600;">৳${(regularPrice - item.salePrice).toLocaleString()} off</span>`
+      : `<span style="color:var(--text-muted);">—</span>`;
+
+    return `<tr id="frow-${p.id}">
+      <td><input type="checkbox" class="fchk" data-pid="${p.id}" ${checked ? "checked" : ""} style="width:15px;height:15px;cursor:pointer;accent-color:var(--primary-color);"></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:.6rem;">
+          ${p.image ? `<img src="${optimizedUrl(p.image, 36)}" style="width:36px;height:36px;object-fit:contain;background:var(--bg-color);border-radius:5px;flex-shrink:0;">` : ""}
+          <span style="font-size:.85rem;font-weight:500;">${escapeHtml(p.name)}</span>
+        </div>
+      </td>
+      <td style="font-size:.85rem;">৳${regularPrice.toLocaleString()}</td>
+      <td><input type="number" class="flash-prod-inp fprice" data-pid="${p.id}" data-reg="${regularPrice}" value="${salePrice}" min="1" max="${regularPrice}" placeholder="Sale price" ${!checked ? "disabled" : ""}></td>
+      <td id="fsaving-${p.id}">${saving}</td>
+    </tr>`;
+  }).join("");
+
+  // Update count
+  const countEl = document.getElementById("flash-selected-count");
+  if (countEl) countEl.textContent = `${selectedCount} product${selectedCount !== 1 ? "s" : ""} selected`;
+
+  // Wire checkboxes
+  tbody.querySelectorAll(".fchk").forEach(chk => {
+    chk.addEventListener("change", () => {
+      const inp = tbody.querySelector(`.fprice[data-pid="${chk.dataset.pid}"]`);
+      if (inp) inp.disabled = !chk.checked;
+      // Update count
+      const total = tbody.querySelectorAll(".fchk:checked").length;
+      const cEl = document.getElementById("flash-selected-count");
+      if (cEl) cEl.textContent = `${total} product${total !== 1 ? "s" : ""} selected`;
+    });
+  });
+
+  // Wire price inputs → live savings
+  tbody.querySelectorAll(".fprice").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const reg = parseInt(inp.dataset.reg) || 0;
+      const sale = parseInt(inp.value) || 0;
+      const savEl = document.getElementById(`fsaving-${inp.dataset.pid}`);
+      if (savEl) {
+        savEl.innerHTML = sale > 0 && sale < reg
+          ? `<span style="color:#1e7e34;font-weight:600;">৳${(reg - sale).toLocaleString()} off</span>`
+          : `<span style="color:var(--text-muted);">—</span>`;
+      }
+    });
+  });
+}
+
+async function saveFlashSale() {
+  const tbody = document.getElementById("flash-product-rows");
+  const items = [];
+  tbody.querySelectorAll(".fchk:checked").forEach(chk => {
+    const pid = parseInt(chk.dataset.pid);
+    const inp = tbody.querySelector(`.fprice[data-pid="${pid}"]`);
+    const salePrice = parseInt(inp?.value) || 0;
+    if (pid && salePrice > 0) items.push({ productId: pid, salePrice });
+  });
+
+  const dateVal = document.getElementById("flash-end-date").value;
+  const timeVal = document.getElementById("flash-end-time").value || "23:59";
+  const endDate = dateVal ? Timestamp.fromDate(new Date(`${dateVal}T${timeVal}:00`)) : null;
+
+  const enabled = document.getElementById("flash-enabled").checked;
+  const data = {
+    enabled,
+    title: document.getElementById("flash-title").value.trim() || "Flash Sale",
+    subtitle: document.getElementById("flash-subtitle").value.trim(),
+    badgeText: (document.getElementById("flash-badge").value.trim() || "SALE").toUpperCase(),
+    endDate,
+    items,
+    updatedAt: serverTimestamp()
+  };
+
+  const btn = document.getElementById("save-flash-sale");
+  const status = document.getElementById("flash-save-status");
+  btn.disabled = true; btn.innerHTML = `<ion-icon name="hourglass-outline"></ion-icon> Saving…`;
+
+  try {
+    await setDoc(doc(db, "settings", "flashSale"), data);
+    flashSaleData = { ...data };
+    updateFlashNavBadge();
+    if (status) { status.textContent = "✓ Saved"; setTimeout(() => { status.textContent = ""; }, 3000); }
+    adminToast(`Flash Sale ${enabled ? "is now LIVE 🔥" : "turned off."}`);
+  } catch (err) { alert("Failed: " + (err.code || err.message)); }
+  finally { btn.disabled = false; btn.innerHTML = `<ion-icon name="save-outline"></ion-icon> Save Flash Sale`; }
+}
+
+async function fetchSaleAnalytics() {
+  const card = document.getElementById("sale-analytics-card");
+  if (!card) return;
+  const saleItems = flashSaleData.items || [];
+  if (!saleItems.length) {
+    card.innerHTML = `<p class="muted-note" style="text-align:center;padding:1.5rem;">No sale products configured. Add products above and save first.</p>`;
+    return;
+  }
+  card.innerHTML = `<p class="muted-note" style="text-align:center;padding:1.5rem;"><ion-icon name="hourglass-outline" style="vertical-align:middle;"></ion-icon> Loading…</p>`;
+  try {
+    const saleIds = new Set(saleItems.map(i => i.productId));
+    const salePriceMap = {};
+    saleItems.forEach(i => { salePriceMap[i.productId] = i.salePrice; });
+    const regularPriceMap = {};
+    products.forEach(p => { regularPriceMap[p.id] = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : (p.price || 0); });
+
+    const snap = await getDocs(collection(db, "orders"));
+    let totalOrders = 0, totalRevenue = 0, totalDiscount = 0, totalUnitsSold = 0;
+    const productSales = {};
+
+    snap.docs.forEach(d => {
+      const order = d.data();
+      const items = order.items || [];
+      const saleOrderItems = items.filter(it => saleIds.has(it.id));
+      if (!saleOrderItems.length) return;
+      totalOrders++;
+      saleOrderItems.forEach(it => {
+        const qty = it.quantity || 1;
+        const salePrice = salePriceMap[it.id] || it.selectedPrice || 0;
+        const regPrice = regularPriceMap[it.id] || salePrice;
+        totalRevenue += salePrice * qty;
+        totalDiscount += Math.max(0, (regPrice - salePrice)) * qty;
+        totalUnitsSold += qty;
+        productSales[it.id] = (productSales[it.id] || 0) + qty;
+      });
+    });
+
+    let topProductId = null, topQty = 0;
+    Object.entries(productSales).forEach(([id, qty]) => { if (qty > topQty) { topProductId = Number(id); topQty = qty; } });
+    const topProduct = topProductId ? products.find(p => p.id === topProductId) : null;
+
+    const statBox = (value, label, color) =>
+      `<div style="background:var(--bg-color);border-radius:10px;padding:1rem 1.25rem;border:1px solid var(--border-color);text-align:center;">
+         <div style="font-size:1.6rem;font-weight:700;color:${color};">${value}</div>
+         <div style="font-size:.75rem;color:var(--text-muted);margin-top:.3rem;line-height:1.4;">${label}</div>
+       </div>`;
+
+    card.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:1rem;padding:.25rem 0 1rem;">
+        ${statBox(totalOrders, "Orders with<br>Sale Items", "var(--primary-color)")}
+        ${statBox("৳" + totalRevenue.toLocaleString(), "Revenue from<br>Sale Products", "var(--primary-color)")}
+        ${statBox(totalUnitsSold, "Total Units<br>Sold on Sale", "var(--primary-color)")}
+        ${statBox("৳" + Math.round(totalDiscount).toLocaleString(), "Total Discount<br>Given", "#e63946")}
+        ${topProduct ? statBox(escapeHtml(topProduct.name) + `<div style="font-size:.7rem;font-weight:400;color:var(--text-muted);">${topQty} unit${topQty !== 1 ? "s" : ""} sold</div>`, "Top Sale<br>Product", "var(--primary-color)") : ""}
+      </div>
+      <p class="muted-note" style="font-size:.75rem;text-align:right;">Based on all-time orders containing current sale products.</p>`;
+  } catch(e) {
+    card.innerHTML = `<p class="muted-note" style="text-align:center;padding:1.5rem;">Could not load analytics.</p>`;
+    console.error("fetchSaleAnalytics:", e);
+  }
+}
+window.fetchSaleAnalytics = fetchSaleAnalytics;
+
+/* ---- Loyalty Section (Settings + Members) -------------------------------- */
+let _lmTab = 'all';
+let _lpSettingsWired = false;
+
+window.lmShowTab = function(tab) {
+  _lmTab = tab;
+  ['all','pending','approved','rejected'].forEach(t => {
+    const btn = document.getElementById('lm-tab-' + t);
+    if (!btn) return;
+    const active = t === tab;
+    btn.style.background = active ? '#163E34' : '#fff';
+    btn.style.color      = active ? '#fff'    : 'var(--text-main)';
+    btn.style.fontWeight = active ? '600'     : '400';
+    btn.style.border     = active ? '1px solid #163E34' : '1px solid var(--border-color)';
+  });
+  renderLoyaltyMembersTable();
+};
+
+window.lmRefresh = function() { renderLoyaltyMembersTable(); };
+
+async function renderLoyaltyMembersTable() {
+  const listEl = document.getElementById('lm-members-list'); if (!listEl) return;
+  listEl.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted);font-size:.85rem;">Loading…</div>';
+  try {
+    const statusColors = { pending:'#e67e22', approved:'#27ae60', rejected:'#c0392b' };
+    const statusLabels = { pending:'Pending', approved:'Approved', rejected:'Rejected' };
+    const tierInfo = { silver:{ icon:'🥈', label:'Silver' }, gold:{ icon:'🥇', label:'Gold' }, platinum:{ icon:'💎', label:'Platinum' } };
+    let q;
+    if (_lmTab === 'all') q = query(collection(db,'loyaltyPoints'));
+    else                   q = query(collection(db,'loyaltyPoints'), where('status','==',_lmTab));
+    const snap = await getDocs(q);
+
+    // Update stat cards (only when viewing "all" — gives accurate global totals)
+    if (_lmTab === 'all') {
+      let pending = 0, approved = 0, totalPts = 0;
+      snap.forEach(d => {
+        const s = d.data().status || 'pending';
+        if (s === 'pending')  pending++;
+        if (s === 'approved') approved++;
+        totalPts += (d.data().points || 0);
+      });
+      const el = id => document.getElementById(id);
+      if (el('lm-stat-total'))    el('lm-stat-total').textContent    = snap.size;
+      if (el('lm-stat-pending'))  el('lm-stat-pending').textContent  = pending;
+      if (el('lm-stat-approved')) el('lm-stat-approved').textContent = approved;
+      if (el('lm-stat-points'))   el('lm-stat-points').textContent   = totalPts.toLocaleString();
+      const badge = document.getElementById('nav-loyalty-badge');
+      if (badge) { badge.textContent = pending || ''; badge.style.display = pending ? '' : 'none'; }
+    }
+
+    if (snap.empty) {
+      listEl.innerHTML = `<div style="padding:3rem;text-align:center;color:var(--text-muted);font-size:.88rem;">
+        <ion-icon name="people-outline" style="font-size:2rem;display:block;margin:0 auto .5rem;opacity:.35;"></ion-icon>
+        No ${_lmTab === 'all' ? '' : _lmTab + ' '}members found.
+      </div>`;
+      return;
+    }
+
+    let html = `<table style="width:100%;border-collapse:collapse;font-size:.84rem;">
+      <thead><tr style="background:#f7f7f5;border-bottom:2px solid var(--border-color);">
+        <th style="padding:.7rem 1rem;text-align:left;font-weight:600;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Name</th>
+        <th style="padding:.7rem 1rem;text-align:left;font-weight:600;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Email</th>
+        <th style="padding:.7rem .85rem;text-align:center;font-weight:600;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Points</th>
+        <th style="padding:.7rem .85rem;text-align:center;font-weight:600;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Tier</th>
+        <th style="padding:.7rem .85rem;text-align:center;font-weight:600;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Status</th>
+        <th style="padding:.7rem .85rem;text-align:center;font-weight:600;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;">Actions</th>
+      </tr></thead><tbody>`;
+
+    snap.forEach(d => {
+      const data   = d.data();
+      const status = data.status || 'pending';
+      const tier   = data.tier   || 'silver';
+      const pts    = data.points || 0;
+      const ti     = tierInfo[tier] || tierInfo.silver;
+      const sc     = statusColors[status] || '#888';
+      html += `<tr style="border-bottom:1px solid #f0ede8;transition:background .12s;" onmouseover="this.style.background='#fafaf8'" onmouseout="this.style.background=''">
+        <td data-label="Name" style="padding:.7rem 1rem;font-weight:500;color:var(--text-main);">${escapeHtml(data.name || '—')}</td>
+        <td data-label="Email" style="padding:.7rem 1rem;color:var(--text-muted);font-size:.8rem;">${escapeHtml(data.email || d.id || '—')}</td>
+        <td data-label="Points" style="padding:.7rem .85rem;text-align:center;font-family:'Inter',sans-serif;font-weight:700;font-size:.95rem;color:#163E34;">${pts.toLocaleString()}</td>
+        <td data-label="Tier" style="padding:.7rem .85rem;text-align:center;font-size:.9rem;" title="${ti.label}">${ti.icon} <span style="font-size:.75rem;color:var(--text-muted);margin-left:.15rem;">${ti.label}</span></td>
+        <td data-label="Status" style="padding:.7rem .85rem;text-align:center;">
+          <span style="display:inline-block;padding:.22rem .65rem;border-radius:20px;font-size:.73rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:${sc}18;color:${sc};border:1px solid ${sc}40;">
+            ${statusLabels[status] || status}
+          </span>
+        </td>
+        <td data-label="Actions" style="padding:.7rem .85rem;text-align:center;">
+          <div style="display:flex;gap:.35rem;justify-content:center;flex-wrap:wrap;">
+            ${status !== 'approved' ? `<button onclick="window.lmAction('${d.id}','approved')" title="Approve this member" style="background:#163E34;color:#fff;border:none;border-radius:6px;padding:.35rem .8rem;font-size:.79rem;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;font-weight:600;letter-spacing:.02em;"><span>✓</span> Approve</button>` : ''}
+            ${status !== 'rejected' ? `<button onclick="window.lmAction('${d.id}','rejected')" title="Reject this member" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:.35rem .8rem;font-size:.79rem;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;font-weight:600;"><span>✗</span> Reject</button>` : ''}
+            ${status === 'approved' ? `<button onclick="window.lmAction('${d.id}','pending')" title="Revoke approval — set back to pending" style="background:#6c757d;color:#fff;border:none;border-radius:6px;padding:.35rem .8rem;font-size:.79rem;cursor:pointer;font-weight:600;">↩ Revoke</button>` : ''}
+          </div>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    listEl.innerHTML = html;
+  } catch(e) {
+    listEl.innerHTML = '<div style="padding:2rem;text-align:center;color:#c0392b;font-size:.85rem;">Could not load members. Check your Firestore rules.</div>';
+    console.warn('LP members:', e);
+  }
+}
+
+window.lmAction = async function(uid, newStatus) {
+  try {
+    await updateDoc(doc(db,'loyaltyPoints',uid), { status: newStatus });
+    renderLoyaltyMembersTable();
+    const msgs = { approved: 'Member approved — they can now earn & redeem points.', rejected: 'Member rejected.', pending: 'Status revoked — member is now pending again.' };
+    adminToast(msgs[newStatus] || 'Status updated.');
+  } catch(e) { adminToast('Error: ' + e.message, false); }
+};
+
+async function saveLoyaltySettings() {
+  const btn = document.getElementById('lp-save-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<ion-icon name="hourglass-outline"></ion-icon> Saving…'; }
+  const getNum = id => parseFloat(document.getElementById(id)?.value) || 0;
+  const getChk = id => !!(document.getElementById(id)?.checked);
+  const enrollMode = document.querySelector('input[name="lp-enroll"]:checked')?.value || 'auto';
+  const tiersOn = getChk('p-lp-tiers-on');
+  const loyaltyPoints = {
+    enabled: getChk('p-lp-on'),
+    earnPer: getNum('p-lp-earn'),
+    redeemValue: getNum('p-lp-val'),
+    minRedeem: getNum('p-lp-min'),
+    minOrderAmount: getNum('p-lp-min-order'),
+    maxRedeemPct: getNum('p-lp-max-pct'),
+    allowDuringPromos: getChk('p-lp-allow-promo'),
+    allowWithCoupon: getChk('p-lp-allow-coupon'),
+    allowWithFreeGift: getChk('p-lp-allow-gift'),
+    enrollMode,
+    enrollConditions: {
+      minPurchase: getNum('p-lp-cond-min'),
+      text: (document.getElementById('p-lp-cond-text')?.value || '').trim()
+    },
+    tiers: tiersOn ? {
+      enabled: true,
+      silver:   { minSpend: getNum('p-lp-silver-min'), mult: parseFloat(document.getElementById('p-lp-silver-mult')?.value) || 1 },
+      gold:     { minSpend: getNum('p-lp-gold-min'),   mult: parseFloat(document.getElementById('p-lp-gold-mult')?.value)   || 2 },
+      platinum: { minSpend: getNum('p-lp-plat-min'),   mult: parseFloat(document.getElementById('p-lp-plat-mult')?.value)   || 3 }
+    } : { enabled: false }
+  };
+  try {
+    await setDoc(doc(db,'settings','promotions'), { loyaltyPoints }, { merge: true });
+    const msg = document.getElementById('lp-save-msg');
+    if (msg) { msg.textContent = '✓ Settings saved successfully'; msg.style.display = 'block'; setTimeout(() => { msg.style.display = 'none'; }, 3000); }
+    adminToast('Loyalty settings saved!');
+  } catch(e) {
+    adminToast('Save failed: ' + (e.message || e), false);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<ion-icon name="save-outline"></ion-icon> Save Settings'; }
+  }
+}
+
+async function initLoyaltyMembersSection() {
+  // Load and populate settings on every visit (fresh data from Firestore)
+  try {
+    const snap = await getDoc(doc(db,'settings','promotions'));
+    const cfg  = snap.exists() ? snap.data() : {};
+    const lp   = cfg.loyaltyPoints || {};
+    const chk  = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+    const num  = (id, val) => { const el = document.getElementById(id); if (el) el.value = (val ?? ''); };
+
+    chk('p-lp-on', lp.enabled);
+    num('p-lp-earn',      lp.earnPer      ?? 100);
+    num('p-lp-val',       lp.redeemValue  ?? 1);
+    num('p-lp-min',       lp.minRedeem    ?? 50);
+    num('p-lp-min-order', lp.minOrderAmount ?? 500);
+    num('p-lp-max-pct',   lp.maxRedeemPct ?? 20);
+    chk('p-lp-allow-promo',  lp.allowDuringPromos !== false);
+    chk('p-lp-allow-coupon', lp.allowWithCoupon   !== false);
+    chk('p-lp-allow-gift',   lp.allowWithFreeGift !== false);
+
+    const enrollMode = lp.enrollMode || 'auto';
+    const enrollEl = document.getElementById(enrollMode === 'approve' ? 'p-lp-approve' : 'p-lp-auto');
+    if (enrollEl) enrollEl.checked = true;
+    const condWrap = document.getElementById('lp-conditions-wrap');
+    if (condWrap) condWrap.style.display = enrollMode === 'approve' ? '' : 'none';
+
+    const cond = lp.enrollConditions || {};
+    num('p-lp-cond-min', cond.minPurchase ?? 0);
+    const condText = document.getElementById('p-lp-cond-text');
+    if (condText) condText.value = cond.text || '';
+
+    const tiersOn = !!(lp.tiers?.enabled);
+    chk('p-lp-tiers-on', tiersOn);
+    const tiersWrap = document.getElementById('lp-tiers-wrap');
+    if (tiersWrap) tiersWrap.style.display = tiersOn ? '' : 'none';
+    const lt = lp.tiers || {};
+    num('p-lp-silver-min',  lt.silver?.minSpend   ?? 0);
+    num('p-lp-silver-mult', lt.silver?.mult        ?? 1);
+    num('p-lp-gold-min',    lt.gold?.minSpend      ?? 8000);
+    num('p-lp-gold-mult',   lt.gold?.mult          ?? 2);
+    num('p-lp-plat-min',    lt.platinum?.minSpend  ?? 15000);
+    num('p-lp-plat-mult',   lt.platinum?.mult      ?? 3);
+  } catch(e) {
+    console.warn('Could not load loyalty settings:', e);
+  }
+
+  // Wire event listeners only once
+  if (!_lpSettingsWired) {
+    _lpSettingsWired = true;
+    document.querySelectorAll('input[name="lp-enroll"]').forEach(r => r.addEventListener('change', () => {
+      const isApprove = document.querySelector('input[name="lp-enroll"]:checked')?.value === 'approve';
+      const condWrap = document.getElementById('lp-conditions-wrap');
+      if (condWrap) condWrap.style.display = isApprove ? '' : 'none';
+    }));
+    document.getElementById('p-lp-tiers-on')?.addEventListener('change', e => {
+      const wrap = document.getElementById('lp-tiers-wrap');
+      if (wrap) wrap.style.display = e.target.checked ? '' : 'none';
+    });
+    document.getElementById('lp-save-btn')?.addEventListener('click', saveLoyaltySettings);
+  }
+
+  // Show members (always refresh on section visit)
+  _lmTab = 'all';
+  window.lmShowTab('all');
+}
+
+/* ---- FAQ Manager -------------------------------------------------------- */
+let faqItems = [];
+let editingFaqId = null;
+
+async function initFaqManager() {
+  await loadFaqs();
+  const addBtn = document.getElementById("faq-add-btn");
+  const cancelBtn = document.getElementById("faq-cancel-btn");
+  const saveBtn = document.getElementById("faq-save-btn");
+  if (addBtn) addBtn.onclick = () => openFaqForm(null);
+  if (cancelBtn) cancelBtn.onclick = closeFaqForm;
+  if (saveBtn) saveBtn.onclick = saveFaqItem;
+}
+
+async function loadFaqs() {
+  const listEl = document.getElementById("faq-list-admin");
+  if (!listEl) return;
+  try {
+    const snap = await getDocs(collection(db, "faqs"));
+    faqItems = snap.docs.map(d => ({ _id: d.id, ...d.data() }))
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+    renderFaqListAdmin();
+  } catch (e) {
+    listEl.innerHTML = `<p style="color:#9b2226;text-align:center;">Failed to load FAQs.</p>`;
+  }
+}
+
+function renderFaqListAdmin() {
+  const listEl = document.getElementById("faq-list-admin");
+  if (!listEl) return;
+  if (!faqItems.length) {
+    listEl.innerHTML = `<p style="text-align:center;color:var(--text-muted);padding:2rem;">No FAQs yet. Click "Add New FAQ" to create the first one.</p>`;
+    return;
+  }
+  listEl.innerHTML = faqItems.map((f, i) => `
+    <div style="border:1px solid var(--border-color);border-radius:8px;padding:1rem 1.1rem;margin-bottom:.75rem;background:var(--surface-color);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem;">
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:.9rem;color:var(--text-main);margin-bottom:.3rem;">${escapeHtml(f.question)}</div>
+          <div style="font-size:.82rem;color:var(--text-muted);white-space:pre-line;line-height:1.6;">${escapeHtml((f.answer || "").slice(0, 120))}${(f.answer || "").length > 120 ? "…" : ""}</div>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-shrink:0;">
+          <button onclick="openFaqForm('${escapeHtml(f._id)}')" style="background:none;border:1px solid var(--border-color);border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.8rem;color:var(--primary-color);display:flex;align-items:center;gap:.3rem;"><ion-icon name="create-outline" style="font-size:.9rem;"></ion-icon>Edit</button>
+          <button onclick="deleteFaq('${escapeHtml(f._id)}')" style="background:none;border:1px solid #fdecea;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.8rem;color:#9b2226;display:flex;align-items:center;gap:.3rem;"><ion-icon name="trash-outline" style="font-size:.9rem;"></ion-icon>Delete</button>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+function openFaqForm(id) {
+  editingFaqId = id;
+  const wrap = document.getElementById("faq-form-wrap");
+  const titleEl = document.getElementById("faq-form-title");
+  const qInput = document.getElementById("faq-q-input");
+  const aInput = document.getElementById("faq-a-input");
+  if (!wrap) return;
+  if (id) {
+    const faq = faqItems.find(f => f._id === id);
+    if (faq) { qInput.value = faq.question || ""; aInput.value = faq.answer || ""; }
+    titleEl.textContent = "Edit FAQ";
+  } else {
+    qInput.value = ""; aInput.value = "";
+    titleEl.textContent = "Add New FAQ";
+  }
+  wrap.style.display = "";
+  qInput.focus();
+}
+
+function closeFaqForm() {
+  const wrap = document.getElementById("faq-form-wrap");
+  if (wrap) wrap.style.display = "none";
+  editingFaqId = null;
+}
+
+async function saveFaqItem() {
+  const q = document.getElementById("faq-q-input").value.trim();
+  const a = document.getElementById("faq-a-input").value.trim();
+  const status = document.getElementById("faq-save-status");
+  const btn = document.getElementById("faq-save-btn");
+  if (!q || !a) { if (status) { status.textContent = "⚠ Question and answer are required."; } return; }
+  btn.disabled = true; btn.innerHTML = `<ion-icon name="hourglass-outline"></ion-icon> Saving…`;
+  try {
+    const data = { question: q, answer: a, active: true, order: faqItems.length, updatedAt: serverTimestamp() };
+    if (editingFaqId) {
+      await setDoc(doc(db, "faqs", editingFaqId), data);
+    } else {
+      await addDoc(collection(db, "faqs"), data);
+    }
+    if (status) { status.textContent = "✓ Saved"; setTimeout(() => { status.textContent = ""; }, 2500); }
+    closeFaqForm();
+    await loadFaqs();
+    adminToast(editingFaqId ? "FAQ updated." : "FAQ added.");
+  } catch (err) {
+    alert("Failed: " + (err.code || err.message));
+  } finally {
+    btn.disabled = false; btn.innerHTML = `<ion-icon name="save-outline"></ion-icon> Save FAQ`;
+  }
+}
+
+window.openFaqForm = openFaqForm;
+window.saveFaqItem = saveFaqItem;
+window.deleteFaq = async function(id) {
+  if (!await zahrounConfirm("Delete this FAQ? This action cannot be undone.", { title: "Delete FAQ", ok: "Delete", danger: true })) return;
+  try {
+    await deleteDoc(doc(db, "faqs", id));
+    faqItems = faqItems.filter(f => f._id !== id);
+    renderFaqListAdmin();
+    adminToast("FAQ deleted.");
+  } catch (e) { alert("Failed to delete: " + e.message); }
+};
+
+/* ---- Broadcast ---------------------------------------------------------- */
+let broadcastData = { enabled: false };
+
+const BC_PRESETS = {
+  promo:   { bg: "#111111", fg: "#D4AF37" },
+  info:    { bg: "#1a3c5e", fg: "#ffffff" },
+  emerald: { bg: "#1ADFE2", fg: "#111111" },
+  warning: { bg: "#6b1a2a", fg: "#ffffff" },
+  carousel:{ bg: "#111111", fg: "#ffffff"  }
+};
+
+const BC_SPEEDS      = { slow: 2.2, normal: 1.0, fast: 0.48, vfast: 0.25 };
+const BC_BG_DUR      = { shimmer: 2.6, "shimmer-fast": 0.75, "golden-glow": 1.9, glass: 4.0, neon: 1.8 };
+const BC_TEXT_DUR    = {
+  ticker: 13, "ticker-r": 13,
+  "slide-left": 4.5, "slide-right": 4.5, "slide-top": 4.5, "slide-bottom": 4.5,
+  fade: 4.5, bounce: 4.5, flip: 4.5, blink: 1.0
+};
+const BC_INTENSITIES = { low: 0.10, normal: 0.25, high: 0.42, max: 0.65 };
+
+function bcHexToRgba(hex, alpha) {
+  if (!hex || hex.length < 7) return `rgba(255,255,255,${alpha})`;
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function bcSetColors(bg, fg) {
+  const bgEl = document.getElementById("bc-bg-color");
+  const fgEl = document.getElementById("bc-fg-color");
+  if (bgEl) { bgEl.value = bg; document.getElementById("bc-bg-hex").value = bg; }
+  if (fgEl) { fgEl.value = fg; document.getElementById("bc-fg-hex").value = fg; }
+}
+
+function bcPreviewUpdate() {
+  const preview  = document.getElementById("bc-preview");
+  const pvText   = document.getElementById("bc-preview-text");
+  if (!preview || !pvText) return;
+
+  const bg     = document.getElementById("bc-bg-color")?.value  || "#111111";
+  const fg     = document.getElementById("bc-fg-color")?.value  || "#ffffff";
+  const bcType = document.getElementById("bc-type")?.value || "promo";
+
+  const bgAnim    = document.getElementById("bc-animation")?.value    || "none";
+  const bgSpeed   = document.getElementById("bc-bg-speed")?.value     || "normal";
+  const textAnim  = document.getElementById("bc-text-anim")?.value    || "none";
+  const textSpeed = document.getElementById("bc-text-speed")?.value   || "normal";
+  const effectColor = document.getElementById("bc-effect-color")?.value || "#ffffff";
+  const intensity   = parseInt(document.getElementById("bc-effect-intensity")?.value || "25") / 100;
+  const effectArea  = document.getElementById("bc-effect-area")?.value  || "inside";
+
+  const showBeam  = effectArea === "inside"  || effectArea === "both";
+  const showOuter = effectArea === "outside" || effectArea === "both" || effectArea === "edge-rim" || effectArea === "ambient" || effectArea === "bottom-line";
+
+  const eHigh = bcHexToRgba(effectColor, intensity);
+  const eLow  = bcHexToRgba(effectColor, intensity * 0.4);
+  const eGlow = bcHexToRgba(effectColor, intensity * 1.9);
+
+  // Use overflow:visible when outer glow needed so box-shadow is not clipped
+  preview.style.cssText = [
+    "border-radius:8px;height:52px",
+    "display:flex;align-items:center;justify-content:center",
+    "font-size:.87rem;font-family:var(--font-sans)",
+    `overflow:${showOuter ? "visible" : "hidden"};position:relative;padding:0 2.5rem`,
+    `background:${bg};color:${fg}`
+  ].join(";");
+  preview.querySelectorAll(".bc-prev-beam").forEach(e => e.remove());
+  document.getElementById("bc-preview-css")?.remove();
+
+  // ── Carousel vs normal content ────────────────────────────────────────────
+  const isCarousel = bcType === "carousel";
+  if (isCarousel) {
+    const rawMsgs = (document.getElementById("bc-carousel-msgs")?.value || "").split("\n").map(s => s.trim()).filter(Boolean);
+    const msgs = rawMsgs.length ? rawMsgs : ["Your carousel message here…"];
+    let idx = parseInt(preview.dataset.carouselIdx || "0");
+    if (idx >= msgs.length) idx = 0;
+    preview.dataset.carouselIdx = idx;
+
+    pvText.style.cssText = "position:relative;z-index:1;white-space:nowrap;text-align:center;";
+    pvText.style.animation = "";
+    pvText.textContent = msgs[idx].length > 80 ? msgs[idx].slice(0,80)+"…" : msgs[idx];
+
+    preview.querySelectorAll(".bc-pv-arrow").forEach(e => e.remove());
+    const arrowStyle = `position:absolute;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;font-weight:700;color:${fg};opacity:.7;padding:.2rem .5rem;z-index:3;`;
+    const prevBtn = document.createElement("button");
+    prevBtn.className = "bc-pv-arrow"; prevBtn.style.cssText = arrowStyle + "left:.5rem;";
+    prevBtn.textContent = "‹";
+    prevBtn.onclick = () => { preview.dataset.carouselIdx = ((idx - 1 + msgs.length) % msgs.length); bcPreviewUpdate(); };
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "bc-pv-arrow"; nextBtn.style.cssText = arrowStyle + "right:.5rem;";
+    nextBtn.textContent = "›";
+    nextBtn.onclick = () => { preview.dataset.carouselIdx = ((idx + 1) % msgs.length); bcPreviewUpdate(); };
+    preview.appendChild(prevBtn);
+    preview.appendChild(nextBtn);
+    // No dot indicators
+  } else {
+    const msg = document.getElementById("bc-message")?.value.trim() || "Your message will appear here";
+    preview.querySelectorAll(".bc-pv-arrow").forEach(e => e.remove());
+    pvText.style.cssText = "position:relative;z-index:1;white-space:nowrap;";
+    pvText.style.animation = "";
+    pvText.textContent = msg.length > 80 ? msg.slice(0, 80) + "…" : msg;
+  }
+
+  // ── Animation durations ───────────────────────────────────────────────────
+  const bgMult  = BC_SPEEDS[bgSpeed]   || 1;
+  const txtMult = BC_SPEEDS[textSpeed] || 1;
+  const bgDur   = ((BC_BG_DUR[bgAnim]    || 2)   * bgMult).toFixed(2);
+  const txtDur  = ((BC_TEXT_DUR[textAnim]|| 4.5) * txtMult).toFixed(2);
+
+  // ── CSS keyframes ─────────────────────────────────────────────────────────
+  const css = `
+    @keyframes bcpv-shimmer  { from{transform:translateX(-120%)} to{transform:translateX(300%)} }
+    @keyframes bcpv-glass    { from{transform:translateX(-120%) skewX(-12deg)} to{transform:translateX(300%) skewX(-12deg)} }
+    @keyframes bcpv-gglow    {
+      0%,100%{box-shadow:0 2px 10px 2px rgba(212,175,55,.45),0 -2px 10px 2px rgba(212,175,55,.45),2px 0 10px 2px rgba(212,175,55,.45),-2px 0 10px 2px rgba(212,175,55,.45),inset 0 0 10px rgba(212,175,55,.12)}
+      50%{box-shadow:0 3px 26px 8px rgba(212,175,55,.9),0 -3px 26px 8px rgba(212,175,55,.9),3px 0 26px 8px rgba(212,175,55,.9),-3px 0 26px 8px rgba(212,175,55,.9),inset 0 0 26px rgba(212,175,55,.3)}
+    }
+    @keyframes bcpv-neon     { 0%,100%{filter:brightness(1) saturate(1);opacity:1} 50%{filter:brightness(1.45) saturate(1.4);opacity:.88} }
+    @keyframes bcpv-ticker   { from{left:101%} to{left:-101%} }
+    @keyframes bcpv-tickerr  { from{left:-101%} to{left:101%} }
+    @keyframes bcpv-slidel   { 0%,8%{transform:translateX(-120%);opacity:0} 18%,78%{transform:translateX(0);opacity:1} 90%,100%{transform:translateX(120%);opacity:0} }
+    @keyframes bcpv-slider   { 0%,8%{transform:translateX(120%);opacity:0}  18%,78%{transform:translateX(0);opacity:1} 90%,100%{transform:translateX(-120%);opacity:0} }
+    @keyframes bcpv-slidet   { 0%,8%{transform:translateY(-180%);opacity:0} 18%,78%{transform:translateY(0);opacity:1} 90%,100%{transform:translateY(180%);opacity:0} }
+    @keyframes bcpv-slideb   { 0%,8%{transform:translateY(180%);opacity:0}  18%,78%{transform:translateY(0);opacity:1} 90%,100%{transform:translateY(-180%);opacity:0} }
+    @keyframes bcpv-fade     { 0%,8%{opacity:0} 18%,78%{opacity:1} 90%,100%{opacity:0} }
+    @keyframes bcpv-bounce   { 0%,8%{transform:translateY(-200%) scale(.5);opacity:0} 20%{transform:translateY(12%) scale(1.08)} 28%,78%{transform:translateY(0) scale(1);opacity:1} 90%,100%{transform:scale(.4);opacity:0} }
+    @keyframes bcpv-flip     { 0%,8%{transform:rotateX(-90deg);opacity:0} 20%,78%{transform:rotateX(0);opacity:1} 90%,100%{transform:rotateX(90deg);opacity:0} }
+    @keyframes bcpv-blink    { 0%,49%{opacity:1} 50%,99%{opacity:0} }
+  `;
+  const styleEl = document.createElement("style");
+  styleEl.id = "bc-preview-css";
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+
+  // ── Background animation — applies to carousel AND normal ─────────────────
+  const addBeam = (beamCss) => {
+    const beam = document.createElement("span");
+    beam.className = "bc-prev-beam";
+    if (showOuter) {
+      // Wrap in overflow:hidden container so beam stays within bounds
+      // while outer box-shadow can show freely
+      const wrap = document.createElement("div");
+      wrap.className = "bc-prev-beam";
+      wrap.style.cssText = "position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2;border-radius:inherit;";
+      beam.style.cssText = beamCss;
+      wrap.appendChild(beam);
+      preview.appendChild(wrap);
+    } else {
+      beam.style.cssText = beamCss + "z-index:2;";
+      preview.appendChild(beam);
+    }
+  };
+
+  if (bgAnim === "shimmer" || bgAnim === "shimmer-fast") {
+    if (showBeam) addBeam(`position:absolute;top:0;width:42%;height:100%;pointer-events:none;background:linear-gradient(90deg,transparent,${eHigh},transparent);animation:bcpv-shimmer ${bgDur}s ease-in-out infinite;`);
+    if (showOuter) preview.style.boxShadow = `0 0 22px 7px ${eGlow}`;
+  } else if (bgAnim === "glass") {
+    if (showBeam) addBeam(`position:absolute;top:0;width:42%;height:100%;pointer-events:none;background:linear-gradient(105deg,transparent 35%,${eHigh} 48%,${eLow} 55%,transparent 68%);transform:skewX(-10deg);animation:bcpv-glass ${bgDur}s ease-in-out infinite 1s;`);
+    if (showOuter) preview.style.boxShadow = `0 0 22px 7px ${eGlow}`;
+  } else if (bgAnim === "golden-glow") {
+    const gc  = bcHexToRgba(effectColor, intensity * 0.85);
+    const gc2 = bcHexToRgba(effectColor, intensity * 0.35);
+    const css2 = `@keyframes bcpv-gglow2{0%,100%{box-shadow:0 2px 12px 3px ${gc2},0 -2px 12px 3px ${gc2},2px 0 12px 3px ${gc2},-2px 0 12px 3px ${gc2},inset 0 0 12px ${eLow}}50%{box-shadow:0 4px 30px 10px ${gc},0 -4px 30px 10px ${gc},4px 0 30px 10px ${gc},-4px 0 30px 10px ${gc},inset 0 0 30px ${eHigh}}}`;
+    document.getElementById("bc-preview-css").textContent += css2;
+    preview.style.animation = `bcpv-gglow2 ${bgDur}s ease-in-out infinite`;
+    if (!showOuter) preview.style.clipPath = "inset(0)";
+  } else if (bgAnim === "neon") {
+    preview.style.animation = `bcpv-neon ${bgDur}s ease-in-out infinite`;
+    if (showOuter) preview.style.boxShadow = `0 0 26px 8px ${eGlow}`;
+  }
+
+  // ── Premium effect area styles ────────────────────────────────────────────
+  if (effectArea === "edge-rim") {
+    const css3 = `@keyframes bcpv-rim{0%,100%{box-shadow:0 0 0 1.5px ${eHigh},inset 0 0 0 1.5px ${eLow},0 0 10px 3px ${eGlow}}50%{box-shadow:0 0 0 2px ${eGlow},inset 0 0 0 1.5px ${eHigh},0 0 20px 8px ${eGlow}}}`;
+    document.getElementById("bc-preview-css").textContent += css3;
+    const prev = preview.style.animation;
+    preview.style.animation = prev ? `${prev},bcpv-rim ${bgDur}s ease-in-out infinite` : `bcpv-rim ${bgDur}s ease-in-out infinite`;
+  } else if (effectArea === "bottom-line") {
+    const css3 = `@keyframes bcpv-bline{0%,100%{opacity:.5;left:20%;right:20%}50%{opacity:1;left:4%;right:4%}}`;
+    document.getElementById("bc-preview-css").textContent += css3;
+    const line = document.createElement("div");
+    line.className = "bc-prev-beam";
+    line.style.cssText = `position:absolute;bottom:0;left:4%;right:4%;height:2px;border-radius:99px;background:${eHigh};box-shadow:0 0 8px 3px ${eGlow},0 0 14px 5px ${bcHexToRgba(effectColor,intensity*0.45)};pointer-events:none;z-index:4;animation:bcpv-bline ${bgDur}s ease-in-out infinite;`;
+    preview.appendChild(line);
+  } else if (effectArea === "ambient") {
+    const a1 = bcHexToRgba(effectColor, Math.min(intensity * 1.4, 0.92));
+    const a2 = bcHexToRgba(effectColor, intensity * 0.6);
+    const a3 = bcHexToRgba(effectColor, intensity * 0.22);
+    const css3 = `@keyframes bcpv-ambient{0%,100%{box-shadow:0 0 16px 5px ${a2},0 0 34px 12px ${a3},inset 0 0 16px ${bcHexToRgba(effectColor,intensity*0.1)}}50%{box-shadow:0 0 28px 10px ${a1},0 0 52px 20px ${a2},inset 0 0 28px ${bcHexToRgba(effectColor,intensity*0.2)}}}`;
+    document.getElementById("bc-preview-css").textContent += css3;
+    const prev = preview.style.animation;
+    preview.style.animation = prev ? `${prev},bcpv-ambient ${bgDur}s ease-in-out infinite` : `bcpv-ambient ${bgDur}s ease-in-out infinite`;
+  }
+
+  // ── Text animation — carousel has its own fade, skip ─────────────────────
+  if (!isCarousel) {
+    const TANIM_MAP = {
+      "slide-left": "bcpv-slidel", "slide-right": "bcpv-slider",
+      "slide-top":  "bcpv-slidet", "slide-bottom": "bcpv-slideb",
+      fade: "bcpv-fade", bounce: "bcpv-bounce", flip: "bcpv-flip", blink: "bcpv-blink"
+    };
+    if (textAnim === "ticker" || textAnim === "ticker-r") {
+      pvText.style.cssText = "position:absolute;white-space:nowrap;z-index:1;";
+      pvText.style.animation = `${textAnim === "ticker" ? "bcpv-ticker" : "bcpv-tickerr"} ${txtDur}s linear infinite`;
+    } else if (TANIM_MAP[textAnim]) {
+      pvText.style.cssText = "position:relative;z-index:1;white-space:nowrap;";
+      pvText.style.animation = `${TANIM_MAP[textAnim]} ${txtDur}s ease-in-out infinite`;
+    }
+  }
+}
+
+async function fetchBroadcast() {
+  try {
+    const snap = await getDoc(doc(db, "settings", "broadcast"));
+    broadcastData = snap.exists() ? snap.data() : { enabled: false };
+  } catch (e) { console.error("fetchBroadcast:", e); }
+}
+
+function updateBroadcastBadge() {
+  const badge = document.getElementById("nav-broadcast-badge");
+  const liveBadge = document.getElementById("broadcast-live-badge");
+  const on = !!broadcastData.enabled;
+  if (badge) badge.style.display = on ? "" : "none";
+  if (liveBadge) liveBadge.style.display = on ? "" : "none";
+}
+
+function bcToggleCarouselRow() {
+  const isCarousel = document.getElementById("bc-type").value === "carousel";
+  document.getElementById("bc-message-row").style.display  = isCarousel ? "none" : "";
+  document.getElementById("bc-carousel-row").style.display = isCarousel ? "" : "none";
+}
+
+function renderBroadcastForm() {
+  document.getElementById("bc-enabled").checked        = !!broadcastData.enabled;
+  document.getElementById("bc-message").value           = broadcastData.message       || "";
+  document.getElementById("bc-type").value              = broadcastData.type          || "promo";
+  document.getElementById("bc-animation").value         = broadcastData.animation     || "none";
+  document.getElementById("bc-bg-speed").value          = broadcastData.bgSpeed       || "normal";
+  document.getElementById("bc-text-anim").value         = broadcastData.textAnim      || "none";
+  document.getElementById("bc-text-speed").value        = broadcastData.textSpeed     || "normal";
+  // Intensity: support legacy string ("normal","high"…) and new number (1-100)
+  const _legacyIntMap = { low: 10, normal: 25, high: 42, max: 65 };
+  const _rawInt = broadcastData.effectIntensity;
+  const _intNum = typeof _rawInt === "number" ? _rawInt : (_legacyIntMap[_rawInt] || 25);
+  document.getElementById("bc-effect-intensity").value     = String(_intNum);
+  document.getElementById("bc-effect-intensity-num").value = String(_intNum);
+  document.getElementById("bc-effect-area").value          = broadcastData.effectArea    || "inside";
+  document.getElementById("bc-dismissible").value          = broadcastData.dismissible === false ? "0" : "1";
+  document.getElementById("bc-link").value              = broadcastData.link          || "";
+  document.getElementById("bc-link-text").value         = broadcastData.linkText      || "";
+  // Carousel messages + interval
+  const carouselMsgs = Array.isArray(broadcastData.carouselMessages) ? broadcastData.carouselMessages : [];
+  document.getElementById("bc-carousel-msgs").value = carouselMsgs.join("\n");
+  document.getElementById("bc-carousel-interval").value = String(broadcastData.carouselInterval ?? 4);
+  bcToggleCarouselRow();
+  // Effect color
+  const efCol = broadcastData.effectColor || "#ffffff";
+  document.getElementById("bc-effect-color").value = efCol;
+  document.getElementById("bc-effect-hex").value   = efCol;
+
+  const preset = BC_PRESETS[broadcastData.type] || BC_PRESETS.promo;
+  bcSetColors(broadcastData.bgColor || preset.bg, broadcastData.fgColor || preset.fg);
+  bcPreviewUpdate();
+
+  updateBroadcastBadge();
+  document.getElementById("bc-enabled").onchange   = updateBroadcastBadge;
+  document.getElementById("save-broadcast").onclick = saveBroadcast;
+
+  // Any change → refresh preview
+  ["bc-message","bc-animation","bc-bg-speed","bc-text-anim","bc-text-speed","bc-effect-area"].forEach(id => {
+    document.getElementById(id).oninput  = bcPreviewUpdate;
+    document.getElementById(id).onchange = bcPreviewUpdate;
+  });
+  document.getElementById("bc-carousel-msgs").oninput = bcPreviewUpdate;
+
+  // Intensity range ↔ number sync
+  const _iRange = document.getElementById("bc-effect-intensity");
+  const _iNum   = document.getElementById("bc-effect-intensity-num");
+  _iRange.oninput = () => { _iNum.value = _iRange.value; bcPreviewUpdate(); };
+  _iNum.oninput   = () => {
+    const v = Math.max(1, Math.min(100, parseInt(_iNum.value) || 25));
+    _iNum.value = String(v); _iRange.value = String(v); bcPreviewUpdate();
+  };
+
+  const efColorEl = document.getElementById("bc-effect-color");
+  const efHexEl   = document.getElementById("bc-effect-hex");
+  efColorEl.oninput = () => { efHexEl.value = efColorEl.value; bcPreviewUpdate(); };
+  efHexEl.oninput   = () => { if (/^#[0-9A-Fa-f]{6}$/.test(efHexEl.value)) { efColorEl.value = efHexEl.value; bcPreviewUpdate(); } };
+
+  // Preset style → auto-fill colors + toggle carousel row
+  document.getElementById("bc-type").onchange = () => {
+    const t = document.getElementById("bc-type").value;
+    if (t !== "custom") { const p = BC_PRESETS[t] || BC_PRESETS.promo; bcSetColors(p.bg, p.fg); }
+    bcToggleCarouselRow();
+    bcPreviewUpdate();
+  };
+
+  const bgColor = document.getElementById("bc-bg-color");
+  const fgColor = document.getElementById("bc-fg-color");
+  const bgHex   = document.getElementById("bc-bg-hex");
+  const fgHex   = document.getElementById("bc-fg-hex");
+
+  bgColor.oninput = () => { bgHex.value = bgColor.value; document.getElementById("bc-type").value = "custom"; bcPreviewUpdate(); };
+  fgColor.oninput = () => { fgHex.value = fgColor.value; bcPreviewUpdate(); };
+  bgHex.oninput   = () => { if (/^#[0-9A-Fa-f]{6}$/.test(bgHex.value)) { bgColor.value = bgHex.value; bcPreviewUpdate(); } };
+  fgHex.oninput   = () => { if (/^#[0-9A-Fa-f]{6}$/.test(fgHex.value)) { fgColor.value = fgHex.value; bcPreviewUpdate(); } };
+}
+
+async function saveBroadcast() {
+  const btn = document.getElementById("save-broadcast");
+  const status = document.getElementById("bc-save-status");
+  const bcType = document.getElementById("bc-type").value;
+  const carouselMessages = bcType === "carousel"
+    ? document.getElementById("bc-carousel-msgs").value.split("\n").map(s => s.trim()).filter(Boolean).slice(0, 10)
+    : [];
+  const data = {
+    enabled:   document.getElementById("bc-enabled").checked,
+    message:   document.getElementById("bc-message").value.trim(),
+    type:      bcType,
+    carouselMessages,
+    animation:       document.getElementById("bc-animation").value,
+    bgSpeed:         document.getElementById("bc-bg-speed").value,
+    textAnim:        document.getElementById("bc-text-anim").value,
+    textSpeed:       document.getElementById("bc-text-speed").value,
+    effectColor:     document.getElementById("bc-effect-color").value,
+    effectIntensity: parseInt(document.getElementById("bc-effect-intensity").value) || 25,
+    effectArea:      document.getElementById("bc-effect-area").value,
+    dismissible:     document.getElementById("bc-dismissible").value !== "0",
+    carouselInterval: parseInt(document.getElementById("bc-carousel-interval").value) || 4,
+    bgColor:         document.getElementById("bc-bg-color").value,
+    fgColor:         document.getElementById("bc-fg-color").value,
+    link:      document.getElementById("bc-link").value.trim(),
+    linkText:  document.getElementById("bc-link-text").value.trim(),
+    updatedAt: serverTimestamp()
+  };
+  btn.disabled = true; btn.innerHTML = `<ion-icon name="hourglass-outline"></ion-icon> Saving…`;
+  try {
+    await setDoc(doc(db, "settings", "broadcast"), data);
+    broadcastData = { ...data };
+    updateBroadcastBadge();
+    if (status) { status.textContent = "✓ Saved"; setTimeout(() => { status.textContent = ""; }, 3000); }
+    adminToast(`Broadcast ${data.enabled ? "is now LIVE 📢" : "turned off."}`);
+  } catch (err) { alert("Failed: " + (err.code || err.message)); }
+  finally { btn.disabled = false; btn.innerHTML = `<ion-icon name="save-outline"></ion-icon> Save Broadcast`; }
 }
 
 /* ---- Messages ---------------------------------------------------------- */
@@ -1148,7 +2757,7 @@ function renderMessagesTable() {
     fetchMessages(); // refresh badge/count
   }));
   tbody.querySelectorAll("[data-msg-del]").forEach(b => b.addEventListener("click", async () => {
-    if (!confirm("Delete this message?")) return;
+    if (!await zahrounConfirm("Delete this message? This action cannot be undone.", { title: "Delete Message", ok: "Delete", danger: true })) return;
     await deleteDoc(doc(db, "messages", b.dataset.msgDel));
     messages = messages.filter(m => m.id !== b.dataset.msgDel);
     renderMessagesTable();
@@ -1157,6 +2766,60 @@ function renderMessagesTable() {
 }
 
 /* ---- Settings ---------------------------------------------------------- */
+/* ---- Admins --------------------------------------------------------------- */
+async function loadAdminsSection() {
+  const listEl = document.getElementById("admins-list");
+  if (!listEl) return;
+  listEl.innerHTML = `<p class="muted-note">Loading…</p>`;
+  try {
+    const snap = await getDocs(query(collection(db, "users"), where("role", "==", "admin")));
+    const admins = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    if (!admins.length) {
+      listEl.innerHTML = `<p class="muted-note">No admin users found.</p>`;
+      return;
+    }
+    listEl.innerHTML = `<table class="data-table" style="width:100%;">
+      <thead><tr><th>Name</th><th>Email</th><th>Joined</th><th></th></tr></thead>
+      <tbody>${admins.map(a => `<tr>
+        <td>${escapeHtml(a.name || "—")}</td>
+        <td>${escapeHtml(a.email || "—")}</td>
+        <td class="muted-note">${fmtDate(a.createdAt)}</td>
+        <td><button class="btn-outline" style="font-size:.78rem;padding:.25rem .6rem;color:#e63946;border-color:#e63946;" onclick="window._revokeAdmin('${escapeHtml(a.docId)}','${escapeHtml(a.email||'')}')">Revoke</button></td>
+      </tr>`).join("")}</tbody>
+    </table>`;
+  } catch (e) {
+    listEl.innerHTML = `<p class="muted-note" style="color:#e63946;">Error loading admins.</p>`;
+  }
+}
+
+window._revokeAdmin = async function(uid, email) {
+  if (!await zahrounConfirm(`Remove admin access from ${email}? They will no longer be able to access the admin panel.`, { title: "Revoke Admin Access", ok: "Revoke", danger: true })) return;
+  try {
+    await updateDoc(doc(db, "users", uid), { role: "customer" });
+    adminToast("Admin access removed.");
+    loadAdminsSection();
+  } catch (e) { adminToast("Failed: " + (e.code || e.message), false); }
+};
+
+window._grantAdmin = async function() {
+  const emailInput = document.getElementById("admin-grant-email");
+  const msgEl = document.getElementById("admin-grant-msg");
+  const email = (emailInput.value || "").trim();
+  if (!email) { msgEl.textContent = "Please enter an email."; msgEl.style.color = "#e63946"; return; }
+  msgEl.textContent = "Searching…"; msgEl.style.color = "var(--text-muted)";
+  try {
+    const snap = await getDocs(query(collection(db, "users"), where("email", "==", email)));
+    if (snap.empty) { msgEl.textContent = "No account found with this email."; msgEl.style.color = "#e63946"; return; }
+    const userDoc = snap.docs[0];
+    if (userDoc.data().role === "admin") { msgEl.textContent = "This user is already an admin."; msgEl.style.color = "var(--text-muted)"; return; }
+    await updateDoc(doc(db, "users", userDoc.id), { role: "admin" });
+    msgEl.textContent = `Admin access granted to ${email}.`;
+    msgEl.style.color = "#1e7e34";
+    emailInput.value = "";
+    loadAdminsSection();
+  } catch (e) { msgEl.textContent = "Error: " + (e.code || e.message); msgEl.style.color = "#e63946"; }
+};
+
 function renderSettingsForm() {
   const f = $("#settings-form");
   if (!f) return;
@@ -1166,6 +2829,10 @@ function renderSettingsForm() {
   f.querySelector("[name=announcementActive]").checked = !!settings.announcementActive;
   f.querySelector("[name=heroTitle]").value = settings.heroTitle || "";
   f.querySelector("[name=heroSubtitle]").value = settings.heroSubtitle || "";
+  f.querySelector("[name=deliveryDhaka]").value = settings.deliveryDhaka ?? 60;
+  f.querySelector("[name=deliveryOutside]").value = settings.deliveryOutside ?? 120;
+  f.querySelector("[name=freeDeliveryThreshold]").value = settings.freeDeliveryThreshold ?? 0;
+  f.querySelector("[name=reviewsEnabled]").checked = settings.reviewsEnabled !== false;
 }
 
 async function saveSettings(e) {
@@ -1181,6 +2848,10 @@ async function saveSettings(e) {
       announcementActive: f.querySelector("[name=announcementActive]").checked,
       heroTitle: f.querySelector("[name=heroTitle]").value.trim(),
       heroSubtitle: f.querySelector("[name=heroSubtitle]").value.trim(),
+      deliveryDhaka: parseInt(f.querySelector("[name=deliveryDhaka]").value) || 60,
+      deliveryOutside: parseInt(f.querySelector("[name=deliveryOutside]").value) || 120,
+      freeDeliveryThreshold: parseInt(f.querySelector("[name=freeDeliveryThreshold]").value) || 0,
+      reviewsEnabled: f.querySelector("[name=reviewsEnabled]").checked,
       updatedAt: serverTimestamp()
     };
     await setDoc(doc(db, "settings", "store"), data, { merge: true });
@@ -1221,7 +2892,39 @@ function openForm(product) {
     f.bestseller.checked = !!product.bestseller;
     f.newArrival.checked = !!product.newArrival;
     f.hidden.checked = !!product.hidden;
-  } else { f.id.value = ""; }
+    // Active sizes
+    const activeSzs = product.activeSizes ?? SIZE_KEYS;
+    SIZE_KEYS.forEach(sz => {
+      const cb = document.getElementById(`sizeOn-${sz}`);
+      const num = sz.replace("ML","");
+      const inp = document.querySelector(`#product-form input[name="price${num}"]`);
+      if (cb) cb.checked = activeSzs.includes(sz);
+      if (inp) { inp.disabled = !activeSzs.includes(sz); inp.closest(".fg").style.opacity = activeSzs.includes(sz) ? "1" : "0.42"; }
+    });
+    // Product type & combo
+    const pType = product.productType || "regular";
+    document.getElementById("product-type-sel").value = pType;
+    const isCombo = pType === "combo";
+    document.getElementById("combo-items-row").style.display = isCombo ? "" : "none";
+    document.getElementById("base-price-row").style.display  = isCombo ? "" : "none";
+    document.querySelector('#product-form [name="comboItems"]').value = (product.comboItems || []).join("\n");
+    document.querySelector('#product-form [name="basePrice"]').value  = product.basePrice || "";
+  } else {
+    f.id.value = "";
+    // Reset size toggles to all active
+    SIZE_KEYS.forEach(sz => {
+      const cb = document.getElementById(`sizeOn-${sz}`);
+      const num = sz.replace("ML","");
+      const inp = document.querySelector(`#product-form input[name="price${num}"]`);
+      if (cb) cb.checked = true;
+      if (inp) { inp.disabled = false; inp.closest(".fg").style.opacity = "1"; }
+    });
+    document.getElementById("product-type-sel").value = "regular";
+    document.getElementById("combo-items-row").style.display = "none";
+    document.getElementById("base-price-row").style.display  = "none";
+    document.querySelector('#product-form [name="comboItems"]').value = "";
+    document.querySelector('#product-form [name="basePrice"]').value  = "";
+  }
   $("#product-modal").classList.add("open");
 }
 
@@ -1363,6 +3066,10 @@ async function saveProduct(e) {
     fragrance_notes: csv(f.fragrance_notes.value), seasons: csv(f.seasons.value), occasions: csv(f.occasions.value),
     stock: numOrNull(f.stock.value) ?? 0,
     featured: f.featured.checked, bestseller: f.bestseller.checked, newArrival: f.newArrival.checked, hidden: f.hidden.checked,
+    activeSizes: SIZE_KEYS.filter(sz => { const cb = document.getElementById(`sizeOn-${sz}`); return !cb || cb.checked; }),
+    productType: document.getElementById("product-type-sel")?.value || "regular",
+    comboItems: (document.querySelector('#product-form [name="comboItems"]')?.value || "").split("\n").map(s => s.trim()).filter(Boolean),
+    basePrice: numOrNull(document.querySelector('#product-form [name="basePrice"]')?.value) || 0,
     updatedAt: serverTimestamp()
   };
   if (isNew) data.createdAt = serverTimestamp();
@@ -1379,7 +3086,7 @@ async function saveProduct(e) {
 
 async function deleteProduct(id) {
   const p = products.find(x => x.id === id);
-  if (!confirm(`Delete "${p ? p.name : id}"? This cannot be undone.`)) return;
+  if (!await zahrounConfirm(`Delete "${p ? p.name : id}"? This cannot be undone.`, { title: "Delete Product", ok: "Delete", danger: true })) return;
   try { await deleteDoc(doc(db, "products", String(id))); await fetchProducts(); renderProductTable(); renderDashboard(); updateNotifications(); }
   catch (err) { alert("Delete failed: " + (err.code || err.message)); }
 }
@@ -1449,6 +3156,13 @@ function renderStockAlerts() {
   if (!el) return;
   const outOfStock = products.filter(p => p.stock !== undefined && p.stock !== null && p.stock === 0);
   const lowStock = products.filter(p => p.stock !== undefined && p.stock !== null && p.stock > 0 && p.stock < 10);
+  // Update Products nav badge
+  const stockBadge = document.getElementById("nav-stock-badge");
+  if (stockBadge) {
+    const total = outOfStock.length + lowStock.length;
+    stockBadge.textContent = total || "";
+    stockBadge.style.display = total ? "" : "none";
+  }
   if (!outOfStock.length && !lowStock.length) { el.innerHTML = ""; return; }
   const parts = [];
   if (outOfStock.length) parts.push(`<strong>${outOfStock.length} out of stock</strong>: ${outOfStock.slice(0, 3).map(p => escapeHtml(p.name)).join(", ")}${outOfStock.length > 3 ? "…" : ""}`);
@@ -1465,6 +3179,27 @@ function renderStockAlerts() {
       if (lowBtn && !lowBtn.classList.contains("active")) lowBtn.click();
     }, 100);
   });
+}
+
+function checkDailyStockAlert() {
+  const today = new Date().toDateString();
+  if (localStorage.getItem("zStockAlertDay") === today) return;
+  const outOfStock = products.filter(p => p.stock !== undefined && p.stock !== null && p.stock === 0);
+  const lowStock   = products.filter(p => p.stock !== undefined && p.stock !== null && p.stock > 0 && p.stock < 10);
+  if (!outOfStock.length && !lowStock.length) return;
+  localStorage.setItem("zStockAlertDay", today);
+  const parts = [];
+  if (outOfStock.length) parts.push(`${outOfStock.length} out of stock`);
+  if (lowStock.length) parts.push(`${lowStock.length} low stock`);
+  let t = document.getElementById("daily-stock-toast");
+  if (t) t.remove();
+  t = document.createElement("div");
+  t.id = "daily-stock-toast";
+  t.style.cssText = "position:fixed;top:1.25rem;right:1.25rem;background:#fff;border:1.5px solid #ffc107;border-radius:14px;padding:1rem 1.25rem;box-shadow:0 6px 28px rgba(0,0,0,.14);font-family:var(--font-sans);font-size:.85rem;z-index:200000;max-width:320px;animation:cfmPop .3s ease both;";
+  t.innerHTML = `<div style="display:flex;align-items:flex-start;gap:.7rem;"><ion-icon name="warning-outline" style="font-size:1.4rem;color:#b8860b;flex-shrink:0;margin-top:.05rem;"></ion-icon><div><p style="font-weight:700;color:#856404;margin-bottom:.2rem;">Stock Alert</p><p style="color:#374151;margin-bottom:.75rem;line-height:1.45;">${parts.join(" &amp; ")} — review before orders come in.</p><div style="display:flex;gap:.5rem;"><button id="dsa-goto" style="background:#163E34;color:#fff;border:none;border-radius:7px;padding:.35rem .85rem;font-size:.8rem;font-weight:600;cursor:pointer;font-family:var(--font-sans);">View Products</button><button onclick="this.closest('#daily-stock-toast').remove()" style="background:none;border:1px solid #e5e5e5;border-radius:7px;padding:.35rem .75rem;font-size:.8rem;cursor:pointer;font-family:var(--font-sans);">Dismiss</button></div></div></div>`;
+  document.body.appendChild(t);
+  t.querySelector("#dsa-goto")?.addEventListener("click", () => { t.remove(); switchSection("products"); setTimeout(() => { const lb = document.querySelector(".pf-flag-btn[data-flag='lowstock']"); if (lb && !lb.classList.contains("active")) lb.click(); }, 100); });
+  setTimeout(() => { if (t.parentNode) { t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(() => t.remove(), 300); } }, 12000);
 }
 
 /* ---- Analytics --------------------------------------------------------- */
@@ -1686,16 +3421,39 @@ function openOrderDetail(order) {
 
     <div style="margin-bottom:1.25rem;">
       <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin-bottom:.75rem;">Items</div>
-      ${items.map(i => `
+      ${items.map(i => i.isFreeGift ? `
+        <div style="display:flex;align-items:center;gap:.75rem;background:#f4f9f6;border-radius:8px;border:1px solid #c3dfd2;padding:.65rem .75rem;margin-bottom:.35rem;">
+          ${i.image ? `<img src="${optimizedUrl(i.image, 50)}" alt="" style="width:44px;height:44px;object-fit:contain;background:#fff;border-radius:6px;flex-shrink:0;border:1px solid #c3dfd2;">` : ""}
+          <div style="flex:1;font-size:.88rem;">
+            <div style="font-weight:600;margin-bottom:.2rem;">${escapeHtml(i.name || "")}</div>
+            <div style="color:var(--text-muted);font-size:.8rem;">Size: ${escapeHtml(i.size || "—")}</div>
+            <div style="color:var(--text-muted);font-size:.8rem;">Quantity: 1</div>
+            <span style="display:inline-block;margin-top:.3rem;font-size:.65rem;font-weight:800;background:#0b231a;color:#c9a84c;border-radius:3px;padding:.15rem .5rem;letter-spacing:.12em;text-transform:uppercase;">Free Gift</span>
+          </div>
+          <div style="text-align:right;font-size:.88rem;">
+            ${i.originalPrice > 0 ? `<div style="color:var(--text-muted);text-decoration:line-through;font-size:.8rem;">৳${Number(i.originalPrice).toLocaleString()}</div>` : ""}
+            <div style="font-weight:700;color:#163E34;">FREE</div>
+          </div>
+        </div>` : `
         <div style="display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid #f0eee8;">
           ${i.image ? `<img src="${optimizedUrl(i.image, 50)}" alt="" style="width:44px;height:44px;object-fit:contain;background:var(--bg-color);border-radius:6px;flex-shrink:0;">` : ""}
           <div style="flex:1;font-size:.88rem;">
-            <div>${escapeHtml(i.name || "")}</div>
-            <div style="color:var(--text-muted);font-size:.8rem;">${escapeHtml(i.size || "")} × ${i.quantity || 1}</div>
+            <div style="font-weight:500;margin-bottom:.2rem;">${escapeHtml(i.name || "")}</div>
+            <div style="color:var(--text-muted);font-size:.8rem;">Size: ${escapeHtml(i.size || "—")}</div>
+            <div style="color:var(--text-muted);font-size:.8rem;">Quantity: ${i.quantity || 1}</div>
           </div>
           <div style="text-align:right;font-size:.88rem;">৳${((i.price || 0) * (i.quantity || 1)).toLocaleString()}</div>
         </div>`).join("")}
     </div>
+
+    ${order.giftMessage ? `
+    <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:.9rem 1.1rem;margin-bottom:1.25rem;display:flex;gap:.75rem;align-items:flex-start;">
+      <ion-icon name="gift-outline" style="font-size:1.3rem;color:#b8860b;flex-shrink:0;margin-top:.1rem;"></ion-icon>
+      <div>
+        <div style="font-size:.7rem;text-transform:uppercase;color:#b8860b;letter-spacing:.05em;font-weight:700;margin-bottom:.25rem;">Gift Message</div>
+        <div style="font-size:.88rem;color:#1c1c1c;line-height:1.6;font-style:italic;">"${escapeHtml(order.giftMessage)}"</div>
+      </div>
+    </div>` : ""}
 
     <div style="background:var(--bg-color);border-radius:8px;padding:1rem;margin-bottom:1rem;">
       <div style="display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:.4rem;"><span style="color:var(--text-muted);">Subtotal</span><span>৳${subtotal.toLocaleString()}</span></div>
@@ -1706,7 +3464,7 @@ function openOrderDetail(order) {
       </div>
     </div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
       <div>
         <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin-bottom:.3rem;">Status</div>
         <span class="o-status ${escapeHtml(order.status || "pending")}">${escapeHtml(order.status || "pending")}</span>
@@ -1715,8 +3473,26 @@ function openOrderDetail(order) {
         <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin-bottom:.3rem;">Ordered</div>
         <div style="font-size:.85rem;">${fmtDate(order.createdAt)}</div>
       </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border-color);padding-top:1rem;">
+      <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin-bottom:.5rem;">Staff Notes</div>
+      <textarea id="order-notes-ta" placeholder="Internal note for staff… (not visible to customer)" style="width:100%;box-sizing:border-box;border:1px solid var(--border-color);border-radius:8px;padding:.6rem .75rem;font-family:var(--font-sans,sans-serif);font-size:.85rem;resize:vertical;min-height:72px;background:var(--bg-color,#faf7f0);color:var(--text-main);">${escapeHtml(order.adminNotes || "")}</textarea>
+      <button id="order-notes-save" style="margin-top:.5rem;padding:.4rem 1.1rem;background:var(--primary-color,#163E34);color:#fff;border:none;border-radius:7px;font-size:.82rem;cursor:pointer;font-family:var(--font-sans);">Save Note</button>
     </div>`;
   document.getElementById("order-detail-modal").classList.add("open");
+  document.getElementById("order-notes-save").addEventListener("click", async () => {
+    const notes = document.getElementById("order-notes-ta").value.trim();
+    const btn = document.getElementById("order-notes-save");
+    btn.disabled = true; btn.textContent = "Saving…";
+    try {
+      await updateDoc(doc(db, "orders", order.id), { adminNotes: notes });
+      const o = orders.find(x => x.id === order.id);
+      if (o) o.adminNotes = notes;
+      adminToast("Note saved.");
+    } catch (e) { adminToast("Save failed.", "error"); }
+    btn.disabled = false; btn.textContent = "Save Note";
+  });
 }
 
 /* ---- Order invoice print ---------------------------------------------- */
@@ -1876,19 +3652,21 @@ function updateNotifications() {
   let html = "";
 
   if (newOrds.length) {
-    html += `<div style="padding:.45rem 1rem .2rem;font-size:.67rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-color);">New Orders</div>`;
-    html += newOrds.slice(0, 6).map(o => {
+    html += `<div style="padding:.55rem 1rem .3rem;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--primary-color);background:#f9f7f4;">New Orders</div>`;
+    html += newOrds.slice(0, 8).map(o => {
       const c = o.customer || {};
       const num = o.orderNum || o.id.slice(0, 8).toUpperCase();
       const ms = o.createdAt?.toMillis ? o.createdAt.toMillis() : (o.createdAt?.seconds || 0) * 1000;
       const isNew = !acknowledgedOrderIds.has(o.id);
-      return `<div class="notif-item" data-goto="orders" style="display:flex;align-items:center;gap:.7rem;padding:.65rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;background:${isNew ? '#fffaf5' : '#fff'};">
-        <ion-icon name="cart-outline" style="font-size:1.2rem;color:var(--primary-color);flex-shrink:0;"></ion-icon>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:.82rem;font-weight:600;">#${escapeHtml(String(num))}${isNew ? '<span class="notif-new-pill">NEW</span>' : ''}</div>
-          <div style="font-size:.74rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c.name || "Customer")} · ৳${(o.total || 0).toLocaleString()}</div>
+      return `<div class="notif-item" data-goto="orders" style="display:flex;align-items:center;gap:.75rem;padding:.7rem 1rem;border-bottom:1px solid #f4f2ee;cursor:pointer;background:${isNew ? '#fffcf5' : '#fff'};transition:background .15s;">
+        <div style="width:34px;height:34px;border-radius:9px;background:${isNew ? '#fef3d8' : '#f2f0ec'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <ion-icon name="cart-outline" style="font-size:1.05rem;color:${isNew ? '#b8860b' : 'var(--primary-color)'};"></ion-icon>
         </div>
-        <span style="font-size:.7rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">${timeAgo(ms)}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:.4rem;">#${escapeHtml(String(num))}${isNew ? '<span class="notif-new-pill">NEW</span>' : ''}</div>
+          <div style="font-size:.74rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem;">${escapeHtml(c.name || "Customer")} · ৳${(o.total || 0).toLocaleString()}</div>
+        </div>
+        <span style="font-size:.68rem;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">${timeAgo(ms)}</span>
       </div>`;
     }).join("");
   }
@@ -1897,10 +3675,12 @@ function updateNotifications() {
   if (unreadMsgs) summaryItems.push({ icon: "mail-outline", text: `${unreadMsgs} unread message${unreadMsgs > 1 ? "s" : ""}`, go: "messages", color: "#1a56b8" });
   if (lowStock) summaryItems.push({ icon: "warning-outline", text: `${lowStock} product${lowStock > 1 ? "s" : ""} low in stock (<10)`, go: "products", color: "#9b2226" });
   html += summaryItems.map(item => `
-    <div class="notif-item" data-goto="${item.go}" style="display:flex;align-items:center;gap:.7rem;padding:.75rem 1rem;border-bottom:1px solid #f0eee8;cursor:pointer;">
-      <ion-icon name="${item.icon}" style="font-size:1.2rem;color:${item.color};flex-shrink:0;"></ion-icon>
-      <span style="font-size:.85rem;">${item.text}</span>
-      <ion-icon name="chevron-forward-outline" style="margin-left:auto;color:var(--text-muted);font-size:.9rem;"></ion-icon>
+    <div class="notif-item" data-goto="${item.go}" style="display:flex;align-items:center;gap:.75rem;padding:.7rem 1rem;border-bottom:1px solid #f4f2ee;cursor:pointer;background:#fff;">
+      <div style="width:34px;height:34px;border-radius:9px;background:#f2f0ec;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <ion-icon name="${item.icon}" style="font-size:1.05rem;color:${item.color};"></ion-icon>
+      </div>
+      <span style="font-size:.82rem;flex:1;">${item.text}</span>
+      <ion-icon name="chevron-forward-outline" style="color:var(--text-muted);font-size:.85rem;flex-shrink:0;"></ion-icon>
     </div>`).join("");
 
   list.innerHTML = html;
@@ -2010,6 +3790,17 @@ function setupPagesSection() {
   document.getElementById("save-pages-homepage").addEventListener("click", savePagesHomepage);
   document.getElementById("save-pages-about").addEventListener("click", savePagesAbout);
   document.getElementById("save-pages-contact").addEventListener("click", savePagesContact);
+
+  // FAQ
+  document.getElementById("add-faq-btn").addEventListener("click", () => openFaqModal(null));
+  document.getElementById("cancel-faq").addEventListener("click", closeFaqModal);
+  document.getElementById("faq-modal").addEventListener("click", e => { if (e.target.id === "faq-modal") closeFaqModal(); });
+  document.getElementById("faq-form").addEventListener("submit", saveFaqModal);
+  fetchFaqs().then(renderFaqTable);
+
+  // Policies
+  renderPoliciesForm();
+  document.getElementById("save-policies").addEventListener("click", savePolicies);
 }
 
 function bindPageUpload(fileId, previewId, statusId, delId, { aspectRatio = NaN } = {}) {
@@ -2283,6 +4074,62 @@ function fmtDate(ts) {
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+function zahrounConfirm(msg, opts = {}) {
+  return new Promise(resolve => {
+    const title   = opts.title  || "Are you sure?";
+    const okText  = opts.ok     || "Confirm";
+    const danger  = opts.danger !== false;
+    const icon    = danger
+      ? `<ion-icon name="trash-outline"      style="color:#9b2226;font-size:1.45rem;"></ion-icon>`
+      : `<ion-icon name="swap-horizontal-outline" style="color:#163E34;font-size:1.45rem;"></ion-icon>`;
+
+    const ov = document.createElement("div");
+    ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.46);z-index:300000;display:flex;align-items:center;justify-content:center;padding:1.5rem;backdrop-filter:blur(3px);";
+    ov.innerHTML = `
+      <div style="background:#fff;border-radius:18px;padding:2rem 1.75rem;max-width:360px;width:100%;box-shadow:0 28px 70px rgba(0,0,0,.22);animation:cfmPop .22s cubic-bezier(.34,1.56,.64,1) both;font-family:var(--font-sans);">
+        <div style="width:48px;height:48px;border-radius:50%;background:${danger ? '#fff2f2' : '#f0f7f4'};display:flex;align-items:center;justify-content:center;margin-bottom:1.1rem;">${icon}</div>
+        <p style="font-size:1rem;font-weight:700;color:#1a1a1a;margin-bottom:.4rem;">${title}</p>
+        <p style="font-size:.88rem;color:#6b7280;margin-bottom:1.6rem;line-height:1.55;">${msg}</p>
+        <div style="display:flex;gap:.65rem;justify-content:flex-end;">
+          <button id="cfm-no"  style="padding:.55rem 1.2rem;border:1px solid #e5e5e5;background:#fff;border-radius:8px;font-size:.88rem;cursor:pointer;color:#374151;font-family:var(--font-sans);font-weight:500;">Cancel</button>
+          <button id="cfm-yes" style="padding:.55rem 1.2rem;background:${danger ? '#9b2226' : '#163E34'};color:#fff;border:none;border-radius:8px;font-size:.88rem;cursor:pointer;font-weight:600;font-family:var(--font-sans);">${okText}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    setTimeout(() => ov.querySelector("#cfm-yes").focus(), 50);
+    const close = r => { ov.remove(); resolve(r); };
+    ov.querySelector("#cfm-yes").addEventListener("click", () => close(true));
+    ov.querySelector("#cfm-no").addEventListener("click",  () => close(false));
+    ov.addEventListener("click", e => { if (e.target === ov) close(false); });
+    const onKey = e => { if (e.key === "Escape") { close(false); document.removeEventListener("keydown", onKey); } };
+    document.addEventListener("keydown", onKey);
+  });
+}
+
+function showWaNotifyToast(order, status) {
+  const c = order?.customer || {};
+  const num = order?.orderNum || (order?.id || "").slice(0, 6).toUpperCase();
+  const statusMsgs = {
+    confirmed: `✅ আপনার Order #${num} confirmed হয়েছে। আমরা আপনার পণ্য প্রস্তুত করছি।`,
+    shipped:   `🚚 আপনার Order #${num} shipped হয়েছে! শীঘ্রই পৌঁছাবে।`,
+    delivered: `🎉 আপনার Order #${num} delivered হয়েছে। ধন্যবাদ Zahroun বেছে নেওয়ার জন্য!`,
+    cancelled: `❌ আপনার Order #${num} cancelled হয়েছে।`
+  };
+  const msg = statusMsgs[status] || `📦 আপনার Order #${num} এর status "${status}" হয়েছে।`;
+  const waPhone = (c.mobile || "").replace(/[^0-9]/g, "").replace(/^0/, "880");
+  if (!waPhone) return;
+  const waUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(msg + "\n\n— Zahroun Perfumes")}`;
+  let t = document.getElementById("wa-notify-toast");
+  if (t) t.remove();
+  t = document.createElement("div");
+  t.id = "wa-notify-toast";
+  t.style.cssText = "position:fixed;bottom:4.5rem;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:.7rem 1rem;box-shadow:0 4px 20px rgba(0,0,0,.14);font-family:var(--font-sans);font-size:.84rem;z-index:100001;display:flex;align-items:center;gap:.7rem;white-space:nowrap;max-width:calc(100vw - 2rem);opacity:0;transition:opacity .25s;";
+  t.innerHTML = `<span style="color:#374151;">Status updated</span><a href="${waUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.35rem;background:#25D366;color:#fff;border-radius:6px;padding:.3rem .75rem;font-size:.8rem;font-weight:600;text-decoration:none;flex-shrink:0;"><ion-icon name="logo-whatsapp" style="font-size:1rem;"></ion-icon>Notify on WhatsApp</a><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1rem;padding:0;line-height:1;flex-shrink:0;">×</button>`;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = "1"; }, 10);
+  t._t = setTimeout(() => { t.style.opacity = "0"; setTimeout(() => t.remove(), 300); }, 8000);
+}
+
 function adminToast(msg, ok = true) {
   let t = document.getElementById("a-toast");
   if (!t) { t = document.createElement("div"); t.id = "a-toast"; document.body.appendChild(t); }
@@ -2290,4 +4137,347 @@ function adminToast(msg, ok = true) {
   t.textContent = (ok ? "✓ " : "⚠ ") + msg;
   clearTimeout(t._t);
   t._t = setTimeout(() => { t.style.opacity = "0"; }, 3200);
+}
+
+/* ========================================================================
+   PROMOTIONS PANEL
+   ======================================================================== */
+
+async function initPromotionsPanel() {
+  const P = window.ZahrounPromos;
+  if (!P) { console.warn("ZahrounPromos not loaded"); return; }
+  const cfg = await P.load(true);
+
+  const $   = id => document.getElementById(id);
+  const chk = (id, val) => { const el=$(id); if(el) el.checked=!!val; };
+  const num = (id, val) => { const el=$(id); if(el) el.value=val??''; };
+  const str = (id, val) => { const el=$(id); if(el) el.value=val??''; };
+  const getNum = id => parseFloat($(id)?.value)||0;
+  const getStr = id => $(id)?.value?.trim()||'';
+  const getChk = id => !!($(id)?.checked);
+
+  // Buy X Get Y
+  const bxgy = cfg.buyXGetY||{};
+  chk('p-bxgy-on', bxgy.enabled);
+  const r1=bxgy.rules?.[0]||{buy:2,getFree:1}, r2=bxgy.rules?.[1]||{buy:3,getFree:1};
+  num('p-bxgy-buy1',r1.buy); num('p-bxgy-free1',r1.getFree);
+  num('p-bxgy-buy2',r2.buy); num('p-bxgy-free2',r2.getFree);
+  // Free item scope
+  const bxgyScope = bxgy.freeItemScope || 'any';
+  const bxgyScopeEl = $(bxgyScope === 'select' ? 'p-bxgy-select' : 'p-bxgy-any');
+  if (bxgyScopeEl) bxgyScopeEl.checked = true;
+  // Support new freeProductSizes format (product+size) and legacy freeProductIds
+  const savedFreeSizes = new Set();
+  (bxgy.freeProductSizes || []).forEach(fs => savedFreeSizes.add(`${fs.productId}_${fs.size}`));
+  if (savedFreeSizes.size === 0 && bxgy.freeProductIds?.length) {
+    bxgy.freeProductIds.forEach(id => savedFreeSizes.add(`${id}_50ML`));
+  }
+  if ($('bxgy-products-wrap')) $('bxgy-products-wrap').style.display = bxgyScope === 'select' ? '' : 'none';
+  document.querySelectorAll('input[name="bxgy-scope"]').forEach(r => r.addEventListener('change', e => {
+    if ($('bxgy-products-wrap')) $('bxgy-products-wrap').style.display = e.target.value === 'select' ? '' : 'none';
+    if (e.target.value === 'select' && !_bxgyAllProducts) loadBxgyProducts('');
+  }));
+  // Load products for free item selection — size-aware checkboxes
+  const _BXGY_SIZES = ['6ML', '15ML', '30ML', '50ML'];
+  let _bxgyAllProducts = null;
+  async function loadBxgyProducts(filterText) {
+    const list = $('bxgy-prod-list'); if (!list) return;
+    list.innerHTML = '<span style="color:var(--text-muted);font-size:.8rem">Loading...</span>';
+    try {
+      if (!_bxgyAllProducts) {
+        const snap = await getDocs(collection(db, 'products'));
+        _bxgyAllProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      }
+      const ft = (filterText||'').toLowerCase();
+      const filtered = ft ? _bxgyAllProducts.filter(p => (p.name||'').toLowerCase().includes(ft)) : _bxgyAllProducts;
+      if (!filtered.length) { list.innerHTML = '<span style="color:var(--text-muted);font-size:.8rem">No products found.</span>'; return; }
+      list.innerHTML = filtered.map(p => {
+        const sizePrices = p.prices || {};
+        const availSizes = _BXGY_SIZES.filter(s => sizePrices[s]);
+        if (!availSizes.length) {
+          // Fallback for products without granular pricing
+          const key = `${p.id}_50ML`;
+          const chk = savedFreeSizes.has(key) ? 'checked' : '';
+          return `<label style="display:flex;align-items:center;gap:.5rem;padding:.28rem .4rem;border-radius:5px;cursor:pointer;">
+            <input type="checkbox" class="bxgy-prod-chk" value="${key}" ${chk}>
+            <span style="flex:1;">${p.name||p.id}</span>
+            ${p.price?`<span style="color:var(--text-muted);font-size:.78rem;">৳${p.price}</span>`:''}
+          </label>`;
+        }
+        return `<div style="margin-bottom:.45rem;padding:.45rem .55rem;border-radius:7px;background:#fafafa;border:1px solid #eee;">
+          <div style="font-size:.82rem;font-weight:600;color:#1a1a1a;margin-bottom:.3rem;">${p.name||p.id}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:.3rem;">
+            ${availSizes.map(s => {
+              const key = `${p.id}_${s}`;
+              const isChk = savedFreeSizes.has(key);
+              return `<label style="display:inline-flex;align-items:center;gap:.22rem;font-size:.76rem;padding:.18rem .45rem;border-radius:20px;border:1.5px solid ${isChk?'#163E34':'#ddd'};background:${isChk?'#e8f5e9':'#fff'};cursor:pointer;">
+                <input type="checkbox" class="bxgy-prod-chk" value="${key}" ${isChk?'checked':''}>${s}<span style="color:var(--text-muted);font-size:.7rem;margin-left:.12rem;">৳${sizePrices[s]}</span>
+              </label>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) { list.innerHTML = `<span style="color:#c0392b;font-size:.8rem">Error: ${e.message||'Could not load'}</span>`; }
+  }
+  $('bxgy-prod-search')?.addEventListener('input', e => loadBxgyProducts(e.target.value));
+  if (bxgyScope === 'select') loadBxgyProducts('');
+
+  // BOGO
+  const bogo=cfg.bogo||{};
+  chk('p-bogo-on',bogo.enabled); num('p-bogo-pct',bogo.discountPct??100);
+
+  // Tiered Discount
+  const td=cfg.tieredDiscount||{};
+  chk('p-tier-on',td.enabled);
+  renderTierRows(td.tiers||[{min:1000,pct:5},{min:2000,pct:10},{min:3000,pct:15}]);
+
+  // Free Gift
+  const fg=cfg.freeGift||{};
+  chk('p-fgift-on',fg.enabled); num('p-fgift-min',fg.threshold??2000); str('p-fgift-name',fg.productName||'Mini Sample');
+
+  // First Order
+  const fo=cfg.firstOrder||{};
+  chk('p-fo-on',fo.enabled); str('p-fo-type',fo.type||'fixed'); num('p-fo-amt',fo.amount??100);
+
+  // Free Shipping
+  const fs=cfg.freeShipping||{};
+  chk('p-fs-on',fs.enabled); num('p-fs-thresh',fs.threshold??1500);
+
+  // Min Qty
+  const mq=cfg.minQtyDiscount||{};
+  chk('p-mqd-on',mq.enabled);
+  renderMqdRows(mq.rules||[{qty:2,pct:5}]);
+
+  // Bundle Builder
+  const bb=cfg.bundleBuilder||{};
+  chk('p-bb-on',bb.enabled); num('p-bb-min',bb.minItems??3); num('p-bb-pct',bb.pct??15);
+
+  // Referral
+  const ref=cfg.referral||{};
+  chk('p-ref-on',ref.enabled); num('p-ref-fee',ref.refereeAmt??100); num('p-ref-rer',ref.referrerAmt??100);
+
+  // Loyalty
+  const lp=cfg.loyaltyPoints||{};
+  chk('p-lp-on',lp.enabled); num('p-lp-earn',lp.earnPer??100); num('p-lp-val',lp.redeemValue??1); num('p-lp-min',lp.minRedeem??50);
+  num('p-lp-min-order',lp.minOrderAmount??500); num('p-lp-max-pct',lp.maxRedeemPct??20);
+  chk('p-lp-allow-promo', lp.allowDuringPromos!==false);
+  chk('p-lp-allow-coupon', lp.allowWithCoupon!==false);
+  chk('p-lp-allow-gift', lp.allowWithFreeGift!==false);
+  // Enrollment mode
+  const enrollMode = lp.enrollMode || 'auto';
+  const enrollEl = $(enrollMode === 'approve' ? 'p-lp-approve' : 'p-lp-auto');
+  if (enrollEl) enrollEl.checked = true;
+  // Approval conditions
+  const cond = lp.enrollConditions || {};
+  num('p-lp-cond-min', cond.minPurchase ?? 0);
+  if ($('p-lp-cond-text')) $('p-lp-cond-text').value = cond.text || '';
+  const condWrap = document.getElementById('lp-conditions-wrap');
+  if (condWrap) condWrap.style.display = enrollMode === 'approve' ? '' : 'none';
+  // Tiers
+  const tiersOn = !!(lp.tiers?.enabled);
+  chk('p-lp-tiers-on', tiersOn);
+  if ($('lp-tiers-wrap')) $('lp-tiers-wrap').style.display = tiersOn ? '' : 'none';
+  const lt = lp.tiers || {};
+  num('p-lp-silver-min', lt.silver?.minSpend??0); num('p-lp-silver-mult', lt.silver?.mult??1);
+  num('p-lp-gold-min',   lt.gold?.minSpend??8000); num('p-lp-gold-mult',   lt.gold?.mult??2);
+  num('p-lp-plat-min',   lt.platinum?.minSpend??15000); num('p-lp-plat-mult',  lt.platinum?.mult??3);
+  $('p-lp-tiers-on')?.addEventListener('change', e => {
+    if ($('lp-tiers-wrap')) $('lp-tiers-wrap').style.display = e.target.checked ? '' : 'none';
+  });
+  // Spin to Win
+  const spin=cfg.spinToWin||{};
+  chk('p-spin-on',spin.enabled); num('p-spin-sec',spin.showAfterSec??8);
+  renderSpinPrizes(spin.prizes||[]);
+
+  // Seasonal
+  const seas=cfg.seasonal||{};
+  chk('p-seas-on',seas.enabled);
+  renderSeasEvents(seas.events||[]);
+
+  // Combo
+  const combo=cfg.comboDiscount||{};
+  chk('p-combo-on',combo.enabled);
+  renderComboRows(combo.combos||[]);
+
+  function renderTierRows(tiers) {
+    const wrap=$('p-tier-rows'); if(!wrap) return;
+    wrap.innerHTML = tiers.map((t,i) =>
+      `<div class="promo-row" data-tier="${i}"><label>Spend >= (TK)</label><input class="promo-input" data-field="min" type="number" min="0" value="${t.min}" style="width:80px;"><label>-></label><input class="promo-input" data-field="pct" type="number" min="1" max="99" value="${t.pct}" style="width:60px;"><label>%</label><button onclick="this.closest('[data-tier]').remove()" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:1rem;padding:0;">x</button></div>`
+    ).join('');
+  }
+  $('p-tier-add')?.addEventListener('click',()=>{
+    const wrap=$('p-tier-rows'); if(!wrap) return;
+    const div=document.createElement('div'); div.className='promo-row'; div.dataset.tier=wrap.children.length;
+    div.innerHTML=`<label>Spend >= (TK)</label><input class="promo-input" data-field="min" type="number" min="0" value="500" style="width:80px;"><label>-></label><input class="promo-input" data-field="pct" type="number" min="1" max="99" value="5" style="width:60px;"><label>%</label><button onclick="this.closest('[data-tier]').remove()" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:1rem;padding:0;">x</button>`;
+    wrap.appendChild(div);
+  });
+
+  function renderMqdRows(rules) {
+    const wrap=$('p-mqd-rows'); if(!wrap) return;
+    wrap.innerHTML = rules.map((r,i) =>
+      `<div class="promo-row" data-mqd="${i}"><label>Buy >=</label><input class="promo-input" data-field="qty" type="number" min="2" value="${r.qty}" style="width:70px;"><label>items -></label><input class="promo-input" data-field="pct" type="number" min="1" max="99" value="${r.pct}" style="width:60px;"><label>% off</label><button onclick="this.closest('[data-mqd]').remove()" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:1rem;padding:0;">x</button></div>`
+    ).join('');
+  }
+  $('p-mqd-add')?.addEventListener('click',()=>{
+    const wrap=$('p-mqd-rows'); if(!wrap) return;
+    const div=document.createElement('div'); div.className='promo-row'; div.dataset.mqd=wrap.children.length;
+    div.innerHTML=`<label>Buy >=</label><input class="promo-input" data-field="qty" type="number" min="2" value="2" style="width:70px;"><label>items -></label><input class="promo-input" data-field="pct" type="number" min="1" max="99" value="5" style="width:60px;"><label>% off</label><button onclick="this.closest('[data-mqd]').remove()" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:1rem;padding:0;">x</button>`;
+    wrap.appendChild(div);
+  });
+
+  function renderSpinPrizes(prizes) {
+    const wrap=$('p-spin-prizes'); if(!wrap) return;
+    wrap.innerHTML = prizes.map((p,i) =>
+      `<div class="promo-row" data-prize="${i}" style="margin-top:.4rem;align-items:center;">
+        <input class="promo-input" data-field="label" type="text" value="${escapeHtml(p.label||'')}" placeholder="Label" style="width:100px;">
+        <input class="promo-input" data-field="code" type="text" value="${escapeHtml(p.code||'')}" placeholder="Code" style="width:90px;text-transform:uppercase;">
+        <input class="promo-input" data-field="prob" type="number" min="1" max="100" value="${p.prob||10}" placeholder="%" style="width:60px;" title="Probability (higher = appears more often)">
+        <span style="color:var(--text-muted);font-size:.78rem;">%</span>
+        <input class="promo-input" data-field="maxWinners" type="number" min="0" value="${p.maxWinners||0}" placeholder="0=সীমাহীন" style="width:80px;" title="কতজন customer এই prize জিততে পারবে — 0 লিখলে unlimited">
+        <span style="color:var(--text-muted);font-size:.75rem;">${p.wonCount?`won:${p.wonCount}`:''}</span>
+        <button onclick="this.closest('[data-prize]').remove()" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:1rem;padding:0 .3rem;">×</button>
+      </div>`
+    ).join('');
+  }
+
+  $('p-spin-add')?.addEventListener('click',()=>{
+    const wrap=$('p-spin-prizes'); if(!wrap) return;
+    const div=document.createElement('div'); div.className='promo-row'; div.dataset.prize=wrap.children.length;
+    div.style.marginTop='.4rem'; div.style.alignItems='center';
+    div.innerHTML=`<input class="promo-input" data-field="label" type="text" placeholder="Label" style="width:100px;"><input class="promo-input" data-field="code" type="text" placeholder="Code" style="width:90px;text-transform:uppercase;"><input class="promo-input" data-field="prob" type="number" min="1" max="100" value="10" placeholder="%" style="width:60px;" title="Probability (higher = appears more often)"><span style="color:var(--text-muted);font-size:.78rem;">%</span><input class="promo-input" data-field="maxWinners" type="number" min="0" value="0" placeholder="0=সীমাহীন" style="width:80px;" title="কতজন customer এই prize জিততে পারবে — 0 লিখলে unlimited"><span style="color:var(--text-muted);font-size:.75rem;"></span><button onclick="this.closest('[data-prize]').remove()" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:1rem;padding:0 .3rem;">×</button>`;
+    wrap.appendChild(div);
+  });
+
+  function renderSeasEvents(events) {
+    const wrap=$('p-seas-events'); if(!wrap) return;
+    wrap.innerHTML = events.map((e,i) =>
+      `<div class="promo-row" data-seas="${i}" style="flex-wrap:wrap;gap:.4rem;"><input class="promo-input" data-field="name" type="text" value="${escapeHtml(e.name||'')}" placeholder="Event name" style="width:110px;"><input class="promo-input" data-field="pct" type="number" min="1" max="99" value="${e.pct||10}" style="width:55px;"><label>%</label><input class="promo-input" data-field="startAt" type="date" value="${(e.startAt||'').slice(0,10)}" style="width:125px;"><label>to</label><input class="promo-input" data-field="endAt" type="date" value="${(e.endAt||'').slice(0,10)}" style="width:125px;"><button onclick="this.closest('[data-seas]').remove()" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:1rem;padding:0;">x</button></div>`
+    ).join('');
+  }
+  $('p-seas-add')?.addEventListener('click',()=>{
+    const wrap=$('p-seas-events'); if(!wrap) return;
+    const div=document.createElement('div'); div.className='promo-row'; div.dataset.seas=wrap.children.length;
+    div.innerHTML=`<input class="promo-input" data-field="name" type="text" placeholder="Event name" style="width:110px;"><input class="promo-input" data-field="pct" type="number" min="1" max="99" value="10" style="width:55px;"><label>%</label><input class="promo-input" data-field="startAt" type="date" style="width:125px;"><label>to</label><input class="promo-input" data-field="endAt" type="date" style="width:125px;"><button onclick="this.closest('[data-seas]').remove()" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:1rem;padding:0;">x</button>`;
+    wrap.appendChild(div);
+  });
+
+  function renderComboRows(combos) {
+    const wrap=$('p-combo-rows'); if(!wrap) return;
+    wrap.innerHTML = combos.map((c,i) =>
+      `<div class="promo-row" data-combo="${i}" style="flex-wrap:wrap;gap:.4rem;"><input class="promo-input" data-field="label" type="text" value="${escapeHtml(c.label||'')}" placeholder="Label" style="width:110px;"><input class="promo-input" data-field="productIds" type="text" value="${(c.productIds||[]).join(',')}" placeholder="Product IDs (comma)" style="width:150px;"><input class="promo-input" data-field="pct" type="number" min="1" max="99" value="${c.pct||10}" style="width:55px;"><label>% off</label><button onclick="this.closest('[data-combo]').remove()" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:1rem;padding:0;">x</button></div>`
+    ).join('');
+  }
+  $('p-combo-add')?.addEventListener('click',()=>{
+    const wrap=$('p-combo-rows'); if(!wrap) return;
+    const div=document.createElement('div'); div.className='promo-row'; div.dataset.combo=wrap.children.length;
+    div.innerHTML=`<input class="promo-input" data-field="label" type="text" placeholder="Label" style="width:110px;"><input class="promo-input" data-field="productIds" type="text" placeholder="Product IDs (comma)" style="width:150px;"><input class="promo-input" data-field="pct" type="number" min="1" max="99" value="10" style="width:55px;"><label>% off</label><button onclick="this.closest('[data-combo]').remove()" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:1rem;padding:0;">x</button>`;
+    wrap.appendChild(div);
+  });
+
+  // Bundle Deals
+  await loadBundles();
+
+  async function loadBundles() {
+    const list=$('p-bundle-list'); if(!list) return;
+    list.innerHTML='<p class="muted-note" style="text-align:center;padding:1rem 0;">Loading...</p>';
+    const bundles = await P.getAllBundles();
+    if(!bundles.length){ list.innerHTML='<p class="muted-note" style="text-align:center;padding:1rem 0;">No bundles yet. Click New Bundle above.</p>'; return; }
+    list.innerHTML=`<table class="admin-table"><thead><tr><th>Name</th><th>Price</th><th>Products</th><th>Status</th><th></th></tr></thead><tbody>${
+      bundles.map(b=>`<tr><td><strong>${escapeHtml(b.name||'')}</strong></td><td>TK${b.price||0}</td><td class="muted-note" style="font-size:.78rem;">${(b.productIds||[]).length} product(s)</td><td><span class="badge" style="${b.enabled!==false?'background:#e6f4ea;color:#1e7e34;':'background:#f0f0f0;color:#555;'}">${b.enabled!==false?'Active':'Off'}</span></td><td style="white-space:nowrap;"><button class="icon-btn" data-bundle-edit="${b.id}"><ion-icon name="create-outline"></ion-icon></button><button class="icon-btn danger" data-bundle-del="${b.id}"><ion-icon name="trash-outline"></ion-icon></button></td></tr>`).join('')
+    }</tbody></table>`;
+    list.querySelectorAll('[data-bundle-edit]').forEach(btn=>{ btn.addEventListener('click',()=>openBundleForm(bundles.find(b=>b.id===btn.dataset.bundleEdit))); });
+    list.querySelectorAll('[data-bundle-del]').forEach(btn=>{ btn.addEventListener('click', async ()=>{
+      if(!await zahrounConfirm('Delete this bundle?',{danger:true})) return;
+      await P.deleteBundle(btn.dataset.bundleDel); await loadBundles();
+    }); });
+  }
+
+  function buildProductChecks(selected=[]) {
+    const wrap=$('pb-product-checks'); if(!wrap) return;
+    wrap.innerHTML=(products||[]).map(p=>`<label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;cursor:pointer;padding:.25rem .5rem;border:1px solid var(--border-color);border-radius:6px;"><input type="checkbox" value="${p.id}" ${selected.includes(String(p.id))?'checked':''}> ${escapeHtml(p.name||'')}</label>`).join('');
+  }
+
+  let _editingBundleId=null;
+  function openBundleForm(bundle) {
+    const form=$('p-bundle-form'); if(!form) return;
+    _editingBundleId=bundle?.id||null;
+    $('p-bundle-form-title').textContent=bundle?'Edit Bundle':'New Bundle';
+    str('pb-name',bundle?.name||''); num('pb-price',bundle?.price||'');
+    str('pb-image',bundle?.image||''); chk('pb-enabled',bundle?.enabled!==false);
+    buildProductChecks((bundle?.productIds||[]).map(String));
+    form.style.display=''; form.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  $('p-bundle-add-btn')?.addEventListener('click',()=>openBundleForm(null));
+  $('pb-cancel-btn')?.addEventListener('click',()=>{ $('p-bundle-form').style.display='none'; });
+  $('pb-save-btn')?.addEventListener('click', async ()=>{
+    const name=getStr('pb-name');
+    if(!name){ adminToast('Bundle name required',false); return; }
+    const productIds=[...($('pb-product-checks')?.querySelectorAll('input:checked')||[])].map(c=>c.value);
+    const bundle={ name, price:getNum('pb-price'), productIds, image:getStr('pb-image'), enabled:getChk('pb-enabled'), updatedAt:new Date().toISOString() };
+    if(_editingBundleId) bundle.id=_editingBundleId;
+    await P.saveBundle(bundle);
+    $('p-bundle-form').style.display='none';
+    await loadBundles();
+    adminToast('Bundle saved!');
+  });
+
+  // Save All
+  $('promo-save-btn')?.addEventListener('click', async ()=>{
+    const btn=$('promo-save-btn'); btn.disabled=true;
+
+    const tierRows=[...($('p-tier-rows')?.querySelectorAll('[data-tier]')||[])];
+    const tiers=tierRows.map(r=>({ min:parseFloat(r.querySelector("[data-field='min']")?.value)||0, pct:parseFloat(r.querySelector("[data-field='pct']")?.value)||0 })).filter(t=>t.min>0&&t.pct>0);
+
+    const mqdRows=[...($('p-mqd-rows')?.querySelectorAll('[data-mqd]')||[])];
+    const mqdRules=mqdRows.map(r=>({ qty:parseInt(r.querySelector("[data-field='qty']")?.value)||2, pct:parseFloat(r.querySelector("[data-field='pct']")?.value)||0 })).filter(r=>r.qty>=2&&r.pct>0);
+
+    const prizeRows=[...($('p-spin-prizes')?.querySelectorAll('[data-prize]')||[])];
+    const prizes=prizeRows.map(r=>({
+      label: r.querySelector("[data-field='label']")?.value.trim()||'',
+      code: (r.querySelector("[data-field='code']")?.value.trim()||'').toUpperCase()||null,
+      prob: parseFloat(r.querySelector("[data-field='prob']")?.value)||0,
+      maxWinners: parseInt(r.querySelector("[data-field='maxWinners']")?.value)||0,
+      wonCount: parseInt(r.querySelector("[data-field='maxWinners']")?.closest('[data-prize]')?.querySelector('[data-field="wonCount"]')?.value)||0
+    })).filter(p=>p.label&&p.prob>0);
+
+    const seasRows=[...($('p-seas-events')?.querySelectorAll('[data-seas]')||[])];
+    const events=seasRows.map(r=>({ name:r.querySelector("[data-field='name']")?.value.trim()||'', pct:parseFloat(r.querySelector("[data-field='pct']")?.value)||0, startAt:r.querySelector("[data-field='startAt']")?.value||'', endAt:r.querySelector("[data-field='endAt']")?.value||'', enabled:true })).filter(e=>e.name&&e.pct>0);
+
+    const comboRows=[...($('p-combo-rows')?.querySelectorAll('[data-combo]')||[])];
+    const combos=comboRows.map(r=>({ label:r.querySelector("[data-field='label']")?.value.trim()||'', productIds:(r.querySelector("[data-field='productIds']")?.value||'').split(',').map(s=>s.trim()).filter(Boolean), pct:parseFloat(r.querySelector("[data-field='pct']")?.value)||0 })).filter(c=>c.productIds.length>=2&&c.pct>0);
+
+    // Collect BuyXGetY free product sizes (format: "productId_size")
+    const bxgyFreeKeys = [...($('bxgy-prod-list')?.querySelectorAll('.bxgy-prod-chk:checked')||[])].map(c=>c.value);
+    const bxgyFreeSizes = bxgyFreeKeys.map(k => {
+      const parts = k.split('_');
+      return { productId: parts[0], size: parts[1] || '50ML' };
+    });
+    const bxgyScopeVal = document.querySelector('input[name="bxgy-scope"]:checked')?.value || 'any';
+
+    const newCfg={
+      buyXGetY:       { enabled:getChk('p-bxgy-on'), rules:[{buy:getNum('p-bxgy-buy1'),getFree:getNum('p-bxgy-free1')},{buy:getNum('p-bxgy-buy2'),getFree:getNum('p-bxgy-free2')}], freeItemScope:bxgyScopeVal, freeProductSizes:bxgyFreeSizes },
+      bogo:           { enabled:getChk('p-bogo-on'), discountPct:getNum('p-bogo-pct') },
+      tieredDiscount: { enabled:getChk('p-tier-on'), tiers },
+      freeGift:       { enabled:getChk('p-fgift-on'), threshold:getNum('p-fgift-min'), productName:getStr('p-fgift-name') },
+      firstOrder:     { enabled:getChk('p-fo-on'), amount:getNum('p-fo-amt'), type:getStr('p-fo-type') },
+      freeShipping:   { enabled:getChk('p-fs-on'), threshold:getNum('p-fs-thresh') },
+      minQtyDiscount: { enabled:getChk('p-mqd-on'), rules:mqdRules },
+      bundleBuilder:  { enabled:getChk('p-bb-on'), minItems:getNum('p-bb-min'), pct:getNum('p-bb-pct') },
+      referral:       { enabled:getChk('p-ref-on'), refereeAmt:getNum('p-ref-fee'), referrerAmt:getNum('p-ref-rer') },
+      loyaltyPoints:  cfg.loyaltyPoints || {},  // managed separately in the Loyalty section — preserve as-is
+      spinToWin:      { enabled:getChk('p-spin-on'), showAfterSec:getNum('p-spin-sec'), prizes },
+      seasonal:       { enabled:getChk('p-seas-on'), events },
+      comboDiscount:  { enabled:getChk('p-combo-on'), combos }
+    };
+
+    try {
+      await P.saveConfig(newCfg);
+      const msg=$('promo-save-msg');
+      if(msg){ msg.textContent='Saved successfully'; msg.style.display='block'; setTimeout(()=>{ msg.style.display='none'; },3000); }
+      adminToast('Promotions saved!');
+    } catch(e) {
+      adminToast('Save failed: '+(e.message||e), false);
+    } finally { btn.disabled=false; }
+  });
 }
