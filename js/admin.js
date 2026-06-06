@@ -43,8 +43,13 @@ async function sendConfirmationEmail(order) {
     /* ── Items HTML — all items in one card table ──────────────────── */
     const itemRows = items.map((item, idx) => {
       const rawImg = item.image || item.imageUrl || item.img || item.images?.[0] || "";
-      const imgUrl = (rawImg && typeof rawImg === "string" && rawImg.startsWith("https://")) ? rawImg : "";
-      if (rawImg && !imgUrl) console.warn("[Email] Skipping non-HTTPS image for:", item.name, "|", String(rawImg).slice(0, 120));
+      let imgUrl = (rawImg && typeof rawImg === "string" && rawImg.startsWith("https://")) ? rawImg : "";
+      // Order snapshot may have legacy relative-path URL — fall back to current product in memory
+      if (!imgUrl && item.id) {
+        const cur = products.find(p => String(p.id) === String(item.id));
+        const fb  = cur?.image || cur?.images?.[0] || "";
+        if (fb && fb.startsWith("https://")) imgUrl = fb;
+      }
       const imgContent = imgUrl
         ? `<img src="${imgUrl}" alt="${item.name}" width="80" height="80" style="width:80px;height:80px;object-fit:cover;display:block;">`
         : `<div style="width:80px;height:80px;background:rgba(10,58,49,0.55);border:1px solid rgba(212,166,74,0.18);"></div>`;
