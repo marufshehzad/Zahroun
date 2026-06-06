@@ -43,9 +43,7 @@ async function sendConfirmationEmail(order) {
     /* ── Items HTML — one <table> per item ─────────────────────────── */
     const itemsHtml = items.map(item => {
       const rawImg    = item.image || item.imageUrl || item.img || item.images?.[0] || "";
-      console.warn(`[EMAIL IMG] ${item.name} → raw: ${rawImg}`);
-      const imgUrl    = rawImg ? optimizedUrl(rawImg, 140).replace("f_auto,q_auto,", "f_jpg,q_80,") : "";
-      console.warn(`[EMAIL IMG] ${item.name} → final: ${imgUrl}`);
+      const imgUrl    = rawImg || "";
       const imgTag    = imgUrl
         ? `<img src="${imgUrl}" alt="${item.name}" width="70" height="70" style="width:70px;height:70px;border-radius:10px;object-fit:cover;display:block;">`
         : `<div style="width:70px;height:70px;border-radius:10px;background:rgba(10,58,49,0.55);border:1px solid rgba(212,166,74,0.18);"></div>`;
