@@ -3,7 +3,7 @@
    Scope: all pages at root (e.g. zahroun.com/*.html)
    ========================================================================= */
 
-const CACHE = 'zahroun-v1-20260611'; // H4-fix: increment this string on every deployment to bust stale JS cache
+const CACHE = 'zahroun-v1-20260611b'; // H4-fix: increment this string on every deployment to bust stale JS cache
 
 const PRECACHE = [
   'css/style.css',
@@ -19,7 +19,8 @@ const PRECACHE = [
   'js/orders.js',
   'js/coupon.js',
   'js/wishlist.js',
-  'favicon.png',
+  'favicon-32x32.png',
+  'apple-touch-icon.png',
   'product%20pictures/main%20logo%20white.webp',
 ];
 
