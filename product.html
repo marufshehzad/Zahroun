@@ -578,7 +578,17 @@
                 : noSizes
                     ? `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;" onclick="addToCart(${product.id},'Set',${productPrice});showAddedToast&&showAddedToast('${product.name}')">ADD TO CART</button>`
                     : `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>`;
-            const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:2rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="buyItNow(${product.id})">BUY IT NOW</button>`;
+            const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:.75rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="buyItNow(${product.id})">BUY IT NOW</button>`;
+            // Back-in-stock notification form (out of stock only)
+            const notifyHtml = product.stock === 0 ? `
+                <div id="stock-notify" style="margin-bottom:2rem;background:var(--surface-color);border:1px solid var(--border-color);border-radius:10px;padding:.9rem 1rem;">
+                    <div style="font-size:.82rem;font-weight:600;margin-bottom:.5rem;color:var(--text-main);">Get notified when it's back</div>
+                    <div style="display:flex;gap:.5rem;">
+                        <input type="email" id="notify-email" placeholder="Your email" style="flex:1;min-width:0;padding:.55rem .75rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;font-family:var(--font-sans);background:var(--bg-color);">
+                        <button class="btn" id="notify-btn" style="padding:.55rem 1rem;font-size:.82rem;white-space:nowrap;">Notify Me</button>
+                    </div>
+                    <div id="notify-msg" style="font-size:.78rem;margin-top:.4rem;color:var(--text-muted);"></div>
+                </div>` : "";
             const gallImgs = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
             const gallStripHtml = gallImgs.length > 1 ? '<div class="gallery-strip" id="gallery-strip">' + gallImgs.map((u, i) => '<button class="gt' + (i === 0 ? ' active' : '') + '" data-gi="' + i + '" type="button"><img src="' + _ctf(u, 'w_130,h_130,c_fill,f_auto,q_auto').replace(/"/g, '&quot;') + '" alt="View ' + (i + 1) + '"></button>').join('') + '</div>' : '';
             const container = document.getElementById('product-detail-content');
@@ -596,6 +606,7 @@
                     ${stockHtml}
                     ${addCartHtml}
                     ${buyNowHtml}
+                    ${notifyHtml}
                     ${comboSection}
 
                     <div style="display: flex; gap: 2rem; margin-bottom: 2rem; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 500;">
@@ -789,14 +800,21 @@
             });
             document.head.appendChild(_breadcrumbs);
 
-            // Populate Upsell Grid — same category first, then featured/bestsellers
+            // Populate Upsell Grid — scored: same category + shared fragrance notes + shared gender + featured
             const upsellGrid = document.getElementById('upsell-products');
-            const sameCat = products.filter(p => p.id !== productId && p.category === product.category);
-            const others  = products.filter(p => p.id !== productId && p.category !== product.category)
-                                    .sort((a, b) => (b.featured || b.bestseller ? 1 : 0) - (a.featured || a.bestseller ? 1 : 0));
-            const upsellProducts = [...sameCat, ...others].slice(0, 4);
             const _esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-            upsellGrid.innerHTML = upsellProducts.map(p => {
+            const myNotes = new Set((product.fragrance_notes || []).map(n => String(n).toLowerCase()));
+            const score = p => {
+                let s = 0;
+                if (p.category === product.category) s += 3;
+                (p.fragrance_notes || []).forEach(n => { if (myNotes.has(String(n).toLowerCase())) s += 1; });
+                if (p.tags?.gender && p.tags.gender === product.tags?.gender) s += 1;
+                if (p.featured || p.bestseller) s += 0.5;
+                return s;
+            };
+            const upsellProducts = products.filter(p => p.id !== productId)
+                .map(p => [score(p), p]).sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => x[1]);
+            const _upCard = p => {
                 const minPrice = p.prices ? Math.min(...Object.values(p.prices).filter(v => v > 0)) : (p.price || 0);
                 const maxPrice = p.prices ? Math.max(...Object.values(p.prices).filter(v => v > 0)) : (p.price || 0);
                 const priceStr = minPrice === maxPrice ? `Tk ${minPrice.toLocaleString()}` : `Tk ${minPrice.toLocaleString()} – Tk ${maxPrice.toLocaleString()}`;
@@ -811,7 +829,27 @@
                         <div class="product-price">${priceStr}</div>
                     </div>
                 </div>`;
-            }).join('');
+            };
+            upsellGrid.innerHTML = upsellProducts.map(_upCard).join('');
+
+            // Recently viewed — localStorage only, no extra reads
+            try {
+                const RV_KEY = 'zhr_recent_v1';
+                let rv = []; try { rv = JSON.parse(localStorage.getItem(RV_KEY)) || []; } catch {}
+                const rvProducts = rv.filter(id => id !== productId)
+                    .map(id => products.find(p => p.id === id)).filter(Boolean).slice(0, 4);
+                localStorage.setItem(RV_KEY, JSON.stringify([productId, ...rv.filter(id => id !== productId)].slice(0, 8)));
+                if (rvProducts.length >= 2) {
+                    const upsellSection = upsellGrid.closest('section') || upsellGrid.parentElement;
+                    const rvSection = document.createElement('section');
+                    rvSection.style.cssText = 'padding:0 0 4rem;';
+                    rvSection.innerHTML = `<div class="container">
+                        <h2 class="section-title" style="text-align:center;margin-bottom:2rem;">Recently Viewed</h2>
+                        <div class="product-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.5rem;">${rvProducts.map(_upCard).join('')}</div>
+                    </div>`;
+                    upsellSection.insertAdjacentElement('afterend', rvSection);
+                }
+            } catch {}
         });
 
         function getSizePrice(product, size) {
@@ -999,6 +1037,35 @@
         onAuthStateChanged(auth, async u => {
             currentUser = u;
             if (u && window.currentProductId) refreshWishlistIcon(window.currentProductId);
+        });
+
+        /* ---- Back-in-stock notification (stores as a message — admin sees it in Messages) ---- */
+        document.addEventListener("click", async e => {
+            if (e.target.id !== "notify-btn") return;
+            const emailEl = document.getElementById("notify-email");
+            const msgEl = document.getElementById("notify-msg");
+            const email = (emailEl?.value || "").trim();
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msgEl.textContent = "Please enter a valid email address."; return; }
+            e.target.disabled = true; e.target.textContent = "Saving…";
+            try {
+                const pid = window.currentProductId;
+                const pname = (window.products || []).find(p => p.id === Number(pid))?.name || ("Product #" + pid);
+                await addDoc(collection(db, "messages"), {
+                    type: "stock-alert",
+                    name: "Back-in-stock request",
+                    email,
+                    productId: Number(pid),
+                    message: `Customer wants to be notified when "${pname}" is back in stock.`,
+                    createdAt: serverTimestamp()
+                });
+                msgEl.textContent = "✓ We'll email you as soon as it's back.";
+                msgEl.style.color = "#1e7e34";
+                emailEl.disabled = true;
+                e.target.textContent = "Saved";
+            } catch (err) {
+                msgEl.textContent = "Could not save — please try again.";
+                e.target.disabled = false; e.target.textContent = "Notify Me";
+            }
         });
 
         /* ---- Reviews ---- */

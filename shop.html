@@ -311,6 +311,19 @@
                     </button>
                 </div>
 
+                <!-- Sort -->
+                <p class="sb-label" style="margin-top:1.1rem;">Sort By</p>
+                <select id="sort-select" style="width:100%;padding:.5rem .6rem;border:1.5px solid #EAE4D9;border-radius:10px;background:#F9F6F0;font-size:.85rem;font-family:var(--font-sans);color:#444;">
+                    <option value="default">Featured</option>
+                    <option value="newest">Newest</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="name-asc">Name: A&ndash;Z</option>
+                </select>
+
+                <!-- Advanced filters (built from product data) -->
+                <div id="adv-filters"></div>
+
             </aside>
 
             <!-- ── Main Content ── -->
@@ -439,7 +452,7 @@
     <script defer src="js/ui.js"></script>
     <script type="module">
         import { db } from "./js/firebase-config.js";
-        import { collection, getDocs, getDoc, doc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { collection, getDocs, getDoc, doc, addDoc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
         const filterList = document.getElementById("category-filter");
@@ -494,6 +507,9 @@
 
         let currentFilter = "all";
         let searchQuery = "";
+        let _sortBy = "default";
+        let _advSel = { gender: null, occasion: null, note: null };
+        let _ratings = {}; // productId -> { avg, count } from approved reviews
         let catsReady = false;
         let productsReady = typeof products !== "undefined" && products.length > 0;
 
@@ -586,6 +602,20 @@
                     matchesSearch(p, searchQuery)
                 );
             }
+            // Advanced filters: gender / occasion / fragrance note
+            if (_advSel.gender)   filtered = filtered.filter(p => String(p.tags?.gender || "").toLowerCase() === _advSel.gender);
+            if (_advSel.occasion) filtered = filtered.filter(p => (p.occasions || []).some(o => String(o).toLowerCase() === _advSel.occasion));
+            if (_advSel.note)     filtered = filtered.filter(p => (p.fragrance_notes || []).some(n => String(n).toLowerCase() === _advSel.note));
+            // Sorting
+            const _minP = p => {
+                const act = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
+                const v = p.prices ? Object.entries(p.prices).filter(([k, x]) => act.includes(k) && typeof x === "number" && x > 0).map(([, x]) => x) : [];
+                return v.length ? Math.min(...v) : (p.basePrice || p.price || 0);
+            };
+            if (_sortBy === "price-asc")  filtered = [...filtered].sort((a, b) => _minP(a) - _minP(b));
+            else if (_sortBy === "price-desc") filtered = [...filtered].sort((a, b) => _minP(b) - _minP(a));
+            else if (_sortBy === "name-asc")   filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+            else if (_sortBy === "newest")     filtered = [...filtered].sort((a, b) => (b.newArrival ? 1 : 0) - (a.newArrival ? 1 : 0) || b.id - a.id);
             if (!filtered.length) { grid.innerHTML = `<p style="color:var(--text-muted)">No products found.</p>`; _updateCatCounts(); return; }
             function priceRange(p) {
                 const active = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
@@ -629,6 +659,7 @@
                     <div class="product-info">
                         <span class="product-category">${esc(p.category)}</span>
                         <h3 class="product-title"><a href="product.html?id=${p.id}">${esc(p.name)}</a></h3>
+                        ${_ratings[p.id] ? `<div style="font-size:.74rem;line-height:1;margin:.15rem 0 .3rem;"><span style="color:#f0b429;letter-spacing:1px;">${"★".repeat(Math.round(_ratings[p.id].avg))}</span><span style="color:#ddd;letter-spacing:1px;">${"★".repeat(5 - Math.round(_ratings[p.id].avg))}</span> <span style="color:var(--text-muted);">(${_ratings[p.id].count})</span></div>` : ""}
                         ${priceHtml}
                     </div>
                 </div>`;
@@ -640,7 +671,102 @@
             if (catsReady && productsReady) renderProducts();
         }
 
-        document.addEventListener("products-ready", () => { productsReady = true; tryRender(); });
+        document.addEventListener("products-ready", () => { productsReady = true; tryRender(); _buildAdvFilters(); });
+
+        /* ── Sort ── */
+        document.getElementById("sort-select")?.addEventListener("change", e => { _sortBy = e.target.value; renderProducts(); });
+
+        /* ── Review stars on cards — one cached reviews read per 10 min ── */
+        (async () => {
+            const RKEY = "zhr_ratings_v1";
+            try { const r = sessionStorage.getItem(RKEY); if (r) { const { data, ts } = JSON.parse(r); if (Date.now() - ts < 10 * 60 * 1000) { _ratings = data || {}; if (Object.keys(_ratings).length && productsReady) renderProducts(); return; } } } catch {}
+            try {
+                const snap = await getDocs(query(collection(db, "reviews"), where("status", "==", "approved")));
+                const agg = {};
+                snap.docs.forEach(d => { const r = d.data(); const id = Number(r.productId); if (!agg[id]) agg[id] = { sum: 0, count: 0 }; agg[id].sum += Number(r.rating) || 0; agg[id].count++; });
+                _ratings = {};
+                Object.keys(agg).forEach(id => { _ratings[id] = { avg: agg[id].sum / agg[id].count, count: agg[id].count }; });
+                try { sessionStorage.setItem(RKEY, JSON.stringify({ data: _ratings, ts: Date.now() })); } catch {}
+                if (Object.keys(_ratings).length && productsReady) renderProducts();
+            } catch {}
+        })();
+
+        /* ── Advanced filters: chips built from live product data ── */
+        function _buildAdvFilters() {
+            const host = document.getElementById("adv-filters");
+            if (!host || typeof products === "undefined" || !products.length) return;
+            const noteFreq = {};
+            products.flatMap(p => p.fragrance_notes || []).forEach(n => { noteFreq[n] = (noteFreq[n] || 0) + 1; });
+            const groups = [
+                ["gender", "Gender", [...new Set(products.map(p => p.tags?.gender).filter(Boolean))]],
+                ["occasion", "Occasion", [...new Set(products.flatMap(p => p.occasions || []))].slice(0, 8)],
+                ["note", "Notes", Object.keys(noteFreq).sort((a, b) => noteFreq[b] - noteFreq[a]).slice(0, 8)]
+            ].filter(g => g[2].length > 1);
+            host.innerHTML = groups.map(([key, label, vals]) => `
+                <p class="sb-label" style="margin-top:1.1rem;">${esc(label)}</p>
+                <div style="display:flex;flex-wrap:wrap;gap:.35rem;">${vals.map(v => `
+                    <button class="adv-chip" data-fk="${esc(key)}" data-fv="${esc(String(v).toLowerCase())}" style="padding:.28rem .7rem;border-radius:20px;font-size:.76rem;font-family:var(--font-sans);border:1px solid #E5DDD0;background:#F9F6F0;color:#666;cursor:pointer;">${esc(v)}</button>`).join("")}
+                </div>`).join("");
+            const paint = () => host.querySelectorAll(".adv-chip").forEach(x => {
+                const on = _advSel[x.dataset.fk] === x.dataset.fv;
+                x.style.background = on ? "var(--primary-color)" : "#F9F6F0";
+                x.style.color = on ? "#fff" : "#666";
+                x.style.borderColor = on ? "var(--primary-color)" : "#E5DDD0";
+            });
+            paint();
+            host.querySelectorAll(".adv-chip").forEach(b => b.addEventListener("click", () => {
+                const k = b.dataset.fk, v = b.dataset.fv;
+                _advSel[k] = _advSel[k] === v ? null : v;
+                paint();
+                renderProducts();
+            }));
+        }
+        _buildAdvFilters(); // initial build — covers the case where products-ready fired before this module loaded
+
+        /* ── Search autocomplete dropdown (thumbnail + name + price) ── */
+        const _searchWrap = document.querySelector(".search-wrap");
+        const _acBox = document.createElement("div");
+        _acBox.id = "search-ac";
+        _acBox.style.cssText = "position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #EAE4D9;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:60;display:none;overflow:hidden;";
+        _searchWrap.appendChild(_acBox);
+        function _acRender() {
+            const q = searchInput.value.trim();
+            if (q.length < 2 || typeof products === "undefined") { _acBox.style.display = "none"; return; }
+            const hits = products.filter(p => matchesSearch(p, q)).slice(0, 6);
+            if (!hits.length) { _acBox.style.display = "none"; return; }
+            _acBox.innerHTML = hits.map((p, i) => {
+                const vals = p.prices ? Object.values(p.prices).filter(v => typeof v === "number" && v > 0) : [];
+                const pr = vals.length ? Math.min(...vals) : (p.basePrice || p.price || 0);
+                const img = p.image && p.image.includes("/upload/") ? p.image.replace("/upload/", "/upload/w_80,h_80,c_fill,f_auto,q_auto/") : (p.image || "");
+                return `<a href="product.html?id=${p.id}" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .6rem;text-decoration:none;color:var(--text-main);${i < hits.length - 1 ? "border-bottom:1px solid #F4F0E8;" : ""}">
+                    <img src="${esc(img)}" alt="" width="38" height="38" style="width:38px;height:38px;object-fit:cover;border-radius:6px;background:#fff;flex-shrink:0;">
+                    <span style="flex:1;min-width:0;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.name)}</span>
+                    <span style="font-size:.78rem;color:var(--text-muted);flex-shrink:0;">Tk ${pr.toLocaleString()}</span>
+                </a>`;
+            }).join("");
+            _acBox.style.display = "block";
+        }
+        searchInput.addEventListener("input", _acRender);
+        searchInput.addEventListener("focus", _acRender);
+        document.addEventListener("click", e => { if (!_searchWrap.contains(e.target)) _acBox.style.display = "none"; });
+        document.addEventListener("keydown", e => { if (e.key === "Escape") _acBox.style.display = "none"; });
+
+        /* ── Category landing header — banner + description set by admin ── */
+        function _renderCatLanding() {
+            let host = document.getElementById("cat-landing");
+            if (!host) {
+                host = document.createElement("div");
+                host.id = "cat-landing";
+                document.querySelector(".shop-title-area")?.insertAdjacentElement("afterend", host);
+            }
+            const cat = (_allCats || []).find(c => c.name === currentFilter);
+            if (!cat || (!cat.banner && !cat.description)) { host.innerHTML = ""; return; }
+            const bImg = cat.banner && cat.banner.includes("/upload/") ? cat.banner.replace("/upload/", "/upload/w_1200,h_320,c_fill,f_auto,q_auto/") : cat.banner;
+            host.innerHTML = `<div style="margin:-.75rem 0 1.75rem;border-radius:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.06);">
+                ${cat.banner ? `<img src="${esc(bImg)}" alt="${esc(cat.name)}" style="width:100%;height:170px;object-fit:cover;display:block;">` : ""}
+                ${cat.description ? `<p style="padding:.9rem 1.15rem;margin:0;font-size:.88rem;color:var(--text-muted);background:var(--surface-color);">${esc(cat.description)}</p>` : ""}
+            </div>`;
+        }
         document.addEventListener("wishlist-ready", () => { if (productsReady) renderProducts(); });
         // Wishlist change: only update button states, avoid full re-render
         document.addEventListener("wishlist-changed", () => {
@@ -791,6 +917,7 @@
                         parentLi.classList.add("open");
                         parentLi.querySelector(".cat-parent-btn")?.setAttribute("aria-expanded", "true");
                     }
+                    _renderCatLanding();
                 }
             }
         }).catch(() => {
@@ -836,6 +963,7 @@
                     btn.classList.add("active");
                     currentFilter = btn.dataset.filter;
                     renderProducts();
+                    _renderCatLanding();
                 });
             });
             // Handle ?filter=new URL param

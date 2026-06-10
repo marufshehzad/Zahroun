@@ -1954,6 +1954,7 @@ function openCatForm(cat) {
     const parentSel = f.querySelector("[name=parentId]");
     if (parentSel) parentSel.value = _catParentOf(cat) || "";
     f.querySelector("[name=icon]").value = cat.icon || "";
+    f.querySelector("[name=description]").value = cat.description || "";
     f.querySelector("[name=banner]").value = cat.banner || "";
     _setCatBannerPreview(cat.banner || "");
   } else {
@@ -1993,6 +1994,7 @@ async function saveCat(e) {
       order: parseInt(f.querySelector("[name=order]").value) || 0,
       parentId: parentId || null,
       icon: f.querySelector("[name=icon]").value.trim() || null,
+      description: f.querySelector("[name=description]").value.trim() || null,
       banner: f.querySelector("[name=banner]").value.trim() || null,
       updatedAt: serverTimestamp()
     };
