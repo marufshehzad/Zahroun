@@ -352,7 +352,7 @@ function hexToRgba(hex, alpha) {
     if (fsInfo && !fsInfo.achieved) {
       const pct = Math.min(100, Math.round(((fsInfo.threshold - fsInfo.remaining) / fsInfo.threshold) * 100));
       rows.push(`<div style="background:#163E34;color:#fff;padding:.45rem 1rem;font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:.5rem;">
-        <span style="flex:1;">🚚 Spend ৳${fsInfo.remaining} more for FREE delivery!</span>
+        <span style="flex:1;">🚚 Spend Tk ${fsInfo.remaining} more for FREE delivery!</span>
         <div style="width:120px;background:rgba(255,255,255,.25);border-radius:4px;height:5px;overflow:hidden;flex-shrink:0;">
           <div style="background:#fff;height:5px;width:${pct}%;border-radius:4px;transition:width .5s;"></div>
         </div>
@@ -361,9 +361,9 @@ function hexToRgba(hex, alpha) {
       rows.push(`<div style="background:#1e7e34;color:#fff;padding:.4rem 1rem;font-size:.8rem;font-weight:600;">✅ You qualify for FREE delivery!</div>`);
     }
     if (tierInfo?.next && !tierInfo.current) {
-      rows.push(`<div style="background:#e65100;color:#fff;padding:.4rem 1rem;font-size:.8rem;font-weight:600;">🏷️ Spend ৳${tierInfo.remaining} more to get ${tierInfo.next.pct}% off!</div>`);
+      rows.push(`<div style="background:#e65100;color:#fff;padding:.4rem 1rem;font-size:.8rem;font-weight:600;">🏷️ Spend Tk ${tierInfo.remaining} more to get ${tierInfo.next.pct}% off!</div>`);
     } else if (tierInfo?.current) {
-      const extra = tierInfo.next ? ` — spend ৳${tierInfo.remaining} more for ${tierInfo.next.pct}%` : '';
+      const extra = tierInfo.next ? ` — spend Tk ${tierInfo.remaining} more for ${tierInfo.next.pct}%` : '';
       rows.push(`<div style="background:#1a56b8;color:#fff;padding:.4rem 1rem;font-size:.8rem;font-weight:600;">🎉 ${tierInfo.current.pct}% discount applied!${extra}</div>`);
     }
     return rows.join('');

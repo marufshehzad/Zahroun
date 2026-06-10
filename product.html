@@ -1,12 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details | Zahroun</title>
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="apple-touch-icon" href="favicon.png">
+    <link rel="icon" href="favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
     <meta name="description" content="Discover Zahroun luxury perfumes — niche fragrances for men, women, and unisex. Long-lasting, premium quality. Shop online in Bangladesh.">
     <meta property="og:site_name" content="Zahroun">
     <meta property="og:type" content="product">
@@ -16,13 +19,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@500;600;700&display=swap">
     <link rel="stylesheet" href="css/style.css">
     <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/broadcast.js"></script>
     <script type="module" src="js/wishlist.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <style>
         .product-detail-container {
             display: grid;
@@ -360,7 +364,7 @@
 <body>
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html" class="active">Shop</a>
@@ -487,7 +491,7 @@
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
                     <span>Total</span>
-                    <span id="cart-total">0 BDT</span>
+                    <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
@@ -534,10 +538,11 @@
                     </button>`;
             }).join('');
             const sizePreviews = displaySizes.map(size => {
-                const image = getSizeImage(product, size);
+                const image = getSizeImage(product, size);   // full-res for hover popover
+                const thumb = getSizeThumb(product, size);   // 130px for the 62px button
                 return `
                     <button class="size-preview ${size === currentSelectedSize ? 'active' : ''}" data-size="${size}" onclick="selectSizeFromPreview('${size}', true)" onmouseenter="showSizePreview('${image}', '${size}')" onmouseleave="schedulePreviewClose()">
-                        <img src="${image}" alt="${product.name} ${size}">
+                        <img src="${thumb}" alt="${product.name} ${size}">
                         <span>${size}</span>
                     </button>`;
             }).join('');
@@ -573,7 +578,17 @@
                 : noSizes
                     ? `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;" onclick="addToCart(${product.id},'Set',${productPrice});showAddedToast&&showAddedToast('${product.name}')">ADD TO CART</button>`
                     : `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>`;
-            const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:2rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="buyItNow(${product.id})">BUY IT NOW</button>`;
+            const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:.75rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="buyItNow(${product.id})">BUY IT NOW</button>`;
+            // Back-in-stock notification form (out of stock only)
+            const notifyHtml = product.stock === 0 ? `
+                <div id="stock-notify" style="margin-bottom:2rem;background:var(--surface-color);border:1px solid var(--border-color);border-radius:10px;padding:.9rem 1rem;">
+                    <div style="font-size:.82rem;font-weight:600;margin-bottom:.5rem;color:var(--text-main);">Get notified when it's back</div>
+                    <div style="display:flex;gap:.5rem;">
+                        <input type="email" id="notify-email" placeholder="Your email" style="flex:1;min-width:0;padding:.55rem .75rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;font-family:var(--font-sans);background:var(--bg-color);">
+                        <button class="btn" id="notify-btn" style="padding:.55rem 1rem;font-size:.82rem;white-space:nowrap;">Notify Me</button>
+                    </div>
+                    <div id="notify-msg" style="font-size:.78rem;margin-top:.4rem;color:var(--text-muted);"></div>
+                </div>` : "";
             const gallImgs = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
             const gallStripHtml = gallImgs.length > 1 ? '<div class="gallery-strip" id="gallery-strip">' + gallImgs.map((u, i) => '<button class="gt' + (i === 0 ? ' active' : '') + '" data-gi="' + i + '" type="button"><img src="' + _ctf(u, 'w_130,h_130,c_fill,f_auto,q_auto').replace(/"/g, '&quot;') + '" alt="View ' + (i + 1) + '"></button>').join('') + '</div>' : '';
             const container = document.getElementById('product-detail-content');
@@ -586,11 +601,12 @@
                     ${badgeRow}
                     <span class="product-category" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem;">${product.category}</span>
                     <h1 style="font-family: var(--font-serif); margin-bottom: 0.5rem; font-size: 2.5rem;">${product.name}</h1>
-                    <div class="price" id="display-price" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 2rem; color: var(--primary-color);">${productPrice} BDT</div>
+                    <div class="price" id="display-price" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 2rem; color: var(--primary-color);">Tk ${Number(productPrice).toLocaleString()}</div>
 
                     ${stockHtml}
                     ${addCartHtml}
                     ${buyNowHtml}
+                    ${notifyHtml}
                     ${comboSection}
 
                     <div style="display: flex; gap: 2rem; margin-bottom: 2rem; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 500;">
@@ -634,17 +650,17 @@
                         <h4 style="display: flex; align-items: center; gap: 0.5rem;"><ion-icon name="cart-outline"></ion-icon> Your Cart</h4>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
                             <span>Current cart subtotal</span>
-                            <span id="inline-cart-subtotal" style="font-weight: bold; color: var(--text-main);">BDT 0</span>
+                            <span id="inline-cart-subtotal" style="font-weight: bold; color: var(--text-main);">Tk 0</span>
                         </div>
                         <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Offers don't stack. Applied at checkout if eligible.</p>
                         
                         <p style="font-size: 0.8rem; color: var(--text-main); font-weight: 500; margin-bottom: 0.5rem;">Available offers</p>
                         <div style="background: white; padding: 1rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                <strong>10% off on orders 4000 BDT+</strong>
+                                <strong>10% off on orders Tk 4,000+</strong>
                                 <span style="background: #eee; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-family: monospace;">myzahroun10</span>
                             </div>
-                            <p id="inline-spend-more" style="color: var(--primary-color); font-size: 0.8rem;">Add 4000 BDT to unlock this offer</p>
+                            <p id="inline-spend-more" style="color: var(--primary-color); font-size: 0.8rem;">Add Tk 4,000 to unlock this offer</p>
                         </div>
                     </div>
 
@@ -692,7 +708,7 @@
                 const spr  = document.getElementById('sticky-pp');
                 const sBtn = document.getElementById('sticky-atc-btn');
                 if (snm) snm.textContent = product.name;
-                const updatePrice = () => { if (spr) spr.textContent = (noSizes ? productPrice : (currentSelectedPrice || productPrice)) + ' BDT'; };
+                const updatePrice = () => { if (spr) spr.textContent = 'Tk ' + Number(noSizes ? productPrice : (currentSelectedPrice || productPrice)).toLocaleString(); };
                 updatePrice();
                 if (sBtn) {
                     if (product.stock === 0) { sBtn.disabled = true; sBtn.textContent = 'OUT OF STOCK'; sBtn.style.opacity = '.5'; }
@@ -709,12 +725,26 @@
             document.title = `${product.name} | Zahroun`;
             const pid = new URLSearchParams(location.search).get("id") || "";
             document.querySelector('meta[name="description"]').content = `${product.name} — ${(product.description || "").slice(0,120)}. Shop Zahroun luxury perfumes online in Bangladesh.`;
-            document.head.insertAdjacentHTML("beforeend", `<link rel="canonical" href="https://zahroun.com/product.html?id=${pid}"><meta property="og:title" content="${product.name} | Zahroun"><meta property="og:description" content="${(product.description || "").slice(0,120)}"><meta property="og:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}"><meta property="og:url" content="https://zahroun.com/product.html?id=${pid}"><meta name="twitter:title" content="${product.name} | Zahroun"><meta name="twitter:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}">`);
+
+            // Clear existing dynamic SEO tags to prevent duplicates
+            document.querySelectorAll(".dynamic-seo").forEach(el => el.remove());
+
+            document.head.insertAdjacentHTML("beforeend", `
+                <link class="dynamic-seo" rel="canonical" href="https://zahroun.com/product.html?id=${pid}">
+                <meta class="dynamic-seo" property="og:title" content="${product.name} | Zahroun">
+                <meta class="dynamic-seo" property="og:description" content="${(product.description || "").slice(0,120)}">
+                <meta class="dynamic-seo" property="og:url" content="https://zahroun.com/product.html?id=${pid}">
+                <meta class="dynamic-seo" property="og:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}">
+                <meta class="dynamic-seo" name="twitter:title" content="${product.name} | Zahroun">
+                <meta class="dynamic-seo" name="twitter:description" content="${(product.description || "").slice(0,120)}">
+                <meta class="dynamic-seo" name="twitter:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}">
+            `);
 
             // Product rich result schema — shows price + availability in Google search
             const _price = (product.prices && product.prices["50ML"]) ? product.prices["50ML"] : (product.price || 0);
             const _schema = document.createElement("script");
             _schema.type = "application/ld+json";
+            _schema.className = "dynamic-seo";
             _schema.textContent = JSON.stringify({
                 "@context": "https://schema.org/",
                 "@type": "Product",
@@ -734,18 +764,60 @@
             });
             document.head.appendChild(_schema);
 
+            // BreadcrumbList schema
+            const _breadcrumbs = document.createElement("script");
+            _breadcrumbs.type = "application/ld+json";
+            _breadcrumbs.className = "dynamic-seo";
+            _breadcrumbs.textContent = JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": 1,
+                        "name": "Home",
+                        "item": "https://zahroun.com/"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": "Shop",
+                        "item": "https://zahroun.com/shop.html"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 3,
+                        "name": product.category || "Perfumes",
+                        "item": "https://zahroun.com/shop.html"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 4,
+                        "name": product.name,
+                        "item": `https://zahroun.com/product.html?id=${pid}`
+                    }
+                ]
+            });
+            document.head.appendChild(_breadcrumbs);
 
-            // Populate Upsell Grid — same category first, then featured/bestsellers
+            // Populate Upsell Grid — scored: same category + shared fragrance notes + shared gender + featured
             const upsellGrid = document.getElementById('upsell-products');
-            const sameCat = products.filter(p => p.id !== productId && p.category === product.category);
-            const others  = products.filter(p => p.id !== productId && p.category !== product.category)
-                                    .sort((a, b) => (b.featured || b.bestseller ? 1 : 0) - (a.featured || a.bestseller ? 1 : 0));
-            const upsellProducts = [...sameCat, ...others].slice(0, 4);
             const _esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-            upsellGrid.innerHTML = upsellProducts.map(p => {
+            const myNotes = new Set((product.fragrance_notes || []).map(n => String(n).toLowerCase()));
+            const score = p => {
+                let s = 0;
+                if (p.category === product.category) s += 3;
+                (p.fragrance_notes || []).forEach(n => { if (myNotes.has(String(n).toLowerCase())) s += 1; });
+                if (p.tags?.gender && p.tags.gender === product.tags?.gender) s += 1;
+                if (p.featured || p.bestseller) s += 0.5;
+                return s;
+            };
+            const upsellProducts = products.filter(p => p.id !== productId)
+                .map(p => [score(p), p]).sort((a, b) => b[0] - a[0]).slice(0, 4).map(x => x[1]);
+            const _upCard = p => {
                 const minPrice = p.prices ? Math.min(...Object.values(p.prices).filter(v => v > 0)) : (p.price || 0);
                 const maxPrice = p.prices ? Math.max(...Object.values(p.prices).filter(v => v > 0)) : (p.price || 0);
-                const priceStr = minPrice === maxPrice ? `৳${minPrice.toLocaleString()}` : `৳${minPrice.toLocaleString()} – ৳${maxPrice.toLocaleString()}`;
+                const priceStr = minPrice === maxPrice ? `Tk ${minPrice.toLocaleString()}` : `Tk ${minPrice.toLocaleString()} – Tk ${maxPrice.toLocaleString()}`;
                 return `<div class="product-card" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;">
                     <div class="product-img-wrapper" style="position:relative;">
                         <img src="${_esc(_ctf(p.image, 'w_400,h_533,c_fill,f_auto,q_auto'))}" alt="${_esc(p.name)}" class="product-img" loading="lazy" style="background-color:#FFFFFF;">
@@ -757,7 +829,27 @@
                         <div class="product-price">${priceStr}</div>
                     </div>
                 </div>`;
-            }).join('');
+            };
+            upsellGrid.innerHTML = upsellProducts.map(_upCard).join('');
+
+            // Recently viewed — localStorage only, no extra reads
+            try {
+                const RV_KEY = 'zhr_recent_v1';
+                let rv = []; try { rv = JSON.parse(localStorage.getItem(RV_KEY)) || []; } catch {}
+                const rvProducts = rv.filter(id => id !== productId)
+                    .map(id => products.find(p => p.id === id)).filter(Boolean).slice(0, 4);
+                localStorage.setItem(RV_KEY, JSON.stringify([productId, ...rv.filter(id => id !== productId)].slice(0, 8)));
+                if (rvProducts.length >= 2) {
+                    const upsellSection = upsellGrid.closest('section') || upsellGrid.parentElement;
+                    const rvSection = document.createElement('section');
+                    rvSection.style.cssText = 'padding:0 0 4rem;';
+                    rvSection.innerHTML = `<div class="container">
+                        <h2 class="section-title" style="text-align:center;margin-bottom:2rem;">Recently Viewed</h2>
+                        <div class="product-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.5rem;">${rvProducts.map(_upCard).join('')}</div>
+                    </div>`;
+                    upsellSection.insertAdjacentElement('afterend', rvSection);
+                }
+            } catch {}
         });
 
         function getSizePrice(product, size) {
@@ -767,6 +859,11 @@
         function getSizeImage(product, size) {
             const raw = product.sizeImages && product.sizeImages[size] ? product.sizeImages[size] : product.image;
             return _ctf(raw, 'w_800,f_auto,q_auto');
+        }
+        // Separate thumbnail transform for the 62px size-preview buttons
+        function getSizeThumb(product, size) {
+            const raw = product.sizeImages && product.sizeImages[size] ? product.sizeImages[size] : product.image;
+            return _ctf(raw, 'w_130,h_130,c_fill,f_auto,q_auto');
         }
 
         function updateSelectedSizeUI(size) {
@@ -888,7 +985,7 @@
             currentSelectedSize = size;
             currentSelectedPrice = price;
             
-            document.getElementById('display-price').textContent = price + ' BDT';
+            document.getElementById('display-price').textContent = 'Tk ' + Number(price).toLocaleString();
             updateProductImage(getSizeImage(currentProduct, size));
             updateSelectedSizeUI(size);
         };
@@ -909,17 +1006,17 @@
             if (!subtotalEl || !spendMoreEl) return;
 
             const subtotal = typeof getCartSubtotal === 'function' ? getCartSubtotal() : 0;
-            subtotalEl.textContent = 'BDT ' + subtotal.toFixed(2);
+            subtotalEl.textContent = 'Tk ' + Math.round(subtotal).toLocaleString();
 
             if (subtotal >= 4000) {
                 spendMoreEl.textContent = '✅ 10% Discount Unlocked! Use code: myzahroun10';
                 spendMoreEl.style.color = '#27ae60';
             } else if (subtotal > 0) {
-                const diff = (4000 - subtotal).toFixed(2);
-                spendMoreEl.textContent = 'Add BDT ' + diff + ' more to unlock 10% off';
+                const diff = Math.round(4000 - subtotal);
+                spendMoreEl.textContent = 'Add Tk ' + diff.toLocaleString() + ' more to unlock 10% off';
                 spendMoreEl.style.color = 'var(--primary-color)';
             } else {
-                spendMoreEl.textContent = 'Add 4000 BDT to unlock this offer';
+                spendMoreEl.textContent = 'Add Tk 4,000 to unlock this offer';
                 spendMoreEl.style.color = 'var(--primary-color)';
             }
         }
@@ -940,6 +1037,35 @@
         onAuthStateChanged(auth, async u => {
             currentUser = u;
             if (u && window.currentProductId) refreshWishlistIcon(window.currentProductId);
+        });
+
+        /* ---- Back-in-stock notification (stores as a message — admin sees it in Messages) ---- */
+        document.addEventListener("click", async e => {
+            if (e.target.id !== "notify-btn") return;
+            const emailEl = document.getElementById("notify-email");
+            const msgEl = document.getElementById("notify-msg");
+            const email = (emailEl?.value || "").trim();
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msgEl.textContent = "Please enter a valid email address."; return; }
+            e.target.disabled = true; e.target.textContent = "Saving…";
+            try {
+                const pid = window.currentProductId;
+                const pname = (window.products || []).find(p => p.id === Number(pid))?.name || ("Product #" + pid);
+                await addDoc(collection(db, "messages"), {
+                    type: "stock-alert",
+                    name: "Back-in-stock request",
+                    email,
+                    productId: Number(pid),
+                    message: `Customer wants to be notified when "${pname}" is back in stock.`,
+                    createdAt: serverTimestamp()
+                });
+                msgEl.textContent = "✓ We'll email you as soon as it's back.";
+                msgEl.style.color = "#1e7e34";
+                emailEl.disabled = true;
+                e.target.textContent = "Saved";
+            } catch (err) {
+                msgEl.textContent = "Could not save — please try again.";
+                e.target.disabled = false; e.target.textContent = "Notify Me";
+            }
         });
 
         /* ---- Reviews ---- */

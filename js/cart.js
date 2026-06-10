@@ -143,7 +143,7 @@ function updateCartUI() {
                 <div style="flex: 1;">
                     <h4 style="font-size: 0.95rem; margin-bottom: 0.25rem;">${item.name}</h4>
                     <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Size: ${item.size}</span>
-                    <div style="color: var(--primary-color); font-weight: 600; margin-bottom: 0.5rem;">${item.selectedPrice} BDT</div>
+                    <div style="color: var(--primary-color); font-weight: 600; margin-bottom: 0.5rem;">Tk ${Number(item.selectedPrice).toLocaleString()}</div>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <button onclick="updateQuantity(${item.id}, '${item.size}', ${item.quantity - 1})" style="width: 36px; height: 36px; border: 1px solid var(--border-color); background: none; cursor: pointer; border-radius: 8px; font-size: 1.1rem; display:flex; align-items:center; justify-content:center; touch-action:manipulation;">−</button>
                         <span style="font-size: 0.95rem; font-weight:600; min-width:20px; text-align:center;">${item.quantity}</span>
@@ -156,7 +156,7 @@ function updateCartUI() {
     }
 
     const totalEl = document.getElementById('cart-total');
-    if (totalEl) totalEl.textContent = getCartTotal().toFixed(2) + ' BDT';
+    if (totalEl) totalEl.textContent = 'Tk ' + Math.round(getCartTotal()).toLocaleString();
 
     // Buy X Get Y — free item selector
     renderBxgySelector();

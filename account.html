@@ -5,8 +5,11 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Account | Zahroun</title>
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="apple-touch-icon" href="favicon.png">
+    <link rel="icon" href="favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
     <meta name="robots" content="noindex, nofollow">
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://res.cloudinary.com">
@@ -18,8 +21,8 @@
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/broadcast.js"></script>
     <script type="module" src="js/wishlist.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <style>
         /* ---- Account Layout ---- */
         .account-head {
@@ -169,7 +172,7 @@
 <body>
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html">Shop</a>
@@ -319,7 +322,7 @@
                         <div style="text-align:right;flex-shrink:0;">
                             <div id="rewards-points" style="font-size:3rem;font-weight:800;color:#c9a84c;line-height:1;font-family:'Inter',sans-serif;letter-spacing:-.02em;">0</div>
                             <div style="font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.08em;margin-top:.15rem;">Points</div>
-                            <div id="rw-redeem-value" style="font-size:.9rem;font-weight:600;color:rgba(201,168,76,.85);margin-top:.3rem;">৳0 value</div>
+                            <div id="rw-redeem-value" style="font-size:.9rem;font-weight:600;color:rgba(201,168,76,.85);margin-top:.3rem;">Tk 0 value</div>
                         </div>
                     </div>
                 </div>
@@ -335,7 +338,7 @@
                         <div style="font-size:.67rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.15rem;">Lifetime Redeemed</div>
                     </div>
                     <div style="padding:.85rem 1rem;text-align:center;">
-                        <div id="rw-available-val" style="font-size:1.3rem;font-weight:700;color:#163E34;">৳0</div>
+                        <div id="rw-available-val" style="font-size:1.3rem;font-weight:700;color:#163E34;">Tk 0</div>
                         <div style="font-size:.67rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.15rem;">Redeemable</div>
                     </div>
                 </div>
@@ -393,7 +396,7 @@
             </div>
             <div id="cart-items" style="flex: 1; overflow-y: auto;"></div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;"><span>Total</span><span id="cart-total">0 BDT</span></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;"><span>Total</span><span id="cart-total">Tk 0</span></div>
                 <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
         </div>
@@ -532,7 +535,7 @@
                                     <span style="display:inline-block;margin-top:.25rem;font-size:.62rem;font-weight:800;background:#0b231a;color:#c9a84c;border-radius:3px;padding:.15rem .45rem;letter-spacing:.1em;text-transform:uppercase;">Free Item</span>
                                 </div>
                                 <div style="text-align:right;">
-                                    ${i.originalPrice > 0 ? `<span style="color:var(--text-muted);font-size:.8rem;text-decoration:line-through;">৳${i.originalPrice}</span><br>` : ""}
+                                    ${i.originalPrice > 0 ? `<span style="color:var(--text-muted);font-size:.8rem;text-decoration:line-through;">Tk ${i.originalPrice}</span><br>` : ""}
                                     <strong style="color:#163E34;">FREE</strong>
                                 </div>
                             </div>` : `
@@ -540,13 +543,13 @@
                                 <img src="${esc(i.image)}" alt="" loading="lazy">
                                 <div style="flex:1;"><strong style="font-size:.95rem;">${esc(i.name)}</strong><br>
                                 <span style="color:var(--text-muted);font-size:.82rem;">${esc(i.size)} · Qty ${i.quantity}</span></div>
-                                <div>৳${i.price * i.quantity}</div>
+                                <div>Tk ${i.price * i.quantity}</div>
                             </div>`).join("")}
                         ${o.giftMessage ? `<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:.5rem .75rem;margin-top:.4rem;font-size:.82rem;color:#7a5800;display:flex;gap:.45rem;align-items:flex-start;"><ion-icon name="gift-outline" style="flex-shrink:0;font-size:.9rem;margin-top:.1rem;"></ion-icon><span><em>"${esc(o.giftMessage)}"</em></span></div>` : ""}
                         <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border-color);padding-top:.8rem;margin-top:.6rem;flex-wrap:wrap;gap:.5rem;">
                             <span style="color:var(--text-muted);font-size:.82rem;">${esc(o.payment?.method || "")} · ${esc(o.customer?.area || "")}</span>
                             <div style="display:flex;align-items:center;gap:.75rem;">
-                                <strong>Total: ৳${o.total}</strong>
+                                <strong>Total: Tk ${o.total}</strong>
                                 <button class="btn-reorder" data-oid="${o.id}" style="display:inline-flex;align-items:center;gap:.3rem;font-size:.8rem;font-weight:600;border:1px solid var(--border-color);border-radius:6px;padding:.25rem .7rem;background:none;cursor:pointer;color:var(--text-main);"><ion-icon name="refresh-outline" style="font-size:.9rem;"></ion-icon>Reorder</button>
                                 <a href="${trackUrl}" style="display:inline-flex;align-items:center;gap:.3rem;font-size:.8rem;color:var(--primary-color);font-weight:600;border:1px solid var(--primary-color);border-radius:6px;padding:.25rem .7rem;"><ion-icon name="locate-outline" style="font-size:.9rem;"></ion-icon>Track</a>
                             </div>
@@ -612,7 +615,7 @@
                             <div class="product-info">
                                 <span class="product-category">${esc(p.category || "")}</span>
                                 <h3 class="product-title"><a href="product.html?id=${p.id}">${esc(p.name)}</a></h3>
-                                <div class="product-price">${price} BDT</div>
+                                <div class="product-price">Tk ${Number(price).toLocaleString()}</div>
                             </div>
                         </div>`;
                     }).join("")}
@@ -713,12 +716,12 @@
                         const toPlat = platMin - spend;
                         pct = Math.round(((spend - goldMin) / (platMin - goldMin)) * 100);
                         nextLabel = "Progress to Platinum";
-                        nextMsg = `Spend ৳${toPlat.toLocaleString()} more to reach Platinum`;
+                        nextMsg = `Spend Tk ${toPlat.toLocaleString()} more to reach Platinum`;
                     } else {
                         const toGold = goldMin - spend;
                         pct = Math.round((spend / goldMin) * 100);
                         nextLabel = "Progress to Gold";
-                        nextMsg = `Spend ৳${toGold.toLocaleString()} more to reach Gold`;
+                        nextMsg = `Spend Tk ${toGold.toLocaleString()} more to reach Gold`;
                     }
 
                     const iconEl  = document.getElementById("rw-tier-icon");
@@ -758,13 +761,13 @@
                         if (redValEl) redValEl.textContent = "";
                         if (earnedEl) earnedEl.textContent = "0";
                         if (redmEl) redmEl.textContent = "0";
-                        if (availEl) availEl.textContent = "৳0";
+                        if (availEl) availEl.textContent = "Tk 0";
                         renderTierProgress(totalSpend);
                         if (info) info.innerHTML =
                             '<div style="background:#faf6ee;border-radius:10px;padding:.9rem 1rem;font-size:.82rem;color:var(--text-muted);line-height:1.6;">' +
                             'Join our <strong style="color:var(--text-main);">Loyalty Program</strong> to earn points on every delivered order!<br>' +
-                            'Earn <strong style="color:var(--text-main);">1 point</strong> per <strong style="color:var(--text-main);">৳' + lp.earnPer + '</strong> spent. ' +
-                            'Redeem at checkout — min <strong style="color:var(--text-main);">' + lp.minRedeem + ' pts</strong> (1 pt = ৳' + rv + ').' +
+                            'Earn <strong style="color:var(--text-main);">1 point</strong> per <strong style="color:var(--text-main);">Tk ' + lp.earnPer + '</strong> spent. ' +
+                            'Redeem at checkout — min <strong style="color:var(--text-main);">' + lp.minRedeem + ' pts</strong> (1 pt = Tk ' + rv + ').' +
                             '<br><button id="lp-join-btn" class="btn" style="margin-top:.75rem;padding:.45rem 1.2rem;font-size:.83rem;">Request to Join</button></div>';
                         if (!_lpJoinListenerAdded) {
                             _lpJoinListenerAdded = true;
@@ -784,8 +787,8 @@
                         renderTierProgress(totalSpend);
                         if (info) info.innerHTML = lpInfoRows([
                             { icon: "time-outline", text: "<strong style='color:var(--text-main);'>Your enrollment is pending admin approval.</strong> You'll be notified once approved." },
-                            { icon: "cash-outline", text: "Once approved, earn <strong style='color:var(--text-main);'>1 point</strong> per <strong style='color:var(--text-main);'>৳" + lp.earnPer + "</strong> spent on delivered orders." },
-                            { icon: "gift-outline", text: "Redeem points at checkout for discounts (1 pt = ৳" + rv + ")." }
+                            { icon: "cash-outline", text: "Once approved, earn <strong style='color:var(--text-main);'>1 point</strong> per <strong style='color:var(--text-main);'>Tk " + lp.earnPer + "</strong> spent on delivered orders." },
+                            { icon: "gift-outline", text: "Redeem points at checkout for discounts (1 pt = Tk " + rv + ")." }
                         ]);
                     } else if (isApproveMode && status === "rejected") {
                         if (ptsEl) ptsEl.textContent = "—";
@@ -800,18 +803,18 @@
                         const lifetimeRedeemed = lpData?.lifetimeRedeemed || 0;
 
                         if (ptsEl)    ptsEl.textContent    = bal.toLocaleString();
-                        if (redValEl) redValEl.textContent  = "৳" + (bal * rv).toFixed(0) + " value";
+                        if (redValEl) redValEl.textContent  = "Tk " + (bal * rv).toFixed(0) + " value";
                         if (earnedEl) earnedEl.textContent  = lifetimeEarned.toLocaleString();
                         if (redmEl)   redmEl.textContent    = lifetimeRedeemed.toLocaleString();
-                        if (availEl)  availEl.textContent   = "৳" + (bal * rv).toFixed(0);
+                        if (availEl)  availEl.textContent   = "Tk " + (bal * rv).toFixed(0);
 
                         renderTierProgress(totalSpend);
 
                         const canRedeem = bal >= (lp.minRedeem || 50);
                         if (info) info.innerHTML = lpInfoRows([
-                            { icon: "cash-outline", text: "Earn <strong style='color:var(--text-main);'>1 point</strong> for every <strong style='color:var(--text-main);'>৳" + lp.earnPer + "</strong> spent — credited after order is <strong style='color:var(--text-main);'>delivered</strong>." },
+                            { icon: "cash-outline", text: "Earn <strong style='color:var(--text-main);'>1 point</strong> for every <strong style='color:var(--text-main);'>Tk " + lp.earnPer + "</strong> spent — credited after order is <strong style='color:var(--text-main);'>delivered</strong>." },
                             { icon: "gift-outline", text: "Redeem at checkout → Order Summary → <strong style='color:var(--text-main);'>Loyalty Points</strong> section." },
-                            { icon: "star-outline", text: "Min <strong style='color:var(--text-main);'>" + lp.minRedeem + " pts</strong> to redeem · 1 pt = ৳" + rv + (lp.maxRedeemPct ? " · Max " + lp.maxRedeemPct + "% of order" : "") + "." }
+                            { icon: "star-outline", text: "Min <strong style='color:var(--text-main);'>" + lp.minRedeem + " pts</strong> to redeem · 1 pt = Tk " + rv + (lp.maxRedeemPct ? " · Max " + lp.maxRedeemPct + "% of order" : "") + "." }
                         ]) + (canRedeem
                             ? `<a href="index.html" style="display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.85rem;padding:.75rem 1.25rem;background:linear-gradient(135deg,#163E34,#0b231a);color:#c9a84c;border-radius:10px;font-weight:700;font-size:.9rem;text-decoration:none;letter-spacing:.03em;transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'"><ion-icon name="bag-handle-outline" style="font-size:1.1rem;"></ion-icon> Shop Now &amp; Use ${bal} Points</a>`
                             : `<div style="margin-top:.75rem;padding:.65rem 1rem;background:#faf8f4;border-radius:10px;border:1px dashed var(--border-color);font-size:.8rem;color:var(--text-muted);text-align:center;">Earn <strong style="color:var(--text-main);">${(lp.minRedeem||50) - bal} more points</strong> to start redeeming at checkout.</div>`);
@@ -838,7 +841,7 @@
                 if (codeEl && code) codeEl.textContent = code;
                 const info = document.getElementById("rewards-ref-info");
                 const rc = cfg.referral;
-                if (info) info.innerHTML = `Share your code with friends. When they place their first order:<br><strong>They get ৳${rc.refereeAmt} off</strong> · <strong>You earn loyalty points worth ৳${rc.referrerAmt}!</strong>`;
+                if (info) info.innerHTML = `Share your code with friends. When they place their first order:<br><strong>They get Tk ${rc.refereeAmt} off</strong> · <strong>You earn loyalty points worth Tk ${rc.referrerAmt}!</strong>`;
                 const copyBtn = document.getElementById("copy-ref-btn");
                 if (copyBtn) copyBtn.addEventListener("click", () => {
                     navigator.clipboard.writeText(code || "").then(() => {
@@ -921,7 +924,7 @@
                 const condBlock = (condMinPurchase > 0 || condText)
                     ? `<div style="background:rgba(255,255,255,.07);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1rem;">
                         <div style="font-size:.78rem;font-weight:700;color:#c9a84c;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;">Approval Conditions</div>
-                        ${condMinPurchase > 0 ? `<div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;"><span style="color:#c9a84c;font-size:1rem;line-height:1.45;">→</span><span style="font-size:.84rem;color:rgba(255,255,255,.82);line-height:1.55;">You must have a minimum total purchase of <strong style="color:#fff;">৳${condMinPurchase.toLocaleString()}</strong> to be eligible to apply.</span></div>` : ''}
+                        ${condMinPurchase > 0 ? `<div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;"><span style="color:#c9a84c;font-size:1rem;line-height:1.45;">→</span><span style="font-size:.84rem;color:rgba(255,255,255,.82);line-height:1.55;">You must have a minimum total purchase of <strong style="color:#fff;">Tk ${condMinPurchase.toLocaleString()}</strong> to be eligible to apply.</span></div>` : ''}
                         ${condText ? `<div style="font-size:.82rem;color:rgba(255,255,255,.75);line-height:1.65;margin-top:${condMinPurchase > 0 ? '.5rem' : '0'};">${condText}</div>` : ''}
                     </div>` : '';
 
@@ -940,8 +943,8 @@
                     ${condBlock}
                     <div style="background:rgba(255,255,255,.06);border:1px solid rgba(201,168,76,.22);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1rem;">
                         <div style="font-size:.78rem;font-weight:700;color:#c9a84c;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;">Benefits After Approval</div>
-                        ${checkRowLight('Earn <strong style="color:#e8d5a0;">1 point</strong> for every <strong style="color:#e8d5a0;">৳' + earnPer + '</strong> spent on delivered orders.')}
-                        ${checkRowLight('Redeem points at checkout for instant discounts (1 pt = ৳' + rv + ').')}
+                        ${checkRowLight('Earn <strong style="color:#e8d5a0;">1 point</strong> for every <strong style="color:#e8d5a0;">Tk ' + earnPer + '</strong> spent on delivered orders.')}
+                        ${checkRowLight('Redeem points at checkout for instant discounts (1 pt = Tk ' + rv + ').')}
                         ${lp.tiers?.enabled ? checkRowLight('Access Silver / Gold / Platinum tier rewards with higher multipliers.') : ''}
                         ${checkRowLight('Exclusive member benefits and priority support.')}
                     </div>
@@ -958,8 +961,8 @@
                     checkRow('Cancelled or refunded orders do not earn points.') +
                     checkRow('Points can be redeemed during checkout in the Order Summary.') +
                     checkRow('Minimum redeem: <strong style="color:var(--text-main);">' + minRedeem + ' pts</strong>') +
-                    checkRow('Point value: <strong style="color:var(--text-main);">1 pt = ৳' + rv + '</strong>') +
-                    checkRow('Earn rate: Earn <strong style="color:var(--text-main);">1 point</strong> for every <strong style="color:var(--text-main);">৳' + earnPer + '</strong> spent.');
+                    checkRow('Point value: <strong style="color:var(--text-main);">1 pt = Tk ' + rv + '</strong>') +
+                    checkRow('Earn rate: Earn <strong style="color:var(--text-main);">1 point</strong> for every <strong style="color:var(--text-main);">Tk ' + earnPer + '</strong> spent.');
                 sections += accordion('how-it-works', '✦  How It Works', howItWorks, true);
 
                 // Section 2: Membership Tiers (only if tiers enabled)
@@ -976,7 +979,7 @@
                                     <div style="font-size:.72rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem;">Silver</div>
                                 </div>
                                 <div style="padding:.65rem .75rem;">
-                                    <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">Spend ৳${(silver.minSpend||0).toLocaleString()}+</div>
+                                    <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">Spend Tk ${(silver.minSpend||0).toLocaleString()}+</div>
                                     <div style="font-size:.9rem;font-weight:700;color:#0b231a;">×${silver.mult || 1} multiplier</div>
                                 </div>
                             </div>
@@ -986,7 +989,7 @@
                                     <div style="font-size:.72rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem;">Gold</div>
                                 </div>
                                 <div style="padding:.65rem .75rem;">
-                                    <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">Spend ৳${(gold.minSpend||0).toLocaleString()}+</div>
+                                    <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">Spend Tk ${(gold.minSpend||0).toLocaleString()}+</div>
                                     <div style="font-size:.9rem;font-weight:700;color:#0b231a;">×${gold.mult || 2} multiplier</div>
                                 </div>
                             </div>
@@ -996,12 +999,12 @@
                                     <div style="font-size:.72rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem;">Platinum</div>
                                 </div>
                                 <div style="padding:.65rem .75rem;">
-                                    <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">Spend ৳${(platinum.minSpend||0).toLocaleString()}+</div>
+                                    <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">Spend Tk ${(platinum.minSpend||0).toLocaleString()}+</div>
                                     <div style="font-size:.9rem;font-weight:700;color:#0b231a;">×${platinum.mult || 3} multiplier</div>
                                 </div>
                             </div>
                         </div>
-                        <div style="font-size:.75rem;color:var(--text-muted);margin-top:.35rem;">Tier is based on your total delivered order spend. Higher tiers earn more points per ৳${earnPer} spent.</div>`;
+                        <div style="font-size:.75rem;color:var(--text-muted);margin-top:.35rem;">Tier is based on your total delivered order spend. Higher tiers earn more points per Tk ${earnPer} spent.</div>`;
                     sections += accordion('tiers', '🏅  Membership Tiers', tierCards, false);
                 }
 
@@ -1012,7 +1015,7 @@
                     numRow(3, 'Enter how many points you want to use — or click <strong style="color:var(--text-main);">"Use All"</strong> to apply your maximum redeemable points.') +
                     numRow(4, 'Click <strong style="color:var(--text-main);">"Apply"</strong> — the discount is applied instantly to your total.') +
                     `<div style="margin-top:.65rem;padding:.6rem .9rem;background:#f0f7f4;border-radius:8px;border-left:3px solid #c9a84c;font-size:.8rem;color:var(--text-muted);">
-                        Minimum <strong style="color:var(--text-main);">${minRedeem} pts</strong> required to redeem. 1 pt = ৳${rv}.
+                        Minimum <strong style="color:var(--text-main);">${minRedeem} pts</strong> required to redeem. 1 pt = Tk ${rv}.
                         ${lp.maxRedeemPct ? ' Max <strong style="color:var(--text-main);">' + lp.maxRedeemPct + '%</strong> of order value can be covered by points.' : ''}
                     </div>`;
                 sections += accordion('how-to-redeem', '🛒  How to Redeem', howToRedeem, false);
@@ -1039,7 +1042,7 @@
                         : 'Loyalty points cannot be applied when there are active promotional discounts on your order. Remove the promotion or use your points on a full-price order.' },
                     { q: 'What if I cancel an order after redeeming points?', a: 'If your order is cancelled or refunded, your redeemed points will be restored to your account.' },
                     { q: 'Is there a limit to how many points I can redeem at once?', a: lp.maxRedeemPct
-                        ? `Yes — you can redeem up to <strong style="color:var(--text-main);">${lp.maxRedeemPct}%</strong> of your order value in points per order. For example, on a ৳1,000 order, you can use up to ${lp.maxRedeemPct} pts (৳${Math.floor(1000 * lp.maxRedeemPct / 100)}).`
+                        ? `Yes — you can redeem up to <strong style="color:var(--text-main);">${lp.maxRedeemPct}%</strong> of your order value in points per order. For example, on a Tk 1,000 order, you can use up to ${lp.maxRedeemPct} pts (Tk ${Math.floor(1000 * lp.maxRedeemPct / 100)}).`
                         : 'You can redeem all your available points in a single order, subject to the minimum redeem threshold of ' + minRedeem + ' pts.' }
                 ];
                 const faqHtml = faqItems.map(f =>

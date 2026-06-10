@@ -58,6 +58,18 @@ service cloud.firestore {
                     || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']);
     }
 
+    // ---- Order number counter ------------------------------------------
+    // Atomic 6-digit sequential order IDs (100001, 100002, …).
+    // Public can read + advance it (guests place orders too); the counter
+    // may only move FORWARD, so order numbers stay unique and monotonic.
+    match /counters/{id} {
+      allow read:   if true;
+      allow create: if request.resource.data.current is int;
+      allow update: if request.resource.data.current is int
+                    && request.resource.data.current > resource.data.current;
+      allow delete: if isAdmin();
+    }
+
     // ---- Orders --------------------------------------------------------
     match /orders/{id} {
       // Logged-in: uid must match auth uid
@@ -65,7 +77,9 @@ service cloud.firestore {
       allow create: if (isSignedIn() && request.resource.data.uid == request.auth.uid)
                     || (!isSignedIn() && request.resource.data.isGuest == true
                         && request.resource.data.uid == null);
-      allow read:   if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid) || true;
+      // Public read powers guest order tracking (track.html) by Order ID / phone.
+      // Writes stay admin-only, so orders can never be tampered with by customers.
+      allow read:   if true;
       allow update, delete: if isAdmin();
     }
 
@@ -115,10 +129,17 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // ---- Loyalty points (owner read/write, admin full access) ---------------
+    // ---- Loyalty points (owner read, admin full access) ----------------------
+    // Owner can create their doc and decrement points (redemption) but CANNOT
+    // increase their own balance — prevents loyalty point self-inflation.
     match /loyaltyPoints/{uid} {
       allow read:   if isOwner(uid) || isAdmin();
-      allow write:  if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid) || isAdmin();
+      allow update: if (
+          isOwner(uid) &&
+          request.resource.data.points <= resource.data.points
+        ) || isAdmin();
+      allow delete: if isAdmin();
     }
 
     // ---- Loyalty history log (owner read, admin full) -----------------------

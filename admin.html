@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" href="favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <meta charset="UTF-8">
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +12,8 @@
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
     <style>
@@ -195,16 +198,45 @@
         /* Crop modal */
         #crop-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.78); z-index:9999; align-items:center; justify-content:center; padding:1rem; }
         #crop-modal.open { display:flex; }
-        #crop-modal-box { background:#fff; border-radius:14px; overflow:hidden; width:100%; max-width:700px; display:flex; flex-direction:column; max-height:92vh; box-shadow:0 24px 64px rgba(0,0,0,.45); }
-        #crop-modal-hdr { display:flex; align-items:center; justify-content:space-between; padding:.85rem 1.2rem; border-bottom:1px solid var(--border-color); flex-wrap:wrap; gap:.5rem; flex-shrink:0; }
+        #crop-modal-box { background:#fff; border-radius:14px; overflow:hidden; width:100%; max-width:860px; display:flex; flex-direction:column; max-height:92vh; box-shadow:0 24px 64px rgba(0,0,0,.45); }
+        #crop-modal-hdr { display:flex; align-items:center; justify-content:space-between; padding:.6rem 1.2rem; border-bottom:1px solid var(--border-color); gap:.5rem; flex-shrink:0; }
         #crop-modal-hdr h4 { font-size:.95rem; margin:0; color:var(--primary-color); }
-        #crop-wrap { flex:1; position:relative; overflow:hidden; background:#111; min-height:300px; max-height:62vh; cursor:grab; user-select:none; }
+        #crop-modal-hdr .crop-hint { font-size:.75rem; color:var(--text-muted); }
+        #crop-wrap { position:relative; overflow:hidden; background:#1a1a1a; min-height:180px; cursor:grab; user-select:none; align-self:center; flex-shrink:0; width:100%; }
         #crop-wrap:active { cursor:grabbing; }
         #crop-img { position:absolute; top:0; left:0; display:block; max-width:none; max-height:none; user-select:none; pointer-events:none; }
-        #crop-modal-ftr { display:flex; align-items:center; justify-content:flex-end; gap:.6rem; padding:.85rem 1.2rem; border-top:1px solid var(--border-color); flex-shrink:0; }
-        #crop-ok { background:var(--primary-color); color:#fff; border:none; padding:.45rem 1.5rem; border-radius:7px; font-size:.88rem; font-weight:600; cursor:pointer; font-family:var(--font-sans); }
+        /* Zoom bar */
+        #crop-zoom-bar { display:flex; align-items:center; gap:.5rem; padding:.35rem .9rem; border-bottom:1px solid var(--border-color); background:#f7f7f5; flex-shrink:0; }
+        .czb-btn { background:#fff; border:1px solid var(--border-color); border-radius:6px; width:28px; height:28px; font-size:1rem; font-weight:700; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .14s,color .14s,border-color .14s; font-family:var(--font-sans); }
+        .czb-btn:hover { background:var(--primary-color); color:#fff; border-color:var(--primary-color); }
+        #crop-zoom-slider { flex:1; height:4px; cursor:pointer; accent-color:var(--primary-color); min-width:0; }
+        #crop-zoom-pct { font-size:.72rem; color:var(--text-muted); min-width:34px; text-align:center; font-variant-numeric:tabular-nums; }
+        #crop-zoom-reset { background:none; border:1px solid var(--border-color); border-radius:6px; padding:.2rem .55rem; font-size:.7rem; cursor:pointer; font-family:var(--font-sans); color:var(--text-muted); flex-shrink:0; transition:border-color .14s,color .14s; white-space:nowrap; }
+        #crop-zoom-reset:hover { border-color:var(--primary-color); color:var(--primary-color); }
+        /* Final Visible Area label overlay on main crop frame */
+        #crop-wrap::after { content:"Final Visible Area"; position:absolute; top:8px; left:8px; background:rgba(0,0,0,.54); color:#fff; font-size:.58rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; padding:3px 9px; border-radius:4px; pointer-events:none; z-index:2; }
+        /* Device previews — side-by-side grid; scrollable when modal is height-constrained */
+        #crop-previews { display:grid; grid-template-columns:1fr 1fr; gap:.7rem 1.8rem; padding:.65rem 1.2rem; border-bottom:1px solid var(--border-color); background:#eeebe5; align-items:start; overflow:visible; flex-shrink:0; }
+        .crop-preview-device { display:flex; flex-direction:column; align-items:center; gap:.55rem; min-width:0; width:100%; }
+        .crop-preview-label { display:inline-flex; align-items:center; gap:.32rem; font-size:.68rem; font-weight:700; color:#163e34; text-transform:uppercase; letter-spacing:.07em; white-space:nowrap; background:rgba(255,255,255,.88); border:1px solid rgba(26,60,42,.2); padding:.28rem .78rem; border-radius:20px; }
+        .crop-preview-label ion-icon { font-size:.85rem; flex-shrink:0; color:var(--primary-color); }
+        .crop-preview-frame { width:100%; max-width:210px; max-height:210px; min-width:0; height:auto; border-radius:10px; overflow:hidden; border:2px solid rgba(255,255,255,.4); background:#1a1a1a; background-repeat:no-repeat; box-shadow:0 4px 18px rgba(0,0,0,.22),0 1px 4px rgba(0,0,0,.14); position:relative; transition:transform .18s ease,box-shadow .18s ease; cursor:zoom-in; }
+        .crop-preview-frame:hover { transform:scale(1.04); box-shadow:0 14px 42px rgba(0,0,0,.32),0 3px 8px rgba(0,0,0,.18); z-index:2; }
+        .crop-preview-frame--sm { max-width:115px; }
+        /* Modal footer */
+        #crop-modal-ftr { display:flex; align-items:center; justify-content:flex-end; gap:.6rem; padding:.6rem 1.2rem; border-top:1px solid var(--border-color); flex-shrink:0; }
+        #crop-ok { background:var(--primary-color); color:#fff; border:none; padding:.45rem 1.6rem; border-radius:7px; font-size:.88rem; font-weight:600; cursor:pointer; font-family:var(--font-sans); }
         #crop-ok:hover { background:#0f2820; }
         #crop-cancel { background:none; border:1px solid var(--border-color); padding:.45rem 1rem; border-radius:7px; font-size:.88rem; cursor:pointer; font-family:var(--font-sans); }
+        /* Upload progress + badges */
+        #img-status { font-size:.78rem; }
+        .upload-progress-wrap { display:inline-flex; align-items:center; gap:.5rem; }
+        .upload-progress-bg { height:3px; border-radius:2px; background:#e0ddd6; overflow:hidden; width:120px; }
+        .upload-progress-bar { height:3px; border-radius:2px; background:var(--primary-color); width:0; transition:width .15s; }
+        .upload-badge { display:inline-flex; align-items:center; gap:.28rem; font-size:.7rem; border-radius:4px; padding:.14rem .42rem; font-weight:500; }
+        .upload-badge.ok   { color:#1e7e34; background:#e6f4ea; }
+        .upload-badge.webp { color:#1a56b8; background:#e8f0fe; }
+        .upload-badge.comp { color:#7c3aed; background:#f3e8fe; }
 
         /* Toggle switch */
         .tog { position:relative; display:inline-block; width:52px; height:28px; flex-shrink:0; }
@@ -442,10 +474,10 @@
             #customer-rows td:nth-child(2) { display:none; }
 
             /* Categories: hide Slug(2), Order(3) */
-            [data-panel="categories"] thead th:nth-child(2),
             [data-panel="categories"] thead th:nth-child(3),
-            #cat-rows td:nth-child(2),
-            #cat-rows td:nth-child(3) { display:none; }
+            [data-panel="categories"] thead th:nth-child(4),
+            #cat-rows td:nth-child(3),
+            #cat-rows td:nth-child(4) { display:none; }
 
             /* Coupons: hide Min Order(3), Expires(5) */
             [data-panel="coupons"] thead th:nth-child(3),
@@ -508,7 +540,13 @@
 
             /* Crop modal on mobile */
             #crop-modal-box { border-radius:10px; }
-            #crop-wrap { min-height:220px; max-height:50vh; }
+            /* crop-wrap dimensions set via JS for each upload location */
+            #crop-zoom-bar { padding:.4rem .7rem; gap:.4rem; }
+            #crop-previews { grid-template-columns:1fr; gap:.8rem; padding:.8rem 1rem; justify-items:center; overflow-y:auto; flex-shrink:1; min-height:130px; }
+            .crop-preview-frame { max-width:160px; max-height:160px; width:100%; cursor:default; }
+            .crop-preview-frame--sm { max-width:160px; }
+            .crop-preview-frame:hover { transform:none; box-shadow:0 4px 18px rgba(0,0,0,.22),0 1px 4px rgba(0,0,0,.14); }
+            #crop-wrap::after { font-size:.52rem; padding:2px 7px; }
         }
 
         /* ===== MOBILE WIDTH FIX ===== */
@@ -851,9 +889,6 @@
                             <input type="search" id="pf-search" placeholder="Search products…" style="flex:1;min-width:160px;padding:.45rem .75rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;background:var(--bg-color);">
                             <select id="pf-category" style="padding:.45rem .6rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;background:var(--bg-color);">
                                 <option value="">All Categories</option>
-                                <option value="Men">Men</option>
-                                <option value="Women">Women</option>
-                                <option value="Unisex">Unisex</option>
                             </select>
                             <select id="pf-sort" style="padding:.45rem .6rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;background:var(--bg-color);">
                                 <option value="default">Sort: Default</option>
@@ -881,8 +916,10 @@
                                 <option value="featured-off">☆ Unmark Featured</option>
                                 <option value="hide">Hide</option>
                                 <option value="show">Show</option>
+                                <option value="move-category">Move to category…</option>
                                 <option value="delete">Delete</option>
                             </select>
+                            <select id="bulk-move-cat" style="display:none;padding:.4rem .65rem;border:1px solid var(--border-color);border-radius:7px;font-size:.83rem;background:var(--bg-color);"></select>
                             <button id="bulk-apply" class="btn" style="padding:.4rem 1rem;font-size:.83rem;">Apply</button>
                             <button id="bulk-cancel" class="link-btn" style="font-size:.83rem;">Cancel</button>
                         </div>
@@ -971,8 +1008,8 @@
                         </div>
                         <div style="overflow-x:auto;">
                             <table class="admin-table">
-                                <thead><tr><th>Name</th><th>Slug</th><th>Order</th><th>Products</th><th></th></tr></thead>
-                                <tbody id="cat-rows"><tr><td colspan="5" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                                <thead><tr><th>Name</th><th>Parent</th><th>Slug</th><th>Order</th><th>Products</th><th>Status</th><th></th></tr></thead>
+                                <tbody id="cat-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -1026,6 +1063,121 @@
                     .tog-slider:before { position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s; }
                     .tog input:checked + .tog-slider { background:var(--primary-color); }
                     .tog input:checked + .tog-slider:before { transform:translateX(20px); }
+
+                    /* ── Mobile-first promo responsive overrides ───────────────────── */
+                    @media (max-width: 640px) {
+                      /* Grid: single column on mobile */
+                      .promo-grid { grid-template-columns: 1fr !important; }
+                      .bxgy-top-grid { grid-template-columns: 1fr !important; }
+
+                      /* Cards: tighter padding, full-width */
+                      .promo-card { padding: 1rem 1rem; box-sizing: border-box; }
+
+                      /* Section header: wrap Save All button to its own row */
+                      .section-hdr { flex-wrap: wrap; padding: .75rem 1rem; gap: .5rem; }
+                      .section-hdr > div { flex: 1 1 0; min-width: 0; }
+                      .section-hdr > div h2 { font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                      .section-hdr > div small { font-size: .7rem; word-break: break-word; }
+                      #promo-save-btn { order: 3; margin-left: 0 !important; width: 100%; justify-content: center; min-height: 42px; }
+
+                      /* All inputs: full-width, proper touch target */
+                      .promo-input {
+                        width: 100% !important;
+                        flex: none !important;
+                        min-height: 44px;
+                        font-size: .9rem;
+                        box-sizing: border-box;
+                      }
+                      .promo-input.wide {
+                        width: 100% !important;
+                        max-width: none !important;
+                      }
+                      select.promo-input { width: 100% !important; }
+
+                      /* Promo rows: stack vertically so all labels and inputs are legible */
+                      .promo-row {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: .4rem;
+                        margin-top: .75rem;
+                      }
+                      .promo-row > label { font-size: .78rem; font-weight: 600; color: var(--text-muted); }
+
+                      /* Prevent long Bangla text from causing horizontal overflow */
+                      .promo-help { overflow-wrap: break-word; word-break: break-word; font-size: .76rem; }
+
+                      /* Seasonal event rows: stack vertically */
+                      .promo-row[data-seas] {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: .4rem;
+                      }
+                      .promo-row[data-seas] .promo-input,
+                      .promo-row[data-seas] input[type="date"],
+                      .promo-row[data-seas] input[type="number"] {
+                        width: 100% !important;
+                        flex: none;
+                      }
+                      .promo-row[data-seas] label { display: none; } /* arrows visible via layout */
+
+                      /* Combo rows: stack vertically */
+                      .promo-row[data-combo] {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: .4rem;
+                      }
+                      .promo-row[data-combo] .promo-input {
+                        width: 100% !important;
+                        flex: none;
+                      }
+
+                      /* Spin prize rows: 2-col grid for compact display */
+                      .promo-row[data-prize] {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: .35rem;
+                        align-items: center;
+                      }
+                      .promo-row[data-prize] .promo-input {
+                        width: 100% !important;
+                        flex: none;
+                        min-width: 0;
+                      }
+                      /* % label sits next to prob input — push delete to far right */
+                      .promo-row[data-prize] > span:first-of-type { display: none; }
+                      .promo-row[data-prize] > button { grid-column: 2; justify-self: end; }
+
+                      /* Spin prizes column header: match 2-col grid */
+                      #p-spin-prizes-header {
+                        display: grid !important;
+                        grid-template-columns: 1fr 1fr !important;
+                        gap: .35rem;
+                      }
+                      #p-spin-prizes-header span:nth-child(3),
+                      #p-spin-prizes-header span:nth-child(4),
+                      #p-spin-prizes-header span:nth-child(5) { display: none; }
+
+                      /* Reduce gap in all rows */
+                      .promo-row { gap: .4rem; }
+
+                      /* Help text: smaller on mobile */
+                      .promo-help { font-size: .74rem; }
+
+                      /* link-btn (Add Prize / Add Event / Add Combo) */
+                      .link-btn { min-height: 44px; padding: .55rem .9rem; font-size: .84rem; width: 100%; justify-content: center; box-sizing: border-box; }
+
+                      /* Promo-top: keep icon, title and toggle in one line */
+                      .promo-top { align-items: center; }
+                      .promo-label h4 { font-size: .88rem; }
+                      .promo-label small { font-size: .73rem; }
+                    }
+
+                    /* Sub-360px: extra tight */
+                    @media (max-width: 360px) {
+                      .promo-card { padding: .8rem .85rem; }
+                      .promo-input { font-size: .85rem; min-height: 42px; }
+                      .section-hdr > div h2 { font-size: .84rem; }
+                    }
                   </style>
 
                   <div class="promo-grid">
@@ -1037,7 +1189,7 @@
                         <div class="promo-label"><h4>Buy X Get Y Free</h4><small>Buy 2 get 1 free — admin selects which items qualify as free</small></div>
                         <label class="tog"><input type="checkbox" id="p-bxgy-on"><span class="tog-slider"></span></label>
                       </div>
-                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+                      <div class="bxgy-top-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
                         <div>
                           <div class="promo-row">
                             <label>Rule 1 — Buy</label>
@@ -1203,7 +1355,7 @@
                         <label>Show after (seconds)</label>
                         <input class="promo-input" id="p-spin-sec" type="number" min="3" max="60" value="8">
                       </div>
-                      <div style="margin-top:.7rem;font-size:.78rem;color:var(--text-muted);display:grid;grid-template-columns:100px 90px 60px 80px auto;gap:.4rem;padding:.2rem .3rem;">
+                      <div id="p-spin-prizes-header" style="margin-top:.7rem;font-size:.78rem;color:var(--text-muted);display:grid;grid-template-columns:100px 90px 60px 80px auto;gap:.4rem;padding:.2rem .3rem;">
                         <span>Label</span><span>Coupon Code</span><span>Prob %</span>
                         <span>Max Winners <span style="font-size:.72rem;color:#1a56b8;font-weight:600;" title="0 লিখলে unlimited — যেকোনো সংখ্যক customer জিততে পারবে">(0 = unlimited)</span></span>
                         <span></span>
@@ -2242,10 +2394,10 @@
                         <ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.3rem;font-size:.95rem;"></ion-icon>Add Images
                     </label>
                     <input type="file" id="img-file-multi" accept="image/*" multiple style="display:none;">
-                    <span class="muted-note" id="img-status" style="font-size:.78rem;"></span>
+                    <div class="muted-note" id="img-status" style="font-size:.78rem;"></div>
                 </div>
                 <p class="muted-note" style="margin-top:.45rem;font-size:.75rem;">
-                    <strong>Best size: 3:4 ratio (e.g. 600×800px)</strong>
+                    <strong>Best size: 3:4 portrait (e.g. 900×1200px)</strong> · Up to 10 MB · Auto WebP + compressed on delivery
                 </p>
             </div>
 
@@ -2261,9 +2413,7 @@
                 <div class="fg"><label>Name</label><input type="text" name="name" required></div>
                 <div class="fg"><label>Category</label>
                     <select name="category" required>
-                        <option value="Men">Men</option>
-                        <option value="Women">Women</option>
-                        <option value="Unisex">Unisex</option>
+                        <option value="" disabled selected>— loading categories —</option>
                     </select>
                 </div>
             </div>
@@ -2353,7 +2503,32 @@
             <h2 id="cat-form-title">Add Category</h2>
             <div class="fg"><label>Category Name</label><input type="text" name="name" required placeholder="Men's Fragrances"></div>
             <div class="fg"><label>Slug (URL key, auto-filled)</label><input type="text" name="slug" required placeholder="mens"></div>
+            <div class="fg"><label>Parent Category</label>
+                <select name="parentId" id="cat-parent-select">
+                    <option value="">Create as Root Category</option>
+                </select>
+                <p class="muted-note" style="font-size:.76rem;margin-top:.35rem;">Select a parent category to create a child category. Leave as "Create as Root Category" to create a top-level category.</p>
+            </div>
             <div class="fg"><label>Display Order</label><input type="number" name="order" value="0" min="0"></div>
+            <div class="fg"><label>Icon <span class="muted-note" style="font-weight:400;font-size:.76rem;">Ionicon name, e.g. man-outline, gift-outline — empty = automatic</span></label>
+                <div style="display:flex;gap:.55rem;align-items:center;">
+                    <input type="text" name="icon" placeholder="auto" style="flex:1;">
+                    <span id="cat-icon-preview" style="font-size:1.35rem;display:flex;align-items:center;color:var(--primary-color);"><ion-icon name="pricetag-outline"></ion-icon></span>
+                </div>
+            </div>
+            <div class="fg"><label>Description <span class="muted-note" style="font-weight:400;font-size:.76rem;">Optional — shows on the shop page when this category is selected</span></label>
+                <textarea name="description" rows="2" placeholder="Short text about this collection…" style="resize:vertical;"></textarea>
+            </div>
+            <div class="fg"><label>Banner Image <span class="muted-note" style="font-weight:400;font-size:.76rem;">Optional — used on category pages</span></label>
+                <div style="display:flex;gap:.55rem;align-items:center;flex-wrap:wrap;">
+                    <img id="cat-banner-preview" alt="" style="width:72px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border-color);display:none;">
+                    <label class="btn btn-outline" for="cat-banner-file" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;"></ion-icon>Upload</label>
+                    <input type="file" id="cat-banner-file" accept="image/*" style="display:none;">
+                    <button type="button" class="icon-btn danger" id="cat-banner-del" style="display:none;" title="Remove banner"><ion-icon name="trash-outline"></ion-icon></button>
+                    <span class="muted-note" id="cat-banner-status"></span>
+                    <input type="hidden" name="banner">
+                </div>
+            </div>
             <div class="form-actions">
                 <button type="button" class="btn btn-outline" id="cancel-cat">Cancel</button>
                 <button type="submit" class="btn">Save Category</button>
@@ -2414,17 +2589,37 @@
         </form>
     </div>
 
-    <!-- Crop Modal -->
+    <!-- Crop / Position Modal -->
     <div id="crop-modal">
         <div id="crop-modal-box">
             <div id="crop-modal-hdr">
-                <h4>Position Image</h4>
-                <span style="font-size:.78rem;color:var(--text-muted);">Drag to reposition</span>
+                <div>
+                    <h4 id="crop-modal-title">Position Image</h4>
+                    <span class="crop-hint">Drag to pan · Scroll or pinch to zoom</span>
+                </div>
+                <span id="crop-ratio-badge" style="font-size:.7rem;background:#f0f4f2;padding:.18rem .52rem;border-radius:4px;color:var(--primary-color);font-weight:600;flex-shrink:0;display:none;"></span>
             </div>
+
             <div id="crop-wrap"><img id="crop-img" alt=""></div>
+
+            <div id="crop-zoom-bar">
+                <button type="button" class="czb-btn" id="crop-zoom-out" title="Zoom out">−</button>
+                <input type="range" id="crop-zoom-slider" min="25" max="320" step="1" value="100">
+                <button type="button" class="czb-btn" id="crop-zoom-in" title="Zoom in">+</button>
+                <span id="crop-zoom-pct">100%</span>
+                <button type="button" id="crop-zoom-reset">↺ Reset</button>
+            </div>
+
+            <div id="crop-previews">
+                <!-- Filled dynamically by _cropSetupPreviews() -->
+                <div class="crop-preview-device" style="opacity:.4;pointer-events:none;">
+                    <div class="crop-preview-label">Loading…</div>
+                </div>
+            </div>
+
             <div id="crop-modal-ftr">
                 <button id="crop-cancel">Cancel</button>
-                <button id="crop-ok">Upload</button>
+                <button id="crop-ok">Upload Image</button>
             </div>
         </div>
     </div>

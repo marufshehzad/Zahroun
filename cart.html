@@ -5,19 +5,24 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Cart | Zahroun</title>
-    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" href="favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
     <meta name="robots" content="noindex">
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://res.cloudinary.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@500;600;700&display=swap">
     <link rel="stylesheet" href="css/style.css">
     <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/broadcast.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <style>
         body { background-color: #FAF7F0; }
         .cart-page { max-width: 900px; margin: 2.5rem auto; padding: 0 1rem 5rem; }
@@ -61,7 +66,7 @@
 <body>
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html">Shop</a>
@@ -97,7 +102,7 @@
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
                     <span>Total</span>
-                    <span id="cart-total">0 BDT</span>
+                    <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
@@ -148,12 +153,12 @@
                         <img src="${esc(item.image)}" alt="${esc(item.name)}" loading="lazy">
                         <div class="cart-item-info">
                             <div class="cart-item-name">${esc(item.name)}</div>
-                            <div class="cart-item-meta">${esc(item.size || "50ML")} &middot; ৳${price.toLocaleString()} each</div>
+                            <div class="cart-item-meta">${esc(item.size || "50ML")} &middot; Tk ${price.toLocaleString()} each</div>
                             <div class="qty-row">
                                 <button class="qty-btn" data-action="dec" data-idx="${idx}"><ion-icon name="remove-outline"></ion-icon></button>
                                 <span class="qty-val">${item.quantity || 1}</span>
                                 <button class="qty-btn" data-action="inc" data-idx="${idx}"><ion-icon name="add-outline"></ion-icon></button>
-                                <span class="line-price">৳${lineTotal.toLocaleString()}</span>
+                                <span class="line-price">Tk ${lineTotal.toLocaleString()}</span>
                             </div>
                         </div>
                         <button class="remove-item-btn" data-action="remove" data-idx="${idx}" title="Remove item">
@@ -166,16 +171,16 @@
                 <h3>Order Summary</h3>
                 <div class="summary-row">
                     <span>Subtotal (${itemCount} item${itemCount !== 1 ? "s" : ""})</span>
-                    <span>৳${subtotal.toLocaleString()}</span>
+                    <span>Tk ${subtotal.toLocaleString()}</span>
                 </div>
                 <div class="summary-row">
                     <span>Delivery</span>
-                    <span>${delivery === 0 ? '<span style="color:#1e7e34;font-weight:600;">Free</span>' : "৳" + delivery}</span>
+                    <span>${delivery === 0 ? '<span style="color:#1e7e34;font-weight:600;">Free</span>' : "Tk " + delivery}</span>
                 </div>
-                ${delivery > 0 ? `<div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.4rem;">Add ৳${(FREE_THRESHOLD - subtotal).toLocaleString()} more for free delivery</div>` : ""}
+                ${delivery > 0 ? `<div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.4rem;">Add Tk ${(FREE_THRESHOLD - subtotal).toLocaleString()} more for free delivery</div>` : ""}
                 <div class="summary-row total-row">
                     <span>Total</span>
-                    <span>৳${total.toLocaleString()}</span>
+                    <span>Tk ${total.toLocaleString()}</span>
                 </div>
                 <button class="checkout-cta" onclick="checkBxgyAndProceed()">Proceed to Checkout</button>
                 <a href="shop.html" class="continue-link">&larr; Continue Shopping</a>

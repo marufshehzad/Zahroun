@@ -1,12 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zahroun | Luxury Perfumes Bangladesh — Buy Online</title>
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="apple-touch-icon" href="favicon.png">
+    <link rel="icon" href="favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
     <meta name="description" content="Zahroun crafts niche, luxury fragrances for men and women. Discover long-lasting, premium perfumes with rare botanical ingredients — shop online in Bangladesh.">
     <meta name="keywords" content="zahroun, zahrun, zahorun, zahroon, zarun, jahroun, jahrun, jahorun, jahroon, jarun, zahron, zehroun, luxury perfume bangladesh, niche fragrance, perfume for women, perfume for men, unisex perfume, long lasting perfume dhaka, best perfume bd, perfume shop bangladesh">
     <meta property="og:title" content="Zahroun | Luxury Perfumes Bangladesh — Buy Online">
@@ -45,7 +48,6 @@
       },
       "description": "Zahroun — luxury niche perfume brand in Bangladesh. Buy long-lasting premium fragrances for women, men, and unisex online. Fast delivery across Bangladesh.",
       "priceRange": "৳৳৳",
-      "servesCuisine": "Luxury Perfumes",
       "areaServed": {
         "@type": "Country",
         "name": "Bangladesh"
@@ -70,6 +72,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="preload" as="image" href="product pictures/New product pic and price/Home.webp" type="image/webp" fetchpriority="high">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@500;600;700&display=swap">
     <link rel="stylesheet" href="css/style.css">
     <style>
         @keyframes _skShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -84,8 +88,8 @@
     <script type="module" src="js/broadcast.js"></script>
     <script type="module" src="js/wishlist.js"></script>
     <!-- Ionicons for clean, minimal icons -->
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </head>
 <body>
@@ -93,7 +97,7 @@
     <!-- Navigation -->
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
             
             <nav class="nav-links" id="nav-links">
                 <a href="index.html" class="active">Home</a>
@@ -117,7 +121,7 @@
 
     <!-- Hero Section -->
     <section class="hero">
-        <img src="product pictures/New product pic and price/Home.jpg" alt="Zahroun Premium Fragrances" class="hero-bg" id="hero-bg-img" loading="eager">
+        <img src="product pictures/New product pic and price/Home.webp" alt="Zahroun Premium Fragrances" class="hero-bg" id="hero-bg-img" loading="eager" fetchpriority="high">
         <div class="container">
             <div class="hero-content">
                 <p class="hero-subtitle" id="hero-subtitle">Perfumery</p>
@@ -159,21 +163,21 @@
             </div>
             <div id="home-category-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
                 <div style="position: relative; height: 400px; overflow: hidden; border-radius: 4px; cursor: pointer;" onclick="window.location.href='shop.html?category=women'">
-                    <img src="product pictures/New product pic and price/women Rosy Diva 50ml.PNG" alt="Women" id="cat-img-forher" style="width: 100%; height: 100%; object-fit: contain; background-color: var(--surface-color); transition: transform 0.5s; padding: 1rem;" loading="lazy">
+                    <img src="product pictures/New product pic and price/women Rosy Diva 50ml.webp" alt="Women" id="cat-img-forher" style="width: 100%; height: 100%; object-fit: contain; background-color: var(--surface-color); transition: transform 0.5s; padding: 1rem;" loading="lazy">
                     <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 2rem; color: white;">
                         <h3 style="color: white; font-size: 1.5rem;">For Her</h3>
                         <p style="color: #eee;">Elegant and radiant</p>
                     </div>
                 </div>
                 <div style="position: relative; height: 400px; overflow: hidden; border-radius: 4px; cursor: pointer;" onclick="window.location.href='shop.html?category=unisex'">
-                    <img src="product pictures/New product pic and price/Unisex.PNG" alt="Unisex" id="cat-img-unisex" style="width: 100%; height: 100%; object-fit: contain; background-color: var(--surface-color); transition: transform 0.5s; padding: 1rem;" loading="lazy">
+                    <img src="product pictures/New product pic and price/Unisex.webp" alt="Unisex" id="cat-img-unisex" style="width: 100%; height: 100%; object-fit: contain; background-color: var(--surface-color); transition: transform 0.5s; padding: 1rem;" loading="lazy">
                     <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 2rem; color: white;">
                         <h3 style="color: white; font-size: 1.5rem;">Unisex</h3>
                         <p style="color: #eee;">Versatile and balanced</p>
                     </div>
                 </div>
                 <div style="position: relative; height: 400px; overflow: hidden; border-radius: 4px; cursor: pointer;" onclick="window.location.href='shop.html?category=men'">
-                    <img src="product pictures/New product pic and price/FOR men.PNG" alt="For Him" id="cat-img-forhim" style="width: 100%; height: 100%; object-fit: contain; background-color: #FFFFFF; transition: transform 0.5s; padding: 1rem; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.12));" loading="lazy">
+                    <img src="product pictures/New product pic and price/FOR men.webp" alt="For Him" id="cat-img-forhim" style="width: 100%; height: 100%; object-fit: contain; background-color: #FFFFFF; transition: transform 0.5s; padding: 1rem; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.12));" loading="lazy">
                     <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 2rem; color: white;">
                         <h3 style="color: white; font-size: 1.5rem;">For Him</h3>
                         <p style="color: #eee;">Bold and refined</p>
@@ -279,25 +283,25 @@
         </div>
         <div id="gallery-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
             <a href="https://www.instagram.com/zahroun_?igsh=b3hrNTFia2xzZG5y" target="_blank" rel="noopener noreferrer" style="display: block; position: relative; overflow: hidden; border-radius: 8px; aspect-ratio: 1/1;" class="product-card">
-                <img src="product pictures/New product pic and price/Sahraa Oudh 50ml.PNG" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
+                <img src="product pictures/New product pic and price/Sahraa Oudh 50ml.webp" alt="Sahraa Oudh Luxury Perfume Bottle - Zahroun" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
                 <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(22, 62, 52, 0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
                     <ion-icon name="logo-instagram" style="color: white; font-size: 2.5rem;"></ion-icon>
                 </div>
             </a>
             <a href="https://www.instagram.com/zahroun_?igsh=b3hrNTFia2xzZG5y" target="_blank" rel="noopener noreferrer" style="display: block; position: relative; overflow: hidden; border-radius: 8px; aspect-ratio: 1/1;" class="product-card">
-                <img src="product pictures/New product pic and price/Dulce Oud 50ml.PNG" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
+                <img src="product pictures/New product pic and price/Dulce Oud 50ml.webp" alt="Dulce Oud Premium Fragrance Bottle - Zahroun" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
                 <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(22, 62, 52, 0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
                     <ion-icon name="logo-instagram" style="color: white; font-size: 2.5rem;"></ion-icon>
                 </div>
             </a>
             <a href="https://www.instagram.com/zahroun_?igsh=b3hrNTFia2xzZG5y" target="_blank" rel="noopener noreferrer" style="display: block; position: relative; overflow: hidden; border-radius: 8px; aspect-ratio: 1/1;" class="product-card">
-                <img src="product pictures/New product pic and price/women Rosy Diva 50ml.PNG" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
+                <img src="product pictures/New product pic and price/women Rosy Diva 50ml.webp" alt="Rosy Diva Elegant Perfume for Women - Zahroun" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
                 <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(22, 62, 52, 0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
                     <ion-icon name="logo-instagram" style="color: white; font-size: 2.5rem;"></ion-icon>
                 </div>
             </a>
             <a href="https://www.instagram.com/zahroun_?igsh=b3hrNTFia2xzZG5y" target="_blank" rel="noopener noreferrer" style="display: block; position: relative; overflow: hidden; border-radius: 8px; aspect-ratio: 1/1;" class="product-card">
-                <img src="product pictures/New product pic and price/AL Khayran 50ml.PNG" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
+                <img src="product pictures/New product pic and price/AL Khayran 50ml.webp" alt="Al Khayran Unisex Luxury Fragrance - Zahroun" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
                 <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(22, 62, 52, 0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
                     <ion-icon name="logo-instagram" style="color: white; font-size: 2.5rem;"></ion-icon>
                 </div>
@@ -374,7 +378,7 @@
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
                     <span>Total</span>
-                    <span id="cart-total">0 BDT</span>
+                    <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
@@ -395,7 +399,7 @@
 
         try {
             // sessionStorage cache — home page settings change rarely
-            const _HP_KEY = 'zhr_hp_v1', _ST_KEY = 'zhr_store_v1', _TTL = 15 * 60 * 1000;
+            const _HP_KEY = 'zhr_hp_v1', _ST_KEY = 'zhr_store_v1', _TTL = 3 * 60 * 1000; // short TTL so admin homepage edits go live within minutes
             let _hpData = null, _stData = null;
             try {
                 const rH = sessionStorage.getItem(_HP_KEY), rS = sessionStorage.getItem(_ST_KEY);
@@ -458,7 +462,7 @@
                     if (grid) {
                         grid.innerHTML = d.gallery.slice(0, 4).map(url => `
                             <a href="https://www.instagram.com/zahroun_?igsh=b3hrNTFia2xzZG5y" target="_blank" rel="noopener noreferrer" style="display: block; position: relative; overflow: hidden; border-radius: 8px; aspect-ratio: 1/1;" class="product-card">
-                                <img src="${cloudinaryTransform(url, "w_600,h_600,c_fill,f_auto,q_auto")}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
+                                <img src="${cloudinaryTransform(url, "w_600,h_600,c_fill,f_auto,q_auto")}" alt="Instagram gallery photo showcasing Zahroun luxury perfumes" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" class="product-img" loading="lazy">
                                 <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(22, 62, 52, 0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
                                     <ion-icon name="logo-instagram" style="color: white; font-size: 2.5rem;"></ion-icon>
                                 </div>
@@ -507,9 +511,9 @@
             function priceRange(p) {
                 const active = p.activeSizes ?? ['6ML','15ML','30ML','50ML'];
                 const vals = p.prices ? Object.entries(p.prices).filter(([k,v]) => active.includes(k) && typeof v === 'number' && v > 0).map(([,v]) => v) : [];
-                if (!vals.length) return `৳${(p.basePrice || p.price || 0).toLocaleString()}`;
+                if (!vals.length) return `Tk ${(p.basePrice || p.price || 0).toLocaleString()}`;
                 const mn = Math.min(...vals), mx = Math.max(...vals);
-                return mn === mx ? `৳${mn.toLocaleString()}` : `৳${mn.toLocaleString()} – ৳${mx.toLocaleString()}`;
+                return mn === mx ? `Tk ${mn.toLocaleString()}` : `Tk ${mn.toLocaleString()} – Tk ${mx.toLocaleString()}`;
             }
             grid.innerHTML = featured.map(p => {
                 const defaultPrice = (p.prices && p.prices['50ML']) ? p.prices['50ML'] : p.price;
@@ -596,10 +600,12 @@
         <div style="font-family:var(--font-serif);font-size:1.3rem;font-weight:700;color:var(--primary-color);margin-bottom:.25rem;">🎰 Spin to Win!</div>
         <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:1.25rem;">Try your luck for a special discount</div>
         <!-- Wheel -->
-        <div style="position:relative;width:260px;height:260px;margin:0 auto 1.25rem;">
-          <canvas id="spin-canvas" width="260" height="260" style="border-radius:50%;display:block;"></canvas>
+        <div id="spin-wheel-wrap" style="position:relative;width:min(260px,calc(100vw - 5rem));height:min(260px,calc(100vw - 5rem));margin:0 auto 1.25rem;">
+          <canvas id="spin-canvas" width="260" height="260" style="width:100%;height:100%;border-radius:50%;display:block;"></canvas>
           <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;background:#fff;border-radius:50%;border:3px solid var(--primary-color);box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:var(--primary-color);" id="spin-center">SPIN</div>
-          <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:22px solid #163E34;"></div>
+          <!-- Pointer sits in its own fixed-position layer so it never rotates with the canvas.
+               Points DOWN into the wheel; centered via left:50% + translateX(-50%) at every width. -->
+          <div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:22px solid #163E34;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3));z-index:3;pointer-events:none;"></div>
         </div>
         <div id="spin-result" style="display:none;background:var(--bg-color);border-radius:10px;padding:.85rem;margin-bottom:.75rem;">
           <div id="spin-prize-label" style="font-size:1.1rem;font-weight:700;color:var(--primary-color);margin-bottom:.35rem;"></div>
@@ -654,6 +660,7 @@
       }
 
       async function initSpin() {
+        if (window._spinInitialized) return;
         const P = window.ZahrounPromos;
         if (!P) return;
         const cfg = await P.load();
@@ -663,6 +670,7 @@
         const prizes = sc.prizes || [];
         if (!prizes.length) return;
 
+        window._spinInitialized = true;
         const modal = document.getElementById('spin-modal');
         const canvas = document.getElementById('spin-canvas');
         const btn = document.getElementById('spin-btn');
@@ -745,6 +753,10 @@
       } else {
         setTimeout(initSpin, 500);
       }
+
+      window.addEventListener('promos-updated', () => {
+        setTimeout(initSpin, 100);
+      });
     })();
     </script>
 </body>

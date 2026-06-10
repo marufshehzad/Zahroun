@@ -5,19 +5,23 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | Zahroun</title>
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="apple-touch-icon" href="favicon.png">
+    <link rel="icon" href="favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
     <meta name="robots" content="noindex, nofollow">
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://res.cloudinary.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@500;600;700&display=swap">
     <link rel="stylesheet" href="css/style.css">
     <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
     <style>
         .checkout-container {
@@ -33,16 +37,18 @@
             box-shadow: 0 2px 18px rgba(0,0,0,.07);
         }
         .checkout-section h2 {
-            font-family: var(--font-serif);
-            font-size: 1.18rem;
+            font-family: 'Cinzel', var(--font-serif);
+            font-size: 1.12rem;
             margin-bottom: 0;
             color: var(--text-main);
             text-transform: uppercase;
-            letter-spacing: .12em;
-            font-weight: 400;
+            letter-spacing: .14em;
+            font-weight: 600;
             padding-bottom: .65rem;
             border-bottom: 2px solid #0b231a;
         }
+        /* Success screen heading uses the same clean serif */
+        .checkout-container h2 { font-family: 'Cinzel', var(--font-serif); }
         .checkout-section h2 + *,
         .checkout-section h2 + .form-group { margin-top: 1.5rem; }
         .form-group {
@@ -171,7 +177,7 @@
 <body>
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html">Shop</a>
@@ -223,8 +229,8 @@
                     <div id="delivery-zone-info" style="display:none; background:#f0f7f4; border:1px solid #c3dfd2; border-radius:6px; padding:.65rem 1rem; margin-bottom:1.5rem; font-size:.9rem; color:#163e34;"></div>
                     <!-- Hidden: auto-set by autoSetDelivery() based on district -->
                     <select id="deliveryArea" style="display:none;" aria-hidden="true">
-                        <option value="60" id="opt-dhaka">Inside Dhaka (60 BDT)</option>
-                        <option value="120" id="opt-outside">Outside Dhaka (120 BDT)</option>
+                        <option value="60" id="opt-dhaka">Inside Dhaka (Tk 60)</option>
+                        <option value="120" id="opt-outside">Outside Dhaka (Tk 120)</option>
                     </select>
                     <div class="form-group">
                         <label for="giftMessage" style="display:flex;align-items:center;gap:.45rem;"><ion-icon name="gift-outline" style="font-size:1rem;color:var(--primary-color);"></ion-icon> Gift Message <span style="font-size:.78rem;font-weight:400;color:var(--text-muted);">(optional)</span></label>
@@ -294,11 +300,11 @@
 
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted);">
                             <span>Subtotal</span>
-                            <span id="summary-subtotal">0 BDT</span>
+                            <span id="summary-subtotal">Tk 0</span>
                         </div>
                         <div id="discount-row" style="display:none;justify-content:space-between;margin-bottom:.5rem;color:#1e7e34;">
                             <span id="discount-label">Discount</span>
-                            <span id="summary-discount">-৳0</span>
+                            <span id="summary-discount">-Tk 0</span>
                         </div>
                         <div id="promo-discount-row" style="display:none;flex-direction:column;gap:.3rem;margin-bottom:.5rem;color:#163E34;background:#f0f7f4;border-radius:8px;padding:.5rem .75rem;">
                             <div id="promo-discount-lines"></div>
@@ -333,7 +339,7 @@
                               <div style="flex:1;padding:.65rem .85rem;">
                                 <div style="font-size:.62rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;">Worth</div>
                                 <div style="font-size:1.35rem;font-weight:800;color:var(--text-main);font-family:var(--font-sans);line-height:1.1;">
-                                  <span id="loyalty-worth">৳0.00</span>
+                                  <span id="loyalty-worth">Tk 0.00</span>
                                 </div>
                               </div>
                             </div>
@@ -366,7 +372,7 @@
                                 <ion-icon name="pricetag-outline" style="font-size:.88rem;"></ion-icon>
                                 Discount Applied
                               </div>
-                              <div id="loyalty-discount-amount" style="font-size:.85rem;font-weight:700;color:var(--text-muted);">৳0.00</div>
+                              <div id="loyalty-discount-amount" style="font-size:.85rem;font-weight:700;color:var(--text-muted);">Tk 0.00</div>
                             </div>
 
                           </div>
@@ -386,11 +392,11 @@
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted);">
                             <span>Delivery Charge</span>
-                            <span id="summary-delivery">70 BDT</span>
+                            <span id="summary-delivery">Tk 70</span>
                         </div>
                         <div class="order-total">
                             <span>Total</span>
-                            <span id="summary-total">0 BDT</span>
+                            <span id="summary-total">Tk 0</span>
                         </div>
                     </div>
 
@@ -411,7 +417,7 @@
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
                     <span>Total</span>
-                    <span id="cart-total">0 BDT</span>
+                    <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn checkout-redirect-btn" style="width: 100%;">Checkout</button>
             </div>
@@ -448,8 +454,8 @@
                 const threshold = s.freeDeliveryThreshold || 0;
                 const optD = document.getElementById("opt-dhaka");
                 const optO = document.getElementById("opt-outside");
-                if (optD) { optD.value = dDhaka; optD.textContent = `Inside Dhaka (${dDhaka} BDT)`; }
-                if (optO) { optO.value = dOutside; optO.textContent = `Outside Dhaka (${dOutside} BDT)`; }
+                if (optD) { optD.value = dDhaka; optD.textContent = `Inside Dhaka (Tk ${dDhaka})`; }
+                if (optO) { optO.value = dOutside; optO.textContent = `Outside Dhaka (Tk ${dOutside})`; }
                 window._freeDeliveryThreshold = threshold;
                 if (typeof autoSetDelivery === "function" && document.getElementById('district')?.value) {
                     autoSetDelivery();
@@ -822,7 +828,7 @@
                             <div class="osi-meta">Size: ${item.size}<br>Qty: ${item.quantity}</div>
                         </div>
                     </div>
-                    <div class="osi-price">${(parseFloat(item.selectedPrice) * item.quantity).toFixed(2)} BDT</div>
+                    <div class="osi-price">Tk ${Math.round(parseFloat(item.selectedPrice) * item.quantity).toLocaleString()}</div>
                 </div>
             `).join('');
 
@@ -845,7 +851,7 @@
                                 </div>
                             </div>
                             <div style="text-align:right;">
-                                <div style="font-size:.82rem;color:var(--text-muted);text-decoration:line-through;">৳${fi.price}</div>
+                                <div style="font-size:.82rem;color:var(--text-muted);text-decoration:line-through;">Tk ${fi.price}</div>
                                 <div style="font-weight:700;color:#0b231a;font-size:.95rem;">FREE</div>
                             </div>
                         </div>`;
@@ -899,14 +905,14 @@
 
             const total = (subtotal - discount - promoDiscount) + effectiveDelivery;
 
-            document.getElementById('summary-subtotal').textContent = subtotal.toFixed(2) + ' BDT';
+            document.getElementById('summary-subtotal').textContent = 'Tk ' + Math.round(subtotal).toLocaleString();
 
             const discountRow = document.getElementById('discount-row');
             if (discount > 0) {
                 discountRow.style.display = 'flex';
                 const label = coupon.type === 'percent' ? `Coupon (${coupon.value}% off)` : `Coupon discount`;
                 document.getElementById('discount-label').textContent = label;
-                document.getElementById('summary-discount').textContent = '-৳' + discount.toFixed(2);
+                document.getElementById('summary-discount').textContent = '-Tk ' + Math.round(discount).toLocaleString();
             } else {
                 discountRow.style.display = 'none';
             }
@@ -918,7 +924,7 @@
                 promoLines.innerHTML = promoResult.discounts.map(d =>
                     `<div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:600;">
                         <span><ion-icon name="pricetag-outline" style="vertical-align:middle;margin-right:.25rem;"></ion-icon>${d.label}</span>
-                        <span>-৳${d.discount.toFixed(2)}</span>
+                        <span>-Tk ${Math.round(d.discount).toLocaleString()}</span>
                     </div>`
                 ).join('');
                 promoRow.style.display = 'flex';
@@ -937,9 +943,9 @@
             }
 
             document.getElementById('summary-delivery').textContent = freeDelivery
-                ? 'FREE' + (deliveryCharge ? ` (was ${deliveryCharge} BDT)` : '')
-                : deliveryCharge + ' BDT';
-            document.getElementById('summary-total').textContent = Math.max(0, total).toFixed(2) + ' BDT';
+                ? 'FREE' + (deliveryCharge ? ` (was Tk ${deliveryCharge.toLocaleString()})` : '')
+                : 'Tk ' + deliveryCharge.toLocaleString();
+            document.getElementById('summary-total').textContent = 'Tk ' + Math.round(Math.max(0, total)).toLocaleString();
         }
 
         async function refreshTotals() {
@@ -968,8 +974,8 @@
 
             zoneInfo.style.display = '';
             zoneInfo.innerHTML = isDhaka
-                ? `📍 <strong>Inside Dhaka</strong> — Delivery charge: <strong>৳${dhakaCharge}</strong>`
-                : `🚚 <strong>Outside Dhaka</strong> — Delivery charge: <strong>৳${outsideCharge}</strong>`;
+                ? `📍 <strong>Inside Dhaka</strong> — Delivery charge: <strong>Tk ${dhakaCharge}</strong>`
+                : `🚚 <strong>Outside Dhaka</strong> — Delivery charge: <strong>Tk ${outsideCharge}</strong>`;
 
             calculateTotal();
             checkFormValidity();
@@ -1055,7 +1061,55 @@
             }
 
             const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.selectedPrice) * item.quantity), 0);
-            const coupon = window.appliedCoupon || null;
+            let coupon = window.appliedCoupon || null;
+
+            // ── H8-fix: re-validate session coupon against Firestore before placing order ──
+            if (coupon) {
+                try {
+                    const { getFirestore, doc: _doc, getDoc: _getDoc } =
+                        await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+                    const { db: _db } = await import('./js/firebase-config.js');
+                    const freshSnap = await _getDoc(_doc(_db, 'coupons', coupon.id));
+                    if (!freshSnap.exists()) {
+                        window.clearAppliedCoupon && window.clearAppliedCoupon();
+                        coupon = null;
+                        if (window.showToast) window.showToast('Coupon no longer exists — it has been removed.', 'error');
+                        else alert('Coupon no longer exists — it has been removed.');
+                        return;
+                    }
+                    const fresh = freshSnap.data();
+                    if (!fresh.active) {
+                        window.clearAppliedCoupon && window.clearAppliedCoupon();
+                        coupon = null;
+                        if (window.showToast) window.showToast('Your coupon has been deactivated. Please remove it and try again.', 'error');
+                        else alert('Your coupon has been deactivated. Please remove it and try again.');
+                        return;
+                    }
+                    if (fresh.expiresAt) {
+                        const exp = fresh.expiresAt.toDate ? fresh.expiresAt.toDate() : new Date(fresh.expiresAt);
+                        if (exp < new Date()) {
+                            window.clearAppliedCoupon && window.clearAppliedCoupon();
+                            coupon = null;
+                            if (window.showToast) window.showToast('Your coupon has expired. Please remove it and try again.', 'error');
+                            else alert('Your coupon has expired. Please remove it and try again.');
+                            return;
+                        }
+                    }
+                    if (fresh.maxUses !== undefined && (fresh.usedCount || 0) >= fresh.maxUses) {
+                        window.clearAppliedCoupon && window.clearAppliedCoupon();
+                        coupon = null;
+                        if (window.showToast) window.showToast('This coupon\'s usage limit has been reached.', 'error');
+                        else alert('This coupon\'s usage limit has been reached.');
+                        return;
+                    }
+                } catch (revalErr) {
+                    console.warn('Coupon re-validation failed — proceeding without coupon:', revalErr);
+                    window.clearAppliedCoupon && window.clearAppliedCoupon();
+                    coupon = null;
+                }
+            }
+            // ── end H8-fix ──
+
             const discount = coupon ? (coupon.discount || 0) : 0;
             const promoResult = window._promoResult;
             const promoDiscount = promoResult ? Math.min(promoResult.totalDiscount || 0, subtotal) : 0;
@@ -1115,6 +1169,25 @@
             if (txnId) message += `*Transaction ID:* ${txnId}\n`;
             const whatsappUrl = `https://wa.me/8801886936581?text=${encodeURIComponent(message)}`;
 
+            // ── C3-fix: guard loyalty/referral discounts against client-side tampering ──
+            if (window._loyaltyDiscount && _loyaltyCfg?.loyaltyPoints?.enabled) {
+                const rv = _loyaltyCfg.loyaltyPoints.redeemValue || 1;
+                const maxDiscount = _loyaltyBal * rv;
+                if (!_loyaltyBal || window._loyaltyDiscount.points > _loyaltyBal ||
+                        window._loyaltyDiscount.discount > maxDiscount + 0.01) {
+                    console.warn('[Loyalty] Discount out of bounds — discarded. bal=', _loyaltyBal, 'claimed=', window._loyaltyDiscount);
+                    window._loyaltyDiscount = null;
+                }
+            }
+            if (window._referralResult && _loyaltyCfg?.referral?.enabled) {
+                const maxRef = _loyaltyCfg.referral.refereeAmt || 0;
+                if (window._referralResult.discount > maxRef + 0.01) {
+                    console.warn('[Referral] Discount out of bounds — discarded. max=', maxRef, 'claimed=', window._referralResult.discount);
+                    window._referralResult = null;
+                }
+            }
+            // ── end C3-fix ──
+
             // Save the order to Firestore
             const submitBtn = e.target.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
@@ -1135,7 +1208,9 @@
                     giftMessage: giftMessage || null,
                     guestEmail: user ? null : customerEmail,
                     loyaltyRedeemedPoints: window._loyaltyDiscount ? (window._loyaltyDiscount.points || 0) : 0,
-                    loyaltyDiscountAmount: window._loyaltyDiscount ? +(window._loyaltyDiscount.discount || 0).toFixed(2) : 0
+                    loyaltyDiscountAmount: window._loyaltyDiscount ? +(window._loyaltyDiscount.discount || 0).toFixed(2) : 0,
+                    referrerUid: window._referralResult ? window._referralResult.referrerUid : null,
+                    referralCode: window._referralResult ? window._referralResult.code : null
                 });
                 const orderId = typeof orderResult === 'object' ? orderResult.id : orderResult;
                 const orderNum = typeof orderResult === 'object' ? orderResult.orderNum : null;
@@ -1143,7 +1218,7 @@
                 if (window.zahrounGA) window.zahrounGA.trackPurchase(orderId, items, total, coupon ? coupon.id : null);
                 // Email is sent by admin when order is confirmed — not here
                 // Increment coupon usage counter if one was applied
-                if (coupon && window.incrementCouponUsage) await window.incrementCouponUsage(coupon.id).catch(() => {});
+                if (coupon && window.incrementCouponUsage) window.incrementCouponUsage(coupon.id).catch(e => console.error('[Coupon] Usage increment failed for', coupon.id, '—', e));
                 if (window.clearAppliedCoupon) window.clearAppliedCoupon();
                 // Apply loyalty deduction + referral after order
                 // NOTE: Points are EARNED only when order status changes to "Delivered" (not here)
@@ -1203,7 +1278,7 @@
             const minOrder = lp.minOrderAmount || 0;
             if (minOrder > 0 && subtotal < minOrder) {
                 const needed = Math.ceil(minOrder - subtotal);
-                return { show: true, canRedeem: false, reason: `Add ৳${needed} more to your order to unlock loyalty points (min ৳${minOrder}).` };
+                return { show: true, canRedeem: false, reason: `Add Tk ${needed} more to your order to unlock loyalty points (min Tk ${minOrder}).` };
             }
 
             // Coupon check
@@ -1240,7 +1315,7 @@
                     const inp = document.getElementById('loyalty-redeem-input');
                     if (inp) inp.value = '';
                     const da = document.getElementById('loyalty-discount-amount');
-                    if (da) { da.textContent = '৳0.00'; da.style.color = 'var(--text-muted)'; }
+                    if (da) { da.textContent = 'Tk 0.00'; da.style.color = 'var(--text-muted)'; }
                     refreshTotals();
                 }
                 return;
@@ -1288,7 +1363,7 @@
             } else {
                 let hintText = `<strong>Min ${minRedeem} pts</strong>`;
                 if (maxRedeemPct > 0 && effectiveMax < _loyaltyBal) {
-                    hintText += ` · Max <strong>${effectiveMax} pts</strong> (${maxRedeemPct}% of order = ৳${(effectiveMax * rv).toFixed(0)})`;
+                    hintText += ` · Max <strong>${effectiveMax} pts</strong> (${maxRedeemPct}% of order = Tk ${(effectiveMax * rv).toFixed(0)})`;
                 } else {
                     hintText += ` · Max <strong>${effectiveMax} pts</strong>`;
                 }
@@ -1321,7 +1396,7 @@
                 const balEl   = document.getElementById('loyalty-balance');
                 const worthEl = document.getElementById('loyalty-worth');
                 if (balEl)   balEl.textContent  = _loyaltyBal.toLocaleString();
-                if (worthEl) worthEl.textContent = '৳' + (_loyaltyBal * rv).toFixed(2);
+                if (worthEl) worthEl.textContent = 'Tk ' + (_loyaltyBal * rv).toFixed(2);
 
                 // Tier badge — extracted from the same lpData read above (no second Firestore call)
                 const tierEl = document.getElementById('loyalty-tier-label');
@@ -1344,7 +1419,7 @@
                 const inp = document.getElementById('loyalty-redeem-input');
                 inp?.addEventListener('input', () => {
                     const v = parseInt(inp.value) || 0;
-                    if (worthEl) worthEl.textContent = '৳' + (v > 0 ? (v * rv).toFixed(2) : (_loyaltyBal * rv).toFixed(2));
+                    if (worthEl) worthEl.textContent = 'Tk ' + (v > 0 ? (v * rv).toFixed(2) : (_loyaltyBal * rv).toFixed(2));
                 });
 
                 // Use All button
@@ -1353,7 +1428,7 @@
                     const maxRedeemPct = lp.maxRedeemPct || 0;
                     const maxByPct = maxRedeemPct > 0 ? Math.floor((subtotal * maxRedeemPct / 100) / rv) : _loyaltyBal;
                     const effectiveMax = Math.min(_loyaltyBal, maxByPct);
-                    if (inp) { inp.value = effectiveMax; if (worthEl) worthEl.textContent = '৳' + (effectiveMax * rv).toFixed(2); }
+                    if (inp) { inp.value = effectiveMax; if (worthEl) worthEl.textContent = 'Tk ' + (effectiveMax * rv).toFixed(2); }
                 });
 
                 // Apply / Remove Points button (toggles state)
@@ -1378,8 +1453,8 @@
                             redeemBtn.style.color = '';
                         }
                         if (msgEl)    msgEl.textContent = '';
-                        if (da)       { da.textContent = '৳0.00'; da.style.color = 'var(--text-muted)'; }
-                        if (worthEl)  worthEl.textContent = '৳' + (_loyaltyBal * rv).toFixed(2);
+                        if (da)       { da.textContent = 'Tk 0.00'; da.style.color = 'var(--text-muted)'; }
+                        if (worthEl)  worthEl.textContent = 'Tk ' + (_loyaltyBal * rv).toFixed(2);
                         await refreshTotals();
                         return;
                     }
@@ -1391,7 +1466,7 @@
                     const res = await window.ZahrounPromos.redeemLoyaltyPoints(user.uid, pts, subtotal);
                     if (res.success) {
                         _loyaltyApplied = true;
-                        window._loyaltyDiscount = { label: 'Loyalty Points', discount: res.discount, points: res.points, detail: pts + ' pts = ৳' + res.discount };
+                        window._loyaltyDiscount = { label: 'Loyalty Points', discount: res.discount, points: res.points, detail: pts + ' pts = Tk ' + res.discount };
                         if (redeemBtn) {
                             redeemBtn.disabled = false;
                             redeemBtn.textContent = 'Remove';
@@ -1401,13 +1476,13 @@
                         }
                         if (inpEl)    inpEl.disabled = true;
                         if (useAllBtn) useAllBtn.disabled = true;
-                        if (msgEl)    { msgEl.style.color = '#1e7e34'; msgEl.textContent = '✓ ' + pts + ' pts applied — ৳' + res.discount.toFixed(2) + ' discount'; }
-                        if (da)       { da.textContent = '৳' + res.discount.toFixed(2); da.style.color = '#1e7e34'; }
+                        if (msgEl)    { msgEl.style.color = '#1e7e34'; msgEl.textContent = '✓ ' + pts + ' pts applied — Tk ' + res.discount.toFixed(2) + ' discount'; }
+                        if (da)       { da.textContent = 'Tk ' + res.discount.toFixed(2); da.style.color = '#1e7e34'; }
                         await refreshTotals();
                     } else {
                         if (redeemBtn) { redeemBtn.disabled = false; redeemBtn.textContent = 'Apply Points'; }
                         if (msgEl)    { msgEl.style.color = '#c0392b'; msgEl.textContent = res.error || 'Invalid points amount'; }
-                        if (da)       { da.textContent = '৳0.00'; da.style.color = 'var(--text-muted)'; }
+                        if (da)       { da.textContent = 'Tk 0.00'; da.style.color = 'var(--text-muted)'; }
                     }
                 });
             }
@@ -1420,9 +1495,9 @@
                     if (!code) return;
                     const res = await window.ZahrounPromos.validateReferral(code, user.uid);
                     if (res?.success) {
-                        window._referralResult = { ...res, label: 'Referral Discount', detail: '৳' + res.discount + ' off' };
+                        window._referralResult = { ...res, label: 'Referral Discount', detail: 'Tk ' + res.discount + ' off', code: code.toUpperCase() };
                         msgEl.style.color = '#0b6e2a';
-                        msgEl.textContent = '✓ Referral code applied! ৳' + res.discount + ' off';
+                        msgEl.textContent = '✓ Referral code applied! Tk ' + res.discount + ' off';
                         await refreshTotals();
                     } else {
                         msgEl.style.color = '#c0392b';

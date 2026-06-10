@@ -417,12 +417,12 @@ onAuthStateChanged(auth, async (user) => {
    will redirect non-admins away. Used by the admin panel pages. */
 function runAdminGuard(user) {
   if (!document.body.hasAttribute("data-require-admin")) return;
-  if (!user) { window.location.href = "../index.html"; return; }
+  if (!user) { window.location.href = "./index.html"; return; }
   // profile may still be loading; re-check shortly
   setTimeout(() => {
     if (!currentProfile || currentProfile.role !== "admin") {
       showToast("Admin access only", "error");
-      window.location.href = "../index.html";
+      window.location.href = "./index.html";
     }
   }, 400);
 }
@@ -441,7 +441,7 @@ window.zahrounAuth = {
 };
 
 /* Site-wide settings: announcement bar, hero text override, WhatsApp link, Flash Sale status. */
-const _ZSK = 'zhr_store_v1', _ZFK = 'zhr_flash_v1', _ZTTL = 30 * 60 * 1000;
+const _ZSK = 'zhr_store_v1', _ZFK = 'zhr_flash_v1', _ZTTL = 3 * 60 * 1000; // short TTL — admin changes appear within minutes, sessionStorage still skips most reads
 
 async function loadSiteSettings() {
   try {
@@ -459,9 +459,11 @@ async function loadSiteSettings() {
       snap = { exists: () => true, data: () => _sData };
       flashSnap = { exists: () => true, data: () => _fData };
     } else {
+      const flashPromise = _fData ? Promise.resolve({ exists: () => true, data: () => _fData }) : getDoc(doc(db, "settings", "flashSale"));
+      if (!_fData) window.__zhrFlashPromise = flashPromise; // let page scripts (shop) reuse this read
       [snap, flashSnap] = await Promise.all([
         _sData ? Promise.resolve({ exists: () => true, data: () => _sData }) : getDoc(doc(db, "settings", "store")),
-        _fData ? Promise.resolve({ exists: () => true, data: () => _fData }) : getDoc(doc(db, "settings", "flashSale"))
+        flashPromise
       ]);
       if (!_sData && snap.exists()) try { sessionStorage.setItem(_ZSK, JSON.stringify({ data: snap.data(), ts: Date.now() })); } catch {}
       if (!_fData && flashSnap.exists()) try { sessionStorage.setItem(_ZFK, JSON.stringify({ data: flashSnap.data(), ts: Date.now() })); } catch {}
@@ -470,6 +472,21 @@ async function loadSiteSettings() {
     if (snap.exists()) {
       const s = snap.data();
       window.zahSettings = s;
+
+      // Floating WhatsApp order button — site-wide except admin
+      const waNum = (s.whatsapp || "01886936581").replace(/\D/g, "");
+      if (waNum && !document.getElementById("za-wa-float") && !location.pathname.endsWith("admin.html")) {
+        const wa = document.createElement("a");
+        wa.id = "za-wa-float";
+        wa.href = `https://wa.me/${waNum.startsWith("880") ? waNum : "88" + waNum}?text=${encodeURIComponent("Hi Zahroun! I'd like to place an order.")}`;
+        wa.target = "_blank"; wa.rel = "noopener";
+        wa.setAttribute("aria-label", "Order on WhatsApp");
+        wa.style.cssText = "position:fixed;left:1rem;bottom:1.1rem;z-index:9990;width:50px;height:50px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(37,211,102,.45);transition:transform .15s;";
+        wa.onmouseenter = () => { wa.style.transform = "scale(1.08)"; };
+        wa.onmouseleave = () => { wa.style.transform = ""; };
+        wa.innerHTML = `<svg viewBox="0 0 32 32" width="27" height="27" fill="#fff" aria-hidden="true"><path d="M16 3C9.4 3 4 8.4 4 15c0 2.1.6 4.2 1.6 6L4 29l8.2-1.5c1.2.6 2.5.9 3.8.9 6.6 0 12-5.4 12-12S22.6 3 16 3zm0 22.4c-1.2 0-2.4-.3-3.5-.8l-.6-.3-4.9.9 1-4.7-.3-.6c-.9-1.6-1.3-3.3-1.3-4.9 0-5.4 4.4-9.8 9.8-9.8s9.8 4.4 9.8 9.8-4.6 10.4-10 10.4zm5.4-7.3c-.3-.1-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.4z"/></svg>`;
+        document.body.appendChild(wa);
+      }
 
       if (s.announcementActive && s.announcement) {
         const bar = document.createElement("div");
@@ -637,3 +654,29 @@ function injectFlashSaleNav(enabled) {
   if (shopLink?.nextSibling) navLinks.insertBefore(link, shopLink.nextSibling);
   else navLinks.appendChild(link);
 }
+
+/* ── Abandoned-cart foundation ───────────────────────────────────────────
+   Logged-in users' carts are snapshotted onto their profile (users/{uid}
+   .savedCart) once per page view when the cart changed — gives the store a
+   recoverable record of abandoned carts for follow-up. No new collections,
+   no rules changes (users may already update their own profile). */
+onAuthStateChanged(auth, (user) => {
+  if (!user) return;
+  setTimeout(async () => {
+    try {
+      const raw = localStorage.getItem("zahroun_cart") || "[]";
+      const SYNC_KEY = "zhr_cart_synced_v1";
+      if (raw === sessionStorage.getItem(SYNC_KEY)) return; // unchanged since last snapshot
+      const items = JSON.parse(raw);
+      if (!Array.isArray(items)) return;
+      await setDoc(doc(db, "users", user.uid), {
+        savedCart: {
+          items: items.slice(0, 30),
+          count: items.length,
+          updatedAt: serverTimestamp()
+        }
+      }, { merge: true });
+      sessionStorage.setItem(SYNC_KEY, raw);
+    } catch { /* non-critical */ }
+  }, 2500);
+});

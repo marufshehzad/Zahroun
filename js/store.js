@@ -23,7 +23,23 @@ const _PROD_TTL = 2 * 60 * 1000; // 2 minutes — balances nav speed vs. stock a
 
 function normalize(p) {
   const id = typeof p.id === "number" ? p.id : Number(p.id);
-  return { ...p, id };
+  const seed = seedProducts.find(s => Number(s.id) === id);
+  const normalized = { ...p, id };
+  if (seed) {
+    if (normalized.image && !normalized.image.startsWith('http')) {
+      normalized.image = seed.image;
+    }
+    if (normalized.sizeImages) {
+      for (const size in normalized.sizeImages) {
+        if (normalized.sizeImages[size] && !normalized.sizeImages[size].startsWith('http')) {
+          normalized.sizeImages[size] = seed.sizeImages[size] || normalized.sizeImages[size];
+        }
+      }
+    } else if (seed.sizeImages) {
+      normalized.sizeImages = seed.sizeImages;
+    }
+  }
+  return normalized;
 }
 
 function publish(list, source) {
@@ -41,8 +57,12 @@ function publish(list, source) {
 // 1) Instant render with bundled data — never an empty storefront.
 publish(seedProducts.map(normalize).sort((a, b) => a.id - b.id), "bundled");
 
-// 2) Upgrade to live data: sessionStorage cache → Firestore.
+// 2) Upgrade to live data: sessionStorage cache → Firestore (stale-while-revalidate).
+//    Cache renders instantly; a fresh fetch still runs in the background and
+//    re-publishes only if something changed — admin edits appear within seconds.
 (async () => {
+  let servedFromCache = false;
+  let cachedJson = null;
   try {
     // Fast path: reuse products fetched earlier in this session (cross-page cache)
     try {
@@ -51,7 +71,8 @@ publish(seedProducts.map(normalize).sort((a, b) => a.id - b.id), "bundled");
         const { data, ts } = JSON.parse(raw);
         if (Date.now() - ts < _PROD_TTL && Array.isArray(data) && data.length) {
           publish(data.map(normalize).sort((a, b) => a.id - b.id), "cache");
-          return;
+          servedFromCache = true;
+          cachedJson = JSON.stringify(data);
         }
       }
     } catch {}
@@ -63,9 +84,10 @@ publish(seedProducts.map(normalize).sort((a, b) => a.id - b.id), "bundled");
         .filter(p => p.hidden !== true)
         .sort((a, b) => a.id - b.id);
       try { sessionStorage.setItem(_PROD_KEY, JSON.stringify({ data: list, ts: Date.now() })); } catch {}
-      publish(list, "firestore");
+      // Skip the re-render when the fresh data is identical to what's on screen
+      if (!servedFromCache || JSON.stringify(list) !== cachedJson) publish(list, "firestore");
     }
   } catch (err) {
-    console.warn("[Zahroun Store] Firestore unavailable; using bundled products.", err);
+    if (!servedFromCache) console.warn("[Zahroun Store] Firestore unavailable; using bundled products.", err);
   }
 })();

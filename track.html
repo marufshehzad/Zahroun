@@ -5,8 +5,11 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Track Your Order | Zahroun</title>
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="apple-touch-icon" href="favicon.png">
+    <link rel="icon" href="favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
     <meta name="robots" content="noindex, nofollow">
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://res.cloudinary.com">
@@ -17,8 +20,8 @@
     <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/broadcast.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <style>
         /* ── Hero ── */
         .track-hero {
@@ -358,7 +361,7 @@
 <body>
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html">Shop</a>
@@ -420,7 +423,7 @@
             </div>
             <div id="cart-items" style="flex:1;overflow-y:auto;"></div>
             <div style="border-top:1px solid var(--border-color);padding-top:1rem;margin-top:1rem;">
-                <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-weight:600;font-size:1.2rem;"><span>Total</span><span id="cart-total">0 BDT</span></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-weight:600;font-size:1.2rem;"><span>Total</span><span id="cart-total">Tk 0</span></div>
                 <button class="btn" style="width:100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
         </div>
@@ -537,15 +540,15 @@
                         <strong>${esc(i.name)}</strong>
                         <span>${esc(i.size)} · Qty ${i.quantity || 1}</span>
                     </div>
-                    <div class="o-item-price">৳${((i.price||0)*(i.quantity||1)).toLocaleString()}</div>
+                    <div class="o-item-price">Tk ${((i.price||0)*(i.quantity||1)).toLocaleString()}</div>
                 </div>`).join("")}
             </div>
 
             <div class="o-summary">
-                <div class="o-summary-row"><span>Subtotal</span><span>৳${subtotal.toLocaleString()}</span></div>
-                ${order.discount ? `<div class="o-summary-row" style="color:#1e7e34;"><span>Discount</span><span>−৳${Number(order.discount).toLocaleString()}</span></div>` : ""}
-                ${order.delivery ? `<div class="o-summary-row"><span>Delivery</span><span>৳${Number(order.delivery).toLocaleString()}</span></div>` : ""}
-                <div class="o-summary-row total"><span>Total</span><span>৳${(order.total||0).toLocaleString()}</span></div>
+                <div class="o-summary-row"><span>Subtotal</span><span>Tk ${subtotal.toLocaleString()}</span></div>
+                ${order.discount ? `<div class="o-summary-row" style="color:#1e7e34;"><span>Discount</span><span>−Tk ${Number(order.discount).toLocaleString()}</span></div>` : ""}
+                ${order.delivery ? `<div class="o-summary-row"><span>Delivery</span><span>Tk ${Number(order.delivery).toLocaleString()}</span></div>` : ""}
+                <div class="o-summary-row total"><span>Total</span><span>Tk ${(order.total||0).toLocaleString()}</span></div>
             </div>
 
             <div class="o-meta">
@@ -630,7 +633,7 @@
                         </div>
                         <div class="order-summary-right">
                             <span class="o-status ${esc(o.status||'pending')}">${esc(o.status||'pending')}</span>
-                            <span class="order-total-label">৳${(o.total||0).toLocaleString()}</span>
+                            <span class="order-total-label">Tk ${(o.total||0).toLocaleString()}</span>
                             <ion-icon name="chevron-down-outline" class="order-expand-icon"></ion-icon>
                         </div>
                     </div>
@@ -670,6 +673,13 @@
 
             if (!val) { setErr("Please enter your Order ID or Phone Number."); return; }
 
+            // Invalid input — needs to look like a 6-digit Order ID or a phone number
+            const digitCount = (val.match(/\d/g) || []).length;
+            if (digitCount < 4) {
+                setErr("Invalid input — enter your 6-digit Order ID or your phone number.");
+                return;
+            }
+
             btn.disabled = true;
             btn.innerHTML = `<span class="spinner" style="width:18px;height:18px;border-width:2px;margin:0;display:inline-block;vertical-align:middle;margin-right:.4rem;"></span>Searching…`;
             resultEl.innerHTML = `<div class="track-loading"><div class="spinner"></div><p>Looking up your order…</p></div>`;
@@ -699,11 +709,20 @@
                     showMultipleOrders(orders);
                 }
             } catch (err) {
+                console.error("[Track] lookup failed:", err);
+                const code = err?.code || "";
+                const isNet = code === "unavailable" || code === "deadline-exceeded" ||
+                              /network|offline|fetch|failed to get/i.test(err?.message || "");
+                const msg = code === "permission-denied"
+                    ? "Order tracking is temporarily unavailable. Please try again shortly."
+                    : isNet
+                        ? "Network error — please check your connection and try again."
+                        : "Something went wrong. Please try again.";
                 resultEl.innerHTML = `<div class="track-error fade-up">
-                    <ion-icon name="alert-circle-outline" class="err-icon"></ion-icon>
-                    <p>Something went wrong. Please try again.</p>
+                    <ion-icon name="${isNet ? 'cloud-offline-outline' : 'alert-circle-outline'}" class="err-icon"></ion-icon>
+                    <p style="font-weight:600;color:var(--text-main);margin-bottom:.35rem;">${msg}</p>
+                    <p>If this keeps happening, please contact us for help.</p>
                 </div>`;
-                console.error(err);
             }
 
             btn.disabled = false;

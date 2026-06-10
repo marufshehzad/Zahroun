@@ -4,7 +4,9 @@ Allow: /
 Disallow: /admin.html
 Disallow: /checkout.html
 Disallow: /account.html
+Disallow: /cart.html
 Disallow: /seed.html
 Disallow: /test_images.html
+Disallow: /test_sw.html
 
 Sitemap: https://zahroun.com/sitemap.xml

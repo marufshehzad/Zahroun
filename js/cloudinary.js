@@ -23,14 +23,14 @@
 const CLOUDINARY_CLOUD_NAME = "dj3nmxfj0";       // Zahroun Cloudinary cloud name
 const CLOUDINARY_UPLOAD_PRESET = "zahroun_upload"; // unsigned upload preset
 
-const MAX_BYTES = 3 * 1024 * 1024; // 3 MB
+const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
 /* Upload a single image File. Returns { url, publicId }.
    Optional onProgress(percent) callback for progress bars. */
 export async function uploadImage(file, { onProgress } = {}) {
   if (!file) throw new Error("No file selected.");
   if (!file.type.startsWith("image/")) throw new Error("Please choose an image file.");
-  if (file.size > MAX_BYTES) throw new Error("Image must be under 3MB.");
+  if (file.size > MAX_BYTES) throw new Error("Image must be under 10MB.");
   if (CLOUDINARY_CLOUD_NAME === "YOUR_CLOUD_NAME") {
     throw new Error("Cloudinary not configured. Add your cloud name + preset in js/cloudinary.js");
   }

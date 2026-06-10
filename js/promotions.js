@@ -34,7 +34,7 @@ const DEFAULTS = {
   spinToWin:      { enabled: false, showAfterSec: 8, prizes: [
     { label: '5% Off',       code: 'SPIN5',   pct: 5,   prob: 30 },
     { label: '10% Off',      code: 'SPIN10',  pct: 10,  prob: 25 },
-    { label: '৳100 Off',     code: 'SPIN100', fixed: 100, prob: 20 },
+    { label: 'Tk 100 Off',     code: 'SPIN100', fixed: 100, prob: 20 },
     { label: 'Free Delivery',code: 'SPINFD',  freeDelivery: true, prob: 15 },
     { label: 'Try Again',    code: null,      prob: 10 }
   ]},
@@ -101,6 +101,7 @@ function _startRealtimePromoSync() {
       _dbg('cfg:updated', 'bxgy.enabled=' + (fresh?.buyXGetY?.enabled ?? 'n/a'));
       _cfgFromFirestore = true;
       try { sessionStorage.setItem(_PROMO_CACHE_KEY, JSON.stringify({ data: _cfg, ts: Date.now() })); _dbg('sessionStorage:updated'); } catch {}
+      window.dispatchEvent(new CustomEvent('promos-updated', { detail: fresh }));
     },
     () => { /* network error — keep existing _cfg intact */ }
   );
@@ -178,7 +179,7 @@ function evalTieredDiscount(subtotal, cfg) {
   if (!cfg?.enabled || !cfg.tiers?.length) return null;
   const tier = [...cfg.tiers].sort((a, b) => b.min - a.min).find(t => subtotal >= t.min);
   if (!tier) return null;
-  return { label: `Spend ৳${tier.min}+ Discount`, discount: (subtotal * tier.pct) / 100, detail: `${tier.pct}% off` };
+  return { label: `Spend Tk ${tier.min}+ Discount`, discount: (subtotal * tier.pct) / 100, detail: `${tier.pct}% off` };
 }
 
 function evalMinQtyDiscount(items, cfg) {
@@ -415,7 +416,7 @@ async function redeemLoyaltyPoints(uid, pointsToRedeem, orderSubtotal = null) {
     const maxDiscount = (orderSubtotal * lp.maxRedeemPct) / 100;
     if (discount > maxDiscount) {
       const maxPoints = Math.floor(maxDiscount / redeemValue);
-      return { success: false, error: `Max ${lp.maxRedeemPct}% of order value can be redeemed (${maxPoints} pts max = ৳${maxDiscount.toFixed(0)})` };
+      return { success: false, error: `Max ${lp.maxRedeemPct}% of order value can be redeemed (${maxPoints} pts max = Tk ${maxDiscount.toFixed(0)})` };
     }
   }
 
@@ -452,25 +453,19 @@ async function validateReferral(code, currentUid) {
     const referrer = res.docs[0].data();
     if (referrer.uid === currentUid) return { success: false, error: 'Cannot use your own referral code' };
     const amt = rc.refereeAmt || 100;
-    return { success: true, discount: amt, label: 'Referral Discount', detail: `৳${amt} off`, referrerUid: referrer.uid };
+    return { success: true, discount: amt, label: 'Referral Discount', detail: `Tk ${amt} off`, referrerUid: referrer.uid };
   } catch { return { success: false, error: 'Could not validate code' }; }
 }
 
 async function applyReferralAfterOrder(referralResult, buyerUid) {
   const cfg = await loadConfig();
   const rc = cfg.referral || {};
-  if (!rc.enabled || !referralResult?.referrerUid) return;
+  if (!rc.enabled) return;
   try {
-    // Credit referrer
-    if (rc.referrerAmt > 0) await awardLoyaltyPoints(referralResult.referrerUid, rc.referrerAmt);
     // Mark buyer used the code
     await updateDoc(doc(db, 'referrals', buyerUid), { usedCode: true }).catch(() =>
       setDoc(doc(db, 'referrals', buyerUid), { uid: buyerUid, usedCode: true }, { merge: true })
     );
-    // Increment referrer use count
-    const q = query(collection(db, 'referrals'), where('uid', '==', referralResult.referrerUid));
-    const res = await getDocs(q);
-    if (!res.empty) await updateDoc(res.docs[0].ref, { uses: (res.docs[0].data().uses || 0) + 1 });
   } catch { /* silent */ }
 }
 
@@ -493,7 +488,7 @@ async function checkFirstOrder(uid) {
       label: 'First Order Discount',
       discount: discount || 0,
       pct,
-      detail: discount ? `৳${discount} off` : `${pct}% off`
+      detail: discount ? `Tk ${discount} off` : `${pct}% off`
     };
     return _firstOrderResult;
   } catch {
@@ -661,4 +656,4 @@ window.ZahrounPromos = {
 // then start a real-time listener so admin changes propagate within 1-3 s.
 _dbg('module-loaded');
 loadConfig().then(cfg => { _readyResolve(cfg); _startRealtimePromoSync(); })
-            .catch(err => { _readyResolve(err); _startRealtimePromoSync(); });
+            .catch(()  => { _readyResolve(null); _startRealtimePromoSync(); }); // H2-fix: resolve null on error, never reject

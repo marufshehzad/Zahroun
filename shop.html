@@ -4,20 +4,23 @@
     <meta charset="UTF-8">
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buy Perfume Online Bangladesh | Zahroun Luxury Shop</title>
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="apple-touch-icon" href="favicon.png">
-    <meta name="description" content="Buy luxury perfumes online in Bangladesh. Zahroun offers niche fragrances for women, men, and unisex — long-lasting, premium quality. Fast delivery across Bangladesh.">
+    <title>Shop Perfumes Online | Zahroun Bangladesh</title>
+    <link rel="icon" href="favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
+    <meta name="description" content="Discover and buy luxury perfumes online in Bangladesh. Zahroun offers premium niche fragrances for women, men, and unisex. Long-lasting & cruelty-free.">
     <meta name="keywords" content="buy perfume online bangladesh, perfume shop bangladesh, luxury perfume dhaka, niche perfume bd, best perfume bangladesh, perfume for women bangladesh, perfume for men bangladesh, long lasting perfume dhaka, zahroun, zahrun, jahroun">
-    <meta property="og:title" content="Buy Perfume Online Bangladesh | Zahroun Luxury Shop">
-    <meta property="og:description" content="Buy luxury niche perfumes online in Bangladesh. Long-lasting premium fragrances for women, men & unisex. Fast delivery across BD.">
+    <meta property="og:title" content="Shop Perfumes Online | Zahroun Bangladesh">
+    <meta property="og:description" content="Discover and buy luxury perfumes online in Bangladesh. Zahroun offers premium niche fragrances for women, men, and unisex. Long-lasting & cruelty-free.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://zahroun.com/shop.html">
     <meta property="og:image" content="https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png">
     <meta property="og:site_name" content="Zahroun">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Shop Perfumes | Zahroun Luxury Fragrances">
-    <meta name="twitter:description" content="Buy luxury perfumes online in Bangladesh. Zahroun niche fragrances — long-lasting, premium quality. Fast delivery across BD.">
+    <meta name="twitter:title" content="Shop Perfumes Online | Zahroun Bangladesh">
+    <meta name="twitter:description" content="Discover and buy luxury perfumes online in Bangladesh. Zahroun offers premium niche fragrances for women, men, and unisex. Long-lasting & cruelty-free.">
     <meta name="twitter:image" content="https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png">
     <link rel="canonical" href="https://zahroun.com/shop.html">
     <script type="application/ld+json">
@@ -48,13 +51,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@500;600;700&display=swap">
     <link rel="stylesheet" href="css/style.css">
     <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/broadcast.js"></script>
     <script type="module" src="js/wishlist.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <style>
         /* ── Page background ── */
         body { background-color: #FAF7F0; }
@@ -194,31 +198,13 @@
             }
             .search-wrap { margin-bottom: .8rem; }
             .sb-label { margin-bottom: .35rem; font-size: .6rem; }
-            .cat-list {
-                display: flex; flex-wrap: nowrap;
-                overflow-x: auto; gap: .4rem;
-                padding-bottom: 2px;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-            }
-            .cat-list::-webkit-scrollbar { display: none; }
-            .cat-list li { flex-shrink: 0; margin: 0; }
-            .cat-btn {
-                padding: .35rem .85rem; border-radius: 20px; font-size: .82rem;
-                gap: .35rem; width: auto; background: #F5F2EB;
-                border: 1px solid #E5DDD0; white-space: nowrap;
-            }
-            .cat-btn:hover { background: #F0EBE0; }
-            .cat-btn.active {
-                background: var(--primary-color, #163E34);
-                border-color: var(--primary-color, #163E34);
-            }
-            .cat-btn.active .cat-label { color: #fff; font-weight: 700; }
-            .cat-btn.active .cat-icon { color: #fff; }
-            .cat-icon { width: 17px; height: 17px; font-size: .8rem; }
+            /* Mobile: same vertical accordion tree as desktop — no horizontal chips */
+            .cat-list { display: block; }
+            .cat-list li { margin: 0; }
+            .cat-btn { padding: .58rem .65rem; font-size: .92rem; }
+            .cat-icon { width: 24px; height: 24px; font-size: .95rem; }
             .sb-feat-divider { margin: .55rem 0 .35rem; font-size: .56rem; }
-            #special-filter { flex-direction: row !important; flex-wrap: nowrap; overflow-x: auto; gap: .4rem; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-            #special-filter::-webkit-scrollbar { display: none; }
+            #special-filter { flex-direction: column !important; }
             .shop-title-area { margin-bottom: 1.25rem; }
             .shop-page-title { font-size: 1.9rem; }
             #shop-products { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
@@ -229,7 +215,29 @@
             }
             #shop-products .product-card { max-width: none; margin: 0; }
             .container.py-4 { padding-left: 12px; padding-right: 12px; }
+            .cat-parent-row { display: flex; }
+            .cat-children-list { margin-left: 1.1rem; }
         }
+        /* ── Category hierarchy tree (accordion — desktop & mobile) ── */
+        .cat-children-list {
+            list-style: none; padding: .15rem 0 .15rem 0;
+            margin: 0 0 .1rem .9rem;
+            display: none;
+            border-left: 2px solid rgba(212,175,55,.2);
+        }
+        .cat-parent-li.open > .cat-children-list { display: block; }
+        /* Roots: bolder + slightly larger; children: indented, smaller, lighter */
+        .cat-parent-btn .cat-label { font-weight: 600; font-size: .92rem; color: #2A2A2A; }
+        .cat-child-btn { padding-left: .6rem !important; font-size: .85rem !important; }
+        .cat-child-btn .cat-label { color: #7A7468; }
+        .cat-child-btn.active .cat-label { color: #1A1A1A; }
+        .cat-child-btn .cat-icon { width: 20px !important; height: 20px !important; font-size: .82rem !important; }
+        .cat-chevron {
+            margin-left: auto; font-size: .72rem; color: #CCC;
+            transition: transform .2s ease; flex-shrink: 0;
+        }
+        .cat-parent-li.open > .cat-parent-row > .cat-parent-btn .cat-chevron { transform: rotate(90deg); }
+        .cat-count { font-size: .72rem; color: #B8AFA3; font-variant-numeric: tabular-nums; flex-shrink: 0; margin-left: .2rem; }
     </style>
     <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </head>
@@ -237,7 +245,7 @@
     <!-- Header -->
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html" class="active">Shop</a>
@@ -245,7 +253,7 @@
                 <a href="contact.html">Contact</a>
             </nav>
             <div class="nav-icons">
-                <button aria-label="Search" onclick="document.getElementById('search-input').focus()"><ion-icon name="search-outline"></ion-icon></button>
+                <button aria-label="Search" onclick="(function(s){s.scrollIntoView({behavior:'smooth',block:'center'});s.focus({preventScroll:true});s.style.boxShadow='0 0 0 3px rgba(22,62,52,.25)';setTimeout(function(){s.style.boxShadow=''},1200)})(document.getElementById('search-input'))"><ion-icon name="search-outline"></ion-icon></button>
                 <button aria-label="Cart" id="cart-icon">
                     <ion-icon name="bag-outline"></ion-icon>
                     <span class="cart-count" id="cart-count">0</span>
@@ -286,28 +294,6 @@
                         <span class="cat-icon"><ion-icon name="grid-outline"></ion-icon></span>
                         <span class="cat-label">All Products</span>
                     </button></li>
-                    <li><button class="cat-btn" data-filter="Men">
-                        <span class="cat-icon"><ion-icon name="person-outline"></ion-icon></span>
-                        <span class="cat-label">Men</span>
-                    </button></li>
-                    <li><button class="cat-btn" data-filter="Women">
-                        <span class="cat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M24 4C15 4 9 10 9 20C9 29 13 34 18 36.5"/>
-                                <path d="M24 4C33 4 39 10 39 20C39 29 35.5 33.5 32.5 35.5"/>
-                                <path d="M32.5 35.5C34.5 34 35.5 31.5 34 29.5C32.5 27.5 30.5 28.5 31 30.5"/>
-                                <path d="M24 9C19 9 16 13 16 20C16 27 19.5 31.5 24 32.5C28.5 31.5 32 27 32 20C32 13 29 9 24 9"/>
-                                <path d="M20.5 32.5L20 38M27.5 32.5L28 38"/>
-                                <path d="M20 38L24 41.5L28 38"/>
-                                <path d="M8 47C10 44.5 14.5 41.5 20 39.5M28 39.5C33.5 41.5 38 44.5 40 47"/>
-                            </svg>
-                        </span>
-                        <span class="cat-label">Women</span>
-                    </button></li>
-                    <li><button class="cat-btn" data-filter="Unisex">
-                        <span class="cat-icon"><ion-icon name="male-female-outline"></ion-icon></span>
-                        <span class="cat-label">Unisex</span>
-                    </button></li>
                 </ul>
 
                 <!-- Featured divider -->
@@ -324,6 +310,19 @@
                         <span class="cat-label">Gift Sets</span>
                     </button>
                 </div>
+
+                <!-- Sort -->
+                <p class="sb-label" style="margin-top:1.1rem;">Sort By</p>
+                <select id="sort-select" style="width:100%;padding:.5rem .6rem;border:1.5px solid #EAE4D9;border-radius:10px;background:#F9F6F0;font-size:.85rem;font-family:var(--font-sans);color:#444;">
+                    <option value="default">Featured</option>
+                    <option value="newest">Newest</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="name-asc">Name: A&ndash;Z</option>
+                </select>
+
+                <!-- Advanced filters (built from product data) -->
+                <div id="adv-filters"></div>
 
             </aside>
 
@@ -440,7 +439,7 @@
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
                     <span>Total</span>
-                    <span id="cart-total">0 BDT</span>
+                    <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
@@ -453,7 +452,7 @@
     <script defer src="js/ui.js"></script>
     <script type="module">
         import { db } from "./js/firebase-config.js";
-        import { collection, getDocs, getDoc, doc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { collection, getDocs, getDoc, doc, addDoc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
         const filterList = document.getElementById("category-filter");
@@ -461,13 +460,22 @@
         const searchInput = document.getElementById("search-input");
         const categoryParam = new URLSearchParams(window.location.search).get("category");
 
-        // Icon map for categories
-        const _catIconMap = { all:'grid-outline', men:'person-outline', unisex:'male-female-outline' };
-        const _womanSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 4C15 4 9 10 9 20C9 29 13 34 18 36.5"/><path d="M24 4C33 4 39 10 39 20C39 29 35.5 33.5 32.5 35.5"/><path d="M32.5 35.5C34.5 34 35.5 31.5 34 29.5C32.5 27.5 30.5 28.5 31 30.5"/><path d="M24 9C19 9 16 13 16 20C16 27 19.5 31.5 24 32.5C28.5 31.5 32 27 32 20C32 13 29 9 24 9"/><path d="M20.5 32.5L20 38M27.5 32.5L28 38"/><path d="M20 38L24 41.5L28 38"/><path d="M8 47C10 44.5 14.5 41.5 20 39.5M28 39.5C33.5 41.5 38 44.5 40 47"/></svg>`;
-        function _catIconHtml(n) {
-            if (n.toLowerCase() === 'women') return _womanSVG;
-            const name = _catIconMap[n.toLowerCase()] || 'pricetag-outline';
-            return `<ion-icon name="${name}"></ion-icon>`;
+        // Category icon: explicit `icon` field from admin wins, else a sensible default by name
+        function _catIconHtml(cat) {
+            let icon = cat && cat.icon;
+            if (!icon) {
+                const n = ((cat && cat.name) || "").toLowerCase();
+                icon = n.includes("women") ? "woman-outline"
+                    : n.includes("men") ? "man-outline"
+                    : n.includes("unisex") ? "people-outline"
+                    : n.includes("premium") ? "diamond-outline"
+                    : n.includes("musk") ? "sparkles-outline"
+                    : (n.includes("attar") || n.includes("oud")) ? "leaf-outline"
+                    : (n.includes("perfume") || n.includes("fragrance")) ? "flower-outline"
+                    : (n.includes("gift") || n.includes("combo")) ? "gift-outline"
+                    : "pricetag-outline";
+            }
+            return `<ion-icon name="${esc(icon)}"></ion-icon>`;
         }
 
         // Delegated hover — swaps to second image on card hover
@@ -478,7 +486,11 @@
             if (!img || img._swapping) return;
             img._swapping = true;
             img.style.opacity = "0";
-            setTimeout(() => { img.src = wrapper.dataset.img2; img.style.opacity = "1"; img._swapping = false; }, 160);
+            setTimeout(() => {
+                // srcset would override a swapped src — park it during the hover swap
+                if (img.srcset) { img.dataset.srcset1 = img.srcset; img.removeAttribute("srcset"); }
+                img.src = wrapper.dataset.img2; img.style.opacity = "1"; img._swapping = false;
+            }, 160);
         }, true);
         grid.addEventListener("mouseleave", e => {
             const wrapper = e.target.closest(".product-img-wrapper[data-img2]");
@@ -486,11 +498,18 @@
             const img = wrapper.querySelector(".product-img");
             if (!img) return;
             img.style.opacity = "0";
-            setTimeout(() => { img.src = wrapper.dataset.img1; img.style.opacity = "1"; }, 160);
+            setTimeout(() => {
+                img.src = wrapper.dataset.img1;
+                if (img.dataset.srcset1) img.srcset = img.dataset.srcset1;
+                img.style.opacity = "1";
+            }, 160);
         }, true);
 
         let currentFilter = "all";
         let searchQuery = "";
+        let _sortBy = "default";
+        let _advSel = { gender: null, occasion: null, note: null };
+        let _ratings = {}; // productId -> { avg, count } from approved reviews
         let catsReady = false;
         let productsReady = typeof products !== "undefined" && products.length > 0;
 
@@ -510,9 +529,55 @@
             }
         }
 
-        function cardImg(url) {
+        function cardImg(url, w = 400) {
             if (!url || !url.includes("/upload/")) return url || "";
-            return url.replace("/upload/", "/upload/w_400,h_533,c_fill,f_auto,q_auto/");
+            const h = Math.round(w * 533 / 400);
+            return url.replace("/upload/", `/upload/w_${w},h_${h},c_fill,f_auto,q_auto/`);
+        }
+        // Responsive srcset — phones download ~250px files instead of 400px ones
+        function cardSrcset(url) {
+            if (!url || !url.includes("/upload/")) return "";
+            return `${cardImg(url, 250)} 250w, ${cardImg(url, 400)} 400w, ${cardImg(url, 600)} 600w`;
+        }
+        const CARD_SIZES = "(max-width: 768px) 46vw, 280px";
+
+        /* ── Multi-field search: name, category, description, notes, tags, seasons, occasions.
+           Tokenised — every word in the query must match some field (substring),
+           with 1-typo tolerance for words of 5+ letters. ── */
+        const _hayCache = new WeakMap();
+        function _haystack(p) {
+            let h = _hayCache.get(p);
+            if (h) return h;
+            h = [
+                p.name, p.category, p.description, p.ingredients,
+                ...(p.fragrance_notes || []), ...(p.seasons || []), ...(p.occasions || []),
+                p.tags?.concentration, p.tags?.gender, p.tags?.type
+            ].filter(Boolean).join(" ").toLowerCase();
+            _hayCache.set(p, h);
+            return h;
+        }
+        function _oneTypoMatch(token, words) {
+            // true if token is within edit distance 1 of any word (cheap check, same-ish length)
+            for (const w of words) {
+                if (Math.abs(w.length - token.length) > 1) continue;
+                let i = 0, j = 0, edits = 0, ok = true;
+                while (i < token.length && j < w.length) {
+                    if (token[i] === w[j]) { i++; j++; continue; }
+                    if (++edits > 1) { ok = false; break; }
+                    if (token.length > w.length) i++;
+                    else if (w.length > token.length) j++;
+                    else { i++; j++; }
+                }
+                if (ok && edits + (token.length - i) + (w.length - j) <= 1) return true;
+            }
+            return false;
+        }
+        function matchesSearch(p, q) {
+            if (!q) return true;
+            const hay = _haystack(p);
+            const tokens = q.toLowerCase().split(/\s+/).filter(Boolean);
+            const words = hay.split(/[^a-z0-9]+/).filter(Boolean);
+            return tokens.every(t => hay.includes(t) || (t.length >= 5 && _oneTypoMatch(t, words)));
         }
 
         function renderProducts() {
@@ -524,26 +589,42 @@
             let filtered;
             if (currentFilter === "flash-sale") {
                 const saleIds = new Set(flashItems.map(it => it.productId));
-                filtered = products.filter(p => saleIds.has(p.id) && p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+                filtered = products.filter(p => saleIds.has(p.id) && matchesSearch(p, searchQuery));
             } else if (currentFilter === "new-arrivals") {
-                filtered = products.filter(p => p.newArrival && p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+                filtered = products.filter(p => p.newArrival && matchesSearch(p, searchQuery));
             } else if (currentFilter === "gift-sets") {
-                filtered = products.filter(p => p.productType === "combo" && p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+                filtered = products.filter(p => p.productType === "combo" && matchesSearch(p, searchQuery));
             } else {
                 filtered = products.filter(p =>
-                    (currentFilter === "all" || p.category === currentFilter) &&
-                    p.name.toLowerCase().includes(searchQuery.toLowerCase())
+                    (currentFilter === "all" ||
+                     p.category === currentFilter ||
+                     (_childNamesOf[currentFilter] || []).includes(p.category)) &&
+                    matchesSearch(p, searchQuery)
                 );
             }
-            if (!filtered.length) { grid.innerHTML = `<p style="color:var(--text-muted)">No products found.</p>`; return; }
+            // Advanced filters: gender / occasion / fragrance note
+            if (_advSel.gender)   filtered = filtered.filter(p => String(p.tags?.gender || "").toLowerCase() === _advSel.gender);
+            if (_advSel.occasion) filtered = filtered.filter(p => (p.occasions || []).some(o => String(o).toLowerCase() === _advSel.occasion));
+            if (_advSel.note)     filtered = filtered.filter(p => (p.fragrance_notes || []).some(n => String(n).toLowerCase() === _advSel.note));
+            // Sorting
+            const _minP = p => {
+                const act = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
+                const v = p.prices ? Object.entries(p.prices).filter(([k, x]) => act.includes(k) && typeof x === "number" && x > 0).map(([, x]) => x) : [];
+                return v.length ? Math.min(...v) : (p.basePrice || p.price || 0);
+            };
+            if (_sortBy === "price-asc")  filtered = [...filtered].sort((a, b) => _minP(a) - _minP(b));
+            else if (_sortBy === "price-desc") filtered = [...filtered].sort((a, b) => _minP(b) - _minP(a));
+            else if (_sortBy === "name-asc")   filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+            else if (_sortBy === "newest")     filtered = [...filtered].sort((a, b) => (b.newArrival ? 1 : 0) - (a.newArrival ? 1 : 0) || b.id - a.id);
+            if (!filtered.length) { grid.innerHTML = `<p style="color:var(--text-muted)">No products found.</p>`; _updateCatCounts(); return; }
             function priceRange(p) {
                 const active = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
                 const vals = p.prices
                     ? Object.entries(p.prices).filter(([k,v]) => active.includes(k) && typeof v === 'number' && v > 0).map(([,v]) => v)
                     : [];
-                if (!vals.length) return `৳${(p.basePrice || p.price || 0).toLocaleString()}`;
+                if (!vals.length) return `Tk ${(p.basePrice || p.price || 0).toLocaleString()}`;
                 const mn = Math.min(...vals), mx = Math.max(...vals);
-                return mn === mx ? `৳${mn.toLocaleString()}` : `৳${mn.toLocaleString()} – ৳${mx.toLocaleString()}`;
+                return mn === mx ? `Tk ${mn.toLocaleString()}` : `Tk ${mn.toLocaleString()} – Tk ${mx.toLocaleString()}`;
             }
             grid.innerHTML = filtered.map((p, _idx) => {
                 const active = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
@@ -561,7 +642,7 @@
                     ? `<button class="add-to-cart-quick" disabled style="cursor:not-allowed;opacity:.7;background:#aaa;">Out of Stock</button>`
                     : `<button class="add-to-cart-quick" onclick="event.stopPropagation();addToCart(${p.id},'${cartSize}',${price});window.showAddedToast&&window.showAddedToast('${esc(p.name)}')">Add to Cart</button>`;
                 const priceHtml = isSale
-                    ? `<div class="product-price" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span style="color:#e63946;font-weight:700;">৳${price.toLocaleString()}</span><span style="font-size:.78rem;color:var(--text-muted);text-decoration:line-through;">৳${regularPrice.toLocaleString()}</span>${discPct > 0 ? `<span style="background:#fdecea;color:#e63946;font-size:.65rem;font-weight:700;padding:.1rem .35rem;border-radius:3px;">${discPct}% OFF</span>` : ""}</div>`
+                    ? `<div class="product-price" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span style="color:#e63946;font-weight:700;">Tk ${price.toLocaleString()}</span><span style="font-size:.78rem;color:var(--text-muted);text-decoration:line-through;">Tk ${regularPrice.toLocaleString()}</span>${discPct > 0 ? `<span style="background:#fdecea;color:#e63946;font-size:.65rem;font-weight:700;padding:.1rem .35rem;border-radius:3px;">${discPct}% OFF</span>` : ""}</div>`
                     : `<div class="product-price">${priceRange(p)}</div>`;
                 const src1 = cardImg(p.image);
                 const img2 = (p.images && p.images.length > 1) ? cardImg(p.images[1]) : "";
@@ -570,7 +651,7 @@
                 const wishBtn = `<button class="wish-btn${inWish ? ' active' : ''}" data-pid="${p.id}" onclick="event.stopPropagation();window.Wishlist&&window.Wishlist.toggle(${p.id})" title="Add to wishlist" aria-label="Wishlist" style="position:absolute;top:.5rem;right:.5rem;background:rgba(255,255,255,.85);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.15rem;color:${inWish?'#c0392b':'#888'};box-shadow:0 1px 4px rgba(0,0,0,.12);z-index:2;transition:all .2s;"><ion-icon name="${inWish?'heart':'heart-outline'}"></ion-icon></button>`;
                 return `<div class="product-card">
                     <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;position:relative;"${wrapAttrs}>
-                        <img src="${esc(src1)}" alt="${esc(p.name)}" class="product-img" loading="${_idx < 4 ? 'eager' : 'lazy'}"${_idx === 0 ? ' fetchpriority="high"' : ''} style="background-color:#FFFFFF;${outOfStock ? "opacity:.75;" : ""}">
+                        <img src="${esc(src1)}"${cardSrcset(p.image) ? ` srcset="${esc(cardSrcset(p.image))}" sizes="${CARD_SIZES}"` : ""} alt="${esc(p.name)}" class="product-img" decoding="async" loading="${_idx < 4 ? 'eager' : 'lazy'}"${_idx === 0 ? ' fetchpriority="high"' : ''} style="background-color:#FFFFFF;${outOfStock ? "opacity:.75;" : ""}">
                         ${oosBadge}${newBadge}${comboBadge}
                         ${wishBtn}
                         ${cartBtn}
@@ -578,17 +659,114 @@
                     <div class="product-info">
                         <span class="product-category">${esc(p.category)}</span>
                         <h3 class="product-title"><a href="product.html?id=${p.id}">${esc(p.name)}</a></h3>
+                        ${_ratings[p.id] ? `<div style="font-size:.74rem;line-height:1;margin:.15rem 0 .3rem;"><span style="color:#f0b429;letter-spacing:1px;">${"★".repeat(Math.round(_ratings[p.id].avg))}</span><span style="color:#ddd;letter-spacing:1px;">${"★".repeat(5 - Math.round(_ratings[p.id].avg))}</span> <span style="color:var(--text-muted);">(${_ratings[p.id].count})</span></div>` : ""}
                         ${priceHtml}
                     </div>
                 </div>`;
             }).join("");
+            _updateCatCounts();
         }
 
         function tryRender() {
             if (catsReady && productsReady) renderProducts();
         }
 
-        document.addEventListener("products-ready", () => { productsReady = true; tryRender(); });
+        document.addEventListener("products-ready", () => { productsReady = true; tryRender(); _buildAdvFilters(); });
+
+        /* ── Sort ── */
+        document.getElementById("sort-select")?.addEventListener("change", e => { _sortBy = e.target.value; renderProducts(); });
+
+        /* ── Review stars on cards — one cached reviews read per 10 min ── */
+        (async () => {
+            const RKEY = "zhr_ratings_v1";
+            try { const r = sessionStorage.getItem(RKEY); if (r) { const { data, ts } = JSON.parse(r); if (Date.now() - ts < 10 * 60 * 1000) { _ratings = data || {}; if (Object.keys(_ratings).length && productsReady) renderProducts(); return; } } } catch {}
+            try {
+                const snap = await getDocs(query(collection(db, "reviews"), where("status", "==", "approved")));
+                const agg = {};
+                snap.docs.forEach(d => { const r = d.data(); const id = Number(r.productId); if (!agg[id]) agg[id] = { sum: 0, count: 0 }; agg[id].sum += Number(r.rating) || 0; agg[id].count++; });
+                _ratings = {};
+                Object.keys(agg).forEach(id => { _ratings[id] = { avg: agg[id].sum / agg[id].count, count: agg[id].count }; });
+                try { sessionStorage.setItem(RKEY, JSON.stringify({ data: _ratings, ts: Date.now() })); } catch {}
+                if (Object.keys(_ratings).length && productsReady) renderProducts();
+            } catch {}
+        })();
+
+        /* ── Advanced filters: chips built from live product data ── */
+        function _buildAdvFilters() {
+            const host = document.getElementById("adv-filters");
+            if (!host || typeof products === "undefined" || !products.length) return;
+            const noteFreq = {};
+            products.flatMap(p => p.fragrance_notes || []).forEach(n => { noteFreq[n] = (noteFreq[n] || 0) + 1; });
+            const groups = [
+                ["gender", "Gender", [...new Set(products.map(p => p.tags?.gender).filter(Boolean))]],
+                ["occasion", "Occasion", [...new Set(products.flatMap(p => p.occasions || []))].slice(0, 8)],
+                ["note", "Notes", Object.keys(noteFreq).sort((a, b) => noteFreq[b] - noteFreq[a]).slice(0, 8)]
+            ].filter(g => g[2].length > 1);
+            host.innerHTML = groups.map(([key, label, vals]) => `
+                <p class="sb-label" style="margin-top:1.1rem;">${esc(label)}</p>
+                <div style="display:flex;flex-wrap:wrap;gap:.35rem;">${vals.map(v => `
+                    <button class="adv-chip" data-fk="${esc(key)}" data-fv="${esc(String(v).toLowerCase())}" style="padding:.28rem .7rem;border-radius:20px;font-size:.76rem;font-family:var(--font-sans);border:1px solid #E5DDD0;background:#F9F6F0;color:#666;cursor:pointer;">${esc(v)}</button>`).join("")}
+                </div>`).join("");
+            const paint = () => host.querySelectorAll(".adv-chip").forEach(x => {
+                const on = _advSel[x.dataset.fk] === x.dataset.fv;
+                x.style.background = on ? "var(--primary-color)" : "#F9F6F0";
+                x.style.color = on ? "#fff" : "#666";
+                x.style.borderColor = on ? "var(--primary-color)" : "#E5DDD0";
+            });
+            paint();
+            host.querySelectorAll(".adv-chip").forEach(b => b.addEventListener("click", () => {
+                const k = b.dataset.fk, v = b.dataset.fv;
+                _advSel[k] = _advSel[k] === v ? null : v;
+                paint();
+                renderProducts();
+            }));
+        }
+        _buildAdvFilters(); // initial build — covers the case where products-ready fired before this module loaded
+
+        /* ── Search autocomplete dropdown (thumbnail + name + price) ── */
+        const _searchWrap = document.querySelector(".search-wrap");
+        const _acBox = document.createElement("div");
+        _acBox.id = "search-ac";
+        _acBox.style.cssText = "position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #EAE4D9;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:60;display:none;overflow:hidden;";
+        _searchWrap.appendChild(_acBox);
+        function _acRender() {
+            const q = searchInput.value.trim();
+            if (q.length < 2 || typeof products === "undefined") { _acBox.style.display = "none"; return; }
+            const hits = products.filter(p => matchesSearch(p, q)).slice(0, 6);
+            if (!hits.length) { _acBox.style.display = "none"; return; }
+            _acBox.innerHTML = hits.map((p, i) => {
+                const vals = p.prices ? Object.values(p.prices).filter(v => typeof v === "number" && v > 0) : [];
+                const pr = vals.length ? Math.min(...vals) : (p.basePrice || p.price || 0);
+                const img = p.image && p.image.includes("/upload/") ? p.image.replace("/upload/", "/upload/w_80,h_80,c_fill,f_auto,q_auto/") : (p.image || "");
+                return `<a href="product.html?id=${p.id}" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .6rem;text-decoration:none;color:var(--text-main);${i < hits.length - 1 ? "border-bottom:1px solid #F4F0E8;" : ""}">
+                    <img src="${esc(img)}" alt="" width="38" height="38" style="width:38px;height:38px;object-fit:cover;border-radius:6px;background:#fff;flex-shrink:0;">
+                    <span style="flex:1;min-width:0;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.name)}</span>
+                    <span style="font-size:.78rem;color:var(--text-muted);flex-shrink:0;">Tk ${pr.toLocaleString()}</span>
+                </a>`;
+            }).join("");
+            _acBox.style.display = "block";
+        }
+        searchInput.addEventListener("input", _acRender);
+        searchInput.addEventListener("focus", _acRender);
+        document.addEventListener("click", e => { if (!_searchWrap.contains(e.target)) _acBox.style.display = "none"; });
+        document.addEventListener("keydown", e => { if (e.key === "Escape") _acBox.style.display = "none"; });
+
+        /* ── Category landing header — banner + description set by admin ── */
+        function _renderCatLanding() {
+            let host = document.getElementById("cat-landing");
+            if (!host) {
+                host = document.createElement("div");
+                host.id = "cat-landing";
+                document.querySelector(".shop-title-area")?.insertAdjacentElement("afterend", host);
+            }
+            const cat = (_allCats || []).find(c => c.name === currentFilter);
+            if (!cat || (!cat.banner && !cat.description)) { host.innerHTML = ""; return; }
+            const bImg = cat.banner && cat.banner.includes("/upload/") ? cat.banner.replace("/upload/", "/upload/w_1200,h_320,c_fill,f_auto,q_auto/") : cat.banner;
+            host.innerHTML = `<div style="margin:-.75rem 0 1.75rem;border-radius:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.06);">
+                ${cat.banner ? `<img src="${esc(bImg)}" alt="${esc(cat.name)}" style="width:100%;height:170px;object-fit:cover;display:block;">` : ""}
+                ${cat.description ? `<p style="padding:.9rem 1.15rem;margin:0;font-size:.88rem;color:var(--text-muted);background:var(--surface-color);">${esc(cat.description)}</p>` : ""}
+            </div>`;
+        }
         document.addEventListener("wishlist-ready", () => { if (productsReady) renderProducts(); });
         // Wishlist change: only update button states, avoid full re-render
         document.addEventListener("wishlist-changed", () => {
@@ -604,50 +782,188 @@
         });
 
         // Fetch categories — sessionStorage cache to skip Firestore on repeat visits
-        const _CKEY = "zah_cats_v2";
+        const _CKEY = "zah_cats_v4";
+        let _allCats = [];
+        let _childNamesOf = {}; // { "Perfume": ["Men","Women","Unisex"], ... }
+
+        // Effective parent — guards against corrupt data (self-parent treated as root)
+        function _catParentOf(c) { return (c.parentId && c.parentId !== c.id) ? c.parentId : null; }
+
+        function _buildChildMap(cats) {
+            _childNamesOf = {};
+            const idToName = {};
+            cats.forEach(c => { idToName[c.id] = c.name; });
+            cats.forEach(c => {
+                const pid = _catParentOf(c);
+                if (pid) {
+                    const pName = idToName[pid];
+                    if (pName) {
+                        _childNamesOf[pName] = _childNamesOf[pName] || [];
+                        _childNamesOf[pName].push(c.name);
+                    }
+                }
+            });
+        }
+
         function _buildCatList(cats) {
-            if (cats.length) {
-                filterList.innerHTML = `<li><button class="cat-btn active" data-filter="all"><span class="cat-icon"><ion-icon name="grid-outline"></ion-icon></span><span class="cat-label">All Products</span></button></li>` +
-                    cats.map(c => `<li><button class="cat-btn" data-filter="${esc(c.name)}"><span class="cat-icon">${_catIconHtml(c.name)}</span><span class="cat-label">${esc(c.name)}</span></button></li>`).join("");
-            }
+            _allCats = cats;
+            const activeCats = cats.filter(c => c.active !== false);
+            if (!activeCats.length) return;
+            _buildChildMap(activeCats);
+
+            const roots = activeCats.filter(c => !_catParentOf(c)).sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            const allBtn = `<li><button class="cat-btn active" data-filter="all"><span class="cat-icon"><ion-icon name="grid-outline"></ion-icon></span><span class="cat-label">All Products</span><span class="cat-count"></span></button></li>`;
+
+            const items = roots.map(c => {
+                const childNames = _childNamesOf[c.name] || [];
+                const childCats = activeCats.filter(ch => childNames.includes(ch.name))
+                    .sort((a, b) => (a.order || 0) - (b.order || 0));
+                if (childCats.length) {
+                    // Parent with children — expandable row
+                    const childHtml = childCats.map(ch =>
+                        `<li><button class="cat-btn cat-child-btn" data-filter="${esc(ch.name)}">
+                            <span class="cat-icon">${_catIconHtml(ch)}</span>
+                            <span class="cat-label">${esc(ch.name)}</span>
+                            <span class="cat-count"></span>
+                        </button></li>`
+                    ).join("");
+                    return `<li class="cat-parent-li">
+                        <div class="cat-parent-row">
+                            <button class="cat-btn cat-parent-btn" data-filter="${esc(c.name)}" aria-expanded="false">
+                                <span class="cat-icon">${_catIconHtml(c)}</span>
+                                <span class="cat-label">${esc(c.name)}</span>
+                                <span class="cat-count"></span>
+                                <ion-icon name="chevron-forward-outline" class="cat-chevron"></ion-icon>
+                            </button>
+                        </div>
+                        <ul class="cat-children-list">${childHtml}</ul>
+                    </li>`;
+                } else {
+                    // Root with no children
+                    return `<li><button class="cat-btn" data-filter="${esc(c.name)}">
+                        <span class="cat-icon">${_catIconHtml(c)}</span>
+                        <span class="cat-label">${esc(c.name)}</span>
+                        <span class="cat-count"></span>
+                    </button></li>`;
+                }
+            }).join("");
+
+            filterList.innerHTML = allBtn + items;
+        }
+
+        function _updateCatCounts() {
+            if (!_allCats.length || typeof products === "undefined" || !products.length) return;
+            filterList.querySelectorAll("button[data-filter]").forEach(btn => {
+                const f = btn.dataset.filter;
+                const span = btn.querySelector(".cat-count");
+                if (!span) return;
+                if (f === "all") { span.textContent = `(${products.length})`; return; }
+                const children = _childNamesOf[f] || [];
+                const n = products.filter(p => p.category === f || children.includes(p.category)).length;
+                span.textContent = n > 0 ? `(${n})` : "";
+            });
         }
         const _cachedCats = (() => { try { const r = sessionStorage.getItem(_CKEY); return r ? JSON.parse(r) : null; } catch { return null; } })();
-        const _catsPromise = _cachedCats
-            ? Promise.resolve(_cachedCats)
-            : getDocs(collection(db, "categories")).then(snap => {
-                const cats = snap.docs.map(d => d.data()).sort((a, b) => (a.order || 0) - (b.order || 0));
-                try { sessionStorage.setItem(_CKEY, JSON.stringify(cats)); } catch {}
-                return cats;
-            });
+        const _fetchCats = () => getDocs(collection(db, "categories")).then(snap => {
+            const cats = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
+            try { sessionStorage.setItem(_CKEY, JSON.stringify(cats)); } catch {}
+            return cats;
+        });
+        const _catsPromise = _cachedCats ? Promise.resolve(_cachedCats) : _fetchCats();
+        // Stale-while-revalidate: cached list renders instantly, fresh data is fetched
+        // in the background and the sidebar rebuilds only if something changed —
+        // admin category changes appear within one page view instead of a whole session.
+        if (_cachedCats) {
+            _fetchCats().then(fresh => {
+                if (JSON.stringify(fresh) === JSON.stringify(_cachedCats)) return;
+                _buildCatList(fresh);
+                // Re-insert the Flash Sale button if it was active (rebuild wipes it)
+                if (window.zahFlashSale) applyFlashSaleShop(window.zahFlashSale);
+                // Restore active filter state on the rebuilt list
+                const btns = [...filterList.querySelectorAll("button[data-filter]")];
+                btns.forEach(b => b.classList.remove("active"));
+                const inSpecial = document.querySelector("#special-filter button.active");
+                const active = btns.find(b => b.dataset.filter === currentFilter);
+                if (active) {
+                    active.classList.add("active");
+                    const pli = active.closest(".cat-parent-li");
+                    if (pli) {
+                        pli.classList.add("open");
+                        pli.querySelector(".cat-parent-btn")?.setAttribute("aria-expanded", "true");
+                    }
+                } else if (!inSpecial) {
+                    // Current filter no longer exists (hidden/renamed) — fall back to All
+                    const allBtn = btns.find(b => b.dataset.filter === "all");
+                    if (allBtn) allBtn.classList.add("active");
+                    if (currentFilter !== "all") { currentFilter = "all"; renderProducts(); return; }
+                }
+                _updateCatCounts();
+            }).catch(() => {});
+        }
         _catsPromise.then(cats => {
             _buildCatList(cats);
-            // Apply URL category param
+            // Apply URL category param — also open parent if child is matched
             if (categoryParam) {
-                const hit = filterList.querySelector(`button[data-filter="${CSS.escape(categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1).toLowerCase())}"]`) ||
-                            filterList.querySelector(`button[data-filter="${esc(categoryParam)}"]`);
+                // Slug-insensitive match so ?category=premium-attar finds "Premium Attar"
+                const slugify = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "");
+                const hit = [...filterList.querySelectorAll("button[data-filter]")]
+                    .find(b => slugify(b.dataset.filter) === slugify(categoryParam));
                 if (hit) {
                     currentFilter = hit.dataset.filter;
                     filterList.querySelectorAll("button").forEach(b => b.classList.toggle("active", b === hit));
+                    const parentLi = hit.closest(".cat-parent-li");
+                    if (parentLi) {
+                        parentLi.classList.add("open");
+                        parentLi.querySelector(".cat-parent-btn")?.setAttribute("aria-expanded", "true");
+                    }
+                    _renderCatLanding();
                 }
             }
         }).catch(() => {
-            // Hardcoded fallback — apply URL param
-            if (categoryParam) {
-                const map = { men: "Men", women: "Women", unisex: "Unisex" };
-                currentFilter = map[categoryParam.toLowerCase()] || "all";
-                filterList.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.filter === currentFilter));
-            }
+            // Firestore unavailable — keep all-products view
+            currentFilter = "all";
         }).finally(() => {
-            // Event delegation — works for both hardcoded and dynamically built buttons
+            // Event delegation for category filters + tree expand/collapse
             const allFilterContainers = [filterList, document.getElementById("special-filter")].filter(Boolean);
             allFilterContainers.forEach(fl => {
                 fl.addEventListener("click", e => {
                     const btn = e.target.closest("button[data-filter]");
                     if (!btn) return;
+                    const parentLi = btn.closest(".cat-parent-li");
+                    // Close other open branches (accordion)
+                    filterList.querySelectorAll(".cat-parent-li.open").forEach(li => {
+                        if (li !== parentLi) {
+                            li.classList.remove("open");
+                            li.querySelector(".cat-parent-btn")?.setAttribute("aria-expanded", "false");
+                        }
+                    });
+                    if (btn.classList.contains("cat-parent-btn")) {
+                        const isOpen = parentLi.classList.contains("open");
+                        if (!isOpen) {
+                            // First tap on a closed root: just expand — no filtering yet
+                            parentLi.classList.add("open");
+                            btn.setAttribute("aria-expanded", "true");
+                            return;
+                        }
+                        if (btn.classList.contains("active")) {
+                            // Tap on an open, already-active root: collapse it
+                            parentLi.classList.remove("open");
+                            btn.setAttribute("aria-expanded", "false");
+                            return;
+                        }
+                        // Open but not active: filter to all products under this root
+                    } else if (parentLi) {
+                        // Child tap keeps its branch open
+                        parentLi.classList.add("open");
+                        parentLi.querySelector(".cat-parent-btn")?.setAttribute("aria-expanded", "true");
+                    }
+                    // Update active state + apply filter
                     allFilterContainers.forEach(c => c.querySelectorAll("button").forEach(b => b.classList.remove("active")));
                     btn.classList.add("active");
                     currentFilter = btn.dataset.filter;
                     renderProducts();
+                    _renderCatLanding();
                 });
             });
             // Handle ?filter=new URL param
@@ -666,8 +982,12 @@
             (async () => {
                 try {
                     let flashData = null;
-                    try { const r = sessionStorage.getItem('zhr_flash_v1'); if (r) { const { data, ts } = JSON.parse(r); if (Date.now() - ts < 30 * 60 * 1000) flashData = data; } } catch {}
-                    if (!flashData) { const snap = await getDoc(doc(db, "settings", "flashSale")); flashData = snap.exists() ? snap.data() : { enabled: false, items: [] }; }
+                    try { const r = sessionStorage.getItem('zhr_flash_v1'); if (r) { const { data, ts } = JSON.parse(r); if (Date.now() - ts < 3 * 60 * 1000) flashData = data; } } catch {}
+                    if (!flashData) {
+                        // Reuse auth.js's in-flight fetch when available — avoids a duplicate Firestore read
+                        const snap = await (window.__zhrFlashPromise || getDoc(doc(db, "settings", "flashSale")));
+                        flashData = snap.exists() ? snap.data() : { enabled: false, items: [] };
+                    }
                     flashData.items = flashData.items || [];
                     window.zahFlashSale = flashData;
                     applyFlashSaleShop(flashData);

@@ -5,8 +5,11 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us | Zahroun Luxury Perfumes</title>
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="apple-touch-icon" href="favicon.png">
+    <link rel="icon" href="favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
     <meta name="description" content="Get in touch with Zahroun — Dhanmondi, Dhaka. Send a message, WhatsApp us, or find us on the map. We're here to assist with your fragrance inquiries.">
     <meta property="og:title" content="Contact Us | Zahroun Luxury Perfumes">
     <meta property="og:description" content="Reach out to Zahroun for perfume inquiries, orders, or support. Located in Dhanmondi, Dhaka, Bangladesh.">
@@ -28,8 +31,8 @@
     <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/broadcast.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <style>
         .form-group {
             margin-bottom: 1.5rem;
@@ -80,7 +83,7 @@
 <body>
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html">Shop</a>
@@ -100,7 +103,7 @@
         </div>
     </header>
 
-    <div id="contact-hero-section" style="background: url('product pictures/New product pic and price/Home.jpg') center/cover no-repeat; padding: 8rem 0; text-align: center; position: relative;">
+    <div id="contact-hero-section" style="background: url('product pictures/New product pic and price/Home.webp') center/cover no-repeat; padding: 8rem 0; text-align: center; position: relative;">
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6));"></div>
         <div class="container fade-in" style="position: relative; z-index: 2;">
             <div class="hero-glass">
@@ -230,7 +233,7 @@
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
                     <span>Total</span>
-                    <span id="cart-total">0 BDT</span>
+                    <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>

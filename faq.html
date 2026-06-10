@@ -1,13 +1,105 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FAQ | Zahroun</title>
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="apple-touch-icon" href="favicon.png">
+    <title>Frequently Asked Questions | Zahroun</title>
+    <link rel="icon" href="favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
     <meta name="description" content="Frequently asked questions about Zahroun luxury perfumes — delivery, returns, payments, and more.">
+    <link rel="canonical" href="https://zahroun.com/faq.html">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do I place an order?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Browse our collection, select a fragrance and size, then click 'Add to Cart'. Once you're ready, go to Cart and click 'Checkout'. Fill in your delivery details and choose your payment method — Bkash, Nagad, or Cash on Delivery."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What payment methods do you accept?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We accept Bkash, Nagad, and Cash on Delivery (COD). For Bkash and Nagad, send the payment to our number and enter the transaction ID at checkout."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How long does delivery take?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Delivery inside Dhaka takes 1–2 business days. Delivery outside Dhaka takes 3–5 business days. Orders are processed within 24 hours."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the delivery charge?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Delivery inside Dhaka is BDT 60. Delivery outside Dhaka is BDT 120. Free delivery may be available during special promotions."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I return or exchange a product?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. We accept returns and exchanges within 3 days of delivery if the product is unopened and in original packaging, or damaged during shipping. Contact us on WhatsApp with your order number."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I track my order?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Visit our Track Order page and enter your Order Number and the Phone Number you used at checkout."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are your perfumes original?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, all Zahroun fragrances are 100% authentic. We source our ingredients from premium suppliers and every bottle is quality-checked before shipping."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What sizes are available?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Most fragrances are available in 6ML (travel size), 15ML, 30ML, and 50ML. Check the product page for current sizes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I send a gift to someone else?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Absolutely! At checkout, enter the recipient's delivery address. You can also add a personalised Gift Message in the order form — it will be included with the package."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I contact customer support?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You can reach us via WhatsApp at +880 1886-936581, Email at support@zahroun.com, or the Contact Form at zahroun.com/contact.html. We reply within a few hours during business hours (9 AM – 9 PM, every day)."
+          }
+        }
+      ]
+    }
+    </script>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://res.cloudinary.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,8 +109,8 @@
     <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/broadcast.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <style>
         .page-head { background-color: var(--accent-color); padding: 3.5rem 0 3rem; text-align: center; }
         .page-head h1 { margin-bottom: .5rem; }
@@ -144,7 +236,7 @@
 <body>
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html">Shop</a>
@@ -196,7 +288,7 @@
             </div>
             <div id="cart-items" style="flex:1;overflow-y:auto;"></div>
             <div style="border-top:1px solid var(--border-color);padding-top:1rem;margin-top:1rem;">
-                <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-weight:600;font-size:1.2rem;"><span>Total</span><span id="cart-total">0 BDT</span></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-weight:600;font-size:1.2rem;"><span>Total</span><span id="cart-total">Tk 0</span></div>
                 <button class="btn" style="width:100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
         </div>
@@ -254,7 +346,7 @@
             { question: "How do I place an order?", answer: "Browse our collection, select a fragrance and size, then click 'Add to Cart'. Once you're ready, go to Cart and click 'Checkout'. Fill in your delivery details and choose your payment method — Bkash, Nagad, or Cash on Delivery." },
             { question: "What payment methods do you accept?", answer: "We accept:\n• Bkash\n• Nagad\n• Cash on Delivery (COD)\n\nFor Bkash and Nagad, send the payment to our number and enter the transaction ID at checkout." },
             { question: "How long does delivery take?", answer: "• Dhaka: 1–2 business days\n• Outside Dhaka: 3–5 business days\n\nOrders are processed within 24 hours. You will receive a confirmation WhatsApp message once your order is dispatched." },
-            { question: "What is the delivery charge?", answer: "• Inside Dhaka: ৳60\n• Outside Dhaka: ৳120\n\nFree delivery may be available during special promotions. Check the announcement bar at the top of the page for current offers." },
+            { question: "What is the delivery charge?", answer: "• Inside Dhaka: Tk 60\n• Outside Dhaka: Tk 120\n\nFree delivery may be available during special promotions. Check the announcement bar at the top of the page for current offers." },
             { question: "Can I return or exchange a product?", answer: "Yes. We accept returns and exchanges within 3 days of delivery if the product is:\n• Unopened and in original packaging\n• Damaged during shipping\n\nContact us on WhatsApp with your order number and we will arrange the return. Refunds are processed within 3–5 business days." },
             { question: "How do I track my order?", answer: "Visit our Track Order page and enter your Order Number and the Phone Number you used at checkout. You can also find the track link in your order confirmation message." },
             { question: "Are your perfumes original?", answer: "Yes, all Zahroun fragrances are 100% authentic. We source our ingredients from premium suppliers and every bottle is quality-checked before shipping." },
