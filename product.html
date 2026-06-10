@@ -1,21 +1,29 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details | Zahroun</title>
-    <link rel="icon" type="image/png" href="product pictures/favicon.png">
-    <link rel="apple-touch-icon" href="product pictures/favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
     <meta name="description" content="Discover Zahroun luxury perfumes — niche fragrances for men, women, and unisex. Long-lasting, premium quality. Shop online in Bangladesh.">
     <meta property="og:site_name" content="Zahroun">
     <meta property="og:type" content="product">
     <meta name="twitter:card" content="summary_large_image">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@500;600;700&display=swap">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/analytics.js"></script>
+    <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="js/broadcast.js"></script>
+    <script type="module" src="js/wishlist.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <style>
         .product-detail-container {
             display: grid;
@@ -220,9 +228,18 @@
         }
         .size-btn {
             border-radius: 8px;
+            transition: background .15s, border-color .15s, box-shadow .15s, color .15s;
         }
         .size-btn:hover {
             box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+            border-color: var(--primary-color);
+        }
+        .size-btn.active {
+            background: var(--primary-color) !important;
+            color: #fff !important;
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 4px 14px rgba(22,62,52,.3);
+            font-weight: 700;
         }
         @media (max-width: 520px) {
             .size-grid,
@@ -246,18 +263,105 @@
             .product-image-large {
                 max-width: 100%;
                 position: sticky;
-                top: 100px; /* Sticks while scrolling meta */
+                top: 100px;
             }
             .product-meta {
                 max-width: 100%;
             }
         }
+
+        /* ---- Reviews UI ---- */
+        .rv-summary {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            background: var(--bg-color);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .rv-avg-block { text-align: center; flex-shrink: 0; }
+        .rv-avg-num { font-size: 3rem; font-weight: 700; color: var(--primary-color); line-height: 1; font-family: var(--font-sans); }
+        .rv-avg-stars { color: #f0b429; font-size: 1.1rem; letter-spacing: 2px; margin: .3rem 0 .15rem; }
+        .rv-avg-count { font-size: .75rem; color: var(--text-muted); }
+        .rv-bars { flex: 1; min-width: 140px; }
+        .rv-bar-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .3rem; font-size: .75rem; color: var(--text-muted); }
+        .rv-bar-row .rv-bar-track { flex: 1; height: 6px; background: var(--border-color); border-radius: 3px; overflow: hidden; }
+        .rv-bar-row .rv-bar-fill { height: 100%; background: #f0b429; border-radius: 3px; transition: width .4s ease; }
+        .rv-bar-row .rv-bar-n { width: 18px; text-align: right; flex-shrink: 0; }
+        .rv-bar-row .rv-bar-star { width: 14px; flex-shrink: 0; }
+
+        .rv-card {
+            padding: 1.1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .rv-card:last-child { border-bottom: none; }
+        .rv-card-head { display: flex; align-items: flex-start; gap: .75rem; margin-bottom: .5rem; }
+        .rv-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--primary-color); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .85rem; font-weight: 700; flex-shrink: 0;
+            font-family: var(--font-sans);
+        }
+        .rv-card-meta { flex: 1; }
+        .rv-card-name { font-size: .9rem; font-weight: 600; color: var(--text-main); }
+        .rv-card-stars { color: #f0b429; letter-spacing: 1px; font-size: .85rem; }
+        .rv-card-date { font-size: .73rem; color: var(--text-muted); margin-top: .1rem; }
+        .rv-badge-verified { display: inline-flex; align-items: center; gap: .2rem; font-size: .7rem; color: #1e7e34; background: #e6f4ea; border-radius: 4px; padding: .1rem .45rem; margin-left: .4rem; vertical-align: middle; }
+        .rv-card-text { font-size: .88rem; color: var(--text-muted); line-height: 1.65; padding-left: calc(36px + .75rem); }
+
+        .rv-empty { text-align: center; padding: 2rem 1rem; color: var(--text-muted); }
+        .rv-empty ion-icon { font-size: 2.2rem; display: block; margin: 0 auto .5rem; opacity: .4; }
+
+        .rv-divider { border: none; border-top: 1px solid var(--border-color); margin: 1.5rem 0; }
+
+        /* Write a Review form */
+        .rv-form-wrap {
+            background: var(--bg-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        .rv-form-wrap h4 { font-size: 1rem; margin-bottom: 1.1rem; color: var(--primary-color); display: flex; align-items: center; gap: .4rem; }
+        .rv-form-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); font-weight: 600; margin-bottom: .45rem; display: block; }
+
+        /* Star picker */
+        .rv-star-row { display: flex; align-items: center; gap: .75rem; margin-bottom: 1rem; }
+        .rv-star-picker { display: flex; gap: .15rem; }
+        .rv-star-picker span {
+            font-size: 2rem; color: #ddd; cursor: pointer;
+            transition: color .12s, transform .12s;
+            line-height: 1; display: inline-block;
+        }
+        .rv-star-picker span.lit { color: #f0b429; }
+        .rv-star-picker span:hover { transform: scale(1.15); }
+        .rv-star-label { font-size: .82rem; color: var(--text-muted); min-width: 70px; transition: color .15s; }
+
+        .rv-form-wrap textarea {
+            width: 100%; padding: .75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: var(--font-sans); font-size: .9rem;
+            color: var(--text-main); background: var(--surface-color);
+            resize: vertical; min-height: 90px;
+            box-sizing: border-box; outline: none;
+            transition: border-color .2s;
+            line-height: 1.6;
+        }
+        .rv-form-wrap textarea:focus { border-color: var(--primary-color); }
+        .rv-char-count { font-size: .72rem; color: var(--text-muted); text-align: right; margin-top: .25rem; }
+        .rv-submit-row { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; margin-top: .9rem; }
+        .rv-login-prompt { font-size: .88rem; color: var(--text-muted); text-align: center; padding: 1rem; }
+        .rv-login-prompt a { color: var(--primary-color); font-weight: 600; }
+        .rv-success { color: #1e7e34; background: #e6f4ea; border-radius: 8px; padding: .9rem 1.1rem; font-size: .9rem; display: flex; align-items: center; gap: .5rem; }
     </style>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </head>
 <body>
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html" class="active">Shop</a>
@@ -277,10 +381,31 @@
         </div>
     </header>
 
+    <style>
+        @keyframes _skShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        .pd-skel-img{width:100%;aspect-ratio:1/1;max-width:480px;margin:0 auto;border-radius:8px;background:linear-gradient(90deg,#f0ede8 25%,#e5e0d8 50%,#f0ede8 75%);background-size:200% 100%;animation:_skShimmer 1.5s infinite;}
+        .pd-skel-line{height:14px;border-radius:4px;margin-bottom:12px;background:linear-gradient(90deg,#f0ede8 25%,#e5e0d8 50%,#f0ede8 75%);background-size:200% 100%;animation:_skShimmer 1.5s infinite;}
+        .pd-skel-h1{height:36px;width:70%;border-radius:4px;margin-bottom:16px;background:linear-gradient(90deg,#f0ede8 25%,#e5e0d8 50%,#f0ede8 75%);background-size:200% 100%;animation:_skShimmer 1.5s infinite;}
+        .pd-skel-price{height:28px;width:30%;border-radius:4px;margin-bottom:24px;background:linear-gradient(90deg,#f0ede8 25%,#e5e0d8 50%,#f0ede8 75%);background-size:200% 100%;animation:_skShimmer 1.5s infinite;}
+        .pd-skel-btn{height:52px;border-radius:8px;margin-bottom:12px;background:linear-gradient(90deg,#d5d0c8 25%,#c8c3ba 50%,#d5d0c8 75%);background-size:200% 100%;animation:_skShimmer 1.5s infinite;}
+    </style>
     <div class="container">
         <div class="product-detail-container" id="product-detail-content">
-            <!-- Injected by JS -->
-            <p>Loading product details...</p>
+            <!-- Skeleton shown until JS renders product -->
+            <div class="product-image-large">
+                <div class="pd-skel-img"></div>
+            </div>
+            <div class="product-meta">
+                <div class="pd-skel-line" style="width:35%;height:12px;margin-bottom:10px;"></div>
+                <div class="pd-skel-h1"></div>
+                <div class="pd-skel-price"></div>
+                <div class="pd-skel-btn"></div>
+                <div class="pd-skel-btn" style="background:linear-gradient(90deg,#eae6e0 25%,#e0dbd2 50%,#eae6e0 75%);background-size:200% 100%;"></div>
+                <div class="pd-skel-line" style="width:100%;margin-top:20px;"></div>
+                <div class="pd-skel-line" style="width:85%;"></div>
+                <div class="pd-skel-line" style="width:90%;"></div>
+                <div class="pd-skel-line" style="width:70%;"></div>
+            </div>
         </div>
     </div>
 
@@ -313,6 +438,7 @@
                 <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
                     <li><a href="shop.html" style="color: #ccc; font-size: 0.9rem;">Explore Fragrance DNAs</a></li>
                     <li><a href="shop.html" style="color: #ccc; font-size: 0.9rem;">Best Sellers</a></li>
+                    <li><a href="sale.html" style="color: #ccc; font-size: 0.9rem;">Flash Sale</a></li>
                     <li><a href="#" style="color: #ccc; font-size: 0.9rem;">Blog</a></li>
                     <li><a href="#" style="color: #ccc; font-size: 0.9rem;">Reviews</a></li>
                 </ul>
@@ -323,24 +449,36 @@
                 <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
                     <li><a href="about.html" style="color: #ccc; font-size: 0.9rem;">How It Works</a></li>
                     <li><a href="contact.html" style="color: #ccc; font-size: 0.9rem;">Contact Us</a></li>
-                    <li><a href="#" style="color: #ccc; font-size: 0.9rem;">Shipping</a></li>
-                    <li><a href="#" style="color: #ccc; font-size: 0.9rem;">Payment Methods</a></li>
+                    <li><a href="contact.html" style="color: #ccc; font-size: 0.9rem;">Shipping</a></li>
+                    <li><a href="checkout.html" style="color: #ccc; font-size: 0.9rem;">Payment Methods</a></li>
+                    <li><a href="track.html" style="color: #ccc; font-size: 0.9rem;">Track Order</a></li>
+                    <li><a href="faq.html" style="color: #ccc; font-size: 0.9rem;">FAQ</a></li>
+                    <li><a href="policy.html" style="color: #ccc; font-size: 0.9rem;">Policies</a></li>
                 </ul>
             </div>
         </div>
-        <div class="footer-bottom-new" style="border-top: 1px solid #222; margin-top: 4rem; padding-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+        <div class="footer-bottom-new" style="border-top: 1px solid #222; margin-top: 4rem; padding-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; width: 100%; box-sizing: border-box; overflow: hidden;">
             <div style="display: flex; gap: 1.5rem; color: white; font-size: 1.2rem;">
-                <a href="#"><ion-icon name="logo-facebook"></ion-icon></a>
-                <a href="#"><ion-icon name="logo-instagram"></ion-icon></a>
+                <a href="https://www.facebook.com/profile.php?id=61586401509792" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-facebook"></ion-icon></a>
+                <a href="https://www.instagram.com/zahroun_?igsh=b3hrNTFia2xzZG5y" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-instagram"></ion-icon></a>
                 <a href="#"><ion-icon name="logo-youtube"></ion-icon></a>
             </div>
-            <p style="color: #666; font-size: 0.8rem;">Dhanmondi, Dhaka, Bangladesh, 1205 | WhatsApp: +880 1886-936581</p>
+            <p style="color: #666; font-size: 0.8rem; text-align: center; word-break: break-word; overflow-wrap: break-word; max-width: 100%; padding: 0 0.5rem; box-sizing: border-box;">Dhanmondi, Dhaka, Bangladesh, 1205<br><a id="whatsapp-link" href="https://wa.me/8801886936581?text=Hi%20Zahroun%2C%20I'm%20interested%20in%20your%20perfumes%20%F0%9F%8C%B9" target="_blank" rel="noopener" style="color:#1e7e34;font-weight:500;white-space:nowrap;">WhatsApp: +880 1886-936581</a> &nbsp;|&nbsp; <a href="mailto:support@zahroun.com" style="color:#1e7e34;font-weight:500;white-space:nowrap;">support@zahroun.com</a></p>
             <p style="color: #666; font-size: 0.8rem;">&copy; 2026 Zahroun. All rights reserved.</p>
         </div>
     </footer>
 
+    <!-- Sticky Add to Cart Bar -->
+    <div id="sticky-atc-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e8e8e8;padding:.7rem 1.25rem;z-index:9990;box-shadow:0 -4px 20px rgba(0,0,0,.1);flex-direction:row;align-items:center;justify-content:space-between;gap:1rem;">
+        <div style="min-width:0;flex:1;">
+            <div id="sticky-pn" style="font-size:.9rem;font-weight:700;color:var(--text-main);font-family:var(--font-serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+            <div id="sticky-pp" style="font-size:.85rem;color:var(--primary-color);font-weight:600;margin-top:.1rem;"></div>
+        </div>
+        <button id="sticky-atc-btn" class="btn btn-black" style="flex-shrink:0;padding:.55rem 1.4rem;font-size:.88rem;">ADD TO CART</button>
+    </div>
+
     <!-- Cart Modal -->
-    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;">
         <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
                 <h3>Your Cart</h3>
@@ -350,7 +488,7 @@
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
                     <span>Total</span>
-                    <span id="cart-total">0 BDT</span>
+                    <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
@@ -358,9 +496,11 @@
     </div>
 
     <script type="module" src="js/store.js"></script>
-    <script src="js/cart.js"></script>
-    <script src="js/ui.js"></script>
+    <script type="module" src="js/promotions.js"></script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
     <script>
+        function _ctf(url, tr) { return url && url.includes('/upload/') ? url.replace('/upload/', '/upload/' + tr + '/') : (url || ''); }
         const sizeOrder = ['6ML', '15ML', '30ML', '50ML'];
         let currentProduct = null;
         let hoverPreviewTimer = null;
@@ -374,10 +514,19 @@
             window.currentProduct = product;
             window.currentProductId = product.id;
             if (window.zahrounGA) window.zahrounGA.trackProductView(product);
-            const productPrice = getSizePrice(product, '50ML');
-            currentSelectedSize = '50ML';
+            // Filter active sizes (backward compat: if no activeSizes, all 4 are shown)
+            const activeSizeList = product.activeSizes ?? sizeOrder;
+            const displaySizes = sizeOrder.filter(s => activeSizeList.includes(s));
+            const noSizes = displaySizes.length === 0;
+
+            // Default selected = largest available size
+            currentSelectedSize = displaySizes.includes('50ML') ? '50ML' : (displaySizes[displaySizes.length - 1] || null);
+            const productPrice = noSizes
+                ? (product.basePrice || Object.values(product.prices || {}).filter(v => v > 0).sort((a,b) => b - a)[0] || 0)
+                : getSizePrice(product, currentSelectedSize);
             currentSelectedPrice = productPrice;
-            const optionButtons = sizeOrder.map(size => {
+
+            const optionButtons = displaySizes.map(size => {
                 const price = getSizePrice(product, size);
                 const isActive = size === currentSelectedSize;
                 return `
@@ -385,44 +534,16 @@
                         <ion-icon name="checkmark-outline" class="check-icon" style="${isActive ? '' : 'display:none;'}"></ion-icon> ${size} SPRAY
                     </button>`;
             }).join('');
-            const sizePreviews = sizeOrder.map(size => {
-                const image = getSizeImage(product, size);
+            const sizePreviews = displaySizes.map(size => {
+                const image = getSizeImage(product, size);   // full-res for hover popover
+                const thumb = getSizeThumb(product, size);   // 130px for the 62px button
                 return `
                     <button class="size-preview ${size === currentSelectedSize ? 'active' : ''}" data-size="${size}" onclick="selectSizeFromPreview('${size}', true)" onmouseenter="showSizePreview('${image}', '${size}')" onmouseleave="schedulePreviewClose()">
-                        <img src="${image}" alt="${product.name} ${size}">
+                        <img src="${thumb}" alt="${product.name} ${size}">
                         <span>${size}</span>
                     </button>`;
             }).join('');
-
-            const stockStat = (product.stock !== undefined && product.stock !== null) ? (product.stock === 0 ? "out" : product.stock < 10 ? "low" : "in") : null;
-            const stockColor = stockStat === "out" ? "color:#9b2226;font-weight:600;" : stockStat === "low" ? "color:#b8860b;font-weight:600;" : "color:#1e7e34;";
-            const stockIcon = stockStat === "out" ? "close-circle-outline" : stockStat === "low" ? "warning-outline" : "checkmark-circle-outline";
-            const stockText = stockStat === "out" ? "Out of Stock" : stockStat === "low" ? "Only " + product.stock + " left!" : "In Stock";
-            const stockHtml = stockStat ? `<div style="margin-bottom:1rem;font-size:.9rem;${stockColor}"><ion-icon name="${stockIcon}" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>${stockText}</div>` : "";
-            const addCartHtml = product.stock === 0 ? `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;opacity:.5;cursor:not-allowed;" disabled>OUT OF STOCK</button>` : `<button class="btn btn-black" style="width: 100%; margin-bottom: 1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>`;
-            const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:2rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="buyItNow(${product.id})">BUY IT NOW</button>`;
-            const gallImgs = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
-            const gallStripHtml = gallImgs.length > 1 ? '<div class="gallery-strip" id="gallery-strip">' + gallImgs.map((u, i) => '<button class="gt' + (i === 0 ? ' active' : '') + '" data-gi="' + i + '" type="button"><img src="' + u.replace(/"/g, '&quot;') + '" alt="View ' + (i + 1) + '"></button>').join('') + '</div>' : '';
-            const container = document.getElementById('product-detail-content');
-            container.innerHTML = `
-                <div class="product-image-large">
-                    <img id="main-product-image" src="${getSizeImage(product, currentSelectedSize)}" alt="${product.name}" class="product-main-img">
-                    ${gallStripHtml}
-                </div>
-                <div class="product-meta">
-                    <span class="product-category" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem;">${product.category}</span>
-                    <h1 style="font-family: var(--font-serif); margin-bottom: 0.5rem; font-size: 2.5rem;">${product.name}</h1>
-                    <div class="price" id="display-price" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 2rem; color: var(--primary-color);">${productPrice} BDT</div>
-
-                    ${stockHtml}
-                    ${addCartHtml}
-                    ${buyNowHtml}
-                    
-                    <div style="display: flex; gap: 2rem; margin-bottom: 2rem; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 500;">
-                        <span style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;"><ion-icon name="share-outline" style="font-size: 1.2rem;"></ion-icon> SHARE</span>
-                        <span id="wishlist-btn" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.toggleWishlist && window.toggleWishlist(${product.id})"><ion-icon id="wishlist-icon" name="heart-outline" style="font-size: 1.2rem;"></ion-icon> <span id="wishlist-label">WISHLIST</span></span>
-                    </div>
-
+            const sizePanel = noSizes ? '' : `
                     <div class="product-option-panel">
                         <p class="option-label">Options</p>
                         <div class="size-grid">${optionButtons}</div>
@@ -430,7 +551,56 @@
                             <p class="option-label">Available Sizes</p>
                             <div class="size-preview-grid">${sizePreviews}</div>
                         </div>
+                    </div>`;
+            const badgeRow = (product.newArrival || product.productType === 'combo') ? `
+                    <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.6rem;">
+                        ${product.newArrival ? '<span style="background:#111;color:#D4AF37;font-size:.62rem;font-weight:700;padding:.2rem .55rem;border-radius:3px;letter-spacing:.07em;">NEW ARRIVAL</span>' : ''}
+                        ${product.productType === 'combo' ? '<span style="background:#D4AF37;color:#111;font-size:.62rem;font-weight:700;padding:.2rem .55rem;border-radius:3px;letter-spacing:.07em;">GIFT SET</span>' : ''}
+                    </div>` : '';
+            const comboSection = (product.productType === 'combo' && product.comboItems && product.comboItems.length) ? `
+                    <div style="margin:1.25rem 0;padding:1.1rem 1.25rem;background:var(--surface-color,#f8f5f0);border-radius:10px;border-left:3px solid var(--primary-color,#D4AF37);">
+                        <h4 style="font-size:.88rem;font-weight:700;margin-bottom:.7rem;letter-spacing:.05em;text-transform:uppercase;">What's Included</h4>
+                        <ul style="list-style:none;margin:0;padding:0;">${product.comboItems.map(item =>
+                            `<li style="display:flex;align-items:center;gap:.45rem;padding:.28rem 0;font-size:.9rem;"><ion-icon name="checkmark-circle-outline" style="color:var(--primary-color,#D4AF37);font-size:1rem;flex-shrink:0;"></ion-icon>${item}</li>`
+                        ).join('')}</ul>
+                    </div>` : '';
+
+            const stockStat = (product.stock !== undefined && product.stock !== null) ? (product.stock === 0 ? "out" : product.stock < 10 ? "low" : "in") : null;
+            const stockColor = stockStat === "out" ? "color:#9b2226;font-weight:600;" : stockStat === "low" ? "color:#b8860b;font-weight:600;" : "color:#1e7e34;";
+            const stockIcon = stockStat === "out" ? "close-circle-outline" : stockStat === "low" ? "warning-outline" : "checkmark-circle-outline";
+            const stockText = stockStat === "out" ? "Out of Stock" : stockStat === "low" ? "Only " + product.stock + " left!" : "In Stock";
+            const stockHtml = stockStat ? `<div style="margin-bottom:1rem;font-size:.9rem;${stockColor}"><ion-icon name="${stockIcon}" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>${stockText}</div>` : "";
+            const addCartHtml = product.stock === 0
+                ? `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;opacity:.5;cursor:not-allowed;" disabled>OUT OF STOCK</button>`
+                : noSizes
+                    ? `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;" onclick="addToCart(${product.id},'Set',${productPrice});showAddedToast&&showAddedToast('${product.name}')">ADD TO CART</button>`
+                    : `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>`;
+            const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:2rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="buyItNow(${product.id})">BUY IT NOW</button>`;
+            const gallImgs = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
+            const gallStripHtml = gallImgs.length > 1 ? '<div class="gallery-strip" id="gallery-strip">' + gallImgs.map((u, i) => '<button class="gt' + (i === 0 ? ' active' : '') + '" data-gi="' + i + '" type="button"><img src="' + _ctf(u, 'w_130,h_130,c_fill,f_auto,q_auto').replace(/"/g, '&quot;') + '" alt="View ' + (i + 1) + '"></button>').join('') + '</div>' : '';
+            const container = document.getElementById('product-detail-content');
+            container.innerHTML = `
+                <div class="product-image-large">
+                    <img id="main-product-image" src="${getSizeImage(product, currentSelectedSize)}" alt="${product.name}" class="product-main-img">
+                    ${gallStripHtml}
+                </div>
+                <div class="product-meta">
+                    ${badgeRow}
+                    <span class="product-category" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem;">${product.category}</span>
+                    <h1 style="font-family: var(--font-serif); margin-bottom: 0.5rem; font-size: 2.5rem;">${product.name}</h1>
+                    <div class="price" id="display-price" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 2rem; color: var(--primary-color);">Tk ${Number(productPrice).toLocaleString()}</div>
+
+                    ${stockHtml}
+                    ${addCartHtml}
+                    ${buyNowHtml}
+                    ${comboSection}
+
+                    <div style="display: flex; gap: 2rem; margin-bottom: 2rem; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 500;">
+                        <span style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;"><ion-icon name="share-outline" style="font-size: 1.2rem;"></ion-icon> SHARE</span>
+                        <span id="wishlist-btn" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="window.toggleWishlist && window.toggleWishlist(${product.id})"><ion-icon id="wishlist-icon" name="heart-outline" style="font-size: 1.2rem;"></ion-icon> <span id="wishlist-label">WISHLIST</span></span>
                     </div>
+
+                    ${sizePanel}
 
                     <div class="tags-section">
                         <h4>Product Details <span style="float: right; color: #999; font-size: 0.8rem; font-weight: normal;">3 items</span></h4>
@@ -466,17 +636,17 @@
                         <h4 style="display: flex; align-items: center; gap: 0.5rem;"><ion-icon name="cart-outline"></ion-icon> Your Cart</h4>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
                             <span>Current cart subtotal</span>
-                            <span id="inline-cart-subtotal" style="font-weight: bold; color: var(--text-main);">BDT 0</span>
+                            <span id="inline-cart-subtotal" style="font-weight: bold; color: var(--text-main);">Tk 0</span>
                         </div>
                         <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Offers don't stack. Applied at checkout if eligible.</p>
                         
                         <p style="font-size: 0.8rem; color: var(--text-main); font-weight: 500; margin-bottom: 0.5rem;">Available offers</p>
                         <div style="background: white; padding: 1rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.85rem;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                <strong>10% off on orders 4000 BDT+</strong>
+                                <strong>10% off on orders Tk 4,000+</strong>
                                 <span style="background: #eee; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-family: monospace;">myzahroun10</span>
                             </div>
-                            <p id="inline-spend-more" style="color: var(--primary-color); font-size: 0.8rem;">Add 4000 BDT to unlock this offer</p>
+                            <p id="inline-spend-more" style="color: var(--primary-color); font-size: 0.8rem;">Add Tk 4,000 to unlock this offer</p>
                         </div>
                     </div>
 
@@ -493,7 +663,7 @@
                         </div>
                         <div class="accordion-item">
                             <div class="accordion-header" onclick="toggleAccordion(this)">
-                                Reviews <ion-icon name="add-outline"></ion-icon>
+                                <span id="reviews-acc-label">Reviews</span> <ion-icon name="add-outline"></ion-icon>
                             </div>
                             <div class="accordion-content" id="product-reviews-section">
                                 <p style="color:var(--text-muted);font-size:.9rem;">Loading reviews…</p>
@@ -516,16 +686,51 @@
                 });
             }
 
+            // Sticky Add to Cart bar setup
+            (function() {
+                const bar  = document.getElementById('sticky-atc-bar');
+                if (!bar || !window.IntersectionObserver) return;
+                const snm  = document.getElementById('sticky-pn');
+                const spr  = document.getElementById('sticky-pp');
+                const sBtn = document.getElementById('sticky-atc-btn');
+                if (snm) snm.textContent = product.name;
+                const updatePrice = () => { if (spr) spr.textContent = 'Tk ' + Number(noSizes ? productPrice : (currentSelectedPrice || productPrice)).toLocaleString(); };
+                updatePrice();
+                if (sBtn) {
+                    if (product.stock === 0) { sBtn.disabled = true; sBtn.textContent = 'OUT OF STOCK'; sBtn.style.opacity = '.5'; }
+                    else sBtn.onclick = () => { noSizes ? addToCart(product.id, 'Set', productPrice) : addCurrentSizeToCart(product.id); };
+                }
+                const prevSelectSize = window.selectSize;
+                window.selectSize = function(size, price, btnEl) { prevSelectSize(size, price, btnEl); updatePrice(); };
+                const mainBtn = container.querySelector('.btn.btn-black');
+                if (!mainBtn) return;
+                new IntersectionObserver(([e]) => { bar.style.display = e.isIntersecting ? 'none' : 'flex'; }, { threshold: 0 }).observe(mainBtn);
+            })();
+
             // Set document title + dynamic SEO
             document.title = `${product.name} | Zahroun`;
             const pid = new URLSearchParams(location.search).get("id") || "";
             document.querySelector('meta[name="description"]').content = `${product.name} — ${(product.description || "").slice(0,120)}. Shop Zahroun luxury perfumes online in Bangladesh.`;
-            document.head.insertAdjacentHTML("beforeend", `<link rel="canonical" href="https://zahroun.com/product.html?id=${pid}"><meta property="og:title" content="${product.name} | Zahroun"><meta property="og:description" content="${(product.description || "").slice(0,120)}"><meta property="og:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}"><meta property="og:url" content="https://zahroun.com/product.html?id=${pid}"><meta name="twitter:title" content="${product.name} | Zahroun"><meta name="twitter:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}">`);
+
+            // Clear existing dynamic SEO tags to prevent duplicates
+            document.querySelectorAll(".dynamic-seo").forEach(el => el.remove());
+
+            document.head.insertAdjacentHTML("beforeend", `
+                <link class="dynamic-seo" rel="canonical" href="https://zahroun.com/product.html?id=${pid}">
+                <meta class="dynamic-seo" property="og:title" content="${product.name} | Zahroun">
+                <meta class="dynamic-seo" property="og:description" content="${(product.description || "").slice(0,120)}">
+                <meta class="dynamic-seo" property="og:url" content="https://zahroun.com/product.html?id=${pid}">
+                <meta class="dynamic-seo" property="og:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}">
+                <meta class="dynamic-seo" name="twitter:title" content="${product.name} | Zahroun">
+                <meta class="dynamic-seo" name="twitter:description" content="${(product.description || "").slice(0,120)}">
+                <meta class="dynamic-seo" name="twitter:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png"}">
+            `);
 
             // Product rich result schema — shows price + availability in Google search
             const _price = (product.prices && product.prices["50ML"]) ? product.prices["50ML"] : (product.price || 0);
             const _schema = document.createElement("script");
             _schema.type = "application/ld+json";
+            _schema.className = "dynamic-seo";
             _schema.textContent = JSON.stringify({
                 "@context": "https://schema.org/",
                 "@type": "Product",
@@ -545,22 +750,65 @@
             });
             document.head.appendChild(_schema);
 
+            // BreadcrumbList schema
+            const _breadcrumbs = document.createElement("script");
+            _breadcrumbs.type = "application/ld+json";
+            _breadcrumbs.className = "dynamic-seo";
+            _breadcrumbs.textContent = JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": 1,
+                        "name": "Home",
+                        "item": "https://zahroun.com/"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": "Shop",
+                        "item": "https://zahroun.com/shop.html"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 3,
+                        "name": product.category || "Perfumes",
+                        "item": "https://zahroun.com/shop.html"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 4,
+                        "name": product.name,
+                        "item": `https://zahroun.com/product.html?id=${pid}`
+                    }
+                ]
+            });
+            document.head.appendChild(_breadcrumbs);
 
-            // Populate Upsell Grid
+            // Populate Upsell Grid — same category first, then featured/bestsellers
             const upsellGrid = document.getElementById('upsell-products');
-            const upsellProducts = products.filter(p => p.id !== productId).slice(0, 4); // Get 4 other products
-            upsellGrid.innerHTML = upsellProducts.map(p => `
-                <div class="product-card" style="border: none; text-align: center;">
-                    <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer; background: transparent;">
-                        <img src="${p.image}" alt="${p.name}" class="product-img ${p.image.includes('transparent') ? 'realistic-shadow' : ''}" style="max-height: 200px; padding: 1rem;">
+            const sameCat = products.filter(p => p.id !== productId && p.category === product.category);
+            const others  = products.filter(p => p.id !== productId && p.category !== product.category)
+                                    .sort((a, b) => (b.featured || b.bestseller ? 1 : 0) - (a.featured || a.bestseller ? 1 : 0));
+            const upsellProducts = [...sameCat, ...others].slice(0, 4);
+            const _esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+            upsellGrid.innerHTML = upsellProducts.map(p => {
+                const minPrice = p.prices ? Math.min(...Object.values(p.prices).filter(v => v > 0)) : (p.price || 0);
+                const maxPrice = p.prices ? Math.max(...Object.values(p.prices).filter(v => v > 0)) : (p.price || 0);
+                const priceStr = minPrice === maxPrice ? `Tk ${minPrice.toLocaleString()}` : `Tk ${minPrice.toLocaleString()} – Tk ${maxPrice.toLocaleString()}`;
+                return `<div class="product-card" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;">
+                    <div class="product-img-wrapper" style="position:relative;">
+                        <img src="${_esc(_ctf(p.image, 'w_400,h_533,c_fill,f_auto,q_auto'))}" alt="${_esc(p.name)}" class="product-img" loading="lazy" style="background-color:#FFFFFF;">
+                        ${p.newArrival ? `<span style="position:absolute;top:.5rem;left:.5rem;background:linear-gradient(120deg,#D4AF37,#f0cc5e,#c9a227);color:#1a0e00;font-size:.55rem;font-weight:800;padding:.2rem .55rem;border-radius:20px;letter-spacing:.1em;z-index:1;">NEW</span>` : ""}
                     </div>
-                    <div class="product-info" style="padding-top: 1rem;">
-                        <h3 class="product-title" style="font-size: 0.9rem;"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Zahroun</span>
-                        <div class="product-price" style="font-size: 0.9rem;">BDT ${(p.prices && p.prices['50ML']) ? p.prices['50ML'] : p.price}</div>
+                    <div class="product-info">
+                        <span class="product-category">${_esc(p.category)}</span>
+                        <h3 class="product-title"><a href="product.html?id=${p.id}">${_esc(p.name)}</a></h3>
+                        <div class="product-price">${priceStr}</div>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         });
 
         function getSizePrice(product, size) {
@@ -568,7 +816,13 @@
         }
 
         function getSizeImage(product, size) {
-            return product.sizeImages && product.sizeImages[size] ? product.sizeImages[size] : product.image;
+            const raw = product.sizeImages && product.sizeImages[size] ? product.sizeImages[size] : product.image;
+            return _ctf(raw, 'w_800,f_auto,q_auto');
+        }
+        // Separate thumbnail transform for the 62px size-preview buttons
+        function getSizeThumb(product, size) {
+            const raw = product.sizeImages && product.sizeImages[size] ? product.sizeImages[size] : product.image;
+            return _ctf(raw, 'w_130,h_130,c_fill,f_auto,q_auto');
         }
 
         function updateSelectedSizeUI(size) {
@@ -690,7 +944,7 @@
             currentSelectedSize = size;
             currentSelectedPrice = price;
             
-            document.getElementById('display-price').textContent = price + ' BDT';
+            document.getElementById('display-price').textContent = 'Tk ' + Number(price).toLocaleString();
             updateProductImage(getSizeImage(currentProduct, size));
             updateSelectedSizeUI(size);
         };
@@ -711,17 +965,17 @@
             if (!subtotalEl || !spendMoreEl) return;
 
             const subtotal = typeof getCartSubtotal === 'function' ? getCartSubtotal() : 0;
-            subtotalEl.textContent = 'BDT ' + subtotal.toFixed(2);
+            subtotalEl.textContent = 'Tk ' + Math.round(subtotal).toLocaleString();
 
             if (subtotal >= 4000) {
                 spendMoreEl.textContent = '✅ 10% Discount Unlocked! Use code: myzahroun10';
                 spendMoreEl.style.color = '#27ae60';
             } else if (subtotal > 0) {
-                const diff = (4000 - subtotal).toFixed(2);
-                spendMoreEl.textContent = 'Add BDT ' + diff + ' more to unlock 10% off';
+                const diff = Math.round(4000 - subtotal);
+                spendMoreEl.textContent = 'Add Tk ' + diff.toLocaleString() + ' more to unlock 10% off';
                 spendMoreEl.style.color = 'var(--primary-color)';
             } else {
-                spendMoreEl.textContent = 'Add 4000 BDT to unlock this offer';
+                spendMoreEl.textContent = 'Add Tk 4,000 to unlock this offer';
                 spendMoreEl.style.color = 'var(--primary-color)';
             }
         }
@@ -733,7 +987,7 @@
     <!-- Reviews + Wishlist (Firebase module) -->
     <script type="module">
         import { db, auth } from "./js/firebase-config.js";
-        import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -745,65 +999,168 @@
         });
 
         /* ---- Reviews ---- */
+        const STAR_LABELS = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+        let _cachedReviews = null;
+
+        function renderStars(n, size) {
+            const s = size || ".9rem";
+            return `<span style="color:#f0b429;font-size:${s};letter-spacing:1px;">${"★".repeat(n||0)}</span><span style="color:#ddd;font-size:${s};letter-spacing:1px;">${"★".repeat(5-(n||0))}</span>`;
+        }
+
+        function fmtDate(ts) {
+            try { return ts?.toDate ? ts.toDate().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : ""; } catch { return ""; }
+        }
+
+        async function fetchReviews(productId) {
+            const snap = await getDocs(query(collection(db, "reviews"), where("productId", "==", productId)));
+            return snap.docs.map(d => ({id:d.id,...d.data()}))
+                .sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        }
+
+        async function updateReviewHeader(productId) {
+            try {
+                const all = await fetchReviews(productId);
+                _cachedReviews = all;
+                const approved = all.filter(r => r.status === "approved");
+                const lbl = document.getElementById("reviews-acc-label");
+                if (!lbl) return;
+                if (!approved.length) { lbl.textContent = "Reviews"; return; }
+                const avg = (approved.reduce((s,r) => s+(r.rating||0), 0) / approved.length).toFixed(1);
+                lbl.innerHTML = `Reviews <span style="color:#f0b429;font-size:.85rem;letter-spacing:1px;">★</span><span style="font-size:.85rem;color:var(--primary-color);font-weight:700;">${avg}</span> <span style="font-size:.8rem;color:var(--text-muted);font-weight:400;">(${approved.length})</span>`;
+            } catch { /* silent */ }
+        }
+
         window.loadProductReviews = async function(container) {
             const productId = window.currentProductId;
             if (!productId) return;
-            container.innerHTML = '<p style="color:var(--text-muted);font-size:.9rem;">Loading reviews…</p>';
+            container.innerHTML = `<p style="color:var(--text-muted);font-size:.9rem;padding:.5rem 0;">Loading reviews…</p>`;
             try {
-                const q = query(collection(db, "reviews"), where("productId", "==", productId), where("status", "==", "approved"));
-                const snap = await getDocs(q);
-                const reviews = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-                    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                const all = _cachedReviews || await fetchReviews(productId);
+                _cachedReviews = all;
+                const reviews = all.filter(r => r.status === "approved");
 
-                const reviewsHtml = reviews.length ? reviews.map(r => `
-                    <div style="border-bottom:1px solid var(--border-color);padding:.9rem 0;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem;">
-                            <strong style="font-size:.9rem;">${esc(r.reviewerName)}</strong>
-                            <span style="color:#f0b429;font-size:.95rem;letter-spacing:1px;">${"★".repeat(r.rating||0)}${"☆".repeat(5-(r.rating||0))}</span>
+                /* ---- Rating Summary ---- */
+                let summaryHtml = "";
+                if (reviews.length) {
+                    const avg = (reviews.reduce((s,r) => s+(r.rating||0), 0) / reviews.length);
+                    const avgStr = avg.toFixed(1);
+                    const counts = [5,4,3,2,1].map(n => reviews.filter(r=>(r.rating||0)===n).length);
+                    const bars = [5,4,3,2,1].map((n,i) => {
+                        const pct = reviews.length ? Math.round(counts[i]/reviews.length*100) : 0;
+                        return `<div class="rv-bar-row">
+                            <span class="rv-bar-star">${n}</span>
+                            <span style="color:#f0b429;font-size:.7rem;">★</span>
+                            <div class="rv-bar-track"><div class="rv-bar-fill" style="width:${pct}%"></div></div>
+                            <span class="rv-bar-n">${counts[i]}</span>
+                        </div>`;
+                    }).join("");
+                    summaryHtml = `<div class="rv-summary">
+                        <div class="rv-avg-block">
+                            <div class="rv-avg-num">${avgStr}</div>
+                            <div class="rv-avg-stars">${"★".repeat(Math.round(avg))}${"☆".repeat(5-Math.round(avg))}</div>
+                            <div class="rv-avg-count">${reviews.length} review${reviews.length!==1?"s":""}</div>
                         </div>
-                        <p style="font-size:.9rem;color:var(--text-muted);margin:.25rem 0;">${esc(r.text)}</p>
-                        <span style="font-size:.75rem;color:var(--text-muted);">${r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : ""}</span>
-                    </div>`).join("") : '<p style="color:var(--text-muted);font-size:.9rem;padding:.5rem 0;">No reviews yet. Be the first!</p>';
+                        <div class="rv-bars">${bars}</div>
+                    </div>`;
+                }
 
-                const formHtml = currentUser ? `
-                    <form id="review-form" style="margin-top:1.25rem;border-top:1px solid var(--border-color);padding-top:1.1rem;">
-                        <p style="font-weight:600;margin-bottom:.75rem;font-size:.95rem;">Write a Review</p>
-                        <div style="margin-bottom:.75rem;">
-                            <div id="star-picker" style="display:flex;gap:.25rem;font-size:1.6rem;cursor:pointer;margin-bottom:.25rem;">
-                                ${[1,2,3,4,5].map(n=>`<span data-star="${n}" style="color:#ddd;line-height:1;">★</span>`).join("")}
+                /* ---- Review Cards ---- */
+                let cardsHtml = "";
+                if (reviews.length) {
+                    cardsHtml = reviews.map(r => {
+                        const initial = (r.reviewerName||"?")[0].toUpperCase();
+                        const hue = ((r.reviewerName||"").charCodeAt(0)||0) % 30;
+                        return `<div class="rv-card">
+                            <div class="rv-card-head">
+                                <div class="rv-avatar" style="background:hsl(${150+hue},40%,30%);">${initial}</div>
+                                <div class="rv-card-meta">
+                                    <div class="rv-card-name">${esc(r.reviewerName||"Anonymous")}</div>
+                                    <div>${renderStars(r.rating||0,".82rem")} <span class="rv-card-date">${fmtDate(r.createdAt)}</span></div>
+                                </div>
+                            </div>
+                            <div class="rv-card-text">${esc(r.text||"")}</div>
+                        </div>`;
+                    }).join("");
+                } else {
+                    cardsHtml = `<div class="rv-empty">
+                        <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
+                        <p style="font-weight:600;margin-bottom:.25rem;">No reviews yet</p>
+                        <p style="font-size:.83rem;">Be the first to share your experience!</p>
+                    </div>`;
+                }
+
+                /* ---- Write a Review Form ---- */
+                let formHtml = "";
+                if (currentUser) {
+                    formHtml = `<hr class="rv-divider">
+                    <div class="rv-form-wrap">
+                        <h4><ion-icon name="create-outline"></ion-icon> Write a Review</h4>
+                        <form id="review-form">
+                            <label class="rv-form-label">Your Rating *</label>
+                            <div class="rv-star-row">
+                                <div class="rv-star-picker" id="star-picker">
+                                    ${[1,2,3,4,5].map(n=>`<span data-star="${n}">★</span>`).join("")}
+                                </div>
+                                <span class="rv-star-label" id="star-label">Tap to rate</span>
                             </div>
                             <input type="hidden" id="review-rating" value="0">
-                        </div>
-                        <textarea id="review-text" style="width:100%;padding:.7rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);font-size:.9rem;resize:vertical;min-height:80px;box-sizing:border-box;" placeholder="Share your experience…"></textarea>
-                        <button type="submit" class="btn" style="margin-top:.75rem;padding:.6rem 1.5rem;font-size:.9rem;">Submit Review</button>
-                    </form>` :
-                    `<p style="margin-top:.9rem;font-size:.88rem;color:var(--text-muted);"><a href="#" onclick="window.zahrounAuth&&window.zahrounAuth.openModal();return false;" style="color:var(--primary-color);">Log in</a> to write a review.</p>`;
 
-                container.innerHTML = reviewsHtml + formHtml;
+                            <label class="rv-form-label">Your Review *</label>
+                            <textarea id="review-text" maxlength="500" placeholder="What did you think of this fragrance? How long did it last? Would you recommend it?"></textarea>
+                            <div class="rv-char-count"><span id="rv-char-used">0</span>/500</div>
 
-                // Wire star picker
+                            <div class="rv-submit-row">
+                                <button type="submit" class="btn" id="rv-submit-btn" style="padding:.65rem 1.75rem;">Submit Review</button>
+                            </div>
+                        </form>
+                    </div>`;
+                } else {
+                    formHtml = `<hr class="rv-divider">
+                    <div class="rv-login-prompt">
+                        <ion-icon name="person-circle-outline" style="font-size:2rem;display:block;margin:0 auto .5rem;color:var(--primary-color);"></ion-icon>
+                        <a href="#" onclick="window.zahrounAuth&&window.zahrounAuth.openModal();return false;">Log in</a> to write a review
+                    </div>`;
+                }
+
+                container.innerHTML = summaryHtml + cardsHtml + formHtml;
+
+                /* ---- Wire star picker ---- */
                 const picker = document.getElementById("star-picker");
-                if (picker) {
-                    const ratingInput = document.getElementById("review-rating");
-                    const highlightStars = n => picker.querySelectorAll("span").forEach((s,i) => s.style.color = i < n ? "#f0b429" : "#ddd");
-                    picker.querySelectorAll("span").forEach(s => {
-                        s.onclick = () => { ratingInput.value = s.dataset.star; highlightStars(+s.dataset.star); };
-                        s.onmouseover = () => highlightStars(+s.dataset.star);
-                        s.onmouseout = () => highlightStars(+ratingInput.value);
+                const ratingInput = document.getElementById("review-rating");
+                const starLabel = document.getElementById("star-label");
+                if (picker && ratingInput) {
+                    const stars = picker.querySelectorAll("span");
+                    const highlight = n => stars.forEach((s,i) => s.classList.toggle("lit", i < n));
+                    stars.forEach(s => {
+                        s.onmouseover = () => { highlight(+s.dataset.star); if(starLabel) starLabel.textContent = STAR_LABELS[+s.dataset.star]; };
+                        s.onmouseout = () => { highlight(+ratingInput.value); if(starLabel) starLabel.textContent = ratingInput.value>0 ? STAR_LABELS[+ratingInput.value] : "Tap to rate"; };
+                        s.onclick = () => {
+                            ratingInput.value = s.dataset.star;
+                            highlight(+s.dataset.star);
+                            if(starLabel){ starLabel.textContent = STAR_LABELS[+s.dataset.star]; starLabel.style.color = "#f0b429"; }
+                        };
                     });
                 }
 
-                // Wire review form
+                /* ---- Character counter ---- */
+                const textarea = document.getElementById("review-text");
+                const charUsed = document.getElementById("rv-char-used");
+                if (textarea && charUsed) {
+                    textarea.addEventListener("input", () => { charUsed.textContent = textarea.value.length; });
+                }
+
+                /* ---- Submit ---- */
                 const form = document.getElementById("review-form");
                 if (form) {
                     form.addEventListener("submit", async e => {
                         e.preventDefault();
-                        const rating = parseInt(document.getElementById("review-rating").value);
-                        const text = document.getElementById("review-text").value.trim();
-                        if (!rating) { alert("Please select a star rating."); return; }
-                        if (!text) { alert("Please write your review."); return; }
-                        const btn = form.querySelector("button[type=submit]");
-                        btn.disabled = true; btn.textContent = "Submitting…";
+                        const rating = parseInt(ratingInput.value);
+                        const text = textarea.value.trim();
+                        if (!rating) { if(window.showToast) window.showToast("Please select a star rating.", "error"); return; }
+                        if (!text) { if(window.showToast) window.showToast("Please write your review.", "error"); return; }
+                        const btn = document.getElementById("rv-submit-btn");
+                        btn.disabled = true;
+                        btn.innerHTML = `<ion-icon name="hourglass-outline" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>Submitting…`;
                         try {
                             await addDoc(collection(db, "reviews"), {
                                 productId: window.currentProductId,
@@ -815,30 +1172,26 @@
                                 status: "pending",
                                 createdAt: serverTimestamp()
                             });
-                            container.innerHTML = '<p style="color:#1e7e34;padding:1rem 0;font-size:.9rem;">✓ Thank you! Your review will appear after admin approval.</p>';
+                            document.querySelector(".rv-form-wrap").innerHTML = `
+                                <div class="rv-success">
+                                    <ion-icon name="checkmark-circle-outline" style="font-size:1.4rem;flex-shrink:0;"></ion-icon>
+                                    <div><strong>Thank you for your review!</strong><br><span style="font-size:.83rem;">It will appear here after admin approval.</span></div>
+                                </div>`;
                         } catch (err) {
-                            alert("Failed to submit: " + (err.message || err.code));
-                            btn.disabled = false; btn.textContent = "Submit Review";
+                            if(window.showToast) window.showToast("Could not submit: " + (err.message||err.code), "error");
+                            btn.disabled = false;
+                            btn.innerHTML = "Submit Review";
                         }
                     });
                 }
             } catch (err) {
-                container.innerHTML = `<p style="color:#9b2226;font-size:.85rem;">Could not load reviews: ${esc(err.message)}</p>`;
+                container.innerHTML = `<p style="color:#9b2226;font-size:.85rem;padding:.5rem 0;">Could not load reviews: ${esc(err.message)}</p>`;
             }
         };
 
-        /* ---- Wishlist ---- */
-        async function getWishlistIds(uid) {
-            try {
-                const snap = await getDoc(doc(db, "wishlist", uid));
-                return snap.exists() ? (snap.data().productIds || []) : [];
-            } catch { return []; }
-        }
-
-        async function refreshWishlistIcon(productId) {
-            if (!currentUser) return;
-            const ids = await getWishlistIds(currentUser.uid);
-            const inList = ids.includes(productId);
+        /* ---- Wishlist — unified via wishlist.js (users/{uid}.wishlist) ---- */
+        function refreshWishlistIcon(productId) {
+            const inList = window.Wishlist ? window.Wishlist.isIn(productId) : false;
             const icon = document.getElementById("wishlist-icon");
             const label = document.getElementById("wishlist-label");
             if (icon) icon.setAttribute("name", inList ? "heart" : "heart-outline");
@@ -847,25 +1200,49 @@
 
         window.toggleWishlist = async function(productId) {
             if (!currentUser) { window.zahrounAuth && window.zahrounAuth.openModal(); return; }
-            const ref = doc(db, "wishlist", currentUser.uid);
-            const ids = await getWishlistIds(currentUser.uid);
-            const inList = ids.includes(productId);
-            const newIds = inList ? ids.filter(x => x !== productId) : [...ids, productId];
-            await setDoc(ref, { productIds: newIds }, { merge: true });
-            await refreshWishlistIcon(productId);
-            if (window.showToast) window.showToast(inList ? "Removed from wishlist." : "Added to wishlist!");
+            if (!window.Wishlist) return;
+            const wasIn = window.Wishlist.isIn(productId);
+            await window.Wishlist.toggle(productId);
+            refreshWishlistIcon(productId);
+            if (window.showToast) window.showToast(wasIn ? "Removed from wishlist." : "Added to wishlist!");
             const prod = window.products?.find(p => p.id === productId);
             if (prod && window.zahrounGA) {
-                inList ? window.zahrounGA.trackWishlistRemove(prod) : window.zahrounGA.trackWishlistAdd(prod);
+                wasIn ? window.zahrounGA.trackWishlistRemove(prod) : window.zahrounGA.trackWishlistAdd(prod);
             }
         };
 
-        // Refresh wishlist icon after product detail renders
-        document.addEventListener("products-ready", () => {
-            if (currentUser && window.currentProductId) refreshWishlistIcon(window.currentProductId);
+        // Refresh icon once wishlist data syncs from Firestore, and on any change
+        document.addEventListener("wishlist-ready", () => {
+            if (window.currentProductId) refreshWishlistIcon(window.currentProductId);
+        });
+        document.addEventListener("wishlist-changed", () => {
+            if (window.currentProductId) refreshWishlistIcon(window.currentProductId);
+        });
+
+        // After product renders: check reviewsEnabled, update wishlist + review header
+        document.addEventListener("products-ready", async () => {
+            if (window.currentProductId) refreshWishlistIcon(window.currentProductId);
+            if (window.currentProductId) {
+                try {
+                    // Prefer already-loaded settings (avoids duplicate Firestore read)
+                    let sData = (window.zahSettings && Object.keys(window.zahSettings).length) ? window.zahSettings : null;
+                    if (!sData) {
+                        try { const r = sessionStorage.getItem('zhr_store_v1'); if (r) { const { data, ts } = JSON.parse(r); if (Date.now() - ts < 30 * 60 * 1000) sData = data; } } catch {}
+                    }
+                    if (!sData) { const settingsSnap = await getDoc(doc(db, "settings", "store")); sData = settingsSnap.exists() ? settingsSnap.data() : {}; }
+                    const reviewsEnabled = sData.reviewsEnabled !== false; // default true
+                    const accItem = document.getElementById("product-reviews-section")?.closest(".accordion-item");
+                    if (accItem) accItem.style.display = reviewsEnabled ? "" : "none";
+                    if (reviewsEnabled) updateReviewHeader(window.currentProductId);
+                } catch {
+                    // Settings fetch failed silently — show reviews by default
+                    updateReviewHeader(window.currentProductId);
+                }
+            }
         });
     </script>
 </body>
 </html>
+
 
 

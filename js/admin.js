@@ -158,6 +158,7 @@ let anDays = 30;
 let anCustomFrom = null;
 let anCustomTo = null;
 let pfSearch = "", pfCategory = "", pfSort = "default";
+let _catChildNamesOf = {}; // { "Perfume": ["Men","Women","Unisex"] } for admin filter
 const pfFlags = new Set();
 const sectionLoaded = new Set();
 const acknowledgedOrderIds = new Set(JSON.parse(localStorage.getItem("ackOrderIds") || "[]"));
@@ -169,12 +170,15 @@ let galleryDragSrc = null;
 let ofSearch = "";
 let ofStatusFilter = "all";
 let currentDetailOrder = null;
-let _cropResolve = null;
-let _cropReject = null;
-let _cropPanX = 0, _cropPanY = 0, _cropScale = 1;
+
+/* ── Crop / Position Modal state ─────────────────────────────────────────── */
+let _cropResolve = null, _cropReject = null;
+let _cropPanX = 0, _cropPanY = 0;
+let _cropScale = 1, _cropBaseScale = 1;          // base = fill-frame scale at load
 let _cropNatW = 0, _cropNatH = 0, _cropFrameW = 0, _cropFrameH = 0;
 let _cropDragging = false, _cropSX = 0, _cropSY = 0, _cropSPX = 0, _cropSPY = 0;
-let _cropMM = null, _cropMU = null, _cropTM = null, _cropTU = null;
+let _cropMM = null, _cropMU = null, _cropTM = null, _cropTU = null, _cropWH = null;
+let _cropPinchDist = null, _cropPinchScaleStart = null;
 
 function _cropApply() {
   const img = document.getElementById("crop-img");
@@ -182,46 +186,184 @@ function _cropApply() {
   img.style.width  = (_cropNatW * _cropScale) + "px";
   img.style.height = (_cropNatH * _cropScale) + "px";
   img.style.transform = `translate(${_cropPanX}px,${_cropPanY}px)`;
+  _cropUpdatePreviews();
+  _cropUpdateSliderUI();
 }
 
 function _cropClamp(x, y) {
-  const maxX = 0, minX = _cropFrameW - _cropNatW * _cropScale;
-  const maxY = 0, minY = _cropFrameH - _cropNatH * _cropScale;
-  return [Math.min(maxX, Math.max(minX, x)), Math.min(maxY, Math.max(minY, y))];
+  const sw = _cropNatW * _cropScale, sh = _cropNatH * _cropScale;
+  const cx = sw <= _cropFrameW
+    ? (_cropFrameW - sw) / 2
+    : Math.min(0, Math.max(_cropFrameW - sw, x));
+  const cy = sh <= _cropFrameH
+    ? (_cropFrameH - sh) / 2
+    : Math.min(0, Math.max(_cropFrameH - sh, y));
+  return [cx, cy];
+}
+
+function _cropSetZoom(newScale, pivotX, pivotY) {
+  if (pivotX == null) pivotX = _cropFrameW / 2;
+  if (pivotY == null) pivotY = _cropFrameH / 2;
+  const minS = Math.min(_cropBaseScale, Math.min(_cropFrameW / (_cropNatW || 1), _cropFrameH / (_cropNatH || 1))) * 0.85;
+  const maxS = _cropBaseScale * 3.5;
+  newScale = Math.min(maxS, Math.max(minS, newScale));
+  const ratio = newScale / _cropScale;
+  _cropPanX = pivotX - (pivotX - _cropPanX) * ratio;
+  _cropPanY = pivotY - (pivotY - _cropPanY) * ratio;
+  _cropScale = newScale;
+  [_cropPanX, _cropPanY] = _cropClamp(_cropPanX, _cropPanY);
+  _cropApply();
+}
+
+function _cropUpdateSliderUI() {
+  const sl = document.getElementById("crop-zoom-slider");
+  const pct = document.getElementById("crop-zoom-pct");
+  if (!sl || !_cropBaseScale) return;
+  const v = Math.round((_cropScale / _cropBaseScale) * 100);
+  sl.value = Math.min(320, Math.max(25, v));
+  if (pct) pct.textContent = v + "%";
+}
+
+function _cropUpdatePreviews() {
+  const img = document.getElementById("crop-img");
+  if (!img || !_cropNatW || !img.src) return;
+  document.querySelectorAll(".crop-preview-frame").forEach(frame => {
+    const w = frame.offsetWidth, h = frame.offsetHeight;
+    if (!w || !h) return;
+    const sx = w / _cropFrameW, sy = h / _cropFrameH;
+    frame.style.backgroundImage    = `url(${img.src})`;
+    frame.style.backgroundSize     = `${_cropNatW * _cropScale * sx}px ${_cropNatH * _cropScale * sy}px`;
+    frame.style.backgroundPosition = `${_cropPanX * sx}px ${_cropPanY * sy}px`;
+    frame.style.backgroundRepeat   = "no-repeat";
+  });
+}
+
+/* Resize the crop frame to match the destination aspect ratio.
+   Computes pixel dimensions that fit in the current viewport. */
+function _cropResizeFrame(aspectRatio) {
+  const frame = document.getElementById("crop-wrap");
+  if (!frame) return;
+  const maxW = Math.min(window.innerWidth - 32, 678);
+  const maxH = Math.max(180, Math.min(Math.floor(window.innerHeight * 0.92) - 440, 340));
+  let fw = maxW, fh;
+  if (!isNaN(aspectRatio) && aspectRatio > 0) {
+    fh = Math.round(fw / aspectRatio);
+    if (fh > maxH) { fh = maxH; fw = Math.round(fh * aspectRatio); }
+    fh = Math.max(fh, 180);
+    if (fw > maxW) { fw = maxW; fh = Math.round(fw / aspectRatio); }
+    fw = Math.max(fw, 150);
+  } else {
+    fh = Math.max(240, Math.min(maxH, Math.round(maxW * 0.55)));
+  }
+  frame.style.width = fw + "px";
+  frame.style.height = fh + "px";
+  frame.style.flex = "none";
+  frame.style.minHeight = "";
+  frame.style.maxHeight = "";
+}
+
+function _cropSetupPreviews(ar) {
+  const container = document.getElementById("crop-previews");
+  if (!container) return;
+
+  // Determine label pair and CSS aspect-ratio string based on crop ratio
+  let label1, label2, arCSS;
+  if (Math.abs(ar - 3/4) < 0.05) {
+    label1 = "Desktop Product Card"; label2 = "Mobile Product Card"; arCSS = "3/4";
+  } else if (Math.abs(ar - 16/9) < 0.05) {
+    label1 = "Desktop Hero";         label2 = "Mobile Hero";         arCSS = "16/9";
+  } else if (Math.abs(ar - 9/16) < 0.05) {
+    label1 = "Mobile Hero";          label2 = "Desktop Thumbnail";   arCSS = "9/16";
+  } else if (Math.abs(ar - 1) < 0.05) {
+    label1 = "Desktop Square";       label2 = "Mobile Square";       arCSS = "1/1";
+  } else {
+    label1 = "Desktop Preview";      label2 = "Mobile Preview";
+    arCSS  = (!isNaN(ar) && ar > 0) ? ar.toFixed(4) : "4/3";
+  }
+
+  // Detect which icon to use — desktop vs mobile — based on label prefix
+  function _devIcon(lbl) {
+    const t = lbl.toLowerCase();
+    if (t.startsWith("mobile") || t.includes("phone")) return "phone-portrait-outline";
+    return "desktop-outline";
+  }
+
+  container.innerHTML =
+    `<div class="crop-preview-device">
+       <div class="crop-preview-label">
+         <ion-icon name="${_devIcon(label1)}"></ion-icon>${label1}
+       </div>
+       <div class="crop-preview-frame" style="aspect-ratio:${arCSS};"></div>
+     </div>
+     <div class="crop-preview-device">
+       <div class="crop-preview-label">
+         <ion-icon name="${_devIcon(label2)}"></ion-icon>${label2}
+       </div>
+       <div class="crop-preview-frame crop-preview-frame--sm" style="aspect-ratio:${arCSS};"></div>
+     </div>`;
 }
 
 function openCropModal(file, { aspectRatio = NaN } = {}) {
   return new Promise((resolve, reject) => {
     _cropResolve = resolve;
-    _cropReject = reject;
+    _cropReject  = reject;
     const modal = document.getElementById("crop-modal");
     const frame = document.getElementById("crop-wrap");
     const img   = document.getElementById("crop-img");
 
+    // Keep the object URL alive until the modal closes (needed for CSS preview backgrounds)
+    if (img._objUrl) URL.revokeObjectURL(img._objUrl);
     const objUrl = URL.createObjectURL(file);
+    img._objUrl = objUrl;
     img.onload = () => {
-      URL.revokeObjectURL(objUrl);
-      _cropNatW = img.naturalWidth;
-      _cropNatH = img.naturalHeight;
-      _cropFrameW = frame.offsetWidth;
-      _cropFrameH = frame.offsetHeight;
-      _cropScale = Math.max(_cropFrameW / _cropNatW, _cropFrameH / _cropNatH);
-      _cropPanX = (_cropFrameW - _cropNatW * _cropScale) / 2;
-      _cropPanY = (_cropFrameH - _cropNatH * _cropScale) / 2;
+      _cropNatW       = img.naturalWidth;
+      _cropNatH       = img.naturalHeight;
+      _cropFrameW     = frame.offsetWidth;
+      _cropFrameH     = frame.offsetHeight;
+      _cropBaseScale  = Math.max(_cropFrameW / _cropNatW, _cropFrameH / _cropNatH);
+      _cropScale      = _cropBaseScale;
+      _cropPanX       = (_cropFrameW - _cropNatW * _cropScale) / 2;
+      _cropPanY       = (_cropFrameH - _cropNatH * _cropScale) / 2;
+      _cropSetupPreviews(aspectRatio);
       _cropApply();
     };
     img.src = objUrl;
 
+    // Set contextual modal title
+    const titleMap = { [3/4]: "Position Product Image", [16/9]: "Position Hero Banner", [9/16]: "Position Mobile Hero", [1]: "Position Square Image" };
+    const titleEl = document.getElementById("crop-modal-title");
+    if (titleEl) {
+      const key = Object.keys(titleMap).find(k => Math.abs(aspectRatio - Number(k)) < 0.05);
+      titleEl.textContent = (key && titleMap[key]) || "Position Image";
+    }
+
+    // Resize crop frame to match destination aspect ratio
+    _cropResizeFrame(aspectRatio);
+    modal.classList.add("open");
+
+    // Clean up previous listeners
     if (_cropMM) { document.removeEventListener("mousemove", _cropMM); document.removeEventListener("mouseup", _cropMU); }
     if (_cropTM) { document.removeEventListener("touchmove", _cropTM); document.removeEventListener("touchend", _cropTU); }
+    if (_cropWH) { frame.removeEventListener("wheel", _cropWH); }
 
+    // Drag (mouse)
     frame.onmousedown = e => {
       _cropDragging = true; _cropSX = e.clientX; _cropSY = e.clientY;
       _cropSPX = _cropPanX; _cropSPY = _cropPanY; e.preventDefault();
     };
+
+    // Drag + pinch (touch)
     frame.ontouchstart = e => {
-      _cropDragging = true; _cropSX = e.touches[0].clientX; _cropSY = e.touches[0].clientY;
-      _cropSPX = _cropPanX; _cropSPY = _cropPanY; e.preventDefault();
+      if (e.touches.length === 2) {
+        _cropPinchDist       = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+        _cropPinchScaleStart = _cropScale;
+        _cropDragging        = false;
+      } else {
+        _cropDragging = true;
+        _cropSX = e.touches[0].clientX; _cropSY = e.touches[0].clientY;
+        _cropSPX = _cropPanX; _cropSPY = _cropPanY;
+      }
+      e.preventDefault();
     };
 
     _cropMM = e => {
@@ -230,19 +372,37 @@ function openCropModal(file, { aspectRatio = NaN } = {}) {
       _cropApply();
     };
     _cropMU = () => { _cropDragging = false; };
+
     _cropTM = e => {
-      if (!_cropDragging) return;
-      [_cropPanX, _cropPanY] = _cropClamp(_cropSPX + e.touches[0].clientX - _cropSX, _cropSPY + e.touches[0].clientY - _cropSY);
-      _cropApply(); e.preventDefault();
+      if (e.touches.length === 2 && _cropPinchDist !== null) {
+        const d    = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+        const rect = frame.getBoundingClientRect();
+        const px   = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+        const py   = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+        _cropSetZoom(_cropPinchScaleStart * (d / _cropPinchDist), px, py);
+      } else if (e.touches.length === 1 && _cropDragging) {
+        [_cropPanX, _cropPanY] = _cropClamp(_cropSPX + e.touches[0].clientX - _cropSX, _cropSPY + e.touches[0].clientY - _cropSY);
+        _cropApply();
+      }
+      e.preventDefault();
     };
-    _cropTU = () => { _cropDragging = false; };
+    _cropTU = e => {
+      if (e.touches.length < 2) _cropPinchDist = null;
+      if (e.touches.length === 0) _cropDragging = false;
+    };
+
+    // Scroll-to-zoom (desktop)
+    _cropWH = e => {
+      e.preventDefault();
+      const rect = frame.getBoundingClientRect();
+      _cropSetZoom(_cropScale * (e.deltaY > 0 ? 0.92 : 1.09), e.clientX - rect.left, e.clientY - rect.top);
+    };
 
     document.addEventListener("mousemove", _cropMM);
     document.addEventListener("mouseup",   _cropMU);
     document.addEventListener("touchmove", _cropTM, { passive: false });
     document.addEventListener("touchend",  _cropTU);
-
-    modal.classList.add("open");
+    frame.addEventListener("wheel",        _cropWH, { passive: false });
   });
 }
 
@@ -251,7 +411,16 @@ function closeCropModal() {
   if (_cropMM) { document.removeEventListener("mousemove", _cropMM); document.removeEventListener("mouseup", _cropMU); _cropMM = _cropMU = null; }
   if (_cropTM) { document.removeEventListener("touchmove", _cropTM); document.removeEventListener("touchend", _cropTU); _cropTM = _cropTU = null; }
   const frame = document.getElementById("crop-wrap");
-  if (frame) { frame.onmousedown = null; frame.ontouchstart = null; }
+  if (frame) {
+    if (_cropWH) { frame.removeEventListener("wheel", _cropWH); _cropWH = null; }
+    frame.onmousedown = null; frame.ontouchstart = null;
+    // Reset dynamic frame dimensions
+    frame.style.width = ""; frame.style.height = ""; frame.style.flex = "";
+    frame.style.minHeight = ""; frame.style.maxHeight = "";
+  }
+  // Release the object URL now that the modal is closed
+  const img = document.getElementById("crop-img");
+  if (img?._objUrl) { URL.revokeObjectURL(img._objUrl); img._objUrl = null; }
   _cropResolve = null; _cropReject = null;
 }
 
@@ -410,11 +579,13 @@ async function initAdmin(user, profile) {
   document.getElementById("order-detail-modal")?.addEventListener("click", e => { if (e.target.id === "order-detail-modal") e.target.classList.remove("open"); });
   document.getElementById("od-print")?.addEventListener("click", () => { if (currentDetailOrder) printOrderInvoice(currentDetailOrder); });
 
-  // Crop modal buttons
+  // Crop modal — Cancel
   document.getElementById("crop-cancel")?.addEventListener("click", () => {
     closeCropModal();
     if (_cropReject) _cropReject(new Error("cancelled"));
   });
+
+  // Crop modal — Upload (render canvas from current pan/zoom)
   document.getElementById("crop-ok")?.addEventListener("click", () => {
     const img = document.getElementById("crop-img");
     if (!img || !_cropNatW) return;
@@ -426,14 +597,33 @@ async function initAdmin(user, profile) {
     const outH = Math.min(Math.round(cropH * 2), 1800);
     const canvas = document.createElement("canvas");
     canvas.width = outW; canvas.height = outH;
-    canvas.getContext("2d").drawImage(img, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, outW, outH);
+    ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
     canvas.toBlob(blob => { const res = _cropResolve; closeCropModal(); if (res) res(blob); }, "image/jpeg", 0.88);
+  });
+
+  // Crop modal — Zoom controls
+  document.getElementById("crop-zoom-slider")?.addEventListener("input", function () {
+    if (!_cropBaseScale) return;
+    _cropSetZoom(_cropBaseScale * (parseInt(this.value) / 100));
+  });
+  document.getElementById("crop-zoom-in")?.addEventListener("click", () => _cropSetZoom(_cropScale * 1.15));
+  document.getElementById("crop-zoom-out")?.addEventListener("click", () => _cropSetZoom(_cropScale * 0.87));
+  document.getElementById("crop-zoom-reset")?.addEventListener("click", () => {
+    if (!_cropBaseScale) return;
+    _cropScale = _cropBaseScale;
+    _cropPanX  = (_cropFrameW - _cropNatW * _cropScale) / 2;
+    _cropPanY  = (_cropFrameH - _cropNatH * _cropScale) / 2;
+    _cropApply();
   });
 
   // Fetch all data once at startup (needed for dashboard stats)
   await Promise.all([fetchProducts(), fetchOrders(), fetchCustomers()]);
   fetchFlashSale().then(updateFlashNavBadge).catch(() => {});
   fetchBroadcast().then(updateBroadcastBadge).catch(() => {});
+  fetchCategories().then(_populateCatSelects).catch(() => {});
   renderDashboard();
   updateNotifications();
   // Show unread messages badge without blocking
@@ -560,7 +750,7 @@ function switchSection(name) {
     if (name === "products") renderProductTable();
     else if (name === "orders") renderOrderTable();
     else if (name === "customers") renderCustomerTable();
-    else if (name === "categories") fetchCategories().then(renderCategoryTable);
+    else if (name === "categories") fetchCategories().then(() => { renderCategoryTable(); _populateCatSelects(); });
     else if (name === "coupons") fetchCoupons().then(renderCouponTable);
     else if (name === "promotions") initPromotionsPanel();
     else if (name === "flash-sale") fetchFlashSale().then(renderFlashSaleForm);
@@ -582,6 +772,31 @@ function setupSection(name) {
     $("#cat-form").addEventListener("submit", saveCat);
     $("#cat-form [name=name]").addEventListener("input", function () {
       if (!editingCat) $("#cat-form [name=slug]").value = this.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const prev = document.querySelector("#cat-icon-preview ion-icon");
+      const iconVal = $("#cat-form [name=icon]").value.trim();
+      if (prev && !iconVal) prev.setAttribute("name", catIconName({ name: this.value }));
+    });
+    $("#cat-form [name=icon]").addEventListener("input", function () {
+      const prev = document.querySelector("#cat-icon-preview ion-icon");
+      if (prev) prev.setAttribute("name", this.value.trim() || catIconName({ name: $("#cat-form [name=name]").value }));
+    });
+    $("#cat-banner-file").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+      const status = document.getElementById("cat-banner-status");
+      try {
+        status.textContent = "Uploading…";
+        const { url } = await uploadImage(file, { onProgress: p => { status.textContent = `Uploading ${p}%`; } });
+        $("#cat-form [name=banner]").value = url;
+        _setCatBannerPreview(url);
+        status.textContent = "✓ Uploaded";
+      } catch (err) { status.textContent = err.message || "Upload failed."; }
+    });
+    $("#cat-banner-del").addEventListener("click", () => {
+      $("#cat-form [name=banner]").value = "";
+      _setCatBannerPreview("");
+      document.getElementById("cat-banner-status").textContent = "";
     });
   } else if (name === "coupons") {
     $("#add-coupon-btn").addEventListener("click", () => openCouponForm(null));
@@ -842,7 +1057,10 @@ function getFilteredProducts() {
   let result = [...products];
   const q = pfSearch.trim().toLowerCase();
   if (q) result = result.filter(p => (p.name || "").toLowerCase().includes(q) || (p.category || "").toLowerCase().includes(q));
-  if (pfCategory) result = result.filter(p => p.category === pfCategory);
+  if (pfCategory) {
+    const children = _catChildNamesOf[pfCategory] || [];
+    result = result.filter(p => p.category === pfCategory || children.includes(p.category));
+  }
   if (pfFlags.has("featured")) result = result.filter(p => p.featured);
   if (pfFlags.has("bestseller")) result = result.filter(p => p.bestseller);
   if (pfFlags.has("lowstock")) result = result.filter(p => p.stock !== undefined && p.stock !== null && p.stock < 10);
@@ -915,12 +1133,23 @@ function renderProductTable() {
       if (bulkBar) bulkBar.style.display = "none";
     });
   }
+  // Show the category target select only for the "Move to category…" action
+  const bulkActionSel = document.getElementById("bulk-action");
+  const bulkMoveCat = document.getElementById("bulk-move-cat");
+  if (bulkActionSel && bulkMoveCat && !bulkActionSel._moveWired) {
+    bulkActionSel._moveWired = true;
+    bulkActionSel.addEventListener("change", () => {
+      bulkMoveCat.style.display = bulkActionSel.value === "move-category" ? "" : "none";
+    });
+  }
   const applyBtn = document.getElementById("bulk-apply");
   if (applyBtn && !applyBtn._bulkWired) {
     applyBtn._bulkWired = true;
     applyBtn.addEventListener("click", async () => {
       const action = document.getElementById("bulk-action").value;
       if (!action) { adminToast("Choose an action first."); return; }
+      const targetCat = action === "move-category" ? document.getElementById("bulk-move-cat")?.value : "";
+      if (action === "move-category" && !targetCat) { adminToast("Choose a target category first."); return; }
       const ids = [...tbody.querySelectorAll(".bulk-chk:checked")].map(c => Number(c.dataset.pid));
       if (!ids.length) return;
       if (action === "delete" && !await zahrounConfirm(`Delete ${ids.length} product(s)? This cannot be undone.`, { title: "Delete Products", ok: "Delete", danger: true })) return;
@@ -932,6 +1161,7 @@ function renderProductTable() {
           else if (action === "featured-off") await updateDoc(ref, { featured: false });
           else if (action === "hide")    await updateDoc(ref, { hidden: true });
           else if (action === "show")    await updateDoc(ref, { hidden: false });
+          else if (action === "move-category") await updateDoc(ref, { category: targetCat });
           else if (action === "delete")  await deleteDoc(ref);
         }
         if (action === "delete") products = products.filter(p => !ids.includes(p.id));
@@ -942,11 +1172,13 @@ function renderProductTable() {
             if (action === "featured-off") p.featured = false;
             if (action === "hide")   p.hidden = true;
             if (action === "show")   p.hidden = false;
+            if (action === "move-category") p.category = targetCat;
           }
         });
-        adminToast(`${ids.length} product(s) updated.`);
+        adminToast(action === "move-category" ? `${ids.length} product(s) moved to ${targetCat}.` : `${ids.length} product(s) updated.`);
         renderProductTable();
         renderStockAlerts();
+        if (action === "move-category") renderCategoryTable();
       } catch (e) { adminToast("Bulk action failed: " + (e.code || e.message), "error"); }
       finally { applyBtn.disabled = false; applyBtn.textContent = "Apply"; }
     });
@@ -958,6 +1190,90 @@ function isNewOrder(o) {
     const ms = o.createdAt?.toMillis ? o.createdAt.toMillis() : o.createdAt?.seconds ? o.createdAt.seconds * 1000 : null;
     return ms && (Date.now() - ms) < 86400000;
   } catch { return false; }
+}
+
+async function handleReferralRewardForOrder(order, settings) {
+  if (!order.referrerUid) return;
+  const rc = settings.referral || {};
+  if (!rc.enabled) return;
+
+  try {
+    // 1. Credit referrer loyalty points
+    if (rc.referrerAmt > 0) {
+      const points = rc.referrerAmt;
+      const ref = doc(db, "loyaltyPoints", order.referrerUid);
+      const snap = await getDoc(ref);
+      const now = new Date().toISOString();
+      if (snap.exists()) {
+        const prev = snap.data();
+        await updateDoc(ref, {
+          points: (prev.points || 0) + points,
+          lifetimeEarned: (prev.lifetimeEarned || 0) + points,
+          lastEarnedDate: now,
+          lastUpdated: now
+        });
+      } else {
+        await setDoc(ref, {
+          uid: order.referrerUid, points, lifetimeEarned: points,
+          lastEarnedDate: now, lastUpdated: now,
+          status: "approved"
+        });
+      }
+    }
+
+    // 2. Increment referrer use count
+    const refDocRef = doc(db, "referrals", order.referrerUid);
+    const refSnap = await getDoc(refDocRef);
+    if (refSnap.exists()) {
+      await updateDoc(refDocRef, { uses: (refSnap.data().uses || 0) + 1 });
+    } else {
+      await setDoc(refDocRef, { uid: order.referrerUid, uses: 1, code: order.referralCode || "" });
+    }
+
+    // Mark referral reward as awarded on the order
+    await updateDoc(doc(db, "orders", order.id), { referralRewardAwarded: true });
+    order.referralRewardAwarded = true;
+    adminToast("✓ Referral points and usage count updated for referrer");
+  } catch (e) {
+    console.warn("Failed to award referral reward:", e);
+  }
+}
+
+async function reverseReferralRewardForOrder(order, settings) {
+  if (!order.referrerUid || !order.referralRewardAwarded) return;
+  const rc = settings.referral || {};
+  if (!rc.enabled) return;
+
+  try {
+    // 1. Deduct referrer loyalty points
+    if (rc.referrerAmt > 0) {
+      const points = rc.referrerAmt;
+      const ref = doc(db, "loyaltyPoints", order.referrerUid);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const prev = snap.data();
+        await updateDoc(ref, {
+          points: Math.max(0, (prev.points || 0) - points),
+          lifetimeEarned: Math.max(0, (prev.lifetimeEarned || 0) - points),
+          lastUpdated: new Date().toISOString()
+        });
+      }
+    }
+
+    // 2. Decrement referrer use count
+    const refDocRef = doc(db, "referrals", order.referrerUid);
+    const refSnap = await getDoc(refDocRef);
+    if (refSnap.exists()) {
+      await updateDoc(refDocRef, { uses: Math.max(0, (refSnap.data().uses || 0) - 1) });
+    }
+
+    // Mark referral reward as not awarded on the order
+    await updateDoc(doc(db, "orders", order.id), { referralRewardAwarded: false });
+    order.referralRewardAwarded = false;
+    adminToast("✓ Referral reward reversed for referrer");
+  } catch (e) {
+    console.warn("Failed to reverse referral reward:", e);
+  }
 }
 
 async function awardLoyaltyPointsForOrder(order) {
@@ -1063,11 +1379,27 @@ async function changeOrderStatus(orderId, newStatus) {
     if (order) { order.status = newStatus; order.statusHistory = [...(order.statusHistory || []), histEntry]; }
     if (newStatus === "confirmed" && prevStatus !== "confirmed") sendConfirmationEmail(order);
 
-    // Loyalty: award on delivery, reverse on cancellation
-    if (newStatus === "delivered" && prevStatus !== "delivered" && order?.uid && !order?.loyaltyPointsAwarded) {
-      awardLoyaltyPointsForOrder(order).catch(e => console.warn("LP award:", e));
-    } else if (newStatus === "cancelled" && prevStatus !== "cancelled" && (order?.loyaltyPointsAwarded || order?.loyaltyRedeemedPoints > 0)) {
-      reverseLoyaltyPointsForOrder(order).catch(e => console.warn("LP reverse:", e));
+    // Loyalty and Referral: award on delivery, reverse on cancellation
+    if (newStatus === "delivered" && prevStatus !== "delivered") {
+      if (order?.uid && !order?.loyaltyPointsAwarded) {
+        awardLoyaltyPointsForOrder(order).catch(e => console.warn("LP award:", e));
+      }
+      if (order?.referrerUid && !order?.referralRewardAwarded) {
+        getDoc(doc(db, "settings", "promotions")).then(settingsSnap => {
+          const cfg = settingsSnap.exists() ? settingsSnap.data() : {};
+          handleReferralRewardForOrder(order, cfg).catch(e => console.warn("Referral award:", e));
+        }).catch(e => console.warn("Failed to fetch settings for referral award:", e));
+      }
+    } else if (newStatus === "cancelled" && prevStatus !== "cancelled") {
+      if (order?.loyaltyPointsAwarded || order?.loyaltyRedeemedPoints > 0) {
+        reverseLoyaltyPointsForOrder(order).catch(e => console.warn("LP reverse:", e));
+      }
+      if (order?.referrerUid && order?.referralRewardAwarded) {
+        getDoc(doc(db, "settings", "promotions")).then(settingsSnap => {
+          const cfg = settingsSnap.exists() ? settingsSnap.data() : {};
+          reverseReferralRewardForOrder(order, cfg).catch(e => console.warn("Referral reverse:", e));
+        }).catch(e => console.warn("Failed to fetch settings for referral reversal:", e));
+      }
     }
 
     updateOrdersBadge(); renderOrderTable(); renderDashboard(); updateNotifications();
@@ -1378,24 +1710,231 @@ function renderCustomerTable() {
 }
 
 /* ---- Categories -------------------------------------------------------- */
+// Effective parent — guards against corrupt data (a category can never be its own parent)
+function _catParentOf(c) { return (c.parentId && c.parentId !== c.id) ? c.parentId : null; }
+
+// Icon for a category: explicit `icon` field wins, otherwise a sensible default by name
+function catIconName(cat) {
+  if (cat.icon) return cat.icon;
+  const n = (cat.name || "").toLowerCase();
+  if (n.includes("women")) return "woman-outline";
+  if (n.includes("men")) return "man-outline";
+  if (n.includes("unisex")) return "people-outline";
+  if (n.includes("premium")) return "diamond-outline";
+  if (n.includes("musk")) return "sparkles-outline";
+  if (n.includes("attar") || n.includes("oud")) return "leaf-outline";
+  if (n.includes("perfume") || n.includes("fragrance")) return "flower-outline";
+  if (n.includes("gift") || n.includes("combo")) return "gift-outline";
+  return "pricetag-outline";
+}
+
 function renderCategoryTable() {
   const tbody = $("#cat-rows");
-  if (!categories.length) { tbody.innerHTML = `<tr><td colspan="5" class="muted-note" style="padding:2rem;text-align:center;">No categories yet.</td></tr>`; return; }
-  tbody.innerHTML = categories.map(c => {
-    const count = products.filter(p => (p.category || "").toLowerCase() === c.name.toLowerCase()).length;
-    return `<tr>
-      <td><strong>${escapeHtml(c.name)}</strong></td>
+  if (!categories.length) { tbody.innerHTML = `<tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">No categories yet.</td></tr>`; return; }
+  // Build parent name lookup
+  const idToName = {};
+  categories.forEach(c => { idToName[c.id] = c.name; });
+  // Rebuild _catChildNamesOf for admin product filter
+  _catChildNamesOf = {};
+  categories.forEach(c => {
+    const pid = _catParentOf(c);
+    if (pid) {
+      const pName = idToName[pid];
+      if (pName) {
+        _catChildNamesOf[pName] = _catChildNamesOf[pName] || [];
+        _catChildNamesOf[pName].push(c.name);
+      }
+    }
+  });
+  // Grouped display: each root (by order) followed by its children (by order)
+  const byOrder = (a, b) => (a.order || 0) - (b.order || 0);
+  const roots = categories.filter(c => !_catParentOf(c)).sort(byOrder);
+  const grouped = [];
+  roots.forEach(r => {
+    grouped.push(r);
+    grouped.push(...categories.filter(c => _catParentOf(c) === r.id).sort(byOrder));
+  });
+  // Orphans (parent points to a missing category) — keep visible so they can be fixed
+  categories.filter(c => !grouped.includes(c)).forEach(c => grouped.push(c));
+
+  tbody.innerHTML = grouped.map(c => {
+    const isActive = c.active !== false;
+    const pid = _catParentOf(c);
+    const isChild = !!pid;
+    const selfParent = c.parentId && c.parentId === c.id;
+    const parentName = selfParent
+      ? `<span class="badge" style="background:#9b2226;color:#fff;font-size:.68rem;" title="Saved as its own parent — open Edit and fix">invalid — self</span>`
+      : pid ? (idToName[pid] || `<span class="muted-note">${escapeHtml(pid)} (missing)</span>`) : `<span class="muted-note">—</span>`;
+    const childNames = _catChildNamesOf[c.name] || [];
+    const count = products.filter(p => (p.category || "").toLowerCase() === c.name.toLowerCase() || childNames.includes(p.category)).length;
+    return `<tr data-cat-id="${escapeHtml(c.id)}" draggable="true" style="${isActive ? "" : "opacity:.55;"}">
+      <td style="${isChild ? "padding-left:1.6rem;" : ""}">
+        <span style="cursor:grab;color:#B8AFA3;margin-right:.35rem;" title="Drag to reorder">⠿</span>
+        <ion-icon name="${escapeHtml(catIconName(c))}" style="vertical-align:-2px;margin-right:.3rem;color:var(--primary-color);"></ion-icon>
+        ${isChild ? "<span style='color:#B8AFA3;'>└</span> " : ""}<strong>${escapeHtml(c.name)}</strong>${isChild ? "" : " <span style='font-size:.68rem;color:#B8AFA3;font-weight:400;'>root</span>"}
+      </td>
+      <td>${parentName}</td>
       <td><code style="font-size:.82rem;">${escapeHtml(c.id)}</code></td>
       <td>${c.order || 0}</td>
       <td>${count}</td>
+      <td><span class="badge ${isActive ? "green" : ""}" style="font-size:.72rem;">${isActive ? "Active" : "Hidden"}</span></td>
       <td style="white-space:nowrap;">
         <button class="icon-btn" data-cat-edit="${escapeHtml(c.id)}" title="Edit"><ion-icon name="create-outline"></ion-icon></button>
+        <button class="icon-btn ${isActive ? "danger" : ""}" data-cat-toggle="${escapeHtml(c.id)}" title="${isActive ? "Hide from shop" : "Show in shop"}"><ion-icon name="${isActive ? "eye-off-outline" : "eye-outline"}"></ion-icon></button>
         <button class="icon-btn danger" data-cat-del="${escapeHtml(c.id)}" title="Delete"><ion-icon name="trash-outline"></ion-icon></button>
       </td>
     </tr>`;
   }).join("");
   tbody.querySelectorAll("[data-cat-edit]").forEach(b => b.addEventListener("click", () => openCatForm(categories.find(c => c.id === b.dataset.catEdit))));
+  tbody.querySelectorAll("[data-cat-toggle]").forEach(b => b.addEventListener("click", () => toggleCatActive(b.dataset.catToggle)));
   tbody.querySelectorAll("[data-cat-del]").forEach(b => b.addEventListener("click", () => deleteCat(b.dataset.catDel)));
+  // Drag & drop reordering (within the same level)
+  let dragId = null;
+  tbody.querySelectorAll("tr[data-cat-id]").forEach(tr => {
+    tr.addEventListener("dragstart", e => { dragId = tr.dataset.catId; tr.style.opacity = ".4"; e.dataTransfer.effectAllowed = "move"; });
+    tr.addEventListener("dragend", () => { tr.style.opacity = ""; });
+    tr.addEventListener("dragover", e => e.preventDefault());
+    tr.addEventListener("drop", e => { e.preventDefault(); reorderCat(dragId, tr.dataset.catId); });
+  });
+}
+
+async function reorderCat(srcId, targetId) {
+  if (!srcId || !targetId || srcId === targetId) return;
+  const src = categories.find(c => c.id === srcId);
+  const tgt = categories.find(c => c.id === targetId);
+  if (!src || !tgt) return;
+  if (_catParentOf(src) !== _catParentOf(tgt)) {
+    adminToast("Drag within the same level — roots with roots, children with their siblings.");
+    return;
+  }
+  const siblings = categories.filter(c => _catParentOf(c) === _catParentOf(src)).sort((a, b) => (a.order || 0) - (b.order || 0));
+  const from = siblings.findIndex(c => c.id === srcId);
+  const to = siblings.findIndex(c => c.id === targetId);
+  siblings.splice(to, 0, siblings.splice(from, 1)[0]);
+  try {
+    await Promise.all(siblings.map((c, i) => setDoc(doc(db, "categories", c.id), { order: i, updatedAt: serverTimestamp() }, { merge: true })));
+    await fetchCategories();
+    renderCategoryTable();
+    _populateCatSelects();
+    adminToast("Order updated.");
+  } catch (err) { alert("Reorder failed: " + (err.code || err.message)); }
+}
+
+async function deleteCat(id) {
+  const cat = categories.find(c => c.id === id);
+  if (!cat) return;
+  const children = categories.filter(c => _catParentOf(c) === id);
+  if (children.length) {
+    alert(`Cannot delete "${cat.name}" — it has ${children.length} child categor${children.length === 1 ? "y" : "ies"}. Delete or move the children first.`);
+    return;
+  }
+  const inUse = products.filter(p => (p.category || "").toLowerCase() === cat.name.toLowerCase()).length;
+  if (inUse) {
+    alert(`Cannot delete "${cat.name}" — ${inUse} product${inUse === 1 ? "" : "s"} still use it. Reassign those products first (Products → Edit → Category).`);
+    return;
+  }
+  if (!await zahrounConfirm(`Permanently delete the category "${cat.name}"? This cannot be undone.`, { title: "Delete Category", ok: "Delete", danger: true })) return;
+  try {
+    await deleteDoc(doc(db, "categories", id));
+    await fetchCategories();
+    renderCategoryTable();
+    _populateCatSelects();
+    adminToast("Category deleted.");
+  } catch (err) { alert("Delete failed: " + (err.code || err.message)); }
+}
+
+function _populateCatSelects() {
+  const activeCats = categories.filter(c => c.active !== false);
+
+  if (!activeCats.length) {
+    const empty = `<option value="" disabled>No active categories — add one in Categories</option>`;
+    const pfCat = document.getElementById("pf-category");
+    if (pfCat) pfCat.innerHTML = `<option value="">All Categories</option>` + empty;
+    const pf = document.getElementById("product-form");
+    const catSel = pf && pf.querySelector('[name="category"]');
+    if (catSel) catSel.innerHTML = empty;
+    return;
+  }
+
+  // Build hierarchy for dropdowns (self-parent corruption treated as root)
+  const idToName = {};
+  activeCats.forEach(c => { idToName[c.id] = c.name; });
+  const roots = activeCats.filter(c => !_catParentOf(c));
+  const childrenOf = {};
+  activeCats.forEach(c => {
+    const pid = _catParentOf(c);
+    if (pid) {
+      childrenOf[pid] = childrenOf[pid] || [];
+      childrenOf[pid].push(c);
+    }
+  });
+
+  // Product form options (only leaf/selectable categories)
+  let formOpts = "";
+  roots.forEach(root => {
+    const kids = childrenOf[root.id] || [];
+    if (kids.length) {
+      formOpts += `<optgroup label="${escapeHtml(root.name)}">`;
+      kids.forEach(ch => { formOpts += `<option value="${escapeHtml(ch.name)}">${escapeHtml(ch.name)}</option>`; });
+      formOpts += `</optgroup>`;
+    } else {
+      formOpts += `<option value="${escapeHtml(root.name)}">${escapeHtml(root.name)}</option>`;
+    }
+  });
+
+  // Filter dropdown options (include parent "All in X" options for filtering)
+  let filterOpts = "";
+  roots.forEach(root => {
+    const kids = childrenOf[root.id] || [];
+    if (kids.length) {
+      filterOpts += `<optgroup label="${escapeHtml(root.name)}">`;
+      filterOpts += `<option value="${escapeHtml(root.name)}">All in ${escapeHtml(root.name)}</option>`;
+      kids.forEach(ch => { filterOpts += `<option value="${escapeHtml(ch.name)}">${escapeHtml(ch.name)}</option>`; });
+      filterOpts += `</optgroup>`;
+    } else {
+      filterOpts += `<option value="${escapeHtml(root.name)}">${escapeHtml(root.name)}</option>`;
+    }
+  });
+
+  const pfCat = document.getElementById("pf-category");
+  if (pfCat) {
+    const cur = pfCat.value;
+    pfCat.innerHTML = `<option value="">All Categories</option>` + filterOpts;
+    if (cur) pfCat.value = cur;
+  }
+
+  const pf = document.getElementById("product-form");
+  const catSel = pf && pf.querySelector('[name="category"]');
+  if (catSel) {
+    const cur = catSel.value;
+    catSel.innerHTML = formOpts;
+    if (cur) catSel.value = cur;
+  }
+
+  // Bulk "Move to category…" target select (same selectable leaf options as the product form)
+  const bulkCat = document.getElementById("bulk-move-cat");
+  if (bulkCat) {
+    const cur = bulkCat.value;
+    bulkCat.innerHTML = `<option value="">Target category…</option>` + formOpts;
+    if (cur) bulkCat.value = cur;
+  }
+}
+
+function _populateCatParentSelect(excludeId) {
+  const sel = document.getElementById("cat-parent-select");
+  if (!sel) return;
+  // Only roots can be parents (two-level hierarchy), and never the category itself
+  const roots = categories.filter(c => c.active !== false && !_catParentOf(c) && c.id !== excludeId);
+  sel.innerHTML = `<option value="">Create as Root Category</option>` +
+    roots.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join("");
+}
+
+function _setCatBannerPreview(url) {
+  const img = document.getElementById("cat-banner-preview");
+  const del = document.getElementById("cat-banner-del");
+  if (!img) return;
+  if (url) { img.src = url; img.style.display = ""; if (del) del.style.display = ""; }
+  else { img.removeAttribute("src"); img.style.display = "none"; if (del) del.style.display = "none"; }
 }
 
 function openCatForm(cat) {
@@ -1403,15 +1942,27 @@ function openCatForm(cat) {
   const f = $("#cat-form");
   f.reset();
   $("#cat-form-title").textContent = cat ? "Edit Category" : "Add Category";
+  _populateCatParentSelect(cat?.id);
   const slugInput = f.querySelector("[name=slug]");
+  const statusEl = document.getElementById("cat-banner-status");
+  if (statusEl) statusEl.textContent = "";
   if (cat) {
     f.querySelector("[name=name]").value = cat.name || "";
     slugInput.value = cat.id;
     slugInput.readOnly = true;
     f.querySelector("[name=order]").value = cat.order || 0;
+    const parentSel = f.querySelector("[name=parentId]");
+    if (parentSel) parentSel.value = _catParentOf(cat) || "";
+    f.querySelector("[name=icon]").value = cat.icon || "";
+    f.querySelector("[name=banner]").value = cat.banner || "";
+    _setCatBannerPreview(cat.banner || "");
   } else {
     slugInput.readOnly = false;
+    f.querySelector("[name=banner]").value = "";
+    _setCatBannerPreview("");
   }
+  const iconPrev = document.querySelector("#cat-icon-preview ion-icon");
+  if (iconPrev) iconPrev.setAttribute("name", catIconName(cat || { name: "" }));
   $("#cat-modal").classList.add("open");
 }
 function closeCatForm() { $("#cat-modal").classList.remove("open"); }
@@ -1421,24 +1972,55 @@ async function saveCat(e) {
   const f = e.target;
   const btn = f.querySelector("button[type=submit]");
   btn.disabled = true; btn.textContent = "Saving…";
+  const resetBtn = () => { btn.disabled = false; btn.textContent = "Save Category"; };
   const slug = f.querySelector("[name=slug]").value.trim().toLowerCase().replace(/\s+/g, "-");
-  if (!slug) { alert("Slug is required"); btn.disabled = false; btn.textContent = "Save Category"; return; }
+  if (!slug) { alert("Slug is required"); resetBtn(); return; }
+  const parentId = (f.querySelector("[name=parentId]")?.value || "").trim();
+  // Data integrity guards
+  if (parentId === slug) { alert("A category cannot be its own parent."); resetBtn(); return; }
+  if (parentId) {
+    const parent = categories.find(c => c.id === parentId);
+    if (!parent) { alert("Selected parent no longer exists. Refresh and try again."); resetBtn(); return; }
+    if (_catParentOf(parent)) { alert(`"${parent.name}" is a child category — only root categories can be parents.`); resetBtn(); return; }
+    if (editingCat && categories.some(c => _catParentOf(c) === editingCat.id)) {
+      alert(`"${editingCat.name}" has child categories, so it must stay a root category. Move its children first.`);
+      resetBtn(); return;
+    }
+  }
   try {
-    const data = { name: f.querySelector("[name=name]").value.trim(), order: parseInt(f.querySelector("[name=order]").value) || 0, updatedAt: serverTimestamp() };
-    if (!editingCat) data.createdAt = serverTimestamp();
+    const data = {
+      name: f.querySelector("[name=name]").value.trim(),
+      order: parseInt(f.querySelector("[name=order]").value) || 0,
+      parentId: parentId || null,
+      icon: f.querySelector("[name=icon]").value.trim() || null,
+      banner: f.querySelector("[name=banner]").value.trim() || null,
+      updatedAt: serverTimestamp()
+    };
+    if (!editingCat) { data.createdAt = serverTimestamp(); data.active = true; }
     await setDoc(doc(db, "categories", slug), data, { merge: true });
     closeCatForm();
     await fetchCategories();
     renderCategoryTable();
+    _populateCatSelects();
     adminToast("Category saved.");
   } catch (err) { alert("Save failed: " + (err.code || err.message)); }
-  finally { btn.disabled = false; btn.textContent = "Save Category"; }
+  finally { resetBtn(); }
 }
 
-async function deleteCat(id) {
-  if (!await zahrounConfirm("Delete this category? This action cannot be undone.", { title: "Delete Category", ok: "Delete", danger: true })) return;
-  try { await deleteDoc(doc(db, "categories", id)); await fetchCategories(); renderCategoryTable(); }
-  catch (err) { alert("Delete failed: " + (err.code || err.message)); }
+async function toggleCatActive(id) {
+  const cat = categories.find(c => c.id === id);
+  if (!cat) return;
+  const isActive = cat.active !== false;
+  const action = isActive ? "hide" : "show";
+  const label = isActive ? "Hide this category from the shop?" : "Show this category in the shop again?";
+  if (!await zahrounConfirm(label, { title: isActive ? "Hide Category" : "Show Category", ok: isActive ? "Hide" : "Show", danger: isActive })) return;
+  try {
+    await setDoc(doc(db, "categories", id), { active: !isActive, updatedAt: serverTimestamp() }, { merge: true });
+    await fetchCategories();
+    renderCategoryTable();
+    _populateCatSelects();
+    adminToast(`Category ${action === "hide" ? "hidden" : "shown"}.`);
+  } catch (err) { alert("Failed: " + (err.code || err.message)); }
 }
 
 /* ---- Coupons ----------------------------------------------------------- */
@@ -2874,9 +3456,10 @@ function openForm(product) {
   renderSizeImageGrid();
   document.getElementById("img-status").textContent = "";
   if (product) {
+    _populateCatSelects();
     f.id.value = product.id;
     f.name.value = product.name || "";
-    f.category.value = product.category || "Men";
+    f.category.value = product.category || categories.find(c => c.active !== false)?.name || "";
     f.description.value = product.description || "";
     f.ingredients.value = product.ingredients || "";
     const pr = product.prices || {};
@@ -2910,6 +3493,7 @@ function openForm(product) {
     document.querySelector('#product-form [name="comboItems"]').value = (product.comboItems || []).join("\n");
     document.querySelector('#product-form [name="basePrice"]').value  = product.basePrice || "";
   } else {
+    _populateCatSelects();
     f.id.value = "";
     // Reset size toggles to all active
     SIZE_KEYS.forEach(sz => {
@@ -2930,26 +3514,44 @@ function openForm(product) {
 
 function closeForm() { galleryImages = []; $("#product-modal").classList.remove("open"); }
 
+function _showUploadProgress(statusEl, pct, label) {
+  if (!statusEl) return;
+  statusEl.innerHTML = `<div class="upload-progress-wrap">
+    <span style="color:var(--text-muted)">${label || "Uploading"} ${pct}%</span>
+    <div class="upload-progress-bg"><div class="upload-progress-bar" style="width:${pct}%"></div></div>
+  </div>`;
+}
+
+function _showUploadDone(statusEl, msg, origSizeKB) {
+  if (!statusEl) return;
+  const sizeNote = origSizeKB ? ` · ${origSizeKB < 1024 ? origSizeKB + " KB" : (origSizeKB / 1024).toFixed(1) + " MB"} → WebP` : "";
+  statusEl.innerHTML = `<span style="color:#1e7e34;font-weight:500;">${msg}</span>
+    <span class="upload-badge ok" style="margin-left:.35rem">✓ Saved</span>
+    <span class="upload-badge webp" style="margin-left:.2rem">WebP on delivery</span>
+    <span class="upload-badge comp" style="margin-left:.2rem">JPEG 88%${sizeNote}</span>`;
+}
+
 async function handleMultiImageUpload(e) {
   const files = Array.from(e.target.files);
   if (!files.length) return;
   const statusEl = document.getElementById("img-status");
   let uploaded = 0;
   for (const file of files) {
+    const origKB = Math.round(file.size / 1024);
     let blob;
     try {
       blob = await openCropModal(file, { aspectRatio: 3 / 4 });
     } catch { e.target.value = ""; continue; }
-    statusEl.textContent = `Uploading…`;
+    _showUploadProgress(statusEl, 0, "Uploading");
     try {
-      const { url } = await uploadImage(blob, { onProgress: p => { statusEl.textContent = `Uploading ${p}%…`; } });
+      const { url } = await uploadImage(blob, { onProgress: p => _showUploadProgress(statusEl, p, "Uploading") });
       galleryImages.unshift(url);
       uploaded++;
       renderGalleryThumbs();
-    } catch (err) { statusEl.textContent = "⚠ " + err.message; break; }
+    } catch (err) { statusEl.innerHTML = `<span style="color:#9b2226;">⚠ ${err.message}</span>`; break; }
   }
   document.getElementById("product-form").image.value = galleryImages[0] || "";
-  if (uploaded > 0) statusEl.textContent = `✓ ${uploaded} image${uploaded > 1 ? "s" : ""} added.`;
+  if (uploaded > 0) _showUploadDone(statusEl, `${uploaded} image${uploaded > 1 ? "s" : ""} added`);
   e.target.value = "";
 }
 
@@ -3030,13 +3632,13 @@ async function handleSizeImageUpload(e) {
   let blob;
   try { blob = await openCropModal(file); } catch { e.target.value = ""; return; }
   const statusEl = document.getElementById("img-status");
-  statusEl.textContent = `Uploading ${size}…`;
+  _showUploadProgress(statusEl, 0, size);
   try {
-    const { url } = await uploadImage(blob, { onProgress: p => { statusEl.textContent = `Uploading ${size} ${p}%…`; } });
+    const { url } = await uploadImage(blob, { onProgress: p => _showUploadProgress(statusEl, p, size) });
     sizeImagesMap[size] = url;
     renderSizeImageGrid();
-    statusEl.textContent = `✓ ${size} image updated.`;
-  } catch (err) { statusEl.textContent = "⚠ " + err.message; }
+    _showUploadDone(statusEl, `${size} image updated`);
+  } catch (err) { statusEl.innerHTML = `<span style="color:#9b2226;">⚠ ${err.message}</span>`; }
   e.target.value = "";
 }
 
@@ -3729,7 +4331,7 @@ function exportCustomersCSV() {
 let pageSettings = { homepage: {}, about: {}, contact: {} };
 let galleryPageImages = [];
 let galleryPageDragSrc = null;
-const MAX_UPLOAD_BYTES = 3 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 async function fetchPageSettings() {
   try {
@@ -3814,27 +4416,24 @@ function bindPageUpload(fileId, previewId, statusId, delId, { aspectRatio = NaN 
     const file = fileInput.files[0];
     if (!file) return;
     if (file.size > MAX_UPLOAD_BYTES) {
-      statusEl.textContent = "File exceeds 3MB limit.";
-      statusEl.style.color = "#9b2226";
+      if (statusEl) { statusEl.innerHTML = `<span style="color:#9b2226;">File exceeds 10MB limit.</span>`; }
       fileInput.value = "";
       return;
     }
     let blob;
     try { blob = await openCropModal(file, { aspectRatio }); }
     catch { fileInput.value = ""; return; }
-    statusEl.style.color = "";
-    statusEl.textContent = "Uploading…";
+    if (statusEl) _showUploadProgress(statusEl, 0, "Uploading");
     try {
-      const { url } = await uploadImage(blob, { onProgress: p => { statusEl.textContent = `Uploading ${p}%…`; } });
+      const { url } = await uploadImage(blob, { onProgress: p => { if (statusEl) _showUploadProgress(statusEl, p, "Uploading"); } });
       preview.src = optimizedUrl(url, 600);
       preview.classList.add("has-img");
       if (delBtn) delBtn.style.display = "";
-      statusEl.textContent = "Uploaded.";
+      if (statusEl) _showUploadDone(statusEl, "Uploaded");
       fileInput._uploadedUrl = url;
       fileInput._deleted = false;
     } catch (err) {
-      statusEl.textContent = err.message;
-      statusEl.style.color = "#9b2226";
+      if (statusEl) statusEl.innerHTML = `<span style="color:#9b2226;">⚠ ${err.message}</span>`;
     }
     fileInput.value = "";
   });
@@ -3878,23 +4477,20 @@ async function handleGalleryPageUpload(e) {
   const statusEl = document.getElementById("status-gallery-multi");
   for (const file of files) {
     if (file.size > MAX_UPLOAD_BYTES) {
-      statusEl.textContent = `"${file.name}" exceeds 3MB limit. Skipped.`;
-      statusEl.style.color = "#9b2226";
+      if (statusEl) statusEl.innerHTML = `<span style="color:#9b2226;">"${file.name}" exceeds 10MB. Skipped.</span>`;
       continue;
     }
     let blob;
     try { blob = await openCropModal(file, { aspectRatio: 1 }); }
     catch { continue; }
-    statusEl.style.color = "";
-    statusEl.textContent = "Uploading…";
+    if (statusEl) _showUploadProgress(statusEl, 0, "Uploading");
     try {
-      const { url } = await uploadImage(blob, { onProgress: p => { statusEl.textContent = `Uploading ${p}%…`; } });
+      const { url } = await uploadImage(blob, { onProgress: p => { if (statusEl) _showUploadProgress(statusEl, p, "Uploading"); } });
       galleryPageImages.push(url);
       renderGalleryPageThumbs();
-      statusEl.textContent = `${galleryPageImages.length} image${galleryPageImages.length > 1 ? "s" : ""} in gallery.`;
+      if (statusEl) _showUploadDone(statusEl, `${galleryPageImages.length} image${galleryPageImages.length > 1 ? "s" : ""} in gallery`);
     } catch (err) {
-      statusEl.textContent = err.message;
-      statusEl.style.color = "#9b2226";
+      if (statusEl) statusEl.innerHTML = `<span style="color:#9b2226;">⚠ ${err.message}</span>`;
     }
   }
   e.target.value = "";
@@ -4339,6 +4935,14 @@ async function initPromotionsPanel() {
       </div>`
     ).join('');
   }
+
+  $('p-spin-add')?.addEventListener('click',()=>{
+    const wrap=$('p-spin-prizes'); if(!wrap) return;
+    const div=document.createElement('div'); div.className='promo-row'; div.dataset.prize=wrap.children.length;
+    div.style.marginTop='.4rem'; div.style.alignItems='center';
+    div.innerHTML=`<input class="promo-input" data-field="label" type="text" placeholder="Label" style="width:100px;"><input class="promo-input" data-field="code" type="text" placeholder="Code" style="width:90px;text-transform:uppercase;"><input class="promo-input" data-field="prob" type="number" min="1" max="100" value="10" placeholder="%" style="width:60px;" title="Probability (higher = appears more often)"><span style="color:var(--text-muted);font-size:.78rem;">%</span><input class="promo-input" data-field="maxWinners" type="number" min="0" value="0" placeholder="0=সীমাহীন" style="width:80px;" title="কতজন customer এই prize জিততে পারবে — 0 লিখলে unlimited"><span style="color:var(--text-muted);font-size:.75rem;"></span><button onclick="this.closest('[data-prize]').remove()" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:1rem;padding:0 .3rem;">×</button>`;
+    wrap.appendChild(div);
+  });
 
   function renderSeasEvents(events) {
     const wrap=$('p-seas-events'); if(!wrap) return;

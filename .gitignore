@@ -20,3 +20,15 @@ Thumbs.db
 *.log
 .vscode/
 .idea/
+.devtest/serviceAccount.json
+
+# Dev/test scaffolding (never deploy)
+.devtest/
+.claude/
+.vs/
+.backup/
+*.bak
+*.bak-*
+seo_backup/
+migrate-firestore.html
+product pictures/oita kajj kortese*

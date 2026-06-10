@@ -1,80 +1,96 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | Zahroun</title>
-    <link rel="icon" type="image/png" href="product pictures/favicon.png">
-    <link rel="apple-touch-icon" href="product pictures/favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
     <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@500;600;700&display=swap">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/analytics.js"></script>
+    <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
     <style>
         .checkout-container {
             display: grid;
             grid-template-columns: 1.5fr 1fr;
-            gap: 4rem;
-            margin: 4rem auto;
+            gap: 3.5rem;
+            margin: 3rem auto;
         }
         .checkout-section {
             background: var(--surface-color);
-            padding: 2.5rem;
-            border-radius: 8px;
-            box-shadow: var(--shadow-sm);
+            padding: 2.25rem 2.5rem;
+            border-radius: 14px;
+            box-shadow: 0 2px 18px rgba(0,0,0,.07);
         }
         .checkout-section h2 {
-            font-family: var(--font-serif);
-            font-size: 1.8rem;
-            margin-bottom: 1.5rem;
+            font-family: 'Cinzel', var(--font-serif);
+            font-size: 1.12rem;
+            margin-bottom: 0;
             color: var(--text-main);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: .14em;
+            font-weight: 600;
+            padding-bottom: .65rem;
+            border-bottom: 2px solid #0b231a;
         }
+        /* Success screen heading uses the same clean serif */
+        .checkout-container h2 { font-family: 'Cinzel', var(--font-serif); }
+        .checkout-section h2 + *,
+        .checkout-section h2 + .form-group { margin-top: 1.5rem; }
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.35rem;
         }
         .form-group label {
             display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--text-main);
+            margin-bottom: .35rem;
+            font-size: .78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--text-muted);
         }
         .form-control {
             width: 100%;
-            padding: 0.8rem;
+            padding: .75rem .9rem;
             border: 1px solid var(--border-color);
-            border-radius: 4px;
+            border-radius: 8px;
             font-family: var(--font-sans);
-            font-size: 1rem;
+            font-size: .95rem;
             background: var(--bg-color);
+            color: var(--text-main);
+            transition: border-color .2s;
         }
         .form-control:focus {
             outline: none;
-            border-color: var(--primary-color);
+            border-color: #0b231a;
+            box-shadow: 0 0 0 3px rgba(11,35,26,.06);
         }
         .payment-methods {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: .85rem;
         }
         .payment-option {
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 1rem;
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem 1.1rem;
             cursor: pointer;
-            transition: var(--transition);
+            transition: border-color .2s, background .2s;
         }
-        .payment-option:hover {
-            border-color: var(--primary-color);
-        }
-        .payment-option input[type="radio"] {
-            margin-right: 0.5rem;
-        }
+        .payment-option:hover { border-color: #0b231a; background: #fafaf9; }
+        .payment-option:has(input:checked) { border-color: #0b231a; background: #f4f9f6; }
+        .payment-option input[type="radio"] { margin-right: .5rem; accent-color: #0b231a; }
         .payment-details {
             margin-top: 1rem;
             padding-top: 1rem;
@@ -84,19 +100,32 @@
         .order-summary-item {
             display: flex;
             justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 1rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid var(--border-color);
+            gap: .5rem;
         }
+        .osi-name {
+            font-size: .9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            margin-bottom: .2rem;
+            color: var(--text-main);
+        }
+        .osi-meta { font-size: .78rem; color: var(--text-muted); line-height: 1.6; }
+        .osi-price { font-weight: 700; font-size: .95rem; white-space: nowrap; }
         .order-total {
             display: flex;
             justify-content: space-between;
-            font-size: 1.5rem;
+            align-items: center;
+            font-size: 1.25rem;
             font-weight: 700;
             color: var(--text-main);
-            margin-top: 2rem;
+            margin-top: 1.5rem;
             padding-top: 1rem;
-            border-top: 2px solid var(--text-main);
+            border-top: 2px solid #0b231a;
         }
         @media (max-width: 768px) {
             .checkout-container {
@@ -105,7 +134,7 @@
                 margin: 1.25rem auto !important;
             }
             .checkout-section { padding: 1.25rem !important; }
-            .checkout-section h2 { font-size: 1.3rem; }
+            .checkout-section h2 { font-size: 1.05rem; }
         }
         .pay-badge {
             display: inline-flex; align-items: center;
@@ -145,7 +174,7 @@
 <body>
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html">Shop</a>
@@ -176,6 +205,10 @@
                         <input type="text" id="fullName" class="form-control" required placeholder="John Doe">
                     </div>
                     <div class="form-group">
+                        <label for="customerEmail">Email <span style="font-size:.78rem;font-weight:400;color:var(--text-muted);">(optional — for order confirmation)</span></label>
+                        <input type="email" id="customerEmail" class="form-control" placeholder="your@email.com" autocomplete="email">
+                    </div>
+                    <div class="form-group">
                         <label for="mobile">Mobile Number *</label>
                         <input type="tel" id="mobile" class="form-control" required placeholder="01XXXXXXXXX" pattern="01[3-9][0-9]{8}" title="Please enter a valid Bangladesh mobile number (e.g. 01711000000)">
                     </div>
@@ -184,11 +217,22 @@
                         <textarea id="address" class="form-control" rows="3" required placeholder="House, Road, Block, Area..."></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="deliveryArea">Delivery Area *</label>
-                        <select id="deliveryArea" class="form-control" required onchange="calculateTotal()">
-                            <option value="70">Inside Dhaka (70 BDT)</option>
-                            <option value="130">Outside Dhaka (130 BDT)</option>
+                        <label for="district">District *</label>
+                        <select id="district" class="form-control" required onchange="autoSetDelivery()">
+                            <option value="">— Select your district —</option>
                         </select>
+                    </div>
+                    <!-- Auto-detected delivery zone info -->
+                    <div id="delivery-zone-info" style="display:none; background:#f0f7f4; border:1px solid #c3dfd2; border-radius:6px; padding:.65rem 1rem; margin-bottom:1.5rem; font-size:.9rem; color:#163e34;"></div>
+                    <!-- Hidden: auto-set by autoSetDelivery() based on district -->
+                    <select id="deliveryArea" style="display:none;" aria-hidden="true">
+                        <option value="60" id="opt-dhaka">Inside Dhaka (Tk 60)</option>
+                        <option value="120" id="opt-outside">Outside Dhaka (Tk 120)</option>
+                    </select>
+                    <div class="form-group">
+                        <label for="giftMessage" style="display:flex;align-items:center;gap:.45rem;"><ion-icon name="gift-outline" style="font-size:1rem;color:var(--primary-color);"></ion-icon> Gift Message <span style="font-size:.78rem;font-weight:400;color:var(--text-muted);">(optional)</span></label>
+                        <textarea id="giftMessage" class="form-control" rows="2" maxlength="200" placeholder="Add a personal note for the recipient… e.g. Happy Birthday! 🎂"></textarea>
+                        <div style="text-align:right;font-size:.74rem;color:var(--text-muted);margin-top:.2rem;"><span id="gift-char-count">0</span>/200</div>
                     </div>
                 </div>
 
@@ -201,12 +245,12 @@
                             <div class="payment-details" id="bkash-details">
                                 <div class="pay-verify-note">Send payment to <strong>01886-936581</strong> (Personal bKash), then fill in your details below.</div>
                                 <div style="margin-bottom:.85rem;">
-                                    <label class="pay-field-label">Your bKash Number (number you paid from)</label>
-                                    <input type="tel" id="bkashMobile" class="form-control" placeholder="01XXXXXXXXX">
+                                    <label class="pay-field-label">Your bKash Number <span style="color:#9b2226;font-size:.78rem;">* Required</span></label>
+                                    <input type="tel" id="bkashMobile" class="form-control" placeholder="01XXXXXXXXX" required>
                                 </div>
                                 <div>
-                                    <label class="pay-field-label">Transaction ID</label>
-                                    <input type="text" id="bkashTxn" class="form-control" placeholder="e.g. 8C5K9X1H2J">
+                                    <label class="pay-field-label">Transaction ID <span style="color:#9b2226;font-size:.78rem;">* Required</span></label>
+                                    <input type="text" id="bkashTxn" class="form-control" placeholder="e.g. 8C5K9X1H2J" required>
                                 </div>
                             </div>
                         </label>
@@ -216,12 +260,12 @@
                             <div class="payment-details" id="nagad-details">
                                 <div class="pay-verify-note">Send payment to <strong>01886-936581</strong> (Personal Nagad), then fill in your details below.</div>
                                 <div style="margin-bottom:.85rem;">
-                                    <label class="pay-field-label">Your Nagad Number (number you paid from)</label>
-                                    <input type="tel" id="nagadMobile" class="form-control" placeholder="01XXXXXXXXX">
+                                    <label class="pay-field-label">Your Nagad Number <span style="color:#9b2226;font-size:.78rem;">* Required</span></label>
+                                    <input type="tel" id="nagadMobile" class="form-control" placeholder="01XXXXXXXXX" required>
                                 </div>
                                 <div>
-                                    <label class="pay-field-label">Transaction ID</label>
-                                    <input type="text" id="nagadTxn" class="form-control" placeholder="e.g. 8C5K9X1H2J">
+                                    <label class="pay-field-label">Transaction ID <span style="color:#9b2226;font-size:.78rem;">* Required</span></label>
+                                    <input type="text" id="nagadTxn" class="form-control" placeholder="e.g. 8C5K9X1H2J" required>
                                 </div>
                             </div>
                         </label>
@@ -253,19 +297,103 @@
 
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted);">
                             <span>Subtotal</span>
-                            <span id="summary-subtotal">0 BDT</span>
+                            <span id="summary-subtotal">Tk 0</span>
                         </div>
                         <div id="discount-row" style="display:none;justify-content:space-between;margin-bottom:.5rem;color:#1e7e34;">
                             <span id="discount-label">Discount</span>
-                            <span id="summary-discount">-৳0</span>
+                            <span id="summary-discount">-Tk 0</span>
+                        </div>
+                        <div id="promo-discount-row" style="display:none;flex-direction:column;gap:.3rem;margin-bottom:.5rem;color:#163E34;background:#f0f7f4;border-radius:8px;padding:.5rem .75rem;">
+                            <div id="promo-discount-lines"></div>
+                        </div>
+                        <div id="free-gift-row" style="display:none;justify-content:space-between;margin-bottom:.5rem;color:#163E34;background:#f0f7f4;border-radius:6px;padding:.35rem .65rem;font-size:.82rem;font-weight:600;">
+                            <span id="free-gift-label">🎁 Free Gift</span><span>Added!</span>
+                        </div>
+                        <!-- Loyalty Points Redemption -->
+                        <div id="loyalty-row" style="display:none;margin-bottom:1rem;">
+                          <div style="background:#fff;border:1.5px solid #e4e0d8;border-radius:14px;padding:1rem 1.1rem;box-shadow:0 2px 10px rgba(0,0,0,.05);">
+
+                            <!-- Header: icon + title + tier badge -->
+                            <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.9rem;">
+                              <div style="width:44px;height:44px;background:#0b231a;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <ion-icon name="diamond-outline" style="color:#c9a84c;font-size:1.25rem;"></ion-icon>
+                              </div>
+                              <div style="flex:1;min-width:0;">
+                                <div style="font-family:var(--font-serif);font-size:.88rem;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:var(--text-main);">Loyalty Points</div>
+                                <div id="loyalty-tier-label" style="display:none;align-items:center;gap:.25rem;margin-top:.28rem;padding:.15rem .55rem;border:1.5px solid #bbb;border-radius:20px;font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#777;font-family:var(--font-sans);width:fit-content;"></div>
+                              </div>
+                            </div>
+
+                            <!-- Stats: Available Points | Redeemable Value -->
+                            <div style="display:flex;border:1.5px solid #eceae4;border-radius:10px;overflow:hidden;margin-bottom:.85rem;">
+                              <div style="flex:1;padding:.65rem .85rem;">
+                                <div style="font-size:.62rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;">Available</div>
+                                <div style="font-size:1.35rem;font-weight:800;color:var(--text-main);font-family:var(--font-sans);line-height:1.1;">
+                                  <span id="loyalty-balance">0</span><span style="font-size:.78rem;font-weight:500;color:var(--text-muted);margin-left:.25rem;">pts</span>
+                                </div>
+                              </div>
+                              <div style="width:1.5px;background:#eceae4;flex-shrink:0;margin:.5rem 0;"></div>
+                              <div style="flex:1;padding:.65rem .85rem;">
+                                <div style="font-size:.62rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;">Worth</div>
+                                <div style="font-size:1.35rem;font-weight:800;color:var(--text-main);font-family:var(--font-sans);line-height:1.1;">
+                                  <span id="loyalty-worth">Tk 0.00</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Info / hint box (dashed) -->
+                            <div id="loyalty-hint-wrap" style="display:flex;align-items:flex-start;gap:.55rem;background:#f6f5f2;border:1.5px dashed #cac7c0;border-radius:8px;padding:.55rem .75rem;margin-bottom:.85rem;">
+                              <ion-icon id="loyalty-hint-icon" name="information-circle-outline" style="font-size:.95rem;flex-shrink:0;margin-top:.1rem;color:var(--text-muted);"></ion-icon>
+                              <div id="loyalty-hint" style="font-size:.73rem;color:var(--text-muted);line-height:1.5;"></div>
+                            </div>
+
+                            <!-- Redeem section -->
+                            <div style="margin-bottom:.55rem;">
+                              <div style="font-size:.63rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.45rem;">Redeem Points</div>
+                              <!-- Input full-width on first row -->
+                              <input type="number" id="loyalty-redeem-input" min="0" placeholder="Enter points to redeem"
+                                style="display:block;width:100%;box-sizing:border-box;padding:.6rem .8rem;border:1.5px solid #d5d1c9;border-radius:9px;font-size:.83rem;font-family:var(--font-sans);background:#fff;color:var(--text-main);outline:none;transition:border-color .2s;margin-bottom:.4rem;">
+                              <!-- Buttons on second row -->
+                              <div id="loyalty-btn-row" style="display:flex;gap:.4rem;">
+                                <button type="button" id="loyalty-use-all-btn"
+                                  style="flex:1;padding:.6rem .7rem;background:#fff;border:2px solid #0b231a;border-radius:9px;font-size:.72rem;font-weight:700;color:#0b231a;cursor:pointer;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em;">Use All</button>
+                                <button type="button" id="loyalty-redeem-btn" class="btn"
+                                  style="flex:2;font-size:.72rem;font-weight:700;padding:.6rem .85rem;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em;">Apply Points</button>
+                              </div>
+                              <div id="loyalty-msg" style="font-size:.74rem;margin-top:.35rem;min-height:1em;font-weight:500;"></div>
+                            </div>
+
+                            <!-- Discount applied row -->
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:.65rem;border-top:1px solid #eceae4;">
+                              <div style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--text-muted);">
+                                <ion-icon name="pricetag-outline" style="font-size:.88rem;"></ion-icon>
+                                Discount Applied
+                              </div>
+                              <div id="loyalty-discount-amount" style="font-size:.85rem;font-weight:700;color:var(--text-muted);">Tk 0.00</div>
+                            </div>
+
+                          </div>
+                        </div>
+                        <!-- Referral Code -->
+                        <div id="referral-row" style="display:none;margin-bottom:.75rem;">
+                            <div style="font-size:.8rem;font-weight:600;color:var(--text-main);margin-bottom:.3rem;">
+                                <ion-icon name="people-outline" style="vertical-align:middle;color:var(--primary-color);margin-right:.25rem;"></ion-icon>
+                                Have a referral code?
+                            </div>
+                            <div style="display:flex;gap:.5rem;align-items:center;">
+                                <input type="text" id="referral-code-input" placeholder="Enter referral code"
+                                    style="flex:1;padding:.4rem .7rem;border:1px solid var(--border-color);border-radius:7px;font-size:.84rem;font-family:var(--font-sans);background:var(--bg-color);text-transform:uppercase;">
+                                <button type="button" id="referral-apply-btn" class="btn btn-outline" style="font-size:.82rem;padding:.4rem .85rem;white-space:nowrap;">Apply</button>
+                            </div>
+                            <div id="referral-msg" style="font-size:.78rem;margin-top:.25rem;min-height:1em;"></div>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted);">
                             <span>Delivery Charge</span>
-                            <span id="summary-delivery">70 BDT</span>
+                            <span id="summary-delivery">Tk 70</span>
                         </div>
                         <div class="order-total">
                             <span>Total</span>
-                            <span id="summary-total">0 BDT</span>
+                            <span id="summary-total">Tk 0</span>
                         </div>
                     </div>
 
@@ -276,7 +404,7 @@
     </div>
 
     <!-- Reusing Cart Modal Structure -->
-    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;">
         <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
                 <h3>Your Cart</h3>
@@ -286,7 +414,7 @@
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
                     <span>Total</span>
-                    <span id="cart-total">0 BDT</span>
+                    <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn checkout-redirect-btn" style="width: 100%;">Checkout</button>
             </div>
@@ -296,47 +424,309 @@
     <script type="module" src="js/store.js"></script>
     <script type="module" src="js/orders.js"></script>
     <script type="module" src="js/coupon.js"></script>
-    <script src="js/cart.js"></script>
-    <script src="js/ui.js"></script>
+    <script type="module" src="js/promotions.js"></script>
+    <script type="module">
+        import { db } from "./js/firebase-config.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        (async () => {
+            try {
+                // sessionStorage cache — delivery charges rarely change
+                const _STORE_KEY = 'zhr_store_v1', _STORE_TTL = 30 * 60 * 1000;
+                let s = {};
+                try {
+                    const raw = sessionStorage.getItem(_STORE_KEY);
+                    if (raw) { const { data, ts } = JSON.parse(raw); if (Date.now() - ts < _STORE_TTL) s = data; }
+                } catch {}
+                if (!Object.keys(s).length) {
+                    // Prefer zahSettings already populated by auth.js (saves a Firestore read)
+                    s = (window.zahSettings && Object.keys(window.zahSettings).length) ? window.zahSettings : {};
+                    if (!Object.keys(s).length) {
+                        const snap = await getDoc(doc(db, "settings", "store"));
+                        s = snap.exists() ? snap.data() : {};
+                    }
+                    try { sessionStorage.setItem(_STORE_KEY, JSON.stringify({ data: s, ts: Date.now() })); } catch {}
+                }
+                const dDhaka = s.deliveryDhaka || 60;
+                const dOutside = s.deliveryOutside || 120;
+                const threshold = s.freeDeliveryThreshold || 0;
+                const optD = document.getElementById("opt-dhaka");
+                const optO = document.getElementById("opt-outside");
+                if (optD) { optD.value = dDhaka; optD.textContent = `Inside Dhaka (Tk ${dDhaka})`; }
+                if (optO) { optO.value = dOutside; optO.textContent = `Outside Dhaka (Tk ${dOutside})`; }
+                window._freeDeliveryThreshold = threshold;
+                if (typeof autoSetDelivery === "function" && document.getElementById('district')?.value) {
+                    autoSetDelivery();
+                } else if (typeof calculateTotal === "function") {
+                    calculateTotal();
+                }
+            } catch {}
+        })();
+    </script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
     <script>
+        // Auto-fill email + init loyalty when user signs in
+        document.addEventListener("zahroun-auth-changed", (e) => {
+            if (!e.detail?.user) return;
+            const u = e.detail.user;
+            if (u && u.email) {
+                const ef = document.getElementById('customerEmail');
+                if (ef && !ef.value) ef.value = u.email;
+            }
+            initLoyaltySection();
+        });
         // ── EmailJS config ── fill these 3 values after EmailJS setup ──
         const EMAILJS_PUBLIC_KEY  = "wUGMJ65uoDE5-C0AF";
         const EMAILJS_SERVICE_ID  = "service_y827jxy";
         const EMAILJS_TEMPLATE_ID = "template_7r5991b";
         // ────────────────────────────────────────────────────────────────
 
-        (function initEmailJS() {
-            if (typeof emailjs !== "undefined" && EMAILJS_PUBLIC_KEY !== "YOUR_PUBLIC_KEY") {
-                emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+        // EmailJS is loaded on demand — only injected when an order is placed
+        let _ejsReady = false;
+        async function _loadEmailJS() {
+            if (EMAILJS_PUBLIC_KEY === "YOUR_PUBLIC_KEY") return;
+            if (_ejsReady || typeof emailjs !== "undefined") {
+                _ejsReady = true;
+                try { emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY }); } catch {}
+                return;
             }
-        })();
+            await new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+                s.onload = () => { _ejsReady = true; resolve(); };
+                s.onerror = reject;
+                document.head.appendChild(s);
+            });
+            try { emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY }); } catch {}
+        }
 
-        async function sendInvoiceEmail({ userEmail, name, orderId, items, subtotal, delivery, discount, coupon, total, paymentMethod, address, mobile }) {
+        async function sendInvoiceEmail({ userEmail, name, orderId, items, subtotal, delivery, discount, coupon, loyaltyDiscount, loyaltyRemainingBalance, total, paymentMethod, address, mobile }) {
+            await _loadEmailJS();
             if (typeof emailjs === "undefined" || EMAILJS_PUBLIC_KEY === "YOUR_PUBLIC_KEY") return;
             try {
                 const orderDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }) + ", " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+                const fmtNum = v => (+v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const ordShort = orderId.slice(0, 8).toUpperCase();
+                const C = { gold:'#D4A64A', dark:'#041A16', card:'rgba(10,58,49,0.35)', border:'rgba(212,166,74,0.25)', muted:'#9E9E9E', body:'#CFCFCF', text:'#EDEDED', green:'#49C16D' };
+                const F = { serif:"font-family:'Playfair Display',Georgia,serif;", sans:"font-family:'Inter',Arial,sans-serif;" };
 
-                const itemsList = items.map(item =>
-                    `${item.name} (${item.size})  x${item.quantity}  —  BDT ${(item.price * item.quantity).toFixed(2)}`
-                ).join('\n');
+                /* ── Item rows ─────────────────────────────────────────── */
+                const itemRowsHtml = items.map(item => {
+                    const imgUrl = item.image || item.imageUrl || item.img || '';
+                    const imgTag = imgUrl
+                        ? `<img src="${imgUrl}" alt="${item.name}" width="70" height="70" style="width:70px;height:70px;border-radius:10px;object-fit:cover;display:block;">`
+                        : `<div style="width:70px;height:70px;border-radius:10px;background:rgba(10,58,49,0.55);border:1px solid rgba(212,166,74,0.18);"></div>`;
+                    const size = item.size || item.selectedSize || '';
+                    if (item.isFreeGift) {
+                        const origPrice = parseFloat(item.originalPrice) || 0;
+                        return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom:1px solid rgba(212,166,74,0.12);background:rgba(10,58,49,0.18);">
+  <tr>
+    <td width="70" valign="top" style="padding:14px 0;">${imgTag}</td>
+    <td valign="top" style="padding:14px 16px;">
+      <div style="${F.sans}font-size:14px;font-weight:600;color:#FFFFFF;margin-bottom:4px;">${item.name}${size ? ' (' + size + ')' : ''}</div>
+      <div style="display:inline-block;margin-top:5px;padding:2px 8px;background:${C.gold};color:#041A16;font-size:10px;font-weight:800;letter-spacing:3px;text-transform:uppercase;border-radius:3px;font-family:'Inter',Arial,sans-serif;">Complimentary Gift</div>
+    </td>
+    <td align="right" valign="top" style="padding:14px 0;white-space:nowrap;">
+      ${origPrice > 0 ? `<div style="${F.sans}font-size:11px;color:${C.muted};text-decoration:line-through;">BDT ${fmtNum(origPrice)}</div>` : ''}
+      <div style="${F.sans}font-size:14px;font-weight:800;color:${C.gold};">FREE</div>
+    </td>
+  </tr>
+</table>`;
+                    }
+                    const unitPrice = parseFloat(item.selectedPrice || item.price) || 0;
+                    const rowTotal = fmtNum(unitPrice * item.quantity);
+                    return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom:1px solid rgba(212,166,74,0.12);">
+  <tr>
+    <td width="70" valign="top" style="padding:14px 0;">${imgTag}</td>
+    <td valign="top" style="padding:14px 16px;">
+      <div style="${F.sans}font-size:14px;font-weight:600;color:#FFFFFF;margin-bottom:4px;">${item.name}${size ? ' (' + size + ')' : ''}</div>
+      <div style="${F.sans}font-size:12px;color:${C.body};margin-top:5px;">Quantity: ${item.quantity}</div>
+    </td>
+    <td align="right" valign="top" style="padding:14px 0;white-space:nowrap;">
+      <div style="${F.sans}font-size:14px;font-weight:600;color:${C.text};">BDT ${rowTotal}</div>
+    </td>
+  </tr>
+</table>`;
+                }).join('');
 
-                const discountLine = discount > 0
-                    ? `Coupon${coupon ? ' (' + coupon.id + ')' : ''}: -BDT ${(+discount).toFixed(2)}`
-                    : '';
+                /* ── Discount rows (go inside the summary <table>) ─────── */
+                let discountRowsHtml = '';
+                if (+discount > 0) {
+                    discountRowsHtml += `<tr><td style="padding:13px 22px;border-bottom:1px solid rgba(255,255,255,0.05);"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="${F.sans}font-size:13px;color:${C.body};">Coupon Discount${coupon ? ' (' + coupon + ')' : ''}</td><td align="right" style="${F.sans}font-size:13px;color:${C.text};font-weight:500;">-BDT ${fmtNum(discount)}</td></tr></table></td></tr>`;
+                }
+                if (loyaltyDiscount?.discount > 0) {
+                    const remNote = (loyaltyRemainingBalance !== undefined && loyaltyRemainingBalance >= 0)
+                        ? ` <span style="color:${C.muted};font-size:11px;">(${loyaltyRemainingBalance} pts remaining)</span>` : '';
+                    discountRowsHtml += `<tr><td style="padding:13px 22px;border-bottom:1px solid rgba(255,255,255,0.05);"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="${F.sans}font-size:13px;color:${C.green};">Loyalty Points (${loyaltyDiscount.points} pts redeemed)${remNote}</td><td align="right" style="${F.sans}font-size:13px;color:${C.green};font-weight:500;">-BDT ${loyaltyDiscount.discount.toFixed(2)}</td></tr></table></td></tr>`;
+                }
+
+                /* ── Icon helpers (Unicode text — works in Gmail, Outlook, Yahoo, Apple Mail) ── */
+                const svgCheck    = `<span style="font-size:26px;line-height:1;color:${C.gold};font-family:Arial,sans-serif;">&#10003;</span>`;
+                const svgDiamond  = `<span style="font-size:11px;color:${C.gold};font-family:Arial,sans-serif;">&#9670;</span>`;
+                const svgDoc      = `<span style="font-size:18px;font-weight:bold;color:${C.gold};font-family:Arial,sans-serif;">#</span>`;
+                const svgCal      = `<span style="font-size:16px;color:${C.gold};font-family:Arial,sans-serif;">&#9679;</span>`;
+                const svgCard     = `<span style="font-size:16px;color:${C.gold};font-family:Arial,sans-serif;">&#9679;</span>`;
+                const svgPin      = `<span style="font-size:16px;color:${C.gold};font-family:Arial,sans-serif;">&#9670;</span>`;
+                const svgFB       = `<span style="font-size:13px;font-weight:bold;color:${C.gold};font-family:Arial,sans-serif;">f</span>`;
+                const svgIG       = `<span style="font-size:11px;font-weight:bold;color:${C.gold};font-family:Arial,sans-serif;">IG</span>`;
+                const svgGlobe    = `<span style="font-size:11px;font-weight:bold;color:${C.gold};font-family:Arial,sans-serif;">W</span>`;
+
+                const divider = `<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid rgba(212,166,74,0.32);"></td><td width="28" align="center" style="padding:0 10px;line-height:0;">${svgDiamond}</td><td style="border-top:1px solid rgba(212,166,74,0.32);"></td></tr></table>`;
+                const socialIcon = (svg) => `<td style="padding:0 10px;"><table cellpadding="0" cellspacing="0" border="0"><tr><td width="40" height="40" align="center" valign="middle" style="width:40px;height:40px;border:1px solid rgba(212,166,74,0.42);border-radius:50%;background:rgba(212,166,74,0.05);">${svg}</td></tr></table></td>`;
+
+                /* ── Complete email HTML ────────────────────────────────── */
+                const html_body = `<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#020202;}table{border-collapse:collapse;}</style>
+</head>
+<body style="margin:0;padding:0;background:#020202;font-family:'Inter',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#020202;padding:28px 0;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#020202;padding:28px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:linear-gradient(180deg,#041A16 0%,#07231C 45%,#0A2F28 100%);border-radius:18px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.55);">
+
+<!-- HEADER -->
+<tr><td style="background:linear-gradient(180deg,#020202 0%,#041A16 100%);padding:38px 40px 28px;text-align:center;border-bottom:1px solid rgba(212,166,74,0.18);">
+  <div style="${F.serif}font-size:40px;font-weight:700;color:#FFFFFF;letter-spacing:10px;text-transform:uppercase;line-height:1;">ZAHROUN</div>
+  <div style="${F.sans}font-size:9.5px;font-weight:600;color:${C.gold};letter-spacing:6px;text-transform:uppercase;margin-top:8px;">LUXURY FRAGRANCES</div>
+  <div style="width:90px;height:1px;background:linear-gradient(90deg,transparent,rgba(212,166,74,0.55),transparent);margin:18px auto 0;"></div>
+</td></tr>
+
+<!-- CHECKMARK + TITLE -->
+<tr><td style="padding:40px 40px 16px;text-align:center;">
+  <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:22px;"><tr>
+    <td width="72" height="72" align="center" valign="middle" style="width:72px;height:72px;border:2px solid ${C.gold};border-radius:50%;background:rgba(212,166,74,0.06);">${svgCheck}</td>
+  </tr></table>
+  <div style="${F.serif}font-size:44px;font-weight:600;color:#FFFFFF;line-height:1.12;margin-bottom:13px;">Order Confirmed</div>
+  <div style="${F.sans}font-size:14px;color:${C.body};letter-spacing:0.4px;line-height:1.7;">Thank you for your order! We&rsquo;re preparing it with care.</div>
+</td></tr>
+
+<!-- DIVIDER 1 -->
+<tr><td style="padding:22px 40px;">${divider}</td></tr>
+
+<!-- GREETING -->
+<tr><td style="padding:0 40px 28px;">
+  <div style="${F.sans}font-size:16px;font-weight:600;color:${C.gold};margin-bottom:10px;">Dear ${name},</div>
+  <div style="${F.sans}font-size:13.5px;color:${C.body};line-height:1.8;">We&rsquo;ve received your order and it is now being processed.<br>You will receive another email once your order is shipped.</div>
+</td></tr>
+
+<!-- ORDER INFO CARD -->
+<tr><td style="padding:0 28px 28px;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.card};border:1px solid ${C.border};border-radius:14px;overflow:hidden;"><tr>
+    <td width="50%" style="padding:20px 22px;vertical-align:middle;">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="36" valign="middle" style="padding-right:14px;">${svgDoc}</td>
+        <td valign="middle">
+          <div style="${F.sans}font-size:9px;font-weight:700;color:${C.muted};letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">ORDER ID</div>
+          <div style="${F.sans}font-size:15px;font-weight:700;color:#FFFFFF;letter-spacing:1px;">#${ordShort}</div>
+        </td>
+      </tr></table>
+    </td>
+    <td width="1" style="padding:8px 0;"><div style="width:1px;min-height:52px;background:rgba(212,166,74,0.22);"></div></td>
+    <td width="50%" style="padding:20px 22px;vertical-align:middle;">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="36" valign="middle" style="padding-right:14px;">${svgCal}</td>
+        <td valign="middle">
+          <div style="${F.sans}font-size:9px;font-weight:700;color:${C.muted};letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">DATE</div>
+          <div style="${F.sans}font-size:13px;font-weight:600;color:#FFFFFF;">${orderDate}</div>
+        </td>
+      </tr></table>
+    </td>
+  </tr></table>
+</td></tr>
+
+<!-- ITEMS SECTION -->
+<tr><td style="padding:0 28px 6px;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;"><tr>
+    <td style="border-top:1px solid rgba(212,166,74,0.32);"></td>
+    <td width="152" align="center" style="padding:0 14px;white-space:nowrap;">
+      <span style="${F.sans}font-size:10px;font-weight:700;color:${C.gold};letter-spacing:4px;text-transform:uppercase;">ITEMS ORDERED</span>
+    </td>
+    <td style="border-top:1px solid rgba(212,166,74,0.32);"></td>
+  </tr></table>
+  ${itemRowsHtml}
+</td></tr>
+
+<!-- SUMMARY CARD -->
+<tr><td style="padding:22px 28px 0;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:rgba(4,16,12,0.75);border:1px solid rgba(212,166,74,0.2);border-radius:16px;overflow:hidden;">
+    <tr><td style="padding:13px 22px;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="${F.sans}font-size:13px;color:${C.body};">Subtotal</td>
+        <td align="right" style="${F.sans}font-size:13px;color:${C.text};font-weight:500;">BDT ${fmtNum(subtotal)}</td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="padding:13px 22px;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="${F.sans}font-size:13px;color:${C.body};">Delivery Charge</td>
+        <td align="right" style="${F.sans}font-size:13px;color:${C.text};font-weight:500;">BDT ${fmtNum(delivery)}</td>
+      </tr></table>
+    </td></tr>
+    ${discountRowsHtml}
+    <tr><td style="padding:18px 22px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="${F.sans}font-size:15px;font-weight:600;color:#FFFFFF;vertical-align:middle;">Total</td>
+        <td align="right" valign="middle">
+          <div style="${F.serif}font-size:13px;font-weight:400;color:${C.gold};letter-spacing:1px;">BDT</div>
+          <div style="${F.serif}font-size:40px;font-weight:600;color:${C.gold};line-height:1.1;">${fmtNum(total)}</div>
+        </td>
+      </tr></table>
+    </td></tr>
+  </table>
+</td></tr>
+
+<!-- PAYMENT + DELIVERY CARD -->
+<tr><td style="padding:16px 28px 0;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.card};border:1px solid ${C.border};border-radius:14px;overflow:hidden;"><tr>
+    <td width="50%" style="padding:18px 20px;vertical-align:middle;">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="34" valign="top" style="padding-right:12px;padding-top:3px;">${svgCard}</td>
+        <td valign="top">
+          <div style="${F.sans}font-size:9px;font-weight:700;color:${C.muted};letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">PAYMENT METHOD</div>
+          <div style="${F.sans}font-size:13px;font-weight:500;color:${C.text};">${paymentMethod}</div>
+        </td>
+      </tr></table>
+    </td>
+    <td width="1" style="padding:8px 0;"><div style="width:1px;min-height:52px;background:rgba(212,166,74,0.22);"></div></td>
+    <td width="50%" style="padding:18px 20px;vertical-align:middle;">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="34" valign="top" style="padding-right:12px;padding-top:3px;">${svgPin}</td>
+        <td valign="top">
+          <div style="${F.sans}font-size:9px;font-weight:700;color:${C.muted};letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">DELIVER TO</div>
+          <div style="${F.sans}font-size:13px;font-weight:500;color:${C.text};line-height:1.65;">${address}<br>${mobile}</div>
+        </td>
+      </tr></table>
+    </td>
+  </tr></table>
+</td></tr>
+
+<!-- DIVIDER 2 -->
+<tr><td style="padding:34px 40px 0;">${divider}</td></tr>
+
+<!-- FOOTER -->
+<tr><td style="padding:24px 40px 38px;text-align:center;">
+  <div style="${F.serif}font-size:22px;font-weight:600;color:${C.gold};letter-spacing:2px;margin-bottom:12px;">Zahroun</div>
+  <div style="${F.sans}font-size:12px;color:${C.muted};line-height:1.75;margin-bottom:3px;">Dhanmondi, Dhaka, Bangladesh, 1205</div>
+  <div style="${F.sans}font-size:12px;color:${C.muted};margin-bottom:3px;">WhatsApp: 01886-936581</div>
+  <div style="${F.sans}font-size:12px;color:${C.gold};margin-bottom:22px;">zahroun.com</div>
+  <div style="${F.sans}font-size:13px;color:${C.body};line-height:1.8;margin-bottom:26px;">Thank you for choosing Zahroun.<br>We appreciate your trust.</div>
+  <table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
+    ${socialIcon(svgFB)}
+    ${socialIcon(svgIG)}
+    ${socialIcon(svgGlobe)}
+  </tr></table>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body></html>`;
 
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-                    to_email:       userEmail,
-                    to_name:        name,
-                    order_id:       orderId.slice(0, 8).toUpperCase(),
-                    order_date:     orderDate,
-                    items_list:     itemsList,
-                    subtotal:       (+subtotal).toFixed(2),
-                    delivery:       (+delivery).toFixed(2),
-                    discount_line:  discountLine,
-                    total:          (+total).toFixed(2),
-                    payment_method: paymentMethod,
-                    address:        address,
-                    mobile:         mobile,
+                    to_email:  userEmail,
+                    html_body,
                 });
             } catch (err) {
                 console.warn("Invoice email failed:", err);
@@ -344,8 +734,22 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Populate Bangladesh districts dropdown
+            const BD_DISTRICTS = ["Bagerhat","Bandarban","Barguna","Barishal","Bhola","Bogura","Brahmanbaria","Chandpur","Chapai Nawabganj","Chattogram","Chuadanga","Cox's Bazar","Cumilla","Dinajpur","Faridpur","Feni","Gaibandha","Gazipur","Gopalganj","Habiganj","Jamalpur","Jashore","Jhalokathi","Jhenaidah","Joypurhat","Khagrachhari","Khulna","Kishoreganj","Kurigram","Kushtia","Lakshmipur","Lalmonirhat","Madaripur","Magura","Manikganj","Meherpur","Moulvibazar","Munshiganj","Mymensingh","Naogaon","Narail","Narayanganj","Narsingdi","Natore","Netrokona","Nilphamari","Noakhali","Pabna","Panchagarh","Patuakhali","Pirojpur","Rajbari","Rajshahi","Rangamati","Rangpur","Satkhira","Shariatpur","Sherpur","Sirajganj","Sunamganj","Sylhet","Tangail","Thakurgaon"];
+            const districtSel = document.getElementById('district');
+            if (districtSel) {
+                ["Dhaka", ...BD_DISTRICTS.sort()].forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d; opt.textContent = d;
+                    districtSel.appendChild(opt);
+                });
+            }
+
             renderCheckoutCart();
             calculateTotal();
+            document.getElementById('giftMessage').addEventListener('input', function() {
+                document.getElementById('gift-char-count').textContent = this.value.length;
+            });
             if (window.zahrounGA && cart.length) {
                 const sub = cart.reduce((s, i) => s + parseFloat(i.selectedPrice) * i.quantity, 0);
                 window.zahrounGA.trackBeginCheckout(cart, sub);
@@ -368,10 +772,10 @@
                 const subtotal = cart.reduce((s, i) => s + parseFloat(i.selectedPrice) * i.quantity, 0);
                 try {
                     if (!window.validateAndApplyCoupon) { fb.textContent = 'Coupon system loading, try again.'; fb.style.color = '#9b2226'; return; }
-                    const result = await window.validateAndApplyCoupon(code, subtotal);
+                    const result = await window.validateAndApplyCoupon(code, subtotal, cart);
                     fb.textContent = result.msg;
                     fb.style.color = result.valid ? '#1e7e34' : '#9b2226';
-                    if (result.valid) calculateTotal();
+                    if (result.valid) { calculateTotal(); if (_loyaltyInited) updateLoyaltyVisibility(); }
                 } catch (err) {
                     fb.textContent = 'Could not validate coupon. Try again.';
                     fb.style.color = '#9b2226';
@@ -386,6 +790,7 @@
                     window.clearAppliedCoupon();
                     document.getElementById('coupon-feedback').textContent = '';
                     calculateTotal();
+                    if (_loyaltyInited) updateLoyaltyVisibility();
                 }
             });
         });
@@ -411,49 +816,166 @@
                 return;
             }
 
-            container.innerHTML = cart.map(item => `
+            let html = cart.map(item => `
                 <div class="order-summary-item">
-                    <div style="display: flex; gap: 1rem;">
-                        <img src="${item.image}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: contain; border: 1px solid var(--border-color); border-radius: 4px;">
-                        <div>
-                            <h4 style="font-size: 1rem; margin-bottom: 0.25rem;">${item.name}</h4>
-                            <div style="color: var(--text-muted); font-size: 0.8rem;">Size: ${item.size}</div>
-                            <div style="color: var(--text-muted); font-size: 0.9rem;">Qty: ${item.quantity}</div>
+                    <div style="display:flex;gap:.85rem;flex:1;min-width:0;">
+                        <img src="${item.image}" alt="${item.name}" style="width:58px;height:58px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;flex-shrink:0;background:var(--bg-color);">
+                        <div style="min-width:0;">
+                            <div class="osi-name">${item.name}</div>
+                            <div class="osi-meta">Size: ${item.size}<br>Qty: ${item.quantity}</div>
                         </div>
                     </div>
-                    <div style="font-weight: 600;">${(parseFloat(item.selectedPrice) * item.quantity).toFixed(2)} BDT</div>
+                    <div class="osi-price">Tk ${Math.round(parseFloat(item.selectedPrice) * item.quantity).toLocaleString()}</div>
                 </div>
             `).join('');
+
+            // Show free item (Buy X Get Y selected)
+            try {
+                const bxgySaved = JSON.parse(localStorage.getItem('zahroun_bxgy_free') || '{}');
+                Object.values(bxgySaved).forEach(fi => {
+                    const prod = (typeof products !== 'undefined' && Array.isArray(products))
+                        ? products.find(p => String(p.id) === String(fi.id)) : null;
+                    const name = fi.name || prod?.name || ('Product #' + fi.id);
+                    const image = fi.image || prod?.image || '';
+                    html += `
+                        <div class="order-summary-item" style="background:#f4f9f6;border-radius:10px;border:1.5px solid #b8d9c8;padding:.75rem;margin-bottom:1rem;">
+                            <div style="display:flex;gap:.85rem;flex:1;min-width:0;">
+                                ${image ? `<img src="${image}" alt="${name}" style="width:58px;height:58px;object-fit:contain;border-radius:8px;background:#fff;border:1px solid #c3dfd2;flex-shrink:0;">` : ''}
+                                <div style="min-width:0;">
+                                    <div class="osi-name" style="color:#0b231a;">${name}</div>
+                                    <div class="osi-meta">Size: ${fi.size}</div>
+                                    <span style="display:inline-block;margin-top:.35rem;font-size:.62rem;font-weight:800;background:#0b231a;color:#c9a84c;border-radius:3px;padding:.2rem .6rem;letter-spacing:.14em;text-transform:uppercase;">Complimentary Gift</span>
+                                </div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:.82rem;color:var(--text-muted);text-decoration:line-through;">Tk ${fi.price}</div>
+                                <div style="font-weight:700;color:#0b231a;font-size:.95rem;">FREE</div>
+                            </div>
+                        </div>`;
+                });
+            } catch {}
+
+            container.innerHTML = html;
+        }
+
+        // Promo state
+        window._promoResult = null;
+        window._loyaltyDiscount = null;
+        window._referralResult = null;
+
+        async function evaluatePromos() {
+            if (!window.ZahrounPromos || !cart.length) { window._promoResult = null; return; }
+            const uid = window.getCurrentUser && window.getCurrentUser()?.uid;
+            const opts = {};
+            if (uid) {
+                const fo = await window.ZahrounPromos.checkFirstOrder(uid).catch(() => null);
+                if (fo && fo.pct) fo.discount = (cart.reduce((s,i)=>s+(parseFloat(i.selectedPrice)*i.quantity),0) * fo.pct / 100);
+                if (fo) opts.firstOrderDiscount = fo;
+            }
+            if (window._loyaltyDiscount)  opts.loyaltyDiscount  = window._loyaltyDiscount;
+            if (window._referralResult)   opts.referralDiscount = window._referralResult;
+
+            // Apply Buy X Get Y customer-selected free items (overrides auto cheapest logic)
+            try {
+                const bxgySaved = JSON.parse(localStorage.getItem('zahroun_bxgy_free') || '{}');
+                const selectedFree = Object.values(bxgySaved);
+                if (selectedFree.length) opts.bxgySelectedFree = selectedFree;
+            } catch {}
+
+            window._promoResult = await window.ZahrounPromos.evaluate(cart, opts).catch(() => null);
         }
 
         function calculateTotal() {
             const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.selectedPrice) * item.quantity), 0);
             const deliverySelect = document.getElementById('deliveryArea');
-            const deliveryCharge = parseInt(deliverySelect.value);
+            const deliveryCharge = parseInt(deliverySelect.value) || 0;
 
             const coupon = window.appliedCoupon || null;
             const discount = coupon ? (coupon.discount || 0) : 0;
-            const freeDelivery = !!(coupon && coupon.freeDelivery);
+            const promoResult = window._promoResult;
+            const promoDiscount = promoResult ? Math.min(promoResult.totalDiscount, subtotal) : 0;
+            const promoFreeShip = !!(promoResult?.freeShipping);
+
+            const freeDelivery = !!(coupon && coupon.freeDelivery) || promoFreeShip
+                || (window._freeDeliveryThreshold > 0 && subtotal >= window._freeDeliveryThreshold);
             const effectiveDelivery = freeDelivery ? 0 : deliveryCharge;
 
-            const total = (subtotal - discount) + effectiveDelivery;
+            const total = (subtotal - discount - promoDiscount) + effectiveDelivery;
 
-            document.getElementById('summary-subtotal').textContent = subtotal.toFixed(2) + ' BDT';
+            document.getElementById('summary-subtotal').textContent = 'Tk ' + Math.round(subtotal).toLocaleString();
 
             const discountRow = document.getElementById('discount-row');
             if (discount > 0) {
                 discountRow.style.display = 'flex';
                 const label = coupon.type === 'percent' ? `Coupon (${coupon.value}% off)` : `Coupon discount`;
                 document.getElementById('discount-label').textContent = label;
-                document.getElementById('summary-discount').textContent = '-৳' + discount.toFixed(2);
+                document.getElementById('summary-discount').textContent = '-Tk ' + Math.round(discount).toLocaleString();
             } else {
                 discountRow.style.display = 'none';
             }
 
+            // Promo discount lines
+            const promoRow = document.getElementById('promo-discount-row');
+            const promoLines = document.getElementById('promo-discount-lines');
+            if (promoResult?.discounts?.length) {
+                promoLines.innerHTML = promoResult.discounts.map(d =>
+                    `<div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:600;">
+                        <span><ion-icon name="pricetag-outline" style="vertical-align:middle;margin-right:.25rem;"></ion-icon>${d.label}</span>
+                        <span>-Tk ${Math.round(d.discount).toLocaleString()}</span>
+                    </div>`
+                ).join('');
+                promoRow.style.display = 'flex';
+            } else {
+                promoRow.style.display = 'none';
+            }
+
+            // Free gift
+            const fgRow = document.getElementById('free-gift-row');
+            const fgLabel = document.getElementById('free-gift-label');
+            if (promoResult?.freeGift) {
+                fgLabel.textContent = '🎁 Free Gift: ' + promoResult.freeGift.name;
+                fgRow.style.display = 'flex';
+            } else {
+                fgRow.style.display = 'none';
+            }
+
             document.getElementById('summary-delivery').textContent = freeDelivery
-                ? 'FREE' + (deliveryCharge ? ` (was ${deliveryCharge} BDT)` : '')
-                : deliveryCharge + ' BDT';
-            document.getElementById('summary-total').textContent = total.toFixed(2) + ' BDT';
+                ? 'FREE' + (deliveryCharge ? ` (was Tk ${deliveryCharge.toLocaleString()})` : '')
+                : 'Tk ' + deliveryCharge.toLocaleString();
+            document.getElementById('summary-total').textContent = 'Tk ' + Math.round(Math.max(0, total)).toLocaleString();
+        }
+
+        async function refreshTotals() {
+            await evaluatePromos();
+            calculateTotal();
+            if (_loyaltyInited) updateLoyaltyVisibility();
+        }
+
+        function autoSetDelivery() {
+            const district = document.getElementById('district').value;
+            const deliverySelect = document.getElementById('deliveryArea');
+            const zoneInfo = document.getElementById('delivery-zone-info');
+
+            if (!district) {
+                zoneInfo.style.display = 'none';
+                calculateTotal();
+                checkFormValidity();
+                return;
+            }
+
+            const isDhaka = (district === 'Dhaka');
+            const dhakaCharge = parseInt(document.getElementById('opt-dhaka').value) || 60;
+            const outsideCharge = parseInt(document.getElementById('opt-outside').value) || 120;
+
+            deliverySelect.value = isDhaka ? dhakaCharge : outsideCharge;
+
+            zoneInfo.style.display = '';
+            zoneInfo.innerHTML = isDhaka
+                ? `📍 <strong>Inside Dhaka</strong> — Delivery charge: <strong>Tk ${dhakaCharge}</strong>`
+                : `🚚 <strong>Outside Dhaka</strong> — Delivery charge: <strong>Tk ${outsideCharge}</strong>`;
+
+            calculateTotal();
+            checkFormValidity();
         }
 
         function togglePaymentDetails() {
@@ -491,14 +1013,6 @@
                 return;
             }
 
-            // Orders require a logged-in account (for order history + admin tracking).
-            const user = window.getCurrentUser && window.getCurrentUser();
-            if (!user) {
-                if (window.showToast) window.showToast('Please log in to place your order', 'error');
-                if (window.zahrounAuth) window.zahrounAuth.openModal();
-                return;
-            }
-
             // Stock validation — check current product stock before accepting order
             const allProducts = window.products || (window.ZahrounStore && window.ZahrounStore.products) || [];
             const stockErrors = [];
@@ -521,6 +1035,12 @@
             const name = document.getElementById('fullName').value;
             const mobile = document.getElementById('mobile').value;
             const address = document.getElementById('address').value;
+            const district = document.getElementById('district').value;
+            const giftMessage = document.getElementById('giftMessage').value.trim() || null;
+            const user = window.getCurrentUser && window.getCurrentUser();
+            const customerEmail = user
+                ? (user.email || document.getElementById('customerEmail').value.trim() || null)
+                : (document.getElementById('customerEmail').value.trim() || null);
             
             const deliverySelect = document.getElementById('deliveryArea');
             const deliveryAreaText = deliverySelect.options[deliverySelect.selectedIndex].text;
@@ -538,11 +1058,63 @@
             }
 
             const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.selectedPrice) * item.quantity), 0);
-            const coupon = window.appliedCoupon || null;
+            let coupon = window.appliedCoupon || null;
+
+            // ── H8-fix: re-validate session coupon against Firestore before placing order ──
+            if (coupon) {
+                try {
+                    const { getFirestore, doc: _doc, getDoc: _getDoc } =
+                        await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+                    const { db: _db } = await import('./js/firebase-config.js');
+                    const freshSnap = await _getDoc(_doc(_db, 'coupons', coupon.id));
+                    if (!freshSnap.exists()) {
+                        window.clearAppliedCoupon && window.clearAppliedCoupon();
+                        coupon = null;
+                        if (window.showToast) window.showToast('Coupon no longer exists — it has been removed.', 'error');
+                        else alert('Coupon no longer exists — it has been removed.');
+                        return;
+                    }
+                    const fresh = freshSnap.data();
+                    if (!fresh.active) {
+                        window.clearAppliedCoupon && window.clearAppliedCoupon();
+                        coupon = null;
+                        if (window.showToast) window.showToast('Your coupon has been deactivated. Please remove it and try again.', 'error');
+                        else alert('Your coupon has been deactivated. Please remove it and try again.');
+                        return;
+                    }
+                    if (fresh.expiresAt) {
+                        const exp = fresh.expiresAt.toDate ? fresh.expiresAt.toDate() : new Date(fresh.expiresAt);
+                        if (exp < new Date()) {
+                            window.clearAppliedCoupon && window.clearAppliedCoupon();
+                            coupon = null;
+                            if (window.showToast) window.showToast('Your coupon has expired. Please remove it and try again.', 'error');
+                            else alert('Your coupon has expired. Please remove it and try again.');
+                            return;
+                        }
+                    }
+                    if (fresh.maxUses !== undefined && (fresh.usedCount || 0) >= fresh.maxUses) {
+                        window.clearAppliedCoupon && window.clearAppliedCoupon();
+                        coupon = null;
+                        if (window.showToast) window.showToast('This coupon\'s usage limit has been reached.', 'error');
+                        else alert('This coupon\'s usage limit has been reached.');
+                        return;
+                    }
+                } catch (revalErr) {
+                    console.warn('Coupon re-validation failed — proceeding without coupon:', revalErr);
+                    window.clearAppliedCoupon && window.clearAppliedCoupon();
+                    coupon = null;
+                }
+            }
+            // ── end H8-fix ──
+
             const discount = coupon ? (coupon.discount || 0) : 0;
-            const freeDelivery = !!(coupon && coupon.freeDelivery);
+            const promoResult = window._promoResult;
+            const promoDiscount = promoResult ? Math.min(promoResult.totalDiscount || 0, subtotal) : 0;
+            const promoFreeShip = !!(promoResult?.freeShipping);
+            const freeDelivery = !!(coupon && coupon.freeDelivery) || promoFreeShip
+                || (window._freeDeliveryThreshold > 0 && subtotal >= window._freeDeliveryThreshold);
             const effectiveDelivery = freeDelivery ? 0 : deliveryCharge;
-            const total = (subtotal - discount) + effectiveDelivery;
+            const total = Math.max(0, (subtotal - discount - promoDiscount) + effectiveDelivery);
 
             // Build the order items snapshot
             const items = cart.map(item => ({
@@ -554,68 +1126,389 @@
                 image: item.image || ''
             }));
 
+            // Append selected free gift as a real item (price: 0, isFreeGift: true)
+            try {
+                const bxgyRaw = JSON.parse(localStorage.getItem('zahroun_bxgy_free') || '{}');
+                Object.values(bxgyRaw).forEach(fi => {
+                    if (fi && fi.id) {
+                        items.push({
+                            id: fi.id,
+                            name: fi.name || '',
+                            size: fi.size || '',
+                            price: 0,
+                            originalPrice: parseFloat(fi.price) || 0,
+                            quantity: 1,
+                            image: fi.image || '',
+                            isFreeGift: true
+                        });
+                    }
+                });
+            } catch {}
+
             // WhatsApp notification message (offered after the order is saved)
             let itemList = '';
             cart.forEach(item => {
                 itemList += `- ${item.name} (${item.size}) (x${item.quantity}) : ${(parseFloat(item.selectedPrice) * item.quantity).toFixed(2)} BDT\n`;
             });
+            // Add free gift to WhatsApp notification
+            items.filter(i => i.isFreeGift).forEach(fi => {
+                itemList += `- ${fi.name} (${fi.size}) (x1) : FREE GIFT\n`;
+            });
             let message = `*New Order for Zahroun*\n------------------------\n*Customer Details:*\n`;
-            message += `Name: ${name}\nMobile: ${mobile}\nAddress: ${address}\nDelivery Area: ${deliveryAreaText}\n\n`;
+            message += `Name: ${name}\nMobile: ${mobile}\nAddress: ${address}\nDistrict: ${district}\nDelivery Area: ${deliveryAreaText}\n\n`;
             message += `*Items:*\n${itemList}\nSubtotal: ${subtotal.toFixed(2)} BDT\n`;
             if (discount > 0 && coupon) message += `Coupon (${coupon.id}): -${discount.toFixed(2)} BDT\n`;
-            if (freeDelivery && coupon) message += `Coupon (${coupon.id}): FREE delivery\n`;
+            if (freeDelivery && coupon && coupon.freeDelivery) message += `Coupon (${coupon.id}): FREE delivery\n`;
+            else if (freeDelivery && window._freeDeliveryThreshold > 0 && subtotal >= window._freeDeliveryThreshold) message += `Free Delivery (Order >= ${window._freeDeliveryThreshold} BDT)\n`;
             message += `Delivery: ${freeDelivery ? 'FREE' : effectiveDelivery + ' BDT'}\n*Total:* ${total.toFixed(2)} BDT\n\n*Payment Method:* ${paymentMethod}\n`;
+            if (giftMessage) message += `\n🎁 *Gift Message:* "${giftMessage}"\n`;
             if (senderMobile) message += `*Paid From:* ${senderMobile}\n`;
             if (txnId) message += `*Transaction ID:* ${txnId}\n`;
             const whatsappUrl = `https://wa.me/8801886936581?text=${encodeURIComponent(message)}`;
+
+            // ── C3-fix: guard loyalty/referral discounts against client-side tampering ──
+            if (window._loyaltyDiscount && _loyaltyCfg?.loyaltyPoints?.enabled) {
+                const rv = _loyaltyCfg.loyaltyPoints.redeemValue || 1;
+                const maxDiscount = _loyaltyBal * rv;
+                if (!_loyaltyBal || window._loyaltyDiscount.points > _loyaltyBal ||
+                        window._loyaltyDiscount.discount > maxDiscount + 0.01) {
+                    console.warn('[Loyalty] Discount out of bounds — discarded. bal=', _loyaltyBal, 'claimed=', window._loyaltyDiscount);
+                    window._loyaltyDiscount = null;
+                }
+            }
+            if (window._referralResult && _loyaltyCfg?.referral?.enabled) {
+                const maxRef = _loyaltyCfg.referral.refereeAmt || 0;
+                if (window._referralResult.discount > maxRef + 0.01) {
+                    console.warn('[Referral] Discount out of bounds — discarded. max=', maxRef, 'claimed=', window._referralResult.discount);
+                    window._referralResult = null;
+                }
+            }
+            // ── end C3-fix ──
 
             // Save the order to Firestore
             const submitBtn = e.target.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
             submitBtn.textContent = 'Placing order...';
             try {
-                const orderId = await window.saveOrder({
-                    customer: { name, mobile, address, area: deliveryAreaText },
+                const orderResult = await window.saveOrder({
+                    customer: { name, mobile, address, district, area: deliveryAreaText },
                     items,
                     subtotal: +subtotal.toFixed(2),
                     discount: +discount.toFixed(2),
+                    promoDiscount: +promoDiscount.toFixed(2),
+                    promos: promoResult?.discounts?.map(d => ({ label: d.label, discount: +d.discount.toFixed(2) })) || [],
                     couponCode: coupon ? coupon.id : null,
                     delivery: effectiveDelivery,
                     total: +total.toFixed(2),
                     payment: { method: paymentMethod, txnId: txnId || null, senderMobile: senderMobile || null },
-                    paymentStatus: paymentMethod === 'COD' ? 'cod' : 'pending'
+                    paymentStatus: paymentMethod === 'COD' ? 'cod' : 'pending',
+                    giftMessage: giftMessage || null,
+                    guestEmail: user ? null : customerEmail,
+                    loyaltyRedeemedPoints: window._loyaltyDiscount ? (window._loyaltyDiscount.points || 0) : 0,
+                    loyaltyDiscountAmount: window._loyaltyDiscount ? +(window._loyaltyDiscount.discount || 0).toFixed(2) : 0,
+                    referrerUid: window._referralResult ? window._referralResult.referrerUid : null,
+                    referralCode: window._referralResult ? window._referralResult.code : null
                 });
+                const orderId = typeof orderResult === 'object' ? orderResult.id : orderResult;
+                const orderNum = typeof orderResult === 'object' ? orderResult.orderNum : null;
 
                 if (window.zahrounGA) window.zahrounGA.trackPurchase(orderId, items, total, coupon ? coupon.id : null);
+                // Email is sent by admin when order is confirmed — not here
                 // Increment coupon usage counter if one was applied
-                if (coupon && window.incrementCouponUsage) await window.incrementCouponUsage(coupon.id).catch(() => {});
+                if (coupon && window.incrementCouponUsage) window.incrementCouponUsage(coupon.id).catch(e => console.error('[Coupon] Usage increment failed for', coupon.id, '—', e));
                 if (window.clearAppliedCoupon) window.clearAppliedCoupon();
+                // Apply loyalty deduction + referral after order
+                // NOTE: Points are EARNED only when order status changes to "Delivered" (not here)
+                if (user && window.ZahrounPromos) {
+                    if (window._referralResult?.referrerUid) {
+                        window.ZahrounPromos.applyReferralAfterOrder(window._referralResult, user.uid).catch(() => {});
+                    }
+                    if (window._loyaltyDiscount) {
+                        window.ZahrounPromos.deductLoyaltyPoints(user.uid, window._loyaltyDiscount.points).catch(() => {});
+                    }
+                }
+                window._promoResult = null; window._loyaltyDiscount = null; window._referralResult = null;
 
                 // Clear the cart
                 localStorage.removeItem('zahroun_cart');
+                localStorage.removeItem('zahroun_bxgy_free');
                 cart = [];
                 if (typeof updateCartUI === 'function') updateCartUI();
+
+                const displayNum = orderNum ? orderNum : orderId.slice(0,8).toUpperCase();
+                const trackUrl = `track.html?order=${orderNum || ''}&phone=${encodeURIComponent(mobile)}`;
 
                 // Success screen
                 document.querySelector('.checkout-container').innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem;">
                         <ion-icon name="checkmark-circle" style="font-size: 4rem; color: #1e7e34;"></ion-icon>
                         <h2 style="margin: 1rem 0 0.5rem;">Order Placed!</h2>
-                        <p style="color: var(--text-muted); margin-bottom: 0.4rem;">Your order <strong>#${orderId.slice(0,8).toUpperCase()}</strong> has been received.</p>
-                        <p style="color: var(--text-muted); margin-bottom: 2rem;">We'll contact you via <strong>01886-936581</strong> to confirm delivery.</p>
+                        <p style="color: var(--text-muted); margin-bottom: 0.4rem;">Your order <strong>#${displayNum}</strong> has been received.</p>
+                        <p style="color: var(--text-muted); margin-bottom: .3rem;">We'll contact you via <strong>01886-936581</strong> to confirm delivery.</p>
+                        <p style="color: var(--text-muted); margin-bottom: 2rem;font-size:.88rem;">Save your order number <strong>#${displayNum}</strong> to track your order.</p>
                         <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
                             <a href="index.html" class="btn">Continue Shopping</a>
-                            <a href="${whatsappUrl}" target="_blank" class="btn btn-outline" style="display:inline-flex;align-items:center;gap:.5rem;"><ion-icon name="logo-whatsapp"></ion-icon> Notify us on WhatsApp</a>
+                            <a href="${trackUrl}" class="btn btn-outline" style="display:inline-flex;align-items:center;gap:.5rem;"><ion-icon name="locate-outline"></ion-icon> Track Order</a>
+                            <a href="${whatsappUrl}" target="_blank" class="btn btn-outline" style="display:inline-flex;align-items:center;gap:.5rem;"><ion-icon name="logo-whatsapp"></ion-icon> Notify on WhatsApp</a>
                         </div>
                     </div>`;
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch (err) {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Place Order';
-                const msg = err.message === 'not-logged-in' ? 'Please log in to place your order' : ('Could not place order: ' + (err.code || err.message));
+                const msg = 'Could not place order: ' + (err.code || err.message);
                 if (window.showToast) window.showToast(msg, 'error'); else alert(msg);
             }
         }
+
+        // ── Loyalty + Referral section initialiser ──────────────────────
+        let _loyaltyInited = false;
+        let _loyaltyCfg = null;
+        let _loyaltyBal = 0;
+
+        function getLoyaltyVisibility() {
+            const lp = _loyaltyCfg?.loyaltyPoints || {};
+            if (!lp.enabled) return { show: false, reason: '' };
+
+            // Min order amount check — show block but mark as not redeemable
+            const subtotal = cart.reduce((s, i) => s + parseFloat(i.selectedPrice) * i.quantity, 0);
+            const minOrder = lp.minOrderAmount || 0;
+            if (minOrder > 0 && subtotal < minOrder) {
+                const needed = Math.ceil(minOrder - subtotal);
+                return { show: true, canRedeem: false, reason: `Add Tk ${needed} more to your order to unlock loyalty points (min Tk ${minOrder}).` };
+            }
+
+            // Coupon check
+            if (!lp.allowWithCoupon && window.appliedCoupon) {
+                return { show: false, reason: 'Loyalty points cannot be used with a coupon. Remove the coupon to use your points.' };
+            }
+
+            // Promo check
+            const promoResult = window._promoResult;
+            if (!lp.allowDuringPromos && promoResult?.discounts?.length) {
+                return { show: false, reason: 'Loyalty points are not available during active promotions.' };
+            }
+
+            // Free gift check
+            if (!lp.allowWithFreeGift && promoResult?.freeGift) {
+                return { show: false, reason: 'Loyalty points cannot be used with a free gift offer.' };
+            }
+
+            return { show: true, canRedeem: true, reason: '' };
+        }
+
+        function updateLoyaltyVisibility() {
+            if (!_loyaltyCfg?.loyaltyPoints?.enabled) return;
+            const lp = _loyaltyCfg.loyaltyPoints;
+            const { show, canRedeem = true, reason } = getLoyaltyVisibility();
+            const row = document.getElementById('loyalty-row');
+            if (!row) return;
+            if (!show) {
+                row.style.display = 'none';
+                if (window._loyaltyDiscount) {
+                    window._loyaltyDiscount = null;
+                    const msgEl = document.getElementById('loyalty-msg');
+                    if (msgEl) msgEl.textContent = '';
+                    const inp = document.getElementById('loyalty-redeem-input');
+                    if (inp) inp.value = '';
+                    const da = document.getElementById('loyalty-discount-amount');
+                    if (da) { da.textContent = 'Tk 0.00'; da.style.color = 'var(--text-muted)'; }
+                    refreshTotals();
+                }
+                return;
+            }
+            row.style.display = '';
+
+            const hintWrap = document.getElementById('loyalty-hint-wrap');
+            const hintEl   = document.getElementById('loyalty-hint');
+            const hintIcon = document.getElementById('loyalty-hint-icon');
+            const inp      = document.getElementById('loyalty-redeem-input');
+            const useAllBtn = document.getElementById('loyalty-use-all-btn');
+            const redeemBtn = document.getElementById('loyalty-redeem-btn');
+
+            function setHint(html, isError) {
+                if (hintWrap) {
+                    hintWrap.style.background   = isError ? '#fff5f5' : '#f6f5f2';
+                    hintWrap.style.borderColor  = isError ? '#f5c6cb' : '#cac7c0';
+                }
+                if (hintIcon) hintIcon.setAttribute('name', isError ? 'warning-outline' : 'information-circle-outline');
+                if (hintEl)   { hintEl.style.color = isError ? '#c0392b' : 'var(--text-muted)'; hintEl.innerHTML = html; }
+            }
+
+            // Min order amount not met — locked state
+            if (!canRedeem) {
+                setHint(reason, true);
+                if (inp) { inp.disabled = true; inp.placeholder = 'Min order not met'; }
+                if (useAllBtn) useAllBtn.disabled = true;
+                if (redeemBtn) redeemBtn.disabled = true;
+                return;
+            }
+
+            const subtotal = cart.reduce((s, i) => s + parseFloat(i.selectedPrice) * i.quantity, 0);
+            const rv = lp.redeemValue || 1;
+            const minRedeem = lp.minRedeem || 50;
+            const maxRedeemPct = lp.maxRedeemPct || 0;
+            const maxByPct = maxRedeemPct > 0 ? Math.floor((subtotal * maxRedeemPct / 100) / rv) : _loyaltyBal;
+            const effectiveMax = Math.min(_loyaltyBal, maxByPct);
+
+            if (_loyaltyBal < minRedeem) {
+                const needed = minRedeem - _loyaltyBal;
+                setHint(`You need <strong>${needed} more point${needed !== 1 ? 's' : ''}</strong> to start redeeming.<br><span style="font-size:.78rem;">Minimum ${minRedeem} pts required to redeem points.</span>`, false);
+                if (inp) { inp.disabled = true; inp.placeholder = `Need ${minRedeem} pts to redeem`; }
+                if (useAllBtn) useAllBtn.disabled = true;
+                if (redeemBtn) redeemBtn.disabled = true;
+            } else {
+                let hintText = `<strong>Min ${minRedeem} pts</strong>`;
+                if (maxRedeemPct > 0 && effectiveMax < _loyaltyBal) {
+                    hintText += ` · Max <strong>${effectiveMax} pts</strong> (${maxRedeemPct}% of order = Tk ${(effectiveMax * rv).toFixed(0)})`;
+                } else {
+                    hintText += ` · Max <strong>${effectiveMax} pts</strong>`;
+                }
+                setHint(hintText, false);
+                if (inp) { inp.disabled = false; inp.min = minRedeem; inp.max = effectiveMax; inp.placeholder = `Enter points to redeem`; }
+                if (useAllBtn) useAllBtn.disabled = false;
+                if (redeemBtn) redeemBtn.disabled = false;
+            }
+        }
+
+        async function initLoyaltySection() {
+            if (_loyaltyInited) return;
+            if (!window.ZahrounPromos) return;
+            const user = window.getCurrentUser && window.getCurrentUser();
+            if (!user) return;
+            _loyaltyInited = true;
+
+            // Use ready promise — config is already loading in background, no extra Firestore call
+            await Promise.race([window.ZahrounPromos.ready, new Promise(r => setTimeout(r, 3000))]);
+            _loyaltyCfg = window.ZahrounPromos.getConfig();
+            const lp = _loyaltyCfg.loyaltyPoints || {};
+
+            if (lp.enabled) {
+                // Single Firestore read — extract both balance and tier from one getLoyaltyData call
+                const lpData = await window.ZahrounPromos.getLoyaltyData(user.uid).catch(() => null);
+                _loyaltyBal = lpData?.points || 0;
+                const rv = lp.redeemValue || 1;
+
+                // Update balance + redeemable value
+                const balEl   = document.getElementById('loyalty-balance');
+                const worthEl = document.getElementById('loyalty-worth');
+                if (balEl)   balEl.textContent  = _loyaltyBal.toLocaleString();
+                if (worthEl) worthEl.textContent = 'Tk ' + (_loyaltyBal * rv).toFixed(2);
+
+                // Tier badge — extracted from the same lpData read above (no second Firestore call)
+                const tierEl = document.getElementById('loyalty-tier-label');
+                if (tierEl) {
+                    const tier = lpData?.tier || 'silver';
+                    const tierLabels = { silver: 'Silver Tier', gold: 'Gold Tier', platinum: 'Platinum Tier' };
+                    const tierIonIcons = { silver: 'shield-outline', gold: 'trophy-outline', platinum: 'diamond-outline' };
+                    const tierColors = { silver: '#777', gold: '#b8860b', platinum: '#7b5ea7' };
+                    const tc = tierColors[tier] || '#777';
+                    tierEl.style.borderColor = tc + '88';
+                    tierEl.style.color = tc;
+                    tierEl.innerHTML = `<ion-icon name="${tierIonIcons[tier] || 'shield-outline'}" style="font-size:.8rem;"></ion-icon>${(tierLabels[tier] || 'Silver Tier').toUpperCase()}`;
+                    tierEl.style.display = 'inline-flex';
+                }
+
+                // Update visibility state (shows/hides row, enables/disables controls)
+                updateLoyaltyVisibility();
+
+                // Input: update "Redeemable Value" as user types
+                const inp = document.getElementById('loyalty-redeem-input');
+                inp?.addEventListener('input', () => {
+                    const v = parseInt(inp.value) || 0;
+                    if (worthEl) worthEl.textContent = 'Tk ' + (v > 0 ? (v * rv).toFixed(2) : (_loyaltyBal * rv).toFixed(2));
+                });
+
+                // Use All button
+                document.getElementById('loyalty-use-all-btn')?.addEventListener('click', () => {
+                    const subtotal = cart.reduce((s, i) => s + parseFloat(i.selectedPrice) * i.quantity, 0);
+                    const maxRedeemPct = lp.maxRedeemPct || 0;
+                    const maxByPct = maxRedeemPct > 0 ? Math.floor((subtotal * maxRedeemPct / 100) / rv) : _loyaltyBal;
+                    const effectiveMax = Math.min(_loyaltyBal, maxByPct);
+                    if (inp) { inp.value = effectiveMax; if (worthEl) worthEl.textContent = 'Tk ' + (effectiveMax * rv).toFixed(2); }
+                });
+
+                // Apply / Remove Points button (toggles state)
+                let _loyaltyApplied = false;
+                document.getElementById('loyalty-redeem-btn')?.addEventListener('click', async () => {
+                    const redeemBtn  = document.getElementById('loyalty-redeem-btn');
+                    const useAllBtn  = document.getElementById('loyalty-use-all-btn');
+                    const inpEl      = document.getElementById('loyalty-redeem-input');
+                    const msgEl      = document.getElementById('loyalty-msg');
+                    const da         = document.getElementById('loyalty-discount-amount');
+
+                    // REMOVE mode — clear applied discount
+                    if (_loyaltyApplied) {
+                        _loyaltyApplied = false;
+                        window._loyaltyDiscount = null;
+                        if (inpEl)    { inpEl.disabled = false; inpEl.value = ''; }
+                        if (useAllBtn) useAllBtn.disabled = false;
+                        if (redeemBtn) {
+                            redeemBtn.textContent = 'Apply Points';
+                            redeemBtn.style.background = '';
+                            redeemBtn.style.borderColor = '';
+                            redeemBtn.style.color = '';
+                        }
+                        if (msgEl)    msgEl.textContent = '';
+                        if (da)       { da.textContent = 'Tk 0.00'; da.style.color = 'var(--text-muted)'; }
+                        if (worthEl)  worthEl.textContent = 'Tk ' + (_loyaltyBal * rv).toFixed(2);
+                        await refreshTotals();
+                        return;
+                    }
+
+                    // APPLY mode
+                    const pts = parseInt(inpEl?.value) || 0;
+                    const subtotal = cart.reduce((s, i) => s + parseFloat(i.selectedPrice) * i.quantity, 0);
+                    if (redeemBtn) { redeemBtn.disabled = true; redeemBtn.textContent = '…'; }
+                    const res = await window.ZahrounPromos.redeemLoyaltyPoints(user.uid, pts, subtotal);
+                    if (res.success) {
+                        _loyaltyApplied = true;
+                        window._loyaltyDiscount = { label: 'Loyalty Points', discount: res.discount, points: res.points, detail: pts + ' pts = Tk ' + res.discount };
+                        if (redeemBtn) {
+                            redeemBtn.disabled = false;
+                            redeemBtn.textContent = 'Remove';
+                            redeemBtn.style.background = '#c0392b';
+                            redeemBtn.style.borderColor = '#c0392b';
+                            redeemBtn.style.color = '#fff';
+                        }
+                        if (inpEl)    inpEl.disabled = true;
+                        if (useAllBtn) useAllBtn.disabled = true;
+                        if (msgEl)    { msgEl.style.color = '#1e7e34'; msgEl.textContent = '✓ ' + pts + ' pts applied — Tk ' + res.discount.toFixed(2) + ' discount'; }
+                        if (da)       { da.textContent = 'Tk ' + res.discount.toFixed(2); da.style.color = '#1e7e34'; }
+                        await refreshTotals();
+                    } else {
+                        if (redeemBtn) { redeemBtn.disabled = false; redeemBtn.textContent = 'Apply Points'; }
+                        if (msgEl)    { msgEl.style.color = '#c0392b'; msgEl.textContent = res.error || 'Invalid points amount'; }
+                        if (da)       { da.textContent = 'Tk 0.00'; da.style.color = 'var(--text-muted)'; }
+                    }
+                });
+            }
+
+            if (_loyaltyCfg.referral?.enabled) {
+                document.getElementById('referral-row').style.display = '';
+                document.getElementById('referral-apply-btn').addEventListener('click', async () => {
+                    const code = document.getElementById('referral-code-input').value.trim();
+                    const msgEl = document.getElementById('referral-msg');
+                    if (!code) return;
+                    const res = await window.ZahrounPromos.validateReferral(code, user.uid);
+                    if (res?.success) {
+                        window._referralResult = { ...res, label: 'Referral Discount', detail: 'Tk ' + res.discount + ' off', code: code.toUpperCase() };
+                        msgEl.style.color = '#0b6e2a';
+                        msgEl.textContent = '✓ Referral code applied! Tk ' + res.discount + ' off';
+                        await refreshTotals();
+                    } else {
+                        msgEl.style.color = '#c0392b';
+                        msgEl.textContent = res?.error || 'Invalid referral code';
+                    }
+                });
+            }
+        }
+
+        // Init promos on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            initLoyaltySection(); // runs if user already signed in
+            setTimeout(async () => { await refreshTotals(); }, 800);
+        });
     </script>
 </body>
 </html>

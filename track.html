@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Your Order | Zahroun</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="css/style.css">
+    <script defer src="js/analytics.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/broadcast.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
+    <style>
+        /* ── Hero ── */
+        .track-hero {
+            background: linear-gradient(135deg, #163E34 0%, #1e5246 100%);
+            padding: 4rem 0 5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .track-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .track-hero h1 { color: #fff; font-size: 2rem; margin-bottom: .5rem; position: relative; }
+        .track-hero p  { color: rgba(255,255,255,.7); font-size: .95rem; position: relative; }
+
+        /* ── Search card (overlaps hero) ── */
+        .track-search-wrap {
+            max-width: 520px;
+            margin: -2.5rem auto 2.5rem;
+            padding: 0 1rem;
+            position: relative;
+            z-index: 2;
+        }
+        .track-search-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 1.75rem 1.75rem 1.5rem;
+            box-shadow: 0 8px 32px rgba(22,62,52,.13);
+        }
+        .track-input-row {
+            display: flex;
+            gap: .65rem;
+            align-items: stretch;
+        }
+        .track-input-wrap {
+            flex: 1;
+            position: relative;
+        }
+        .track-input-wrap ion-icon {
+            position: absolute;
+            left: .9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: color .2s;
+        }
+        .track-input-wrap input {
+            width: 100%;
+            padding: .8rem 1rem .8rem 2.6rem;
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            font-family: var(--font-sans);
+            font-size: .95rem;
+            background: var(--bg-color);
+            color: var(--text-main);
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+            box-sizing: border-box;
+        }
+        .track-input-wrap input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(22,62,52,.08);
+        }
+        .track-input-wrap input:focus + ion-icon,
+        .track-input-wrap:focus-within ion-icon { color: var(--primary-color); }
+        #track-btn {
+            padding: .8rem 1.4rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            font-size: .9rem;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .track-hint {
+            font-size: .78rem;
+            color: var(--text-muted);
+            margin-top: .65rem;
+            display: flex;
+            align-items: center;
+            gap: .3rem;
+        }
+        #track-err {
+            font-size: .83rem;
+            color: #9b2226;
+            margin-top: .6rem;
+            display: none;
+            align-items: center;
+            gap: .35rem;
+        }
+
+        /* ── Loading skeleton ── */
+        .track-loading {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: var(--text-muted);
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Fade-in animation ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fadeUp .4s ease both; }
+
+        /* ── Order summary card (for phone results) ── */
+        .orders-list-label {
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: .85rem;
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .order-summary-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow .2s;
+        }
+        .order-summary-card:hover { box-shadow: var(--shadow-md); }
+        .order-summary-head {
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            gap: .75rem;
+            flex-wrap: wrap;
+        }
+        .order-summary-head:hover { background: var(--bg-color); }
+        .order-num-label { font-weight: 700; color: var(--primary-color); font-size: 1rem; letter-spacing: .03em; }
+        .order-date-label { font-size: .8rem; color: var(--text-muted); margin-top: .15rem; }
+        .order-summary-right { display: flex; align-items: center; gap: .75rem; flex-shrink: 0; }
+        .order-total-label { font-weight: 600; font-size: .92rem; }
+        .order-expand-icon { color: var(--text-muted); font-size: 1.1rem; transition: transform .25s; }
+        .order-summary-card.open .order-expand-icon { transform: rotate(180deg); }
+        .order-detail-wrap {
+            display: none;
+            padding: 0 1.25rem 1.25rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .order-summary-card.open .order-detail-wrap { display: block; }
+
+        /* ── Timeline ── */
+        .timeline-wrap {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.75rem;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            box-shadow: 0 4px 20px rgba(22,62,52,.08);
+        }
+        .timeline-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: .75rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.75rem;
+        }
+        .t-order-id { font-weight: 700; font-size: 1.1rem; color: var(--primary-color); letter-spacing: .04em; }
+        .t-order-date { font-size: .8rem; color: var(--text-muted); margin-top: .2rem; }
+
+        .o-status { font-size: .73rem; padding: .28rem .85rem; border-radius: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+        .o-status.delivered { background: #e6f4ea; color: #1e7e34; }
+        .o-status.cancelled { background: #fdecea; color: #9b2226; }
+        .o-status.confirmed { background: #e8f0fe; color: #1a56b8; }
+        .o-status.shipped   { background: #ede7f6; color: #5e35b1; }
+        .o-status.pending   { background: #fff8e1; color: #b8860b; }
+
+        /* Steps progress bar */
+        .steps-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 68px;
+            position: relative;
+        }
+        /* Connecting line */
+        .step-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 17px;
+            left: 50%;
+            width: 100%;
+            height: 3px;
+            background: var(--border-color);
+            z-index: 0;
+            border-radius: 2px;
+            transition: background .4s;
+        }
+        .step-item.done:not(:last-child)::after { background: var(--primary-color); }
+        .step-item.cancelled-step:not(:last-child)::after { background: #e8d0d0; }
+
+        .step-dot {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            border: 2.5px solid var(--border-color);
+            background: var(--surface-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .95rem;
+            color: var(--text-muted);
+            position: relative;
+            z-index: 1;
+            transition: all .35s;
+            flex-shrink: 0;
+        }
+        .step-item.done .step-dot {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #fff;
+        }
+        .step-item.active .step-dot {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            animation: pulse-ring 2s ease infinite;
+        }
+        .step-item.cancelled-step .step-dot {
+            background: #fdecea;
+            border-color: #d9a5a5;
+            color: #9b2226;
+        }
+        @keyframes pulse-ring {
+            0%   { box-shadow: 0 0 0 0 rgba(22,62,52,.25); }
+            70%  { box-shadow: 0 0 0 7px rgba(22,62,52,0); }
+            100% { box-shadow: 0 0 0 0 rgba(22,62,52,0); }
+        }
+        .step-label {
+            font-size: .7rem;
+            text-align: center;
+            margin-top: .5rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            line-height: 1.3;
+            max-width: 68px;
+        }
+        .step-item.done .step-label,
+        .step-item.active .step-label { color: var(--primary-color); font-weight: 700; }
+        .step-item.cancelled-step .step-label { color: #9b2226; }
+        .step-ts { font-size:.6rem; color:var(--text-muted); text-align:center; margin-top:.25rem; max-width:68px; line-height:1.3; }
+        .step-item.done .step-ts, .step-item.active .step-ts { color:var(--primary-color); opacity:.75; }
+
+        /* Cancelled banner */
+        .cancelled-banner {
+            background: #fdecea;
+            border: 1px solid #f0c0c0;
+            border-radius: 10px;
+            padding: .9rem 1.1rem;
+            color: #9b2226;
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            margin-bottom: 1.5rem;
+            font-size: .88rem;
+        }
+
+        /* Items */
+        .o-items-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); font-weight: 600; margin-bottom: .65rem; }
+        .o-item { display: flex; gap: .85rem; align-items: center; padding: .55rem 0; border-bottom: 1px solid var(--border-color); }
+        .o-item:last-child { border-bottom: none; }
+        .o-item img { width: 46px; height: 46px; object-fit: contain; background: var(--bg-color); border-radius: 8px; flex-shrink: 0; }
+        .o-item-info { flex: 1; min-width: 0; }
+        .o-item-info strong { font-size: .88rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .o-item-info span { font-size: .78rem; color: var(--text-muted); }
+        .o-item-price { font-size: .88rem; font-weight: 700; flex-shrink: 0; }
+
+        /* Summary */
+        .o-summary { background: var(--bg-color); border-radius: 10px; padding: .85rem 1rem; font-size: .87rem; margin-top: 1rem; }
+        .o-summary-row { display: flex; justify-content: space-between; margin-bottom: .3rem; color: var(--text-muted); }
+        .o-summary-row.total { font-weight: 700; font-size: .96rem; color: var(--text-main); border-top: 1px solid var(--border-color); padding-top: .45rem; margin-top: .35rem; }
+
+        .o-meta { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: .82rem; color: var(--text-muted); line-height: 1.9; }
+        .o-meta strong { color: var(--text-main); }
+
+        /* Error state */
+        .track-error {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+        .track-error .err-icon { font-size: 3rem; color: var(--border-color); display: block; margin: 0 auto .75rem; }
+        .track-error p { margin-bottom: .35rem; }
+
+        /* Results wrapper */
+        #track-result { max-width: 700px; margin: 0 auto; padding: 0 1rem 3rem; }
+
+        @media (max-width: 540px) {
+            .track-hero { padding: 3rem 0 4.5rem; }
+            .track-hero h1 { font-size: 1.6rem; }
+            .track-search-card { padding: 1.25rem; }
+            .track-input-row { flex-direction: column; }
+            #track-btn { width: 100%; justify-content: center; }
+            .timeline-wrap { padding: 1.1rem; }
+            .step-label { font-size: .62rem; max-width: 56px; }
+            .step-dot { width: 28px; height: 28px; font-size: .8rem; }
+            .step-item:not(:last-child)::after { top: 13px; }
+        }
+    </style>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+</head>
+<body>
+    <header class="header">
+        <div class="container nav-container">
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="nav-icons">
+                <button aria-label="Search" onclick="window.location.href='shop.html'"><ion-icon name="search-outline"></ion-icon></button>
+                <button aria-label="Cart" id="cart-icon"><ion-icon name="bag-outline"></ion-icon><span class="cart-count" id="cart-count">0</span></button>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu"><ion-icon name="menu-outline"></ion-icon></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <div class="track-hero">
+        <div class="container">
+            <h1>Track Your Order</h1>
+            <p>Enter your order ID or phone number to see live status</p>
+        </div>
+    </div>
+
+    <!-- Search box (overlaps hero) -->
+    <div class="track-search-wrap">
+        <div class="track-search-card">
+            <form id="track-form">
+                <div class="track-input-row">
+                    <div class="track-input-wrap">
+                        <input type="text" id="inp-query"
+                            placeholder="Order ID (e.g. 123456) or Phone number"
+                            inputmode="text" autocomplete="off" autofocus>
+                        <ion-icon name="search-outline"></ion-icon>
+                    </div>
+                    <button type="submit" class="btn" id="track-btn">
+                        <ion-icon name="locate-outline"></ion-icon>Track
+                    </button>
+                </div>
+                <div class="track-hint">
+                    <ion-icon name="information-circle-outline"></ion-icon>
+                    <span>Enter your <strong style="color:var(--text-main);">6-digit Order ID</strong> — or your <strong style="color:var(--text-main);">Phone Number</strong> to see all orders</span>
+                </div>
+                <div id="track-err">
+                    <ion-icon name="alert-circle-outline"></ion-icon>
+                    <span id="track-err-msg"></span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="track-result"></div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" style="display:none;position:fixed;top:0;right:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100000;">
+        <div style="position:absolute;top:0;right:0;width:400px;max-width:100%;height:100%;background:white;padding:2rem;display:flex;flex-direction:column;box-shadow:-5px 0 15px rgba(0,0,0,0.1);transform:translateX(100%);transition:transform 0.3s;" id="cart-content-wrapper">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-color);padding-bottom:1rem;margin-bottom:1rem;">
+                <h3>Your Cart</h3>
+                <button id="close-cart" style="background:none;border:none;font-size:1.5rem;cursor:pointer;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div id="cart-items" style="flex:1;overflow-y:auto;"></div>
+            <div style="border-top:1px solid var(--border-color);padding-top:1rem;margin-top:1rem;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-weight:600;font-size:1.2rem;"><span>Total</span><span id="cart-total">Tk 0</span></div>
+                <button class="btn" style="width:100%;" onclick="window.location.href='checkout.html'">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/store.js"></script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script type="module">
+        import { db } from "./js/firebase-config.js";
+        import { collection, query, where, getDocs, orderBy, limit }
+            from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+            ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+        const fmtDate = ts => {
+            try {
+                return ts?.toDate
+                    ? ts.toDate().toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" })
+                    : "";
+            } catch { return ""; }
+        };
+
+        const normPhone = p => String(p || "").replace(/[\s\-()]/g, "");
+
+        const phoneMatch = (stored, input) => {
+            const s = normPhone(stored), i = normPhone(input);
+            return s === i || s.endsWith(i.slice(-10)) || i.endsWith(s.slice(-10));
+        };
+
+        const STEPS = [
+            { key: "pending",   label: "Order\nPlaced",      icon: "bag-check-outline" },
+            { key: "confirmed", label: "Payment\nConfirmed", icon: "shield-checkmark-outline" },
+            { key: "shipped",   label: "Shipped",            icon: "bicycle-outline" },
+            { key: "delivered", label: "Delivered",          icon: "home-outline" },
+        ];
+
+        function getStepIdx(status) {
+            if (status === "delivered") return 3;
+            if (status === "shipped")   return 2;
+            if (status === "confirmed") return 1;
+            return 0;
+        }
+
+        function buildSteps(status, statusHistory) {
+            const isCancelled = status === "cancelled";
+            const isDelivered = status === "delivered";
+            const idx = getStepIdx(status);
+            // Build a map of status → timestamp from history
+            const histMap = {};
+            (statusHistory || []).forEach(h => {
+                if (h.status && h.at && !histMap[h.status]) histMap[h.status] = h.at;
+            });
+            const fmtHistDate = (iso) => {
+                try {
+                    const d = new Date(iso);
+                    return d.toLocaleDateString("en-GB", { day:"2-digit", month:"short" }) + ", " +
+                           d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit", hour12:true });
+                } catch { return ""; }
+            };
+            return STEPS.map((s, i) => {
+                let cls = "";
+                if (isCancelled)         cls = "cancelled-step";
+                else if (i < idx)        cls = "done";
+                else if (i === idx)      cls = (i === 0 || isDelivered) ? "done" : "active";
+
+                const isDone = cls === "done";
+                const icon = isCancelled
+                    ? `<ion-icon name="close-outline"></ion-icon>`
+                    : (isDone ? `<ion-icon name="checkmark-outline"></ion-icon>`
+                              : `<ion-icon name="${s.icon}"></ion-icon>`);
+                const ts = histMap[s.key] ? `<div class="step-ts">${fmtHistDate(histMap[s.key])}</div>` : "";
+
+                return `<div class="step-item ${cls}" style="animation-delay:${i*80}ms">
+                    <div class="step-dot">${icon}</div>
+                    <div class="step-label">${s.label.replace("\n","<br>")}</div>
+                    ${ts}
+                </div>`;
+            }).join("");
+        }
+
+        function renderOrderDetail(order, compact = false) {
+            const c = order.customer || {};
+            const items = order.items || [];
+            const ordNum = order.orderNum ? `#${order.orderNum}` : `#${order.id.slice(0,8).toUpperCase()}`;
+            const isCancelled = order.status === "cancelled";
+            const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0);
+
+            const header = compact ? "" : `
+            <div class="timeline-top">
+                <div>
+                    <div class="t-order-id">${esc(ordNum)}</div>
+                    <div class="t-order-date">${fmtDate(order.createdAt)}</div>
+                </div>
+                <span class="o-status ${esc(order.status || 'pending')}">${esc(order.status || 'pending')}</span>
+            </div>`;
+
+            return `
+            ${header}
+            ${isCancelled ? `<div class="cancelled-banner">
+                <ion-icon name="close-circle-outline" style="font-size:1.4rem;flex-shrink:0;"></ion-icon>
+                <span>This order has been <strong>cancelled</strong>. Contact us if you need help.</span>
+            </div>` : ""}
+
+            <div class="steps-row fade-up">${buildSteps(order.status || "pending", order.statusHistory)}</div>
+
+            <div style="margin-bottom:.75rem;">
+                <div class="o-items-label">Order Items</div>
+                ${items.map(i => `
+                <div class="o-item">
+                    ${i.image ? `<img src="${esc(i.image)}" alt="" loading="lazy">` : ""}
+                    <div class="o-item-info">
+                        <strong>${esc(i.name)}</strong>
+                        <span>${esc(i.size)} · Qty ${i.quantity || 1}</span>
+                    </div>
+                    <div class="o-item-price">Tk ${((i.price||0)*(i.quantity||1)).toLocaleString()}</div>
+                </div>`).join("")}
+            </div>
+
+            <div class="o-summary">
+                <div class="o-summary-row"><span>Subtotal</span><span>Tk ${subtotal.toLocaleString()}</span></div>
+                ${order.discount ? `<div class="o-summary-row" style="color:#1e7e34;"><span>Discount</span><span>−Tk ${Number(order.discount).toLocaleString()}</span></div>` : ""}
+                ${order.delivery ? `<div class="o-summary-row"><span>Delivery</span><span>Tk ${Number(order.delivery).toLocaleString()}</span></div>` : ""}
+                <div class="o-summary-row total"><span>Total</span><span>Tk ${(order.total||0).toLocaleString()}</span></div>
+            </div>
+
+            <div class="o-meta">
+                <strong>Delivery to:</strong> ${esc(c.address || "—")}${c.area ? ` · ${esc(c.area)}` : ""}<br>
+                <strong>Payment:</strong> ${esc(order.payment?.method || "—")}
+            </div>
+
+            <div style="text-align:center;margin-top:1.25rem;">
+                <a href="contact.html" class="btn btn-outline" style="font-size:.83rem;padding:.5rem 1.3rem;">
+                    <ion-icon name="chatbubble-ellipses-outline" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>Need Help?
+                </a>
+            </div>`;
+        }
+
+        // ── Firestore lookups ──────────────────────────────────────────────
+
+        async function lookupByOrderId(numStr) {
+            const num = parseInt(numStr.replace(/\D/g, ""));
+            if (!num) return [];
+            const snap = await getDocs(query(collection(db, "orders"), where("orderNum", "==", num)));
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+
+        async function lookupByPhone(phone) {
+            const cleaned = normPhone(phone);
+            if (cleaned.length < 7) return [];
+            // Try exact match first
+            const q1 = query(collection(db, "orders"), where("customer.mobile", "==", cleaned), limit(20));
+            const snap1 = await getDocs(q1);
+            if (!snap1.empty) {
+                return snap1.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            }
+            // Fallback: fetch recent orders and filter client-side (handles leading-0 variants)
+            const q2 = query(collection(db, "orders"), orderBy("createdAt", "desc"), limit(200));
+            const snap2 = await getDocs(q2);
+            return snap2.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(o => phoneMatch(o.customer?.mobile || "", cleaned))
+                .slice(0, 20);
+        }
+
+        // ── Detect input type ──────────────────────────────────────────────
+        function detectInputType(val) {
+            const digits = val.replace(/\D/g, "");
+            // 6-digit order ID
+            if (/^\d{6}$/.test(digits) && /^\d+$/.test(val.trim())) return "orderId";
+            // Looks like a phone number (8-15 digits, may start with 0/+)
+            if (digits.length >= 8 && digits.length <= 15) return "phone";
+            // Numeric but short → could be order ID attempt
+            if (/^\d+$/.test(val.trim())) return "orderId";
+            return "phone";
+        }
+
+        // ── Render functions ───────────────────────────────────────────────
+        const resultEl = document.getElementById("track-result");
+
+        function showError(msg) {
+            resultEl.innerHTML = `<div class="track-error fade-up">
+                <ion-icon name="search-outline" class="err-icon"></ion-icon>
+                <p style="font-weight:600;color:var(--text-main);margin-bottom:.35rem;">${msg}</p>
+                <p>Double-check your input and try again.</p>
+            </div>`;
+        }
+
+        function showSingleOrder(order) {
+            resultEl.innerHTML = `<div class="timeline-wrap fade-up">${renderOrderDetail(order)}</div>`;
+        }
+
+        function showMultipleOrders(orders) {
+            const label = `<div class="orders-list-label" style="padding:0 .25rem;">
+                <ion-icon name="list-outline"></ion-icon>${orders.length} order${orders.length > 1 ? "s" : ""} found
+            </div>`;
+            const cards = orders.map((o, idx) => {
+                const ordNum = o.orderNum ? `#${o.orderNum}` : `#${o.id.slice(0,8).toUpperCase()}`;
+                return `<div class="order-summary-card fade-up" style="animation-delay:${idx*60}ms" id="ocard-${idx}">
+                    <div class="order-summary-head" onclick="toggleCard(${idx})">
+                        <div>
+                            <div class="order-num-label">${esc(ordNum)}</div>
+                            <div class="order-date-label">${fmtDate(o.createdAt)}</div>
+                        </div>
+                        <div class="order-summary-right">
+                            <span class="o-status ${esc(o.status||'pending')}">${esc(o.status||'pending')}</span>
+                            <span class="order-total-label">Tk ${(o.total||0).toLocaleString()}</span>
+                            <ion-icon name="chevron-down-outline" class="order-expand-icon"></ion-icon>
+                        </div>
+                    </div>
+                    <div class="order-detail-wrap">${renderOrderDetail(o, true)}</div>
+                </div>`;
+            }).join("");
+
+            resultEl.innerHTML = label + `<div style="padding:0 .25rem;">${cards}</div>`;
+
+            // Auto-open first card
+            const first = document.getElementById("ocard-0");
+            if (first) first.classList.add("open");
+        }
+
+        window.toggleCard = function(idx) {
+            const card = document.getElementById("ocard-" + idx);
+            if (card) card.classList.toggle("open");
+        };
+
+        // ── Form submit ────────────────────────────────────────────────────
+        const form    = document.getElementById("track-form");
+        const errEl   = document.getElementById("track-err");
+        const errMsg  = document.getElementById("track-err-msg");
+        const btn     = document.getElementById("track-btn");
+
+        function setErr(msg) {
+            errMsg.textContent = msg;
+            errEl.style.display = "flex";
+        }
+        function clearErr() { errEl.style.display = "none"; }
+
+        async function doTrack(e) {
+            if (e) e.preventDefault();
+            const val = document.getElementById("inp-query").value.trim();
+            clearErr();
+            resultEl.innerHTML = "";
+
+            if (!val) { setErr("Please enter your Order ID or Phone Number."); return; }
+
+            // Invalid input — needs to look like a 6-digit Order ID or a phone number
+            const digitCount = (val.match(/\d/g) || []).length;
+            if (digitCount < 4) {
+                setErr("Invalid input — enter your 6-digit Order ID or your phone number.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner" style="width:18px;height:18px;border-width:2px;margin:0;display:inline-block;vertical-align:middle;margin-right:.4rem;"></span>Searching…`;
+            resultEl.innerHTML = `<div class="track-loading"><div class="spinner"></div><p>Looking up your order…</p></div>`;
+
+            try {
+                const type = detectInputType(val);
+                let orders = [];
+
+                if (type === "orderId") {
+                    orders = await lookupByOrderId(val);
+                    if (!orders.length) {
+                        // Maybe it's a phone number after all
+                        orders = await lookupByPhone(val);
+                    }
+                } else {
+                    orders = await lookupByPhone(val);
+                    if (!orders.length && /^\d{5,10}$/.test(val.trim())) {
+                        orders = await lookupByOrderId(val);
+                    }
+                }
+
+                if (!orders.length) {
+                    showError("No order found");
+                } else if (orders.length === 1) {
+                    showSingleOrder(orders[0]);
+                } else {
+                    showMultipleOrders(orders);
+                }
+            } catch (err) {
+                console.error("[Track] lookup failed:", err);
+                const code = err?.code || "";
+                const isNet = code === "unavailable" || code === "deadline-exceeded" ||
+                              /network|offline|fetch|failed to get/i.test(err?.message || "");
+                const msg = code === "permission-denied"
+                    ? "Order tracking is temporarily unavailable. Please try again shortly."
+                    : isNet
+                        ? "Network error — please check your connection and try again."
+                        : "Something went wrong. Please try again.";
+                resultEl.innerHTML = `<div class="track-error fade-up">
+                    <ion-icon name="${isNet ? 'cloud-offline-outline' : 'alert-circle-outline'}" class="err-icon"></ion-icon>
+                    <p style="font-weight:600;color:var(--text-main);margin-bottom:.35rem;">${msg}</p>
+                    <p>If this keeps happening, please contact us for help.</p>
+                </div>`;
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = `<ion-icon name="locate-outline"></ion-icon>Track`;
+        }
+
+        form.addEventListener("submit", doTrack);
+
+        // Pre-fill from URL params (from checkout success page)
+        const params = new URLSearchParams(location.search);
+        if (params.get("order")) document.getElementById("inp-query").value = params.get("order");
+        if (params.get("phone") && !params.get("order")) document.getElementById("inp-query").value = params.get("phone");
+        if (params.get("order") || params.get("phone")) doTrack();
+    </script>
+</body>
+</html>

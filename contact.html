@@ -5,8 +5,8 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us | Zahroun Luxury Perfumes</title>
-    <link rel="icon" type="image/png" href="product pictures/favicon.png">
-    <link rel="apple-touch-icon" href="product pictures/favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
     <meta name="description" content="Get in touch with Zahroun — Dhanmondi, Dhaka. Send a message, WhatsApp us, or find us on the map. We're here to assist with your fragrance inquiries.">
     <meta property="og:title" content="Contact Us | Zahroun Luxury Perfumes">
     <meta property="og:description" content="Reach out to Zahroun for perfume inquiries, orders, or support. Located in Dhanmondi, Dhaka, Bangladesh.">
@@ -19,11 +19,17 @@
     <meta name="twitter:description" content="Get in touch with Zahroun — Dhanmondi, Dhaka. WhatsApp: 01886-936581. We're here to assist with your fragrance inquiries.">
     <meta name="twitter:image" content="https://raw.githubusercontent.com/marufshehzad/Zahroun/master/logo.png">
     <link rel="canonical" href="https://zahroun.com/contact.html">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/analytics.js"></script>
+    <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script type="module" src="js/broadcast.js"></script>
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <style>
         .form-group {
             margin-bottom: 1.5rem;
@@ -69,11 +75,12 @@
             color: var(--primary-color);
         }
     </style>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </head>
 <body>
     <header class="header">
         <div class="container nav-container">
-            <a href="index.html" class="logo"><img src="product pictures/main logo white.png" alt="Zahroun"></a>
+            <a href="index.html" class="logo"><img src="product pictures/main logo white.webp" alt="Zahroun"></a>
             <nav class="nav-links" id="nav-links">
                 <a href="index.html">Home</a>
                 <a href="shop.html">Shop</a>
@@ -93,7 +100,7 @@
         </div>
     </header>
 
-    <div id="contact-hero-section" style="background: url('product pictures/New product pic and price/Home.jpg') center/cover no-repeat; padding: 8rem 0; text-align: center; position: relative;">
+    <div id="contact-hero-section" style="background: url('product pictures/New product pic and price/Home.webp') center/cover no-repeat; padding: 8rem 0; text-align: center; position: relative;">
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6));"></div>
         <div class="container fade-in" style="position: relative; z-index: 2;">
             <div class="hero-glass">
@@ -182,6 +189,7 @@
                 <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
                     <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Explore Fragrance DNAs</a></li>
                     <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Best Sellers</a></li>
+                    <li><a href="sale.html" style="color: #ccc; font-size: 1rem;">Flash Sale</a></li>
                     <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Blog</a></li>
                     <li><a href="shop.html" style="color: #ccc; font-size: 1rem;">Reviews</a></li>
                 </ul>
@@ -193,23 +201,26 @@
                     <li><a href="about.html" style="color: #ccc; font-size: 1rem;">How It Works</a></li>
                     <li><a href="contact.html" style="color: #ccc; font-size: 1rem;">Contact Us</a></li>
                     <li><a href="contact.html" style="color: #ccc; font-size: 1rem;">Shipping</a></li>
+                    <li><a href="track.html" style="color: #ccc; font-size: 1rem;">Track Order</a></li>
+                    <li><a href="faq.html" style="color: #ccc; font-size: 1rem;">FAQ</a></li>
+                    <li><a href="policy.html" style="color: #ccc; font-size: 1rem;">Policies</a></li>
                     <li><a href="checkout.html" style="color: #ccc; font-size: 1rem;">Payment Methods</a></li>
                 </ul>
             </div>
         </div>
-        <div class="footer-bottom-new" style="border-top: 1px solid #222; margin-top: 4rem; padding-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+        <div class="footer-bottom-new" style="border-top: 1px solid #222; margin-top: 4rem; padding-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; width: 100%; box-sizing: border-box; overflow: hidden;">
             <div style="display: flex; gap: 1.5rem; color: white; font-size: 1.2rem;">
-                <a href="https://www.facebook.com/zahroun" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-facebook"></ion-icon></a>
-                <a href="https://www.instagram.com/zahroun" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-instagram"></ion-icon></a>
+                <a href="https://www.facebook.com/profile.php?id=61586401509792" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-facebook"></ion-icon></a>
+                <a href="https://www.instagram.com/zahroun_?igsh=b3hrNTFia2xzZG5y" target="_blank" rel="noopener noreferrer"><ion-icon name="logo-instagram"></ion-icon></a>
                 <a href="#"><ion-icon name="logo-youtube"></ion-icon></a>
             </div>
-            <p style="color: #666; font-size: 0.95rem;">Dhanmondi, Dhaka, Bangladesh, 1205 | WhatsApp: +880 1886-936581</p>
+            <p style="color: #666; font-size: 0.95rem; text-align: center; word-break: break-word; overflow-wrap: break-word; max-width: 100%; padding: 0 0.5rem; box-sizing: border-box;">Dhanmondi, Dhaka, Bangladesh, 1205<br><a id="whatsapp-link" href="https://wa.me/8801886936581?text=Hi%20Zahroun%2C%20I'm%20interested%20in%20your%20perfumes%20%F0%9F%8C%B9" target="_blank" rel="noopener" style="color:#1e7e34;font-weight:500;white-space:nowrap;">WhatsApp: +880 1886-936581</a> &nbsp;|&nbsp; <a href="mailto:support@zahroun.com" style="color:#1e7e34;font-weight:500;white-space:nowrap;">support@zahroun.com</a></p>
             <p style="color: #666; font-size: 0.95rem;">&copy; 2026 Zahroun. All rights reserved.</p>
         </div>
     </footer>
 
     <!-- Reusing Cart Modal Structure -->
-    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div id="cart-modal" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;">
         <div style="position: absolute; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: white; padding: 2rem; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s;" id="cart-content-wrapper">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem;">
                 <h3>Your Cart</h3>
@@ -219,7 +230,7 @@
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
                     <span>Total</span>
-                    <span id="cart-total">0 BDT</span>
+                    <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
@@ -227,8 +238,8 @@
     </div>
 
     <script type="module" src="js/store.js"></script>
-    <script src="js/cart.js"></script>
-    <script src="js/ui.js"></script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
     <script type="module">
         import { db } from "./js/firebase-config.js";
         import { getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -317,6 +328,7 @@
     </script>
 </body>
 </html>
+
 
 
 

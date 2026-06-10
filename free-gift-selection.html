@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="only light">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Your Complimentary Gift | Zahroun</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="css/style.css">
+    <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="vendor/ionicons/ionicons.js"></script>
+    <style>
+        .fgs-page {
+            min-height: 100vh;
+            background: #f7f5f1;
+        }
+
+        /* ── Hero ──────────────────────────────────────────────────── */
+        .fgs-hero {
+            background: linear-gradient(160deg, #081c14 0%, #163E34 55%, #1e5c45 100%);
+            padding: 4.5rem 1.5rem 3.75rem;
+            text-align: center;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .fgs-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a84c' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+        .fgs-hero-eyebrow {
+            font-size: .65rem;
+            font-weight: 700;
+            letter-spacing: .3em;
+            text-transform: uppercase;
+            color: #c9a84c;
+            margin-bottom: 1.1rem;
+            position: relative;
+        }
+        .fgs-hero-title {
+            font-family: var(--font-serif, 'Georgia', serif);
+            font-size: 2.6rem;
+            font-weight: 400;
+            letter-spacing: .02em;
+            line-height: 1.18;
+            margin-bottom: 1.25rem;
+            color: #fff;
+            position: relative;
+        }
+        .fgs-hero-rule {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .9rem;
+            margin: 0 auto 1.35rem;
+            max-width: 240px;
+            position: relative;
+        }
+        .fgs-hero-rule::before,
+        .fgs-hero-rule::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(201,168,76,.45);
+        }
+        .fgs-hero-rule-diamond {
+            width: 6px;
+            height: 6px;
+            background: #c9a84c;
+            transform: rotate(45deg);
+            flex-shrink: 0;
+        }
+        .fgs-hero-sub {
+            font-size: .93rem;
+            line-height: 1.85;
+            color: rgba(255,255,255,.78);
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .fgs-promo-badge {
+            display: inline-block;
+            background: rgba(201,168,76,.18);
+            border: 1px solid rgba(201,168,76,.4);
+            color: #c9a84c;
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            padding: .3rem .9rem;
+            border-radius: 2px;
+            margin-bottom: 1.35rem;
+            position: relative;
+        }
+
+        /* ── Content ───────────────────────────────────────────────── */
+        .fgs-content {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 3.5rem 1.5rem 4rem;
+        }
+
+        .fgs-section-header {
+            text-align: center;
+            margin-bottom: 2.25rem;
+        }
+        .fgs-section-eyebrow {
+            font-size: .62rem;
+            font-weight: 700;
+            letter-spacing: .25em;
+            text-transform: uppercase;
+            color: #163E34;
+            margin-bottom: .5rem;
+        }
+        .fgs-section-title {
+            font-family: var(--font-serif, 'Georgia', serif);
+            font-size: 1.35rem;
+            font-weight: 400;
+            color: #1a1a1a;
+            letter-spacing: .03em;
+        }
+
+        /* ── ML restriction note ───────────────────────────────────── */
+        .fgs-ml-note {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            max-width: 520px;
+            margin: 0 auto 2rem;
+            background: #f0f7f4;
+            border: 1px solid #b8d9c8;
+            border-radius: 8px;
+            padding: .7rem 1.1rem;
+            font-size: .8rem;
+            color: #163E34;
+            line-height: 1.5;
+        }
+        .fgs-ml-note ion-icon {
+            flex-shrink: 0;
+            font-size: 1.05rem;
+            color: #163E34;
+        }
+
+        /* ── Product grid ──────────────────────────────────────────── */
+        .fgs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 1.35rem;
+            margin-bottom: 2.75rem;
+        }
+
+        /* ── Card ──────────────────────────────────────────────────── */
+        .fgs-card {
+            background: #fff;
+            border: 1.5px solid #e6e0d5;
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color .22s, box-shadow .22s, transform .2s;
+            position: relative;
+        }
+        .fgs-card:hover {
+            border-color: #163E34;
+            box-shadow: 0 10px 32px rgba(22,62,52,.13);
+            transform: translateY(-3px);
+        }
+        .fgs-card.selected {
+            border-color: #163E34;
+            border-width: 2px;
+            box-shadow: 0 10px 32px rgba(22,62,52,.2);
+        }
+        .fgs-card.selected::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 13px;
+            background: rgba(22,62,52,.025);
+            pointer-events: none;
+        }
+
+        .fgs-card-img-wrap {
+            position: relative;
+            aspect-ratio: 1;
+            background: #f6f4f0;
+            overflow: hidden;
+        }
+        .fgs-card-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 1rem;
+        }
+
+        .fgs-card-badge {
+            position: absolute;
+            top: .7rem;
+            right: .7rem;
+            background: #163E34;
+            color: #c9a84c;
+            font-size: .58rem;
+            font-weight: 800;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            padding: .22rem .6rem;
+            border-radius: 2px;
+        }
+
+        .fgs-card-selected-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(22,62,52,.08);
+            align-items: center;
+            justify-content: center;
+        }
+        .fgs-card.selected .fgs-card-selected-overlay {
+            display: flex;
+        }
+        .fgs-card-selected-check {
+            width: 44px;
+            height: 44px;
+            background: #163E34;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(22,62,52,.35);
+        }
+        .fgs-card-selected-check ion-icon {
+            color: #fff;
+            font-size: 1.4rem;
+        }
+
+        .fgs-card-body {
+            padding: 1.1rem 1.15rem 1.15rem;
+        }
+        .fgs-card-name {
+            font-family: var(--font-serif, 'Georgia', serif);
+            font-size: 1rem;
+            font-weight: 400;
+            color: #1a1a1a;
+            margin-bottom: .2rem;
+            letter-spacing: .015em;
+        }
+        .fgs-card-size {
+            font-size: .68rem;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            margin-bottom: .8rem;
+        }
+        .fgs-card-price-row {
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            margin-bottom: .9rem;
+        }
+        .fgs-card-orig-price {
+            font-size: .83rem;
+            color: #bbb;
+            text-decoration: line-through;
+        }
+        .fgs-card-free-label {
+            font-size: .78rem;
+            font-weight: 700;
+            color: #163E34;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .fgs-select-btn {
+            display: block;
+            width: 100%;
+            padding: .65rem;
+            background: #fff;
+            border: 1.5px solid #163E34;
+            border-radius: 8px;
+            font-size: .72rem;
+            font-weight: 700;
+            color: #163E34;
+            cursor: pointer;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            transition: background .2s, color .2s;
+            font-family: var(--font-sans, sans-serif);
+        }
+        .fgs-card:hover .fgs-select-btn,
+        .fgs-card.selected .fgs-select-btn {
+            background: #163E34;
+            color: #fff;
+        }
+
+        /* ── Continue section ──────────────────────────────────────── */
+        .fgs-actions {
+            text-align: center;
+        }
+        .fgs-continue-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .65rem;
+            padding: .95rem 2.75rem;
+            background: #163E34;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: .82rem;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background .2s, transform .15s;
+            font-family: var(--font-sans, sans-serif);
+        }
+        .fgs-continue-btn:hover:not(:disabled) {
+            background: #0b231a;
+            transform: translateY(-1px);
+        }
+        .fgs-continue-btn:disabled {
+            opacity: .38;
+            cursor: not-allowed;
+        }
+        .fgs-continue-btn ion-icon { font-size: 1rem; }
+
+        .fgs-skip-link {
+            display: block;
+            margin-top: 1rem;
+            font-size: .78rem;
+            color: #aaa;
+            cursor: pointer;
+            text-decoration: none;
+            letter-spacing: .04em;
+            transition: color .2s;
+        }
+        .fgs-skip-link:hover { color: #163E34; }
+
+        /* ── State screens ─────────────────────────────────────────── */
+        .fgs-state {
+            text-align: center;
+            padding: 4.5rem 1rem;
+            color: #888;
+        }
+        .fgs-state p { font-size: .95rem; line-height: 1.7; }
+        .fgs-spinner {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 2.5px solid #e0e0e0;
+            border-top-color: #163E34;
+            border-radius: 50%;
+            animation: fgsSpin .75s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes fgsSpin { to { transform: rotate(360deg); } }
+
+        /* ── Skeleton loaders ──────────────────────────────────────── */
+        .fgs-skeleton-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 1.35rem;
+            margin-bottom: 2.75rem;
+        }
+        .fgs-skeleton-card {
+            background: #fff;
+            border: 1.5px solid #e6e0d5;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .fgs-skeleton-img {
+            aspect-ratio: 1;
+            background: linear-gradient(90deg, #f0ede8 25%, #e8e4de 50%, #f0ede8 75%);
+            background-size: 200% 100%;
+            animation: fgsSkel 1.4s infinite;
+        }
+        .fgs-skeleton-body { padding: 1.1rem; }
+        .fgs-skeleton-line {
+            height: 12px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0ede8 25%, #e8e4de 50%, #f0ede8 75%);
+            background-size: 200% 100%;
+            animation: fgsSkel 1.4s infinite;
+            margin-bottom: .65rem;
+        }
+        .fgs-skeleton-line.short { width: 45%; }
+        .fgs-skeleton-btn {
+            height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #f0ede8 25%, #e8e4de 50%, #f0ede8 75%);
+            background-size: 200% 100%;
+            animation: fgsSkel 1.4s infinite;
+            margin-top: .5rem;
+        }
+        @keyframes fgsSkel { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        @media (max-width: 680px) {
+            .fgs-skeleton-grid { grid-template-columns: 1fr; }
+            .fgs-skeleton-card { display: flex; flex-direction: row; }
+            .fgs-skeleton-img { width: 120px; min-width: 120px; aspect-ratio: auto; height: 130px; }
+        }
+
+        /* ── Mobile ────────────────────────────────────────────────── */
+        @media (max-width: 680px) {
+            .fgs-hero { padding: 3rem 1.25rem 2.75rem; }
+            .fgs-hero-title { font-size: 1.85rem; }
+            .fgs-content { padding: 2.5rem 1rem 3rem; }
+            .fgs-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .fgs-card {
+                display: flex;
+                flex-direction: row;
+                border-radius: 12px;
+            }
+            .fgs-card-img-wrap {
+                width: 120px;
+                min-width: 120px;
+                aspect-ratio: auto;
+                height: auto;
+                border-radius: 0;
+            }
+            .fgs-card-body {
+                flex: 1;
+                padding: .9rem 1rem;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+            .fgs-continue-btn {
+                width: 100%;
+                justify-content: center;
+                padding: .9rem;
+            }
+        }
+    </style>
+    <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+</head>
+<body>
+    <header class="header">
+        <div class="container nav-container">
+            <a href="index.html" class="logo">
+                <img src="product pictures/main logo white.webp" alt="Zahroun">
+            </a>
+            <nav class="nav-links" id="nav-links">
+                <a href="index.html">Home</a>
+                <a href="shop.html">Shop</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            <div class="nav-icons">
+                <button aria-label="Cart" id="cart-icon">
+                    <ion-icon name="bag-outline"></ion-icon>
+                    <span class="cart-count" id="cart-count">0</span>
+                </button>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="fgs-page">
+
+        <!-- Hero -->
+        <div class="fgs-hero">
+            <div class="fgs-promo-badge" id="fgs-promo-badge">Buy X Get Y Free</div>
+            <div class="fgs-hero-eyebrow">Complimentary Gift</div>
+            <h1 class="fgs-hero-title">Choose Your<br>Complimentary Gift</h1>
+            <div class="fgs-hero-rule">
+                <div class="fgs-hero-rule-diamond"></div>
+            </div>
+            <p class="fgs-hero-sub">
+                Congratulations! Your order qualifies for our promotion.<br>
+                Select one complimentary fragrance from the collection below
+                and it will be added to your order at no extra cost.
+            </p>
+        </div>
+
+        <!-- Main content -->
+        <div class="fgs-content">
+
+            <!-- Loading state — skeleton cards -->
+            <div id="fgs-loading">
+                <div class="fgs-section-header">
+                    <div class="fgs-section-eyebrow">Select One Fragrance</div>
+                    <div class="fgs-section-title">Your Complimentary Selection</div>
+                </div>
+                <div class="fgs-skeleton-grid">
+                    <div class="fgs-skeleton-card"><div class="fgs-skeleton-img"></div><div class="fgs-skeleton-body"><div class="fgs-skeleton-line"></div><div class="fgs-skeleton-line short"></div><div class="fgs-skeleton-line short"></div><div class="fgs-skeleton-btn"></div></div></div>
+                    <div class="fgs-skeleton-card"><div class="fgs-skeleton-img"></div><div class="fgs-skeleton-body"><div class="fgs-skeleton-line"></div><div class="fgs-skeleton-line short"></div><div class="fgs-skeleton-line short"></div><div class="fgs-skeleton-btn"></div></div></div>
+                    <div class="fgs-skeleton-card"><div class="fgs-skeleton-img"></div><div class="fgs-skeleton-body"><div class="fgs-skeleton-line"></div><div class="fgs-skeleton-line short"></div><div class="fgs-skeleton-line short"></div><div class="fgs-skeleton-btn"></div></div></div>
+                    <div class="fgs-skeleton-card"><div class="fgs-skeleton-img"></div><div class="fgs-skeleton-body"><div class="fgs-skeleton-line"></div><div class="fgs-skeleton-line short"></div><div class="fgs-skeleton-line short"></div><div class="fgs-skeleton-btn"></div></div></div>
+                </div>
+            </div>
+
+            <!-- Empty state -->
+            <div id="fgs-empty" class="fgs-state" style="display:none;">
+                <p>No complimentary gifts are available at this time.</p>
+                <a href="checkout.html" class="btn" style="margin-top:1.5rem;display:inline-block;">Continue to Checkout</a>
+            </div>
+
+            <!-- Gift selector -->
+            <div id="fgs-selector" style="display:none;">
+                <div id="fgs-ml-note-wrap"></div>
+
+                <div class="fgs-section-header">
+                    <div class="fgs-section-eyebrow">Select One Fragrance</div>
+                    <div class="fgs-section-title">Your Complimentary Selection</div>
+                </div>
+
+                <div class="fgs-grid" id="fgs-grid"></div>
+
+                <div class="fgs-actions">
+                    <button class="fgs-continue-btn" id="fgs-continue-btn" disabled>
+                        <ion-icon name="arrow-forward-outline"></ion-icon>
+                        Continue to Checkout
+                    </button>
+                    <a href="checkout.html" class="fgs-skip-link" id="fgs-skip-link">
+                        Skip &mdash; proceed without selecting a gift
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Cart sidebar (reused for cart icon) -->
+    <div id="cart-modal" style="display:none;position:fixed;top:0;right:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:100000;">
+        <div style="position:absolute;top:0;right:0;width:400px;max-width:100%;height:100%;background:#fff;padding:2rem;display:flex;flex-direction:column;box-shadow:-5px 0 15px rgba(0,0,0,.1);transform:translateX(100%);transition:transform .3s;" id="cart-content-wrapper">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-color);padding-bottom:1rem;margin-bottom:1rem;">
+                <h3>Your Cart</h3>
+                <button id="close-cart" style="background:none;border:none;font-size:1.5rem;cursor:pointer;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div id="cart-items" style="flex:1;overflow-y:auto;"></div>
+            <div style="border-top:1px solid var(--border-color);padding-top:1rem;margin-top:1rem;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-weight:600;font-size:1.2rem;">
+                    <span>Total</span><span id="cart-total">Tk 0</span>
+                </div>
+                <button class="btn checkout-redirect-btn" style="width:100%;">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/store.js"></script>
+    <script type="module" src="js/promotions.js"></script>
+    <script defer src="js/cart.js"></script>
+    <script defer src="js/ui.js"></script>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+        const SIZE_ML = { "6ML": 6, "15ML": 15, "30ML": 30, "50ML": 50 };
+        function sizeNum(s) { return SIZE_ML[s] || 0; }
+
+        let _selectedGift = null;
+
+        async function initPage() {
+            const cart = JSON.parse(localStorage.getItem('zahroun_cart') || '[]');
+            if (!cart.length) { window.location.href = 'cart.html'; return; }
+
+            // Load promo config — use sessionStorage cache to avoid repeated Firestore reads
+            let cfg = {};
+            try {
+                const P = window.ZahrounPromos;
+                if (P) {
+                    const _cacheKey = 'zhr_promo_cfg_v1';
+                    const _cached = sessionStorage.getItem(_cacheKey);
+                    if (_cached) {
+                        try { cfg = JSON.parse(_cached); } catch {}
+                    }
+                    if (!cfg?.buyXGetY) {
+                        cfg = await P.load(true);
+                        try { sessionStorage.setItem(_cacheKey, JSON.stringify(cfg)); } catch {}
+                    }
+                }
+            } catch {}
+
+            const bxgy = cfg?.buyXGetY;
+            if (!bxgy?.enabled || bxgy.freeItemScope !== 'select') {
+                window.location.href = 'checkout.html'; return;
+            }
+
+            // Check cart qualifies
+            const totalQty = cart.reduce((s, i) => s + (i.quantity || 1), 0);
+            const rules = [...(bxgy.rules || [])].sort((a, b) => b.buy - a.buy);
+            const rule = rules.find(r => totalQty >= r.buy);
+            if (!rule) { window.location.href = 'checkout.html'; return; }
+
+            // Update promo badge
+            const badge = document.getElementById('fgs-promo-badge');
+            if (badge) badge.textContent = `Buy ${rule.buy} Get ${rule.getFree} Free`;
+
+            // ML restriction: max size in cart
+            const maxCartSizeMl = Math.max(...cart.map(i => sizeNum(i.size || '50ML')), 6);
+
+            // Build eligible free product+size entries
+            let freeSizeEntries = [];
+            if (bxgy.freeProductSizes?.length) {
+                freeSizeEntries = bxgy.freeProductSizes.filter(fps => sizeNum(fps.size) <= maxCartSizeMl);
+            } else if (bxgy.freeProductIds?.length) {
+                // Legacy: show smallest eligible size per product
+                bxgy.freeProductIds.forEach(id => {
+                    ['6ML', '15ML', '30ML', '50ML'].filter(s => sizeNum(s) <= maxCartSizeMl)
+                        .forEach(s => freeSizeEntries.push({ productId: String(id), size: s }));
+                });
+            }
+
+            if (!freeSizeEntries.length) {
+                // All sizes restricted — show a helpful note, then skip
+                document.getElementById('fgs-loading').style.display = 'none';
+                document.getElementById('fgs-empty').style.display = 'block';
+                return;
+            }
+
+            // Check if ML restriction filtered anything
+            const totalEntries = (bxgy.freeProductSizes || bxgy.freeProductIds || []).length;
+            const removedBySizeFilter = totalEntries > 0 && freeSizeEntries.length < totalEntries;
+
+            if (removedBySizeFilter) {
+                const maxSizeLabel = Object.keys(SIZE_ML).find(k => SIZE_ML[k] === maxCartSizeMl) || `${maxCartSizeMl}ML`;
+                document.getElementById('fgs-ml-note-wrap').innerHTML = `
+                    <div class="fgs-ml-note">
+                        <ion-icon name="information-circle-outline"></ion-icon>
+                        <span>Your complimentary gift is limited to <strong>${maxSizeLabel}</strong> or smaller, based on your purchase size.</span>
+                    </div>`;
+            }
+
+            // Load product data
+            const uniqueIds = [...new Set(freeSizeEntries.map(e => String(e.productId)))];
+            const productsMap = {};
+
+            // Prefer global products array (avoids extra Firestore reads)
+            const waitForProducts = () => new Promise(resolve => {
+                if (typeof window.products !== 'undefined' && window.products?.length) {
+                    window.products.forEach(p => { productsMap[String(p.id)] = p; });
+                    resolve();
+                } else {
+                    document.addEventListener('products-ready', () => {
+                        (window.products || []).forEach(p => { productsMap[String(p.id)] = p; });
+                        resolve();
+                    }, { once: true });
+                    // Fallback if products-ready never fires
+                    setTimeout(resolve, 1500);
+                }
+            });
+            await waitForProducts();
+
+            // Fill missing products from Firestore
+            const missingIds = uniqueIds.filter(id => !productsMap[id]);
+            if (missingIds.length) {
+                try {
+                    const snaps = await Promise.all(missingIds.map(id => getDoc(doc(db, 'products', id))));
+                    snaps.filter(s => s.exists()).forEach(s => { productsMap[s.id] = { id: s.id, ...s.data() }; });
+                } catch {}
+            }
+
+            // Build enriched options — skip out-of-stock products
+            const giftOptions = freeSizeEntries.map(fps => {
+                const prod = productsMap[String(fps.productId)];
+                if (!prod) return null;
+                // Respect stock: if product has a numeric stock field and it's 0, exclude it
+                if (typeof prod.stock === 'number' && prod.stock <= 0) return null;
+                const price = (prod.prices && prod.prices[fps.size]) || prod.price || 0;
+                const rawImg = (prod.sizeImages && prod.sizeImages[fps.size]) || prod.image || '';
+                const image = rawImg;
+                return { id: String(fps.productId), name: prod.name, size: fps.size, price, image };
+            }).filter(Boolean);
+
+            if (!giftOptions.length) {
+                document.getElementById('fgs-loading').style.display = 'none';
+                document.getElementById('fgs-empty').style.display = 'block';
+                return;
+            }
+
+            renderGifts(giftOptions);
+        }
+
+        function _fctf(url) {
+            if (!url || !url.includes('/upload/')) return url || '';
+            // Only skip if a Cloudinary TRANSFORM is already present (e.g. w_400, f_auto).
+            // The old check wrongly matched the folder path (…/upload/zahroun/…) and
+            // served full-res originals — the cause of slow gift images.
+            if (url.includes('f_auto') || /\/upload\/[a-z]{1,2}_[a-z0-9]/i.test(url)) return url;
+            return url.replace('/upload/', '/upload/w_400,h_400,c_fill,f_auto,q_auto/');
+        }
+
+        function renderGifts(giftOptions) {
+            window._fgsGiftOptions = giftOptions;
+
+            document.getElementById('fgs-loading').style.display = 'none';
+            document.getElementById('fgs-selector').style.display = 'block';
+
+            const grid = document.getElementById('fgs-grid');
+            grid.innerHTML = giftOptions.map((gift, idx) => `
+                <div class="fgs-card" data-idx="${idx}">
+                    <div class="fgs-card-img-wrap">
+                        ${gift.image
+                            ? `<img src="${_fctf(gift.image)}" alt="${gift.name}" loading="${idx < 3 ? 'eager' : 'lazy'}"${idx === 0 ? ' fetchpriority="high"' : ''} decoding="async">`
+                            : `<div style="width:100%;height:100%;background:#f0ede8;"></div>`
+                        }
+                        <span class="fgs-card-badge">Free</span>
+                        <div class="fgs-card-selected-overlay">
+                            <div class="fgs-card-selected-check">
+                                <ion-icon name="checkmark-outline"></ion-icon>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="fgs-card-body">
+                        <div class="fgs-card-name">${gift.name}</div>
+                        <div class="fgs-card-size">${gift.size}</div>
+                        <div class="fgs-card-price-row">
+                            <span class="fgs-card-orig-price">Tk ${gift.price.toFixed(0)}</span>
+                            <span class="fgs-card-free-label">Free</span>
+                        </div>
+                        <button class="fgs-select-btn">Select Gift</button>
+                    </div>
+                </div>
+            `).join('');
+
+            grid.querySelectorAll('.fgs-card').forEach((card, idx) => {
+                card.addEventListener('click', () => selectGift(idx));
+            });
+        }
+
+        function selectGift(idx) {
+            const gifts = window._fgsGiftOptions;
+            if (!gifts || !gifts[idx]) return;
+            _selectedGift = gifts[idx];
+
+            document.querySelectorAll('.fgs-card').forEach((card, i) => {
+                card.classList.toggle('selected', i === idx);
+            });
+
+            document.getElementById('fgs-continue-btn').disabled = false;
+        }
+
+        document.getElementById('fgs-continue-btn')?.addEventListener('click', () => {
+            if (!_selectedGift) return;
+            const saveObj = {};
+            saveObj[`${_selectedGift.id}_${_selectedGift.size}`] = _selectedGift;
+            localStorage.setItem('zahroun_bxgy_free', JSON.stringify(saveObj));
+            window.location.href = 'checkout.html';
+        });
+
+        document.getElementById('fgs-skip-link')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('zahroun_bxgy_free');
+            window.location.href = 'checkout.html';
+        });
+
+        // Init after promotions.js is ready
+        function tryInit() {
+            if (window.ZahrounPromos) { initPage(); return; }
+            setTimeout(tryInit, 80);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', tryInit);
+        } else {
+            tryInit();
+        }
+    </script>
+</body>
+</html>

@@ -99,6 +99,20 @@ function injectStyles() {
   const style = document.createElement("style");
   style.id = "za-styles";
   style.textContent = `
+    #za-search-overlay{position:fixed;inset:0;z-index:99998;background:rgba(10,30,25,.55);
+      backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;
+      padding-top:6rem;}
+    #za-search-overlay.open{display:flex;animation:zaFade .2s ease;}
+    #za-search-box{background:var(--surface-color,#fff);border-radius:14px;
+      width:100%;max-width:560px;margin:0 1rem;
+      box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;}
+    #za-search-box form{display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;}
+    #za-search-input{flex:1;border:none;outline:none;font-size:1.1rem;
+      font-family:var(--font-sans,sans-serif);background:transparent;color:var(--text-main,#1c1c1c);
+      padding:.35rem 0;}
+    #za-search-input::placeholder{color:var(--text-muted,#999);}
+    #za-search-box button[type=submit]{background:var(--primary-color,#163E34);color:#fff;
+      border:none;border-radius:8px;padding:.5rem .9rem;cursor:pointer;font-size:1rem;flex-shrink:0;}
     #zahroun-auth-modal{position:fixed;inset:0;z-index:99999;display:none;
       align-items:center;justify-content:center;background:rgba(15,46,39,.45);
       backdrop-filter:blur(4px);padding:1rem;}
@@ -143,7 +157,7 @@ function injectStyles() {
     /* Account button + dropdown in navbar */
     .za-account-wrap{position:relative;display:inline-block;}
     .za-menu{position:absolute;right:0;top:calc(100% + 10px);background:#fff;border:1px solid var(--border-color,#DCD8CF);
-      border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.12);min-width:200px;padding:.5rem;display:none;z-index:9000;}
+      border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.12);min-width:210px;padding:.5rem;display:none;z-index:9000;}
     .za-menu.open{display:block;animation:zaFade .2s ease;}
     .za-menu .za-user{padding:.6rem .75rem;border-bottom:1px solid var(--border-color,#DCD8CF);margin-bottom:.4rem;}
     .za-menu .za-user strong{display:block;font-size:.9rem;color:var(--text-main,#1A1A1A);}
@@ -152,6 +166,13 @@ function injectStyles() {
       padding:.6rem .75rem;background:none;border:none;border-radius:6px;cursor:pointer;
       font-family:var(--font-sans,sans-serif);font-size:.9rem;color:var(--text-main,#1A1A1A);}
     .za-menu a:hover,.za-menu button:hover{background:var(--bg-color,#F5F3EF);}
+    .za-menu .za-track-row{color:#c0392b !important;font-weight:500;}
+    .za-menu .za-track-row ion-icon{color:#c0392b;}
+    .za-menu .za-divrow{height:1px;background:var(--border-color,#DCD8CF);margin:.35rem .75rem;}
+    /* Flash Sale nav link */
+    .nav-links .flash-nav-link{display:inline-flex;align-items:center;gap:.25rem;}
+    .nav-links .flash-nav-link .flash-badge{background:#c0392b;color:#fff;font-size:.6rem;font-weight:700;
+      padding:.1rem .35rem;border-radius:3px;letter-spacing:.05em;vertical-align:middle;}
   `;
   document.head.appendChild(style);
 }
@@ -341,8 +362,17 @@ function renderAccount(user) {
   }
 
   if (!user) {
-    wrap.innerHTML = `<button aria-label="Account" data-za-open><ion-icon name="person-outline"></ion-icon></button>`;
-    wrap.querySelector("[data-za-open]").onclick = openAuthModal;
+    wrap.innerHTML = `
+      <button aria-label="Account" data-za-toggle><ion-icon name="person-outline"></ion-icon></button>
+      <div class="za-menu">
+        <a href="track.html" class="za-track-row"><ion-icon name="locate-outline"></ion-icon> Track Order</a>
+        <div class="za-divrow"></div>
+        <button data-za-open><ion-icon name="person-outline"></ion-icon> Login / Sign Up</button>
+      </div>`;
+    const menu = wrap.querySelector(".za-menu");
+    wrap.querySelector("[data-za-toggle]").onclick = (e) => { e.stopPropagation(); menu.classList.toggle("open"); };
+    wrap.querySelector("[data-za-open]").onclick = () => { menu.classList.remove("open"); openAuthModal(); };
+    document.addEventListener("click", (e) => { if (!wrap.contains(e.target)) menu.classList.remove("open"); });
     return;
   }
 
@@ -352,9 +382,13 @@ function renderAccount(user) {
     <button aria-label="Account" data-za-toggle><ion-icon name="person-circle-outline"></ion-icon></button>
     <div class="za-menu">
       <div class="za-user"><strong>${escapeHtml(name)}</strong><span>${escapeHtml(user.email || "")}</span></div>
+      <a href="track.html" class="za-track-row"><ion-icon name="locate-outline"></ion-icon> Track Order</a>
+      <div class="za-divrow"></div>
       <a href="account.html"><ion-icon name="bag-handle-outline"></ion-icon> My Orders</a>
-      <a href="wishlist.html"><ion-icon name="heart-outline"></ion-icon> Wishlist</a>
+      <a href="account.html#wishlist"><ion-icon name="heart-outline"></ion-icon> Wishlist</a>
+      <a href="account.html#address"><ion-icon name="location-outline"></ion-icon> Saved Address</a>
       ${isAdmin ? `<a href="admin.html"><ion-icon name="speedometer-outline"></ion-icon> Admin Panel</a>` : ``}
+      <div class="za-divrow"></div>
       <button data-za-logout><ion-icon name="log-out-outline"></ion-icon> Logout</button>
     </div>`;
   const menu = wrap.querySelector(".za-menu");
@@ -383,12 +417,12 @@ onAuthStateChanged(auth, async (user) => {
    will redirect non-admins away. Used by the admin panel pages. */
 function runAdminGuard(user) {
   if (!document.body.hasAttribute("data-require-admin")) return;
-  if (!user) { window.location.href = "../index.html"; return; }
+  if (!user) { window.location.href = "./index.html"; return; }
   // profile may still be loading; re-check shortly
   setTimeout(() => {
     if (!currentProfile || currentProfile.role !== "admin") {
       showToast("Admin access only", "error");
-      window.location.href = "../index.html";
+      window.location.href = "./index.html";
     }
   }, 400);
 }
@@ -406,34 +440,131 @@ window.zahrounAuth = {
   requireLogin: () => { if (!auth.currentUser) { openAuthModal(); return false; } return true; }
 };
 
-/* Site-wide settings: announcement bar, hero text override, WhatsApp link. */
+/* Site-wide settings: announcement bar, hero text override, WhatsApp link, Flash Sale status. */
+const _ZSK = 'zhr_store_v1', _ZFK = 'zhr_flash_v1', _ZTTL = 3 * 60 * 1000; // short TTL — admin changes appear within minutes, sessionStorage still skips most reads
+
 async function loadSiteSettings() {
   try {
-    const snap = await getDoc(doc(db, "settings", "store"));
-    if (!snap.exists()) return;
-    const s = snap.data();
-    window.zahSettings = s;
+    // sessionStorage cache — store/flash settings change rarely; 30-min TTL shared with all pages
+    let _sData = null, _fData = null;
+    try {
+      const rS = sessionStorage.getItem(_ZSK);
+      if (rS) { const { data, ts } = JSON.parse(rS); if (Date.now() - ts < _ZTTL) _sData = data; }
+      const rF = sessionStorage.getItem(_ZFK);
+      if (rF) { const { data, ts } = JSON.parse(rF); if (Date.now() - ts < _ZTTL) _fData = data; }
+    } catch {}
 
-    if (s.announcementActive && s.announcement) {
-      const bar = document.createElement("div");
-      bar.id = "za-announcement";
-      bar.style.cssText = "background:#000;color:#D4AF37;text-align:center;padding:.55rem 3rem;font-size:.88rem;font-family:var(--font-sans,sans-serif);position:relative;z-index:1000;";
-      bar.innerHTML = `${escapeHtml(s.announcement)}<button onclick="this.parentElement.remove()" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;color:#D4AF37;cursor:pointer;font-size:1.3rem;line-height:1;">×</button>`;
-      document.body.insertBefore(bar, document.body.firstChild);
+    let snap, flashSnap;
+    if (_sData && _fData) {
+      snap = { exists: () => true, data: () => _sData };
+      flashSnap = { exists: () => true, data: () => _fData };
+    } else {
+      const flashPromise = _fData ? Promise.resolve({ exists: () => true, data: () => _fData }) : getDoc(doc(db, "settings", "flashSale"));
+      if (!_fData) window.__zhrFlashPromise = flashPromise; // let page scripts (shop) reuse this read
+      [snap, flashSnap] = await Promise.all([
+        _sData ? Promise.resolve({ exists: () => true, data: () => _sData }) : getDoc(doc(db, "settings", "store")),
+        flashPromise
+      ]);
+      if (!_sData && snap.exists()) try { sessionStorage.setItem(_ZSK, JSON.stringify({ data: snap.data(), ts: Date.now() })); } catch {}
+      if (!_fData && flashSnap.exists()) try { sessionStorage.setItem(_ZFK, JSON.stringify({ data: flashSnap.data(), ts: Date.now() })); } catch {}
     }
 
-    if (s.heroTitle) {
-      const el = document.getElementById("hero-title");
-      if (el) el.textContent = s.heroTitle;
+    if (snap.exists()) {
+      const s = snap.data();
+      window.zahSettings = s;
+
+      if (s.announcementActive && s.announcement) {
+        const bar = document.createElement("div");
+        bar.id = "za-announcement";
+        // Announcement Bar: fixed at very top (above header), z-index highest
+        bar.style.cssText = "background:#000;color:#D4AF37;text-align:center;padding:.55rem 3rem;font-size:.88rem;font-family:var(--font-sans,sans-serif);position:fixed;left:0;right:0;z-index:99998;";
+        bar.innerHTML = `<span>${escapeHtml(s.announcement)}</span><button aria-label="Close" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;color:#D4AF37;cursor:pointer;font-size:1.3rem;line-height:1;">×</button>`;
+        document.body.insertBefore(bar, document.body.firstChild);
+
+        requestAnimationFrame(() => {
+          const hdr = document.querySelector('.header');
+          let annObs = null;
+          let mode = 'top'; // 'top' = above header, 'below' = below header
+
+          // Place bar below header, track header movement via MutationObserver
+          const placeAnnBelow = () => {
+            if (!bar.isConnected) { if (annObs) annObs.disconnect(); return; }
+            const hdrTop = hdr ? (parseFloat(hdr.style.top) || 0) : 0;
+            const hdrH   = hdr ? hdr.offsetHeight : (window.innerWidth <= 768 ? 68 : 78);
+            bar.style.top = (hdrTop + hdrH) + 'px';
+          };
+
+          // Switch from top-mode to below-header mode
+          // Called when broadcast banner appears (takes over the top position)
+          const switchToBelow = () => {
+            if (mode === 'below') return;
+            mode = 'below';
+            const h = bar.offsetHeight || 36;
+            // Broadcast already overwrote body padding; add announcement height back
+            const cp = parseFloat(document.body.style.paddingTop) || parseFloat(getComputedStyle(document.body).paddingTop) || 0;
+            document.body.style.paddingTop = (cp + h) + 'px';
+            placeAnnBelow();
+            if (hdr && !annObs) {
+              annObs = new MutationObserver(placeAnnBelow);
+              annObs.observe(hdr, { attributes: true, attributeFilter: ['style'] });
+            }
+          };
+
+          if (document.getElementById('zahroun-bc-bar')) {
+            // Broadcast is already active — go directly below header
+            switchToBelow();
+          } else {
+            // No broadcast yet — take top position, push header down
+            bar.style.top = '0';
+            const h = bar.offsetHeight || 36;
+            if (hdr) hdr.style.top = h + 'px';
+            const hdrH = hdr ? hdr.offsetHeight : (window.innerWidth <= 768 ? 68 : 78);
+            document.body.style.paddingTop = (h + hdrH) + 'px';
+            // If broadcast appears later, yield top to it
+            document.addEventListener('zahroun-bc-appeared', () => {
+              requestAnimationFrame(() => switchToBelow());
+            }, { once: true });
+          }
+
+          bar.querySelector('button').addEventListener('click', () => {
+            const bh = bar.offsetHeight || 0;
+            if (annObs) annObs.disconnect();
+            // If we were at top, reset header
+            if (mode === 'top' && hdr) hdr.style.top = '0px';
+            const cp = parseFloat(document.body.style.paddingTop) || parseFloat(getComputedStyle(document.body).paddingTop);
+            document.body.style.paddingTop = Math.max(0, cp - bh) + 'px';
+            bar.remove();
+          });
+        });
+      }
+
+      if (s.heroTitle) {
+        const el = document.getElementById("hero-title");
+        if (el) el.textContent = s.heroTitle;
+      }
+      if (s.heroSubtitle) {
+        const el = document.getElementById("hero-subtitle");
+        if (el) el.textContent = s.heroSubtitle;
+      }
+      if (s.whatsapp) {
+        const num = s.whatsapp.replace(/\D/g, "");
+        const msg = encodeURIComponent("Hi Zahroun, I'm interested in your perfumes 🌹");
+        const link = document.getElementById("whatsapp-link");
+        if (link) link.href = `https://wa.me/${num}?text=${msg}`;
+      }
     }
-    if (s.heroSubtitle) {
-      const el = document.getElementById("hero-subtitle");
-      if (el) el.textContent = s.heroSubtitle;
-    }
-    if (s.whatsapp) {
-      const link = document.getElementById("whatsapp-link");
-      if (link) link.href = `https://wa.me/${s.whatsapp.replace(/\D/g, "")}`;
-    }
+
+    // Flash Sale global state
+    const flashData = flashSnap.exists() ? flashSnap.data() : { enabled: false, items: [] };
+    flashData.items = flashData.items || [];
+    window.zahFlashSale = flashData;
+
+    // Inject nav link based on enabled state
+    injectFlashSaleNav(flashData.enabled);
+
+    // Notify other scripts on this page
+    document.dispatchEvent(new CustomEvent("flashsale-status", { detail: flashData }));
+
   } catch (e) {
     console.warn("[Zahroun] settings load failed:", e);
   }
@@ -444,3 +575,67 @@ loadSiteSettings();
    onAuthStateChanged will refresh it once Firebase resolves. */
 injectStyles();
 renderAccount(null);
+
+/* ---------------------------------------------------------------------------
+   Site-wide search overlay — opens on any [aria-label="Search"] button click.
+   On submit redirects to shop.html?q=<term>
+   --------------------------------------------------------------------------- */
+(function setupSearchOverlay() {
+  function openSearch() {
+    let ov = document.getElementById("za-search-overlay");
+    if (!ov) {
+      ov = document.createElement("div");
+      ov.id = "za-search-overlay";
+      ov.innerHTML = `<div id="za-search-box">
+        <form id="za-search-form">
+          <ion-icon name="search-outline" style="font-size:1.2rem;color:var(--text-muted,#999);flex-shrink:0;"></ion-icon>
+          <input id="za-search-input" type="search" placeholder="Search fragrances…" autocomplete="off" autocorrect="off" spellcheck="false">
+          <button type="submit"><ion-icon name="arrow-forward-outline"></ion-icon></button>
+        </form>
+      </div>`;
+      document.body.appendChild(ov);
+      ov.addEventListener("click", e => { if (e.target === ov) closeSearch(); });
+      ov.querySelector("#za-search-form").addEventListener("submit", e => {
+        e.preventDefault();
+        const q = ov.querySelector("#za-search-input").value.trim();
+        closeSearch();
+        if (q) window.location.href = "shop.html?q=" + encodeURIComponent(q);
+        else window.location.href = "shop.html";
+      });
+      document.addEventListener("keydown", e => { if (e.key === "Escape") closeSearch(); }, { passive: true });
+    }
+    ov.classList.add("open");
+    setTimeout(() => ov.querySelector("#za-search-input").focus(), 50);
+  }
+  function closeSearch() {
+    const ov = document.getElementById("za-search-overlay");
+    if (ov) ov.classList.remove("open");
+  }
+  // Intercept search button clicks on any page
+  document.addEventListener("click", e => {
+    const btn = e.target.closest('button[aria-label="Search"], a[aria-label="Search"]');
+    if (!btn) return;
+    // Only intercept if not already on shop.html (there the search is inline)
+    if (!window.location.pathname.endsWith("shop.html")) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      openSearch();
+    }
+  }, true);
+})();
+
+/* Inject or remove "Flash Sale" nav link based on enabled state. */
+function injectFlashSaleNav(enabled) {
+  const navLinks = document.querySelector(".nav-links");
+  if (!navLinks) return;
+  const existing = navLinks.querySelector(".flash-nav-link");
+  if (!enabled) { if (existing) existing.remove(); return; }
+  if (existing) return;
+  const shopLink = Array.from(navLinks.querySelectorAll("a")).find(a => a.textContent.trim() === "Shop");
+  const link = document.createElement("a");
+  link.href = "sale.html";
+  link.className = "flash-nav-link";
+  link.innerHTML = `Flash Sale <span class="flash-badge">SALE</span>`;
+  if (shopLink?.nextSibling) navLinks.insertBefore(link, shopLink.nextSibling);
+  else navLinks.appendChild(link);
+}
