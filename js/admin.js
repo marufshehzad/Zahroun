@@ -3408,6 +3408,8 @@ function renderSettingsForm() {
   const f = $("#settings-form");
   if (!f) return;
   f.querySelector("[name=whatsapp]").value = settings.whatsapp || "";
+  f.querySelector("[name=whatsappEnabled]").checked = settings.whatsappEnabled !== false;
+  f.querySelector("[name=whatsappMessage]").value = settings.whatsappMessage || "";
   f.querySelector("[name=contactEmail]").value = settings.contactEmail || "";
   f.querySelector("[name=announcement]").value = settings.announcement || "";
   f.querySelector("[name=announcementActive]").checked = !!settings.announcementActive;
@@ -3427,6 +3429,8 @@ async function saveSettings(e) {
   try {
     const data = {
       whatsapp: f.querySelector("[name=whatsapp]").value.trim(),
+      whatsappEnabled: f.querySelector("[name=whatsappEnabled]").checked,
+      whatsappMessage: f.querySelector("[name=whatsappMessage]").value.trim(),
       contactEmail: f.querySelector("[name=contactEmail]").value.trim(),
       announcement: f.querySelector("[name=announcement]").value.trim(),
       announcementActive: f.querySelector("[name=announcementActive]").checked,

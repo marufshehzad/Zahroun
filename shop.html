@@ -196,15 +196,22 @@
                 position: static;
                 box-shadow: 0 2px 14px rgba(0,0,0,.06);
             }
-            .search-wrap { margin-bottom: .8rem; }
-            .sb-label { margin-bottom: .35rem; font-size: .6rem; }
+            .search-wrap { margin-bottom: .55rem; }
+            .sb-label { margin-bottom: .3rem; font-size: .6rem; }
             /* Mobile: same vertical accordion tree as desktop — no horizontal chips */
             .cat-list { display: block; }
             .cat-list li { margin: 0; }
-            .cat-btn { padding: .58rem .65rem; font-size: .92rem; }
-            .cat-icon { width: 24px; height: 24px; font-size: .95rem; }
+            .cat-btn { padding: .45rem .6rem; font-size: .9rem; }
+            .cat-icon { width: 22px; height: 22px; font-size: .92rem; }
             .sb-feat-divider { margin: .55rem 0 .35rem; font-size: .56rem; }
             #special-filter { flex-direction: column !important; }
+            /* Above-the-fold: filter icon visible; Featured/Sort/Filters live in the bottom sheet */
+            #mob-filter-btn { display: flex !important; }
+            .shop-container { padding-top: .4rem; gap: .6rem; }
+            .sidebar-card { padding: .65rem .85rem; }
+            .container.py-4 { padding-top: .35rem; }
+            .shop-title-area { margin-bottom: .9rem; }
+            #mob-sheet-body .sb-label { font-size: .62rem; }
             .shop-title-area { margin-bottom: 1.25rem; }
             .shop-page-title { font-size: 1.9rem; }
             #shop-products { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
@@ -288,7 +295,10 @@
                 </a>
 
                 <!-- Categories -->
-                <p class="sb-label">Categories</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <p class="sb-label" style="margin-bottom:0;">Categories</p>
+                    <button id="mob-filter-btn" aria-label="Filters &amp; sorting" style="display:none;background:#F5F2EB;border:1px solid #E5DDD0;border-radius:9px;width:36px;height:30px;align-items:center;justify-content:center;cursor:pointer;color:#163E34;font-size:1.05rem;"><ion-icon name="options-outline"></ion-icon></button>
+                </div>
                 <ul class="cat-list" id="category-filter">
                     <li><button class="cat-btn active" data-filter="all">
                         <span class="cat-icon"><ion-icon name="grid-outline"></ion-icon></span>
@@ -312,7 +322,7 @@
                 </div>
 
                 <!-- Sort -->
-                <p class="sb-label" style="margin-top:1.1rem;">Sort By</p>
+                <p class="sb-label" id="sort-label" style="margin-top:1.1rem;">Sort By</p>
                 <select id="sort-select" style="width:100%;padding:.5rem .6rem;border:1.5px solid #EAE4D9;border-radius:10px;background:#F9F6F0;font-size:.85rem;font-family:var(--font-sans);color:#444;">
                     <option value="default">Featured</option>
                     <option value="newest">Newest</option>
@@ -325,6 +335,16 @@
                 <div id="adv-filters"></div>
 
             </aside>
+
+            <!-- Mobile filter bottom sheet -->
+            <div id="mob-sheet-backdrop" style="display:none;position:fixed;inset:0;background:rgba(10,30,25,.45);z-index:9991;"></div>
+            <div id="mob-filter-sheet" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:9992;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.2);max-height:72vh;overflow-y:auto;padding:1rem 1.1rem 1.4rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;">
+                    <span style="font-size:.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#163E34;">Filters &amp; Featured</span>
+                    <button id="mob-sheet-close" aria-label="Close" style="background:none;border:none;font-size:1.6rem;line-height:1;cursor:pointer;color:#666;">&times;</button>
+                </div>
+                <div id="mob-sheet-body"></div>
+            </div>
 
             <!-- ── Main Content ── -->
             <div class="shop-main">
@@ -722,6 +742,29 @@
             }));
         }
         _buildAdvFilters(); // initial build — covers the case where products-ready fired before this module loaded
+
+        /* ── Mobile filter sheet: Featured/Sort/Filters relocate out of the sidebar
+           so products appear above the fold; the funnel icon opens them. ── */
+        (function mobileFilterSheet() {
+            const btn = document.getElementById("mob-filter-btn");
+            const sheet = document.getElementById("mob-filter-sheet");
+            const backdrop = document.getElementById("mob-sheet-backdrop");
+            const body = document.getElementById("mob-sheet-body");
+            if (!btn || !sheet || !window.matchMedia("(max-width: 768px)").matches) return;
+            // Moving live nodes keeps every existing event listener working
+            [document.querySelector(".sb-feat-divider"), document.getElementById("special-filter"),
+             document.getElementById("sort-label"), document.getElementById("sort-select"),
+             document.getElementById("adv-filters")].forEach(el => el && body.appendChild(el));
+            const open = () => { sheet.style.display = "block"; backdrop.style.display = "block"; document.body.style.overflow = "hidden"; };
+            const close = () => { sheet.style.display = "none"; backdrop.style.display = "none"; document.body.style.overflow = ""; };
+            btn.addEventListener("click", open);
+            backdrop.addEventListener("click", close);
+            document.getElementById("mob-sheet-close").addEventListener("click", close);
+            // Picking a Featured filter closes the sheet so results show immediately
+            document.getElementById("special-filter")?.addEventListener("click", e => {
+                if (e.target.closest("button[data-filter]")) close();
+            });
+        })();
 
         /* ── Search autocomplete dropdown (thumbnail + name + price) ── */
         const _searchWrap = document.querySelector(".search-wrap");

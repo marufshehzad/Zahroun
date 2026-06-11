@@ -1,3 +1,7 @@
+# ============================================================
+# Zahroun — production .gitignore
+# ============================================================
+
 # Dependencies
 node_modules/
 
@@ -6,29 +10,38 @@ node_modules/
 .env.*
 *.key
 serviceAccountKey.json
-
-# Dev-only pages (not for production)
-seed.html
-test_images.html
-
-# Netlify
-.netlify/
-
-# OS / editor junk
-.DS_Store
-Thumbs.db
-*.log
-.vscode/
-.idea/
 .devtest/serviceAccount.json
 
 # Dev/test scaffolding (never deploy)
 .devtest/
 .claude/
 .vs/
+.vscode/
+.idea/
+sandbox/
+
+# Backups & temp artifacts
 .backup/
+backups/
+seo_backup/
 *.bak
 *.bak-*
-seo_backup/
+*.tmp
+tmp/
+cache/
+logs/
+*.log
+screenshots/
+
+# Dev-only pages (not for production)
+seed.html
+test_images.html
 migrate-firestore.html
 product pictures/oita kajj kortese*
+
+# Platform
+.netlify/
+
+# OS junk
+.DS_Store
+Thumbs.db

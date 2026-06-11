@@ -473,18 +473,19 @@ async function loadSiteSettings() {
       const s = snap.data();
       window.zahSettings = s;
 
-      // Floating WhatsApp order button — site-wide except admin
+      // Floating WhatsApp order button — site-wide except admin; admin-controllable
       const waNum = (s.whatsapp || "01886936581").replace(/\D/g, "");
-      if (waNum && !document.getElementById("za-wa-float") && !location.pathname.endsWith("admin.html")) {
+      if (s.whatsappEnabled !== false && waNum && !document.getElementById("za-wa-float") && !location.pathname.endsWith("admin.html")) {
+        const waMsg = s.whatsappMessage || "Hi Zahroun! I'd like to place an order.";
         const wa = document.createElement("a");
         wa.id = "za-wa-float";
-        wa.href = `https://wa.me/${waNum.startsWith("880") ? waNum : "88" + waNum}?text=${encodeURIComponent("Hi Zahroun! I'd like to place an order.")}`;
+        wa.href = `https://wa.me/${waNum.startsWith("880") ? waNum : "88" + waNum}?text=${encodeURIComponent(waMsg)}`;
         wa.target = "_blank"; wa.rel = "noopener";
         wa.setAttribute("aria-label", "Order on WhatsApp");
-        wa.style.cssText = "position:fixed;left:1rem;bottom:1.1rem;z-index:9990;width:50px;height:50px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(37,211,102,.45);transition:transform .15s;";
+        wa.style.cssText = "position:fixed;right:1rem;bottom:1.1rem;z-index:9990;width:46px;height:46px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(37,211,102,.45);transition:transform .15s;";
         wa.onmouseenter = () => { wa.style.transform = "scale(1.08)"; };
         wa.onmouseleave = () => { wa.style.transform = ""; };
-        wa.innerHTML = `<svg viewBox="0 0 32 32" width="27" height="27" fill="#fff" aria-hidden="true"><path d="M16 3C9.4 3 4 8.4 4 15c0 2.1.6 4.2 1.6 6L4 29l8.2-1.5c1.2.6 2.5.9 3.8.9 6.6 0 12-5.4 12-12S22.6 3 16 3zm0 22.4c-1.2 0-2.4-.3-3.5-.8l-.6-.3-4.9.9 1-4.7-.3-.6c-.9-1.6-1.3-3.3-1.3-4.9 0-5.4 4.4-9.8 9.8-9.8s9.8 4.4 9.8 9.8-4.6 10.4-10 10.4zm5.4-7.3c-.3-.1-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.4z"/></svg>`;
+        wa.innerHTML = `<svg viewBox="0 0 32 32" width="25" height="25" fill="#fff" aria-hidden="true"><path d="M16 3C9.4 3 4 8.4 4 15c0 2.1.6 4.2 1.6 6L4 29l8.2-1.5c1.2.6 2.5.9 3.8.9 6.6 0 12-5.4 12-12S22.6 3 16 3zm0 22.4c-1.2 0-2.4-.3-3.5-.8l-.6-.3-4.9.9 1-4.7-.3-.6c-.9-1.6-1.3-3.3-1.3-4.9 0-5.4 4.4-9.8 9.8-9.8s9.8 4.4 9.8 9.8-4.6 10.4-10 10.4zm5.4-7.3c-.3-.1-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.4z"/></svg>`;
         document.body.appendChild(wa);
       }
 
