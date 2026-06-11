@@ -718,7 +718,16 @@
                 window.selectSize = function(size, price, btnEl) { prevSelectSize(size, price, btnEl); updatePrice(); };
                 const mainBtn = container.querySelector('.btn.btn-black');
                 if (!mainBtn) return;
-                new IntersectionObserver(([e]) => { bar.style.display = e.isIntersecting ? 'none' : 'flex'; }, { threshold: 0 }).observe(mainBtn);
+                new IntersectionObserver(([e]) => {
+                    const show = !e.isIntersecting;
+                    bar.style.display = show ? 'flex' : 'none';
+                    // Reserve space below the page so the bar never hides content (price, related, footer)
+                    const h = show ? bar.offsetHeight : 0;
+                    document.body.style.paddingBottom = show ? (h + 10) + 'px' : '';
+                    // Lift the floating WhatsApp button above the bar
+                    const wa = document.getElementById('za-wa-float');
+                    if (wa) wa.style.bottom = show ? (h + 12) + 'px' : '1.1rem';
+                }, { threshold: 0 }).observe(mainBtn);
             })();
 
             // Set document title + dynamic SEO
