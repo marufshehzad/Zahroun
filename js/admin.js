@@ -593,8 +593,12 @@ async function initAdmin(user, profile) {
     const cropY = -_cropPanY / _cropScale;
     const cropW = _cropFrameW / _cropScale;
     const cropH = _cropFrameH / _cropScale;
-    const outW = Math.min(Math.round(cropW * 2), 1800);
-    const outH = Math.min(Math.round(cropH * 2), 1800);
+    // Scale both dimensions by one factor so the output keeps the crop
+    // ratio exactly — clamping W and H to 1800 independently squashed
+    // large photos into squares, which c_fill then re-cropped on cards.
+    const shrink = Math.min(1, 1800 / Math.max(cropW * 2, cropH * 2));
+    const outW = Math.round(cropW * 2 * shrink);
+    const outH = Math.round(cropH * 2 * shrink);
     const canvas = document.createElement("canvas");
     canvas.width = outW; canvas.height = outH;
     const ctx = canvas.getContext("2d");
