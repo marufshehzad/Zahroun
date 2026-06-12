@@ -117,12 +117,19 @@ function hexToRgba(hex, alpha) {
       document.body.insertBefore(bar, document.body.firstChild);
       document.dispatchEvent(new CustomEvent("zahroun-bc-appeared"));
 
-      requestAnimationFrame(() => {
-        const barH = bar.offsetHeight || 40;
+      // Re-layout whenever the bar's height changes — web-font load or viewport
+      // resize can reflow the text after the first measurement, which left the
+      // header offset stale (bar overlapping header until a refresh).
+      const layoutBarC = () => {
+        const barH = bar.isConnected ? (bar.offsetHeight || 40) : 0;
         if (headerElC) headerElC.style.top = barH + "px";
         const hdrH = headerElC ? headerElC.offsetHeight : (window.innerWidth <= 768 ? 68 : 78);
         document.body.style.paddingTop = (barH + hdrH) + "px";
-      });
+      };
+      requestAnimationFrame(layoutBarC);
+      if (window.ResizeObserver) new ResizeObserver(layoutBarC).observe(bar);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => layoutBarC());
+      window.addEventListener("resize", layoutBarC);
 
       if (intervalSecs > 0) timer = setInterval(() => goTo(idx + 1), intervalSecs * 1000);
       return;
@@ -315,13 +322,22 @@ function hexToRgba(hex, alpha) {
 
     document.body.insertBefore(bar, document.body.firstChild);
 
-    requestAnimationFrame(() => {
-      const barH = bar.offsetHeight || 36;
+    // Re-layout whenever the bar's height changes — web-font load or viewport
+    // resize can reflow the text after the first measurement, which left the
+    // header offset stale (bar overlapping header until a refresh).
+    const layoutBar = () => {
+      const barH = bar.isConnected ? (bar.offsetHeight || 36) : 0;
       if (headerEl) headerEl.style.top = barH + "px";
       const hdrH = headerEl ? headerEl.offsetHeight : (window.innerWidth <= 768 ? 68 : 78);
       document.body.style.paddingTop = (barH + hdrH) + "px";
+    };
+    requestAnimationFrame(() => {
+      layoutBar();
       document.dispatchEvent(new CustomEvent("zahroun-bc-appeared"));
     });
+    if (window.ResizeObserver) new ResizeObserver(layoutBar).observe(bar);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => layoutBar());
+    window.addEventListener("resize", layoutBar);
 
   } catch {
     // Broadcast is optional — fail silently

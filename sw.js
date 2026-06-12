@@ -3,7 +3,7 @@
    Scope: all pages at root (e.g. zahroun.com/*.html)
    ========================================================================= */
 
-const CACHE = 'zahroun-v1-20260612a'; // H4-fix: increment this string on every deployment to bust stale JS cache
+const CACHE = 'zahroun-v1-20260612c'; // H4-fix: increment this string on every deployment to bust stale JS cache
 
 const PRECACHE = [
   'css/style.css?v=20260612',
@@ -25,8 +25,16 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', e => {
+  // cache:'no-cache' revalidates with the server — plain addAll() can be
+  // answered by the browser HTTP cache, silently precaching stale files.
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(PRECACHE)).catch(() => {})
+    caches.open(CACHE).then(c =>
+      Promise.all(PRECACHE.map(u =>
+        fetch(u, { cache: 'no-cache' })
+          .then(r => { if (r.ok) return c.put(u, r); })
+          .catch(() => {})
+      ))
+    )
   );
   self.skipWaiting();
 });
@@ -74,7 +82,9 @@ self.addEventListener('fetch', e => {
     e.respondWith(
       caches.match(request).then(cached => {
         if (cached) return cached;
-        return fetch(request).then(res => {
+        // no-cache: revalidate with the server so a stale browser HTTP
+        // cache entry can't get permanently baked into the SW cache
+        return fetch(request, { cache: 'no-cache' }).then(res => {
           if (res.ok) {
             const clone = res.clone();
             caches.open(CACHE).then(c => c.put(request, clone));

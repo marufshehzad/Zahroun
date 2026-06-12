@@ -212,6 +212,13 @@
             #special-filter { flex-direction: column !important; }
             /* Above-the-fold: filter icon visible; Featured/Sort/Filters live in the bottom sheet */
             #mob-filter-btn { display: flex !important; }
+            /* Hide the filter controls while they're still in the sidebar — JS moves
+               them into #mob-sheet-body; this prevents them flashing inline on slow
+               first loads before the module script runs. !important beats the inline
+               display:flex on #special-filter. Once relocated, these no longer match. */
+            .sidebar-card .sb-feat-divider, .sidebar-card #special-filter,
+            .sidebar-card #sort-label, .sidebar-card #sort-select,
+            .sidebar-card #adv-filters { display: none !important; }
             .shop-container { padding-top: .4rem; gap: .6rem; }
             .sidebar-card { padding: .65rem .85rem; }
             .container.py-4 { padding-top: .35rem; }
