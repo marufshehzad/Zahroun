@@ -189,6 +189,7 @@
         @media (max-width: 768px) {
             .shop-container {
                 flex-direction: column;
+                align-items: stretch;
                 gap: .75rem;
                 padding-top: 1rem;
                 padding-bottom: 2rem;
@@ -534,6 +535,7 @@
         let _sortBy = "default";
         let _advSel = { gender: null, occasion: null, note: null };
         let _ratings = {}; // productId -> { avg, count } from approved reviews
+        let _reviewsEnabled = true; // mirrors admin "Show Customer Reviews" toggle
         let catsReady = false;
         let productsReady = typeof products !== "undefined" && products.length > 0;
 
@@ -683,7 +685,7 @@
                     <div class="product-info">
                         <span class="product-category">${esc(p.category)}</span>
                         <h3 class="product-title"><a href="product.html?id=${p.id}">${esc(p.name)}</a></h3>
-                        ${_ratings[p.id] ? `<div style="font-size:.74rem;line-height:1;margin:.15rem 0 .3rem;"><span style="color:#f0b429;letter-spacing:1px;">${"★".repeat(Math.round(_ratings[p.id].avg))}</span><span style="color:#ddd;letter-spacing:1px;">${"★".repeat(5 - Math.round(_ratings[p.id].avg))}</span> <span style="color:var(--text-muted);">(${_ratings[p.id].count})</span></div>` : ""}
+                        ${(_reviewsEnabled && _ratings[p.id]) ? `<div style="font-size:.74rem;line-height:1;margin:.15rem 0 .3rem;"><span style="color:#f0b429;letter-spacing:1px;">${"★".repeat(Math.round(_ratings[p.id].avg))}</span><span style="color:#ddd;letter-spacing:1px;">${"★".repeat(5 - Math.round(_ratings[p.id].avg))}</span> <span style="color:var(--text-muted);">(${_ratings[p.id].count})</span></div>` : ""}
                         ${priceHtml}
                     </div>
                 </div>`;
@@ -712,6 +714,22 @@
                 Object.keys(agg).forEach(id => { _ratings[id] = { avg: agg[id].sum / agg[id].count, count: agg[id].count }; });
                 try { sessionStorage.setItem(RKEY, JSON.stringify({ data: _ratings, ts: Date.now() })); } catch {}
                 if (Object.keys(_ratings).length && productsReady) renderProducts();
+            } catch {}
+        })();
+
+        /* ── Store settings: respect admin reviewsEnabled toggle ── */
+        (async () => {
+            try {
+                let sData = null;
+                try { const r = sessionStorage.getItem('zhr_store_v1'); if (r) { const { data, ts } = JSON.parse(r); if (Date.now() - ts < 30 * 60 * 1000) sData = data; } } catch {}
+                if (!sData) {
+                    const settingsSnap = await getDoc(doc(db, "settings", "store"));
+                    sData = settingsSnap.exists() ? settingsSnap.data() : {};
+                    try { sessionStorage.setItem('zhr_store_v1', JSON.stringify({ data: sData, ts: Date.now() })); } catch {}
+                }
+                const was = _reviewsEnabled;
+                _reviewsEnabled = sData.reviewsEnabled !== false;
+                if (was !== _reviewsEnabled && productsReady && catsReady) renderProducts();
             } catch {}
         })();
 
