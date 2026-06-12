@@ -690,8 +690,8 @@ section:not(.hero) {
   /* Tall portrait ratio — image dominates the card */
   .product-img-wrapper { padding-top: 135% !important; }
 
-  /* Zero image padding so the product fills its full wrapper */
-  .product-img { padding: 0 !important; }
+  /* Zero padding + cover so image fills its wrapper edge-to-edge */
+  .product-img { padding: 0 !important; object-fit: cover !important; }
 
   /* Minimal info strip — just enough to read category/title/price */
   .product-info { padding: .2rem .3rem .25rem !important; }
@@ -733,7 +733,7 @@ section:not(.hero) {
   }
   /* Keep portrait ratio at all small sizes */
   .product-img-wrapper { padding-top: 135% !important; }
-  .product-img { padding: 0 !important; }
+  .product-img { padding: 0 !important; object-fit: cover !important; }
 
   /* About page — prevent text overflow on small screens */
   .about-hero-title {

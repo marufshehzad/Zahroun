@@ -558,7 +558,7 @@
         function cardImg(url, w = 400) {
             if (!url || !url.includes("/upload/")) return url || "";
             const h = Math.round(w * 1.35);
-            return url.replace("/upload/", `/upload/w_${w},h_${h},c_pad,b_white,f_auto,q_auto/`);
+            return url.replace("/upload/", `/upload/w_${w},h_${h},c_fill,g_auto,f_auto,q_auto/`);
         }
         // Responsive srcset — phones download ~250px files instead of 400px ones
         function cardSrcset(url) {
