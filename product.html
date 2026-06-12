@@ -833,7 +833,7 @@
                 const priceStr = minPrice === maxPrice ? `Tk ${minPrice.toLocaleString()}` : `Tk ${minPrice.toLocaleString()} – Tk ${maxPrice.toLocaleString()}`;
                 return `<div class="product-card" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;">
                     <div class="product-img-wrapper" style="position:relative;">
-                        <img src="${_esc(_ctf(p.image, 'w_400,h_533,c_fill,f_auto,q_auto'))}" alt="${_esc(p.name)}" class="product-img" loading="lazy" style="background-color:#FFFFFF;">
+                        <img src="${_esc(_ctf(p.image, 'w_400,h_540,c_fill,g_auto,f_auto,q_auto'))}" alt="${_esc(p.name)}" class="product-img" loading="lazy" style="background-color:#FFFFFF;">
                         ${p.newArrival ? `<span style="position:absolute;top:.5rem;left:.5rem;background:linear-gradient(120deg,#D4AF37,#f0cc5e,#c9a227);color:#1a0e00;font-size:.55rem;font-weight:800;padding:.2rem .55rem;border-radius:20px;letter-spacing:.1em;z-index:1;">NEW</span>` : ""}
                     </div>
                     <div class="product-info">

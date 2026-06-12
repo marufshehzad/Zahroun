@@ -392,7 +392,7 @@ section:not(.hero) {
 
 .product-img-wrapper {
   position: relative;
-  padding-top: 133.33%; /* 3:4 Aspect Ratio */
+  padding-top: 135%; /* matches admin crop ratio 20/27 */
   overflow: hidden;
   background-color: var(--surface-color);
 }
@@ -403,8 +403,8 @@ section:not(.hero) {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 1.5rem;
+  object-fit: cover;
+  padding: 0;
   transition: transform 0.5s ease;
 }
 

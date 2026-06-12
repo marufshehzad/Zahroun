@@ -504,7 +504,8 @@
     <script>
         function ctf(url) {
             if (!url || !url.includes("/upload/")) return url;
-            return url.replace("/upload/", "/upload/f_auto,q_auto,w_600/");
+            /* Same crop engine as shop cards: card ratio 20/27 (1.35), c_fill,g_auto */
+            return url.replace("/upload/", "/upload/w_600,h_810,c_fill,g_auto,f_auto,q_auto/");
         }
         function renderFeatured() {
             const grid = document.getElementById('featured-products');
