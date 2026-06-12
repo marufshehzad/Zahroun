@@ -269,7 +269,7 @@ function _cropSetupPreviews(ar) {
   // Determine label pair and CSS aspect-ratio string based on crop ratio
   let label1, label2, arCSS;
   if (Math.abs(ar - 3/4) < 0.05) {
-    label1 = "Desktop Product Card"; label2 = "Mobile Product Card"; arCSS = "3/4";
+    label1 = "Desktop Product Card"; label2 = "Mobile Product Card"; arCSS = "20/27";
   } else if (Math.abs(ar - 16/9) < 0.05) {
     label1 = "Desktop Hero";         label2 = "Mobile Hero";         arCSS = "16/9";
   } else if (Math.abs(ar - 9/16) < 0.05) {
@@ -3546,7 +3546,7 @@ async function handleMultiImageUpload(e) {
     const origKB = Math.round(file.size / 1024);
     let blob;
     try {
-      blob = await openCropModal(file, { aspectRatio: 3 / 4 });
+      blob = await openCropModal(file, { aspectRatio: 20 / 27 });
     } catch { e.target.value = ""; continue; }
     _showUploadProgress(statusEl, 0, "Uploading");
     try {
