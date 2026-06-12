@@ -204,7 +204,7 @@
             .search-wrap { margin-bottom: .55rem; }
             .sb-label { margin-bottom: .3rem; font-size: .6rem; }
             /* Mobile: same vertical accordion tree as desktop — no horizontal chips */
-            .cat-list { display: block; }
+            .cat-list { display: block; margin-top: .45rem; }
             .cat-list li { margin: 0; }
             .cat-btn { padding: .45rem .6rem; font-size: .9rem; }
             .cat-icon { width: 22px; height: 22px; font-size: .92rem; }
@@ -557,8 +557,7 @@
 
         function cardImg(url, w = 400) {
             if (!url || !url.includes("/upload/")) return url || "";
-            const h = Math.round(w * 533 / 400);
-            return url.replace("/upload/", `/upload/w_${w},h_${h},c_fill,f_auto,q_auto/`);
+            return url.replace("/upload/", `/upload/w_${w},c_limit,f_auto,q_auto/`);
         }
         // Responsive srcset — phones download ~250px files instead of 400px ones
         function cardSrcset(url) {
