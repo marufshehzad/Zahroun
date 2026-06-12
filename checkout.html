@@ -1220,6 +1220,7 @@
                 const orderNum = typeof orderResult === 'object' ? orderResult.orderNum : null;
 
                 if (window.zahrounGA) window.zahrounGA.trackPurchase(orderId, items, total, coupon ? coupon.id : null);
+                if (typeof fbq !== 'undefined') fbq('track', 'Purchase', { value: total, currency: 'BDT', content_ids: items.map(i => String(i.id)), content_type: 'product', contents: items.map(i => ({ id: String(i.id), quantity: i.quantity })), num_items: items.reduce((s, i) => s + i.quantity, 0) });
                 // Email is sent by admin when order is confirmed — not here
                 // Increment coupon usage counter if one was applied
                 if (coupon && window.incrementCouponUsage) window.incrementCouponUsage(coupon.id).catch(e => console.error('[Coupon] Usage increment failed for', coupon.id, '—', e));
