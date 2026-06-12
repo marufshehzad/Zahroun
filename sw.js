@@ -3,10 +3,10 @@
    Scope: all pages at root (e.g. zahroun.com/*.html)
    ========================================================================= */
 
-const CACHE = 'zahroun-v1-20260611f'; // H4-fix: increment this string on every deployment to bust stale JS cache
+const CACHE = 'zahroun-v1-20260612a'; // H4-fix: increment this string on every deployment to bust stale JS cache
 
 const PRECACHE = [
-  'css/style.css',
+  'css/style.css?v=20260612',
   'js/firebase-config.js',
   'js/store.js',
   'js/products.js',
@@ -47,10 +47,13 @@ self.addEventListener('fetch', e => {
   // Only handle same-origin requests — let Firebase/Cloudinary/CDN go to network
   if (url.origin !== self.location.origin) return;
 
-  // Network-first for HTML navigation (always get fresh pages)
+  // Network-first for HTML navigation (always get fresh pages).
+  // cache:'no-cache' forces revalidation with the server — without it the
+  // fetch can be answered by the HTTP cache (Firebase serves HTML with
+  // max-age=3600), so users kept seeing day-old pages on first load.
   if (request.mode === 'navigate') {
     e.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-cache' })
         .then(res => {
           const clone = res.clone();
           caches.open(CACHE).then(c => c.put(request, clone));
