@@ -223,6 +223,7 @@
         .crop-preview-frame { width:100%; max-width:155px; max-height:210px; min-width:0; height:auto; border-radius:10px; overflow:hidden; border:2px solid rgba(255,255,255,.4); background:#1a1a1a; background-repeat:no-repeat; box-shadow:0 4px 18px rgba(0,0,0,.22),0 1px 4px rgba(0,0,0,.14); position:relative; transition:transform .18s ease,box-shadow .18s ease; cursor:zoom-in; }
         .crop-preview-frame:hover { transform:scale(1.04); box-shadow:0 14px 42px rgba(0,0,0,.32),0 3px 8px rgba(0,0,0,.18); z-index:2; }
         .crop-preview-frame--sm { max-width:115px; }
+        .pdp-pad-overlay { position:absolute;inset:7%;border:1.5px dashed rgba(200,185,165,.65);pointer-events:none;z-index:3;border-radius:2px; }
         /* Modal footer */
         #crop-modal-ftr { display:flex; align-items:center; justify-content:flex-end; gap:.6rem; padding:.6rem 1.2rem; border-top:1px solid var(--border-color); flex-shrink:0; }
         #crop-ok { background:var(--primary-color); color:#fff; border:none; padding:.45rem 1.6rem; border-radius:7px; font-size:.88rem; font-weight:600; cursor:pointer; font-family:var(--font-sans); }
@@ -2409,6 +2410,10 @@
                 <button type="button" id="si-sync-btn" class="btn btn-outline" style="margin-top:.5rem;font-size:.78rem;padding:.35rem .8rem;">
                     <ion-icon name="sync-outline" style="vertical-align:middle;font-size:.9rem;margin-right:.25rem;"></ion-icon>Use main image for all sizes
                 </button>
+                <div class="fg" style="margin-top:.6rem;">
+                    <label>Default shown size on product page <span class="muted-note" style="font-weight:normal;font-size:.76rem;">Which size image loads first for the customer</span></label>
+                    <select id="si-default-size" style="width:100%;font-size:.85rem;padding:.38rem .6rem;border:1px solid var(--border-color);border-radius:5px;background:var(--bg-color);color:var(--text-main);cursor:pointer;"></select>
+                </div>
             </div>
 
             <div class="grid2">

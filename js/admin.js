@@ -288,18 +288,20 @@ function _cropSetupPreviews(ar) {
     return "desktop-outline";
   }
 
+  const isPdp = Math.abs(ar - 3/4) < 0.05;
+  const pdpOverlay = isPdp ? `<div class="pdp-pad-overlay"></div>` : "";
   container.innerHTML =
     `<div class="crop-preview-device">
        <div class="crop-preview-label">
          <ion-icon name="${_devIcon(label1)}"></ion-icon>${label1}
        </div>
-       <div class="crop-preview-frame" style="aspect-ratio:${arCSS};"></div>
+       <div class="crop-preview-frame" style="aspect-ratio:${arCSS};">${pdpOverlay}</div>
      </div>
      <div class="crop-preview-device">
        <div class="crop-preview-label">
          <ion-icon name="${_devIcon(label2)}"></ion-icon>${label2}
        </div>
-       <div class="crop-preview-frame crop-preview-frame--sm" style="aspect-ratio:${arCSS};"></div>
+       <div class="crop-preview-frame crop-preview-frame--sm" style="aspect-ratio:${arCSS};">${pdpOverlay}</div>
      </div>`;
 }
 
@@ -518,6 +520,7 @@ async function initAdmin(user, profile) {
     if (cb && inp) cb.addEventListener("change", () => {
       inp.disabled = !cb.checked;
       inp.closest(".fg").style.opacity = cb.checked ? "1" : "0.42";
+      updateDefaultSizeSelect();
     });
   });
 
@@ -3494,6 +3497,10 @@ function openForm(product) {
       if (cb) cb.checked = activeSzs.includes(sz);
       if (inp) { inp.disabled = !activeSzs.includes(sz); inp.closest(".fg").style.opacity = activeSzs.includes(sz) ? "1" : "0.42"; }
     });
+    // Default display size
+    updateDefaultSizeSelect();
+    const dds = document.getElementById("si-default-size");
+    if (dds && product.defaultDisplaySize && activeSzs.includes(product.defaultDisplaySize)) dds.value = product.defaultDisplaySize;
     // Product type & combo
     const pType = product.productType || "regular";
     document.getElementById("product-type-sel").value = pType;
@@ -3633,6 +3640,19 @@ function renderSizeImageGrid() {
       renderSizeImageGrid();
     });
   });
+  updateDefaultSizeSelect();
+}
+
+function updateDefaultSizeSelect() {
+  const sel = document.getElementById("si-default-size");
+  if (!sel) return;
+  const activeSzs = SIZE_KEYS.filter(sz => {
+    const cb = document.getElementById(`sizeOn-${sz}`);
+    return !cb || cb.checked;
+  });
+  const prev = sel.value;
+  sel.innerHTML = activeSzs.map(sz => `<option value="${sz}">${sz}</option>`).join("");
+  if (activeSzs.includes(prev)) sel.value = prev;
 }
 
 async function handleSizeImageUpload(e) {
@@ -3679,6 +3699,7 @@ async function saveProduct(e) {
     stock: numOrNull(f.stock.value) ?? 0,
     featured: f.featured.checked, bestseller: f.bestseller.checked, newArrival: f.newArrival.checked, hidden: f.hidden.checked,
     activeSizes: SIZE_KEYS.filter(sz => { const cb = document.getElementById(`sizeOn-${sz}`); return !cb || cb.checked; }),
+    defaultDisplaySize: document.getElementById("si-default-size")?.value || "",
     productType: document.getElementById("product-type-sel")?.value || "regular",
     comboItems: (document.querySelector('#product-form [name="comboItems"]')?.value || "").split("\n").map(s => s.trim()).filter(Boolean),
     basePrice: numOrNull(document.querySelector('#product-form [name="basePrice"]')?.value) || 0,

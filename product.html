@@ -48,7 +48,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            padding: 1rem;
         }
         .product-image-large img {
             width: 100%;
@@ -541,8 +541,11 @@
             const displaySizes = sizeOrder.filter(s => activeSizeList.includes(s));
             const noSizes = displaySizes.length === 0;
 
-            // Default selected = largest available size
-            currentSelectedSize = displaySizes.includes('50ML') ? '50ML' : (displaySizes[displaySizes.length - 1] || null);
+            // Default selected = admin-chosen size, else 50ML, else last available
+            const _dds = product.defaultDisplaySize;
+            currentSelectedSize = (_dds && displaySizes.includes(_dds))
+                ? _dds
+                : (displaySizes.includes('50ML') ? '50ML' : (displaySizes[displaySizes.length - 1] || null));
             const productPrice = noSizes
                 ? (product.basePrice || Object.values(product.prices || {}).filter(v => v > 0).sort((a,b) => b - a)[0] || 0)
                 : getSizePrice(product, currentSelectedSize);
