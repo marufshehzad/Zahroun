@@ -275,7 +275,7 @@ function _cropSetupPreviews(ar) {
   } else if (Math.abs(ar - 9/16) < 0.05) {
     label1 = "Mobile Hero";          label2 = "Desktop Thumbnail";   arCSS = "9/16";
   } else if (Math.abs(ar - 1) < 0.05) {
-    label1 = "Desktop Square";       label2 = "Mobile Square";       arCSS = "1/1";
+    label1 = "Size Thumbnail";       label2 = "Size Thumbnail (sm)"; arCSS = "1/1";
   } else {
     label1 = "Desktop Preview";      label2 = "Mobile Preview";
     arCSS  = (!isNaN(ar) && ar > 0) ? ar.toFixed(4) : "4/3";
@@ -330,7 +330,7 @@ function openCropModal(file, { aspectRatio = NaN } = {}) {
     img.src = objUrl;
 
     // Set contextual modal title
-    const titleMap = { [3/4]: "Position Product Image", [16/9]: "Position Hero Banner", [9/16]: "Position Mobile Hero", [1]: "Position Square Image" };
+    const titleMap = { [3/4]: "Position Product Image", [16/9]: "Position Hero Banner", [9/16]: "Position Mobile Hero", [1]: "Position Size Image" };
     const titleEl = document.getElementById("crop-modal-title");
     if (titleEl) {
       const key = Object.keys(titleMap).find(k => Math.abs(aspectRatio - Number(k)) < 0.05);
@@ -3616,7 +3616,7 @@ function renderSizeImageGrid() {
     return `
       <div style="text-align:center;">
         <div style="font-size:.78rem;font-weight:600;margin-bottom:.35rem;color:var(--text-main);">${size}</div>
-        <div style="width:100%;aspect-ratio:3/4;border:1px solid var(--border-color);border-radius:6px;overflow:hidden;background:var(--surface-color);display:flex;align-items:center;justify-content:center;margin-bottom:.35rem;">
+        <div style="width:100%;aspect-ratio:1/1;border:1px solid var(--border-color);border-radius:6px;overflow:hidden;background:var(--surface-color);display:flex;align-items:center;justify-content:center;margin-bottom:.35rem;">
           ${thumb}
         </div>
         <label class="btn btn-outline" style="font-size:.72rem;padding:.3rem .55rem;cursor:pointer;display:inline-block;" for="si-file-${size}">Upload</label>
@@ -3640,7 +3640,7 @@ async function handleSizeImageUpload(e) {
   if (!file) return;
   const size = e.target.dataset.size;
   let blob;
-  try { blob = await openCropModal(file); } catch { e.target.value = ""; return; }
+  try { blob = await openCropModal(file, { aspectRatio: 1 }); } catch { e.target.value = ""; return; }
   const statusEl = document.getElementById("img-status");
   _showUploadProgress(statusEl, 0, size);
   try {
