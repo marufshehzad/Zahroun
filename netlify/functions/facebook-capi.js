@@ -4,22 +4,45 @@
 // FB_TEST_CODE: set to your test event code during testing, leave empty for production.
 
 const crypto = require('crypto');
+const https  = require('https');
 
 const PIXEL_ID = '1009881314767011';
-const CAPI_URL = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`;
 
 function sha256(value) {
     if (!value) return '';
     return crypto.createHash('sha256').update(String(value).trim().toLowerCase()).digest('hex');
 }
 
-// Bangladesh phone: strip leading 0 or country code, add 880
 function normalizePhone(phone) {
     if (!phone) return '';
     let p = String(phone).replace(/\D/g, '');
     if (p.startsWith('880')) return p;
     if (p.startsWith('0')) p = p.slice(1);
     return '880' + p;
+}
+
+function httpsPost(url, data) {
+    return new Promise((resolve, reject) => {
+        const body = JSON.stringify(data);
+        const u = new URL(url);
+        const options = {
+            hostname: u.hostname,
+            path: u.pathname + u.search,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(body),
+            },
+        };
+        const req = https.request(options, (res) => {
+            let raw = '';
+            res.on('data', chunk => { raw += chunk; });
+            res.on('end', () => resolve({ status: res.statusCode, body: raw }));
+        });
+        req.on('error', reject);
+        req.write(body);
+        req.end();
+    });
 }
 
 exports.handler = async (event) => {
@@ -40,12 +63,12 @@ exports.handler = async (event) => {
     }
 
     const {
-        event_name,   // 'Purchase' | 'Lead' | 'InitiateCheckout' | 'AddToCart' | 'ViewContent'
-        event_id,     // deduplication ID — must match browser pixel eventID
-        event_time,   // unix timestamp (seconds); defaults to now
-        user_data,    // { email, phone, first_name, last_name, city, fbp, fbc }
-        custom_data,  // { value, currency, content_ids, content_type, order_id, ... }
-        source_url,   // referrer page URL
+        event_name,
+        event_id,
+        event_time,
+        user_data,
+        custom_data,
+        source_url,
     } = payload;
 
     if (!event_name || !event_id) {
@@ -54,22 +77,23 @@ exports.handler = async (event) => {
 
     const ud = user_data || {};
     const userData = {
-        em: [sha256(ud.email)].filter(Boolean),
-        ph: [sha256(normalizePhone(ud.phone))].filter(Boolean),
-        fn: [sha256(ud.first_name)].filter(Boolean),
-        ln: [sha256(ud.last_name)].filter(Boolean),
-        ct: [sha256(ud.city)].filter(Boolean),
+        em:      [sha256(ud.email)].filter(v => v),
+        ph:      [sha256(normalizePhone(ud.phone))].filter(v => v),
+        fn:      [sha256(ud.first_name)].filter(v => v),
+        ln:      [sha256(ud.last_name)].filter(v => v),
+        ct:      [sha256(ud.city)].filter(v => v),
         country: [sha256('bd')],
-        client_ip_address: event.headers['x-forwarded-for']?.split(',')[0]?.trim() || '',
+        client_ip_address: (event.headers['x-forwarded-for'] || '').split(',')[0].trim(),
         client_user_agent: event.headers['user-agent'] || '',
     };
     if (ud.fbp) userData.fbp = ud.fbp;
     if (ud.fbc) userData.fbc = ud.fbc;
 
-    // Remove empty arrays
+    // Remove empty arrays / empty strings
     Object.keys(userData).forEach(k => {
-        if (Array.isArray(userData[k]) && userData[k].length === 0) delete userData[k];
-        if (Array.isArray(userData[k]) && userData[k][0] === '') delete userData[k];
+        const v = userData[k];
+        if (Array.isArray(v) && (v.length === 0 || v[0] === '')) delete userData[k];
+        if (typeof v === 'string' && v === '') delete userData[k];
     });
 
     const capiEvent = {
@@ -82,21 +106,17 @@ exports.handler = async (event) => {
         custom_data: custom_data || {},
     };
 
-    const body = { data: [capiEvent] };
+    const capiBody = { data: [capiEvent] };
     const testCode = process.env.FB_TEST_CODE || '';
-    if (testCode) body.test_event_code = testCode;
+    if (testCode) capiBody.test_event_code = testCode;
 
     try {
-        const response = await fetch(`${CAPI_URL}?access_token=${token}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-        const result = await response.json();
+        const apiUrl = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events?access_token=${token}`;
+        const result = await httpsPost(apiUrl, capiBody);
         return {
-            statusCode: response.status,
+            statusCode: result.status,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(result),
+            body: result.body,
         };
     } catch (err) {
         return {
