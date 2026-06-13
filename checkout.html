@@ -232,6 +232,7 @@
         <form id="checkout-form" class="checkout-container">
             <input type="hidden" id="field_fbp" name="fbp" value="">
             <input type="hidden" id="field_fbc" name="fbc" value="">
+            <input type="hidden" id="field_purchase_event_id" name="purchase_event_id" value="">
             <!-- Left Column: Shipping & Payment -->
             <div>
                 <div class="checkout-section" style="margin-bottom: 2rem;">
@@ -1260,9 +1261,45 @@
                         country: 'bd'
                     });
                     const _storageKey = 'zhr_px_' + orderId;
+                    const _capiUserData = {
+                        email: customerEmail || '',
+                        phone: mobile || '',
+                        first_name: name ? name.split(' ')[0] : '',
+                        last_name: name && name.split(' ').length > 1 ? name.split(' ').slice(1).join(' ') : '',
+                        city: district || '',
+                        fbp: typeof getSafeFbp === 'function' ? getSafeFbp() : '',
+                        fbc: typeof getSafeFbc === 'function' ? getSafeFbc() : '',
+                    };
+                    const _capiCustomData = {
+                        content_ids: items.map(i => String(i.id)),
+                        content_type: 'product',
+                        value: total,
+                        currency: 'BDT',
+                        num_items: items.reduce((s, i) => s + i.quantity, 0),
+                        order_id: orderId,
+                    };
+                    function _sendCAPI(evName, evId) {
+                        fetch('/.netlify/functions/facebook-capi', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                event_name: evName,
+                                event_id: evId,
+                                event_time: Math.floor(Date.now() / 1000),
+                                user_data: _capiUserData,
+                                custom_data: evName === 'Lead'
+                                    ? { content_name: 'COD Order Placed', value: total, currency: 'BDT', order_id: orderId }
+                                    : _capiCustomData,
+                                source_url: window.location.href,
+                            }),
+                        }).catch(() => {});
+                    }
                     if (paymentMethod === 'COD') {
                         // COD = unconfirmed — track as Lead only, not Purchase
-                        fbq('track', 'Lead', { content_name: 'COD Order Placed', value: total, currency: 'BDT', order_id: orderId });
+                        const _leadId = typeof generateEventId === 'function' ? generateEventId('LEAD') : 'LEAD_' + Date.now();
+                        fbq('track', 'Lead', { content_name: 'COD Order Placed', value: total, currency: 'BDT', order_id: orderId }, { eventID: _leadId });
+                        document.getElementById('field_purchase_event_id').value = _leadId;
+                        _sendCAPI('Lead', _leadId);
                     } else if (!sessionStorage.getItem(_storageKey)) {
                         // bKash / Nagad — payment confirmed, track as Purchase (once only)
                         const _purId = typeof generateEventId === 'function' ? generateEventId('PUR') : 'PUR_' + Date.now();
@@ -1274,7 +1311,9 @@
                             num_items: items.reduce((s, i) => s + i.quantity, 0),
                             order_id: orderId
                         }, { eventID: _purId });
+                        document.getElementById('field_purchase_event_id').value = _purId;
                         sessionStorage.setItem(_storageKey, '1');
+                        _sendCAPI('Purchase', _purId);
                     }
                 }
                 // Email is sent by admin when order is confirmed — not here

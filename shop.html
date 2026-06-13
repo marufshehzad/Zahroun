@@ -705,7 +705,29 @@
             if (catsReady && productsReady) renderProducts();
         }
 
-        document.addEventListener("products-ready", () => { productsReady = true; tryRender(); _buildAdvFilters(); });
+        document.addEventListener("products-ready", () => {
+            productsReady = true; tryRender(); _buildAdvFilters();
+            // ViewContent: fire once per session when product catalogue loads
+            if (typeof fbq !== 'undefined' && !sessionStorage.getItem('zhr_vc_shop')) {
+                try {
+                    const _topIds = (products || []).slice(0, 10).map(p => String(p.id));
+                    const _minPrices = (products || []).slice(0, 10).map(p => {
+                        const vals = p.prices ? Object.values(p.prices).filter(v => typeof v === 'number' && v > 0) : [];
+                        return vals.length ? Math.min(...vals) : (p.basePrice || p.price || 0);
+                    });
+                    const _avgValue = _minPrices.length ? Math.round(_minPrices.reduce((s, v) => s + v, 0) / _minPrices.length) : 0;
+                    const _vcId = typeof generateEventId === 'function' ? generateEventId('VC') : 'VC_' + Date.now();
+                    fbq('track', 'ViewContent', {
+                        content_ids: _topIds,
+                        content_type: 'product',
+                        content_category: 'Perfume',
+                        value: _avgValue,
+                        currency: 'BDT'
+                    }, { eventID: _vcId });
+                    sessionStorage.setItem('zhr_vc_shop', '1');
+                } catch(e) {}
+            }
+        });
 
         /* ── Sort ── */
         document.getElementById("sort-select")?.addEventListener("change", e => { _sortBy = e.target.value; renderProducts(); });
