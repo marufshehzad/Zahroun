@@ -500,26 +500,47 @@ async function loadSiteSettings() {
         bar.innerHTML = `<span>${escapeHtml(s.announcement)}</span><button aria-label="Close" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;color:#D4AF37;cursor:pointer;font-size:1.3rem;line-height:1;">×</button>`;
         document.body.insertBefore(bar, document.body.firstChild);
 
-        requestAnimationFrame(() => {
+        // Double-RAF: first RAF queues after current paint, second ensures
+        // the bar element is fully laid out (height readable) before measuring.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
           const hdr = document.querySelector('.header');
+          let barRO = null;
           let annObs = null;
-          let mode = 'top'; // 'top' = above header, 'below' = below header
+          let mode = 'top';
+          const hdrH = hdr ? hdr.offsetHeight : (window.innerWidth <= 768 ? 68 : 78);
 
-          // Place bar below header, track header movement via MutationObserver
+          // Snap header to position instantly (no slide animation on initial load)
+          const snapHdr = (topPx) => {
+            if (!hdr) return;
+            const prev = hdr.style.transition;
+            hdr.style.transition = 'none';
+            hdr.style.top = topPx + 'px';
+            hdr.offsetHeight; // force reflow so transition:none takes effect
+            hdr.style.transition = prev;
+          };
+
+          // Sync bar + header + body padding whenever bar height changes
+          const syncTop = () => {
+            if (!bar.isConnected) { if (barRO) barRO.disconnect(); return; }
+            const h = bar.offsetHeight || 36;
+            if (mode === 'top') {
+              snapHdr(h);
+              document.body.style.paddingTop = (h + hdrH) + 'px';
+            }
+          };
+
+          // Place bar below header when broadcast banner takes top position
           const placeAnnBelow = () => {
             if (!bar.isConnected) { if (annObs) annObs.disconnect(); return; }
             const hdrTop = hdr ? (parseFloat(hdr.style.top) || 0) : 0;
-            const hdrH   = hdr ? hdr.offsetHeight : (window.innerWidth <= 768 ? 68 : 78);
             bar.style.top = (hdrTop + hdrH) + 'px';
           };
 
-          // Switch from top-mode to below-header mode
-          // Called when broadcast banner appears (takes over the top position)
           const switchToBelow = () => {
             if (mode === 'below') return;
             mode = 'below';
+            if (barRO) { barRO.disconnect(); barRO = null; }
             const h = bar.offsetHeight || 36;
-            // Broadcast already overwrote body padding; add announcement height back
             const cp = parseFloat(document.body.style.paddingTop) || parseFloat(getComputedStyle(document.body).paddingTop) || 0;
             document.body.style.paddingTop = (cp + h) + 'px';
             placeAnnBelow();
@@ -530,16 +551,22 @@ async function loadSiteSettings() {
           };
 
           if (document.getElementById('zahroun-bc-bar')) {
-            // Broadcast is already active — go directly below header
             switchToBelow();
           } else {
-            // No broadcast yet — take top position, push header down
             bar.style.top = '0';
-            const h = bar.offsetHeight || 36;
-            if (hdr) hdr.style.top = h + 'px';
-            const hdrH = hdr ? hdr.offsetHeight : (window.innerWidth <= 768 ? 68 : 78);
-            document.body.style.paddingTop = (h + hdrH) + 'px';
-            // If broadcast appears later, yield top to it
+            syncTop(); // immediate snap, no animation glitch
+
+            // Re-sync after fonts finish loading (text reflow can change bar height)
+            if (document.fonts && document.fonts.ready) {
+              document.fonts.ready.then(syncTop);
+            }
+
+            // Keep in sync if bar ever resizes (orientation change, font swap, etc.)
+            if (typeof ResizeObserver !== 'undefined') {
+              barRO = new ResizeObserver(syncTop);
+              barRO.observe(bar);
+            }
+
             document.addEventListener('zahroun-bc-appeared', () => {
               requestAnimationFrame(() => switchToBelow());
             }, { once: true });
@@ -547,14 +574,14 @@ async function loadSiteSettings() {
 
           bar.querySelector('button').addEventListener('click', () => {
             const bh = bar.offsetHeight || 0;
+            if (barRO) barRO.disconnect();
             if (annObs) annObs.disconnect();
-            // If we were at top, reset header
-            if (mode === 'top' && hdr) hdr.style.top = '0px';
+            if (mode === 'top' && hdr) snapHdr(0);
             const cp = parseFloat(document.body.style.paddingTop) || parseFloat(getComputedStyle(document.body).paddingTop);
             document.body.style.paddingTop = Math.max(0, cp - bh) + 'px';
             bar.remove();
           });
-        });
+        }));
       }
 
       if (s.heroTitle) {
