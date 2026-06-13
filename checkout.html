@@ -5,9 +5,36 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Meta Pixel Code -->
-    <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1009881314767011');fbq('track','PageView');fbq('track','InitiateCheckout');</script>
+    <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1009881314767011');fbq('track','PageView');</script>
     <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1009881314767011&ev=PageView&noscript=1"/></noscript>
     <!-- End Meta Pixel Code -->
+    <script defer src="js/pixel-helpers.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            var cartData = JSON.parse(localStorage.getItem('zahroun_cart') || '[]');
+            if (typeof fbq !== 'undefined' && cartData.length > 0) {
+                var cartTotal = cartData.reduce(function(s, i) { return s + parseFloat(i.selectedPrice) * i.quantity; }, 0);
+                var icoId = typeof generateEventId === 'function' ? generateEventId('ICO') : 'ICO_' + Date.now();
+                sessionStorage.setItem('zhr_ico_event_id', icoId);
+                fbq('track', 'InitiateCheckout', {
+                    content_ids: cartData.map(function(i) { return String(i.id); }),
+                    content_type: 'product',
+                    value: Math.round(cartTotal),
+                    currency: 'BDT',
+                    num_items: cartData.reduce(function(s, i) { return s + i.quantity; }, 0)
+                }, { eventID: icoId });
+            }
+            // Fill hidden fbp/fbc fields after helpers load
+            setTimeout(function() {
+                var fp = document.getElementById('field_fbp');
+                var fc = document.getElementById('field_fbc');
+                if (fp && typeof getSafeFbp === 'function') fp.value = getSafeFbp();
+                if (fc && typeof getSafeFbc === 'function') fc.value = getSafeFbc();
+            }, 500);
+        } catch(e) {}
+    });
+    </script>
     <title>Checkout | Zahroun</title>
     <link rel="icon" href="favicon.ico" sizes="48x48">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
@@ -203,6 +230,8 @@
 
     <div class="container">
         <form id="checkout-form" class="checkout-container">
+            <input type="hidden" id="field_fbp" name="fbp" value="">
+            <input type="hidden" id="field_fbc" name="fbc" value="">
             <!-- Left Column: Shipping & Payment -->
             <div>
                 <div class="checkout-section" style="margin-bottom: 2rem;">
@@ -1220,7 +1249,34 @@
                 const orderNum = typeof orderResult === 'object' ? orderResult.orderNum : null;
 
                 if (window.zahrounGA) window.zahrounGA.trackPurchase(orderId, items, total, coupon ? coupon.id : null);
-                if (typeof fbq !== 'undefined') fbq('track', 'Purchase', { value: total, currency: 'BDT', content_ids: items.map(i => String(i.id)), content_type: 'product', contents: items.map(i => ({ id: String(i.id), quantity: i.quantity })), num_items: items.reduce((s, i) => s + i.quantity, 0) });
+                if (typeof fbq !== 'undefined') {
+                    // Advanced matching re-init with customer data for higher EMQ score
+                    fbq('init', '1009881314767011', {
+                        em: customerEmail || '',
+                        ph: mobile || '',
+                        fn: name ? name.split(' ')[0] : '',
+                        ln: name && name.split(' ').length > 1 ? name.split(' ').slice(1).join(' ') : '',
+                        ct: district || '',
+                        country: 'bd'
+                    });
+                    const _storageKey = 'zhr_px_' + orderId;
+                    if (paymentMethod === 'COD') {
+                        // COD = unconfirmed — track as Lead only, not Purchase
+                        fbq('track', 'Lead', { content_name: 'COD Order Placed', value: total, currency: 'BDT', order_id: orderId });
+                    } else if (!sessionStorage.getItem(_storageKey)) {
+                        // bKash / Nagad — payment confirmed, track as Purchase (once only)
+                        const _purId = typeof generateEventId === 'function' ? generateEventId('PUR') : 'PUR_' + Date.now();
+                        fbq('track', 'Purchase', {
+                            content_ids: items.map(i => String(i.id)),
+                            content_type: 'product',
+                            value: total,
+                            currency: 'BDT',
+                            num_items: items.reduce((s, i) => s + i.quantity, 0),
+                            order_id: orderId
+                        }, { eventID: _purId });
+                        sessionStorage.setItem(_storageKey, '1');
+                    }
+                }
                 // Email is sent by admin when order is confirmed — not here
                 // Increment coupon usage counter if one was applied
                 if (coupon && window.incrementCouponUsage) window.incrementCouponUsage(coupon.id).catch(e => console.error('[Coupon] Usage increment failed for', coupon.id, '—', e));

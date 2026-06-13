@@ -5,9 +5,10 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Meta Pixel Code -->
-    <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1009881314767011');fbq('track','PageView');fbq('track','ViewContent');</script>
+    <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1009881314767011');fbq('track','PageView');</script>
     <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1009881314767011&ev=PageView&noscript=1"/></noscript>
     <!-- End Meta Pixel Code -->
+    <script defer src="js/pixel-helpers.js"></script>
     <title>Product Details | Zahroun</title>
     <link rel="icon" href="favicon.ico" sizes="48x48">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
@@ -521,6 +522,19 @@
             window.currentProduct = product;
             window.currentProductId = product.id;
             if (window.zahrounGA) window.zahrounGA.trackProductView(product);
+            if (typeof fbq !== 'undefined') {
+                const _sizes = product.sizes || {};
+                const _prices = Object.values(_sizes).map(Number).filter(Boolean);
+                const _price = _prices.length ? Math.min(..._prices) : (parseFloat(product.price) || 0);
+                fbq('track', 'ViewContent', {
+                    content_ids: [String(product.id)],
+                    content_type: 'product',
+                    content_name: product.name,
+                    content_category: product.category || 'Perfume',
+                    value: _price,
+                    currency: 'BDT'
+                });
+            }
             // Filter active sizes (backward compat: if no activeSizes, all 4 are shown)
             const activeSizeList = product.activeSizes ?? sizeOrder;
             const displaySizes = sizeOrder.filter(s => activeSizeList.includes(s));
