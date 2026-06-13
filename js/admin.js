@@ -3525,6 +3525,7 @@ function openForm(product) {
     document.getElementById("base-price-row").style.display  = "none";
     document.querySelector('#product-form [name="comboItems"]').value = "";
     document.querySelector('#product-form [name="basePrice"]').value  = "";
+    updateDefaultSizeSelect();
   }
   $("#product-modal").classList.add("open");
 }
