@@ -5,8 +5,9 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Meta Pixel Code -->
-    <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1009881314767011');fbq('track','PageView');</script>
+    <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1009881314767011');fbq('init','2542211759531144');fbq('track','PageView');</script>
     <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1009881314767011&ev=PageView&noscript=1"/></noscript>
+    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2542211759531144&ev=PageView&noscript=1"/></noscript>
     <!-- End Meta Pixel Code -->
     <script defer src="js/pixel-helpers.js"></script>
     <script>
@@ -1252,14 +1253,16 @@
                 if (window.zahrounGA) window.zahrounGA.trackPurchase(orderId, items, total, coupon ? coupon.id : null);
                 if (typeof fbq !== 'undefined') {
                     // Advanced matching re-init with customer data for higher EMQ score
-                    fbq('init', '1009881314767011', {
+                    const _amData = {
                         em: customerEmail || '',
                         ph: mobile || '',
                         fn: name ? name.split(' ')[0] : '',
                         ln: name && name.split(' ').length > 1 ? name.split(' ').slice(1).join(' ') : '',
                         ct: district || '',
                         country: 'bd'
-                    });
+                    };
+                    fbq('init', '1009881314767011', _amData);
+                    fbq('init', '2542211759531144', _amData);
                     const _storageKey = 'zhr_px_' + orderId;
                     const _capiUserData = {
                         email: customerEmail || '',

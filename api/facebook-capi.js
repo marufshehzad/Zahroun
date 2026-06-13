@@ -5,7 +5,7 @@
 const crypto = require('crypto');
 const https  = require('https');
 
-const PIXEL_ID = '1009881314767011';
+const PIXEL_IDS = ['1009881314767011', '2542211759531144'];
 
 function sha256(value) {
     if (!value) return '';
@@ -97,9 +97,11 @@ module.exports = async (req, res) => {
     if (testCode) capiBody.test_event_code = testCode;
 
     try {
-        const apiUrl = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events?access_token=${token}`;
-        const result = await httpsPost(apiUrl, capiBody);
-        return res.status(result.status).json(JSON.parse(result.body));
+        const results = await Promise.all(PIXEL_IDS.map(pid =>
+            httpsPost(`https://graph.facebook.com/v19.0/${pid}/events?access_token=${token}`, capiBody)
+        ));
+        const primary = results[0];
+        return res.status(primary.status).json(JSON.parse(primary.body));
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
