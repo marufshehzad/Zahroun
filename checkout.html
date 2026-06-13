@@ -1279,7 +1279,7 @@
                         order_id: orderId,
                     };
                     function _sendCAPI(evName, evId) {
-                        fetch('/.netlify/functions/facebook-capi', {
+                        fetch('/api/facebook-capi', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
