@@ -1,8 +1,12 @@
-[functions]
-  directory = "netlify/functions"
+[build]
+  publish = "."
+  command  = ""
 
 [build.environment]
   NODE_VERSION = "18"
+
+[functions]
+  directory = "netlify/functions"
 
 [[headers]]
   for = "/*"
