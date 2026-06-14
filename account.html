@@ -67,32 +67,32 @@
         /* ---- Tabs ---- */
         .acc-tabs {
             display: flex;
-            gap: 0;
-            border-bottom: 2px solid var(--border-color);
+            gap: .5rem;
+            padding: .75rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
             overflow-x: auto;
             scrollbar-width: none;
-            background: var(--surface-color);
+            background: var(--bg-color);
         }
         .acc-tabs::-webkit-scrollbar { display: none; }
         .acc-tab {
-            padding: .85rem 1.4rem;
-            border: none;
-            background: none;
+            padding: .5rem 1.1rem;
+            border: 1.5px solid var(--border-color);
+            border-radius: 100px;
+            background: var(--surface-color);
             font-family: var(--font-sans);
-            font-size: .88rem;
+            font-size: .85rem;
             font-weight: 500;
             color: var(--text-muted);
             cursor: pointer;
             white-space: nowrap;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-            transition: color .2s, border-color .2s;
+            transition: color .18s, border-color .18s, background .18s;
             display: flex;
             align-items: center;
-            gap: .4rem;
+            gap: .35rem;
         }
-        .acc-tab:hover { color: var(--text-main); }
-        .acc-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: 600; }
+        .acc-tab:hover { color: var(--primary-color); border-color: var(--primary-color); background: var(--surface-color); }
+        .acc-tab.active { background: var(--primary-color); border-color: var(--primary-color); color: #fff; font-weight: 600; }
 
         .acc-panel { display: none; }
         .acc-panel.active { display: block; }
@@ -162,8 +162,22 @@
         .login-cta { text-align: center; padding: 4rem 1rem; }
         .login-cta ion-icon { font-size: 3rem; color: var(--primary-color); display: block; margin: 0 auto 1rem; }
 
+        @media (max-width: 768px) {
+            /* Shrink profile header */
+            .account-head { padding: 1.25rem 0 1rem; }
+            .account-avatar {
+                width: 44px; height: 44px;
+                font-size: 1.1rem;
+                margin-bottom: .6rem;
+            }
+            .account-head h1 { font-size: 1rem; letter-spacing: .09em; margin-bottom: .25rem; }
+            .account-head p { font-size: .78rem; }
+
+            /* Slightly smaller pills on mobile */
+            .acc-tabs { padding: .6rem .75rem; gap: .4rem; }
+            .acc-tab { padding: .42rem .85rem; font-size: .78rem; gap: .3rem; }
+        }
         @media (max-width: 540px) {
-            .acc-tab { font-size: .8rem; padding: .75rem 1rem; }
             .acc-form-card { padding: 1.25rem; }
         }
     </style>
