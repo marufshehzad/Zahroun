@@ -812,9 +812,9 @@
 
                         const canRedeem = bal >= (lp.minRedeem || 50);
                         if (info) info.innerHTML = lpInfoRows([
-                            { icon: "cash-outline", text: "Earn <strong style='color:var(--text-main);'>1 point</strong> for every <strong style='color:var(--text-main);'>Tk " + lp.earnPer + "</strong> spent â€” credited after order is <strong style='color:var(--text-main);'>delivered</strong>." },
-                            { icon: "gift-outline", text: "Redeem at checkout â†’ Order Summary â†’ <strong style='color:var(--text-main);'>Loyalty Points</strong> section." },
-                            { icon: "star-outline", text: "Min <strong style='color:var(--text-main);'>" + lp.minRedeem + " pts</strong> to redeem Â· 1 pt = Tk " + rv + (lp.maxRedeemPct ? " Â· Max " + lp.maxRedeemPct + "% of order" : "") + "." }
+                            { icon: “cash-outline”, text: “Earn <strong style=’color:var(--text-main);’>1 point</strong> for every <strong style=’color:var(--text-main);’>Tk “ + lp.earnPer + “</strong> spent — credited after order is <strong style=’color:var(--text-main);’>delivered</strong>.” },
+                            { icon: “gift-outline”, text: “Redeem at checkout → Order Summary → <strong style=’color:var(--text-main);’>Loyalty Points</strong> section.” },
+                            { icon: “star-outline”, text: “Min <strong style=’color:var(--text-main);’>” + lp.minRedeem + “ pts</strong> to redeem · 1 pt = Tk “ + rv + (lp.maxRedeemPct ? “ · Max “ + lp.maxRedeemPct + “% of order” : “”) + “.” }
                         ]) + (canRedeem
                             ? `<a href="index.html" style="display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.85rem;padding:.75rem 1.25rem;background:linear-gradient(135deg,#163E34,#0b231a);color:#c9a84c;border-radius:10px;font-weight:700;font-size:.9rem;text-decoration:none;letter-spacing:.03em;transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'"><ion-icon name="bag-handle-outline" style="font-size:1.1rem;"></ion-icon> Shop Now &amp; Use ${bal} Points</a>`
                             : `<div style="margin-top:.75rem;padding:.65rem 1rem;background:#faf8f4;border-radius:10px;border:1px dashed var(--border-color);font-size:.8rem;color:var(--text-muted);text-align:center;">Earn <strong style="color:var(--text-main);">${(lp.minRedeem||50) - bal} more points</strong> to start redeeming at checkout.</div>`);

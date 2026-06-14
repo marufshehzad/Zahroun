@@ -654,7 +654,7 @@
                     : [];
                 if (!vals.length) return `Tk ${(p.basePrice || p.price || 0).toLocaleString()}`;
                 const mn = Math.min(...vals), mx = Math.max(...vals);
-                return mn === mx ? `Tk ${mn.toLocaleString()}` : `Tk ${mn.toLocaleString()} â€“ Tk ${mx.toLocaleString()}`;
+                return mn === mx ? `Tk ${mn.toLocaleString()}` : `Tk ${mn.toLocaleString()} – Tk ${mx.toLocaleString()}`;
             }
             grid.innerHTML = filtered.map((p, _idx) => {
                 const active = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
