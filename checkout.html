@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -49,7 +49,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@500;600;700&display=swap">
-    <link rel="stylesheet" href="css/style.css?v=20260612">
+    <link rel="stylesheet" href="css/style.css?v=20260614d">
     <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
@@ -243,7 +243,7 @@
                         <input type="text" id="fullName" class="form-control" required placeholder="John Doe">
                     </div>
                     <div class="form-group">
-                        <label for="customerEmail">Email <span style="font-size:.78rem;font-weight:400;color:var(--text-muted);">(optional — for order confirmation)</span></label>
+                        <label for="customerEmail">Email <span style="font-size:.78rem;font-weight:400;color:var(--text-muted);">(optional â€” for order confirmation)</span></label>
                         <input type="email" id="customerEmail" class="form-control" placeholder="your@email.com" autocomplete="email">
                     </div>
                     <div class="form-group">
@@ -257,7 +257,7 @@
                     <div class="form-group">
                         <label for="district">District *</label>
                         <select id="district" class="form-control" required onchange="autoSetDelivery()">
-                            <option value="">— Select your district —</option>
+                            <option value="">â€” Select your district â€”</option>
                         </select>
                     </div>
                     <!-- Auto-detected delivery zone info -->
@@ -269,7 +269,7 @@
                     </select>
                     <div class="form-group">
                         <label for="giftMessage" style="display:flex;align-items:center;gap:.45rem;"><ion-icon name="gift-outline" style="font-size:1rem;color:var(--primary-color);"></ion-icon> Gift Message <span style="font-size:.78rem;font-weight:400;color:var(--text-muted);">(optional)</span></label>
-                        <textarea id="giftMessage" class="form-control" rows="2" maxlength="200" placeholder="Add a personal note for the recipient… e.g. Happy Birthday! 🎂"></textarea>
+                        <textarea id="giftMessage" class="form-control" rows="2" maxlength="200" placeholder="Add a personal note for the recipientâ€¦ e.g. Happy Birthday! ðŸŽ‚"></textarea>
                         <div style="text-align:right;font-size:.74rem;color:var(--text-muted);margin-top:.2rem;"><span id="gift-char-count">0</span>/200</div>
                     </div>
                 </div>
@@ -345,7 +345,7 @@
                             <div id="promo-discount-lines"></div>
                         </div>
                         <div id="free-gift-row" style="display:none;justify-content:space-between;margin-bottom:.5rem;color:#163E34;background:#f0f7f4;border-radius:6px;padding:.35rem .65rem;font-size:.82rem;font-weight:600;">
-                            <span id="free-gift-label">🎁 Free Gift</span><span>Added!</span>
+                            <span id="free-gift-label">ðŸŽ Free Gift</span><span>Added!</span>
                         </div>
                         <!-- Loyalty Points Redemption -->
                         <div id="loyalty-row" style="display:none;margin-bottom:1rem;">
@@ -468,7 +468,7 @@
         import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         (async () => {
             try {
-                // sessionStorage cache — delivery charges rarely change
+                // sessionStorage cache â€” delivery charges rarely change
                 const _STORE_KEY = 'zhr_store_v1', _STORE_TTL = 30 * 60 * 1000;
                 let s = {};
                 try {
@@ -513,13 +513,13 @@
             }
             initLoyaltySection();
         });
-        // ── EmailJS config ── fill these 3 values after EmailJS setup ──
+        // â”€â”€ EmailJS config â”€â”€ fill these 3 values after EmailJS setup â”€â”€
         const EMAILJS_PUBLIC_KEY  = "wUGMJ65uoDE5-C0AF";
         const EMAILJS_SERVICE_ID  = "service_y827jxy";
         const EMAILJS_TEMPLATE_ID = "template_7r5991b";
-        // ────────────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-        // EmailJS is loaded on demand — only injected when an order is placed
+        // EmailJS is loaded on demand â€” only injected when an order is placed
         let _ejsReady = false;
         async function _loadEmailJS() {
             if (EMAILJS_PUBLIC_KEY === "YOUR_PUBLIC_KEY") return;
@@ -548,7 +548,7 @@
                 const C = { gold:'#D4A64A', dark:'#041A16', card:'rgba(10,58,49,0.35)', border:'rgba(212,166,74,0.25)', muted:'#9E9E9E', body:'#CFCFCF', text:'#EDEDED', green:'#49C16D' };
                 const F = { serif:"font-family:'Playfair Display',Georgia,serif;", sans:"font-family:'Inter',Arial,sans-serif;" };
 
-                /* ── Item rows ─────────────────────────────────────────── */
+                /* â”€â”€ Item rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
                 const itemRowsHtml = items.map(item => {
                     const imgUrl = item.image || item.imageUrl || item.img || '';
                     const imgTag = imgUrl
@@ -587,7 +587,7 @@
 </table>`;
                 }).join('');
 
-                /* ── Discount rows (go inside the summary <table>) ─────── */
+                /* â”€â”€ Discount rows (go inside the summary <table>) â”€â”€â”€â”€â”€â”€â”€ */
                 let discountRowsHtml = '';
                 if (+discount > 0) {
                     discountRowsHtml += `<tr><td style="padding:13px 22px;border-bottom:1px solid rgba(255,255,255,0.05);"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="${F.sans}font-size:13px;color:${C.body};">Coupon Discount${coupon ? ' (' + coupon + ')' : ''}</td><td align="right" style="${F.sans}font-size:13px;color:${C.text};font-weight:500;">-BDT ${fmtNum(discount)}</td></tr></table></td></tr>`;
@@ -598,7 +598,7 @@
                     discountRowsHtml += `<tr><td style="padding:13px 22px;border-bottom:1px solid rgba(255,255,255,0.05);"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="${F.sans}font-size:13px;color:${C.green};">Loyalty Points (${loyaltyDiscount.points} pts redeemed)${remNote}</td><td align="right" style="${F.sans}font-size:13px;color:${C.green};font-weight:500;">-BDT ${loyaltyDiscount.discount.toFixed(2)}</td></tr></table></td></tr>`;
                 }
 
-                /* ── Icon helpers (Unicode text — works in Gmail, Outlook, Yahoo, Apple Mail) ── */
+                /* â”€â”€ Icon helpers (Unicode text â€” works in Gmail, Outlook, Yahoo, Apple Mail) â”€â”€ */
                 const svgCheck    = `<span style="font-size:26px;line-height:1;color:${C.gold};font-family:Arial,sans-serif;">&#10003;</span>`;
                 const svgDiamond  = `<span style="font-size:11px;color:${C.gold};font-family:Arial,sans-serif;">&#9670;</span>`;
                 const svgDoc      = `<span style="font-size:18px;font-weight:bold;color:${C.gold};font-family:Arial,sans-serif;">#</span>`;
@@ -612,7 +612,7 @@
                 const divider = `<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid rgba(212,166,74,0.32);"></td><td width="28" align="center" style="padding:0 10px;line-height:0;">${svgDiamond}</td><td style="border-top:1px solid rgba(212,166,74,0.32);"></td></tr></table>`;
                 const socialIcon = (svg) => `<td style="padding:0 10px;"><table cellpadding="0" cellspacing="0" border="0"><tr><td width="40" height="40" align="center" valign="middle" style="width:40px;height:40px;border:1px solid rgba(212,166,74,0.42);border-radius:50%;background:rgba(212,166,74,0.05);">${svg}</td></tr></table></td>`;
 
-                /* ── Complete email HTML ────────────────────────────────── */
+                /* â”€â”€ Complete email HTML â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
                 const html_body = `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -806,7 +806,7 @@
                 const code = document.getElementById('coupon-code-input').value.trim();
                 const fb = document.getElementById('coupon-feedback');
                 if (!code) { fb.textContent = 'Enter a coupon code.'; fb.style.color = '#9b2226'; return; }
-                btn.disabled = true; btn.textContent = 'Checking…';
+                btn.disabled = true; btn.textContent = 'Checkingâ€¦';
                 const subtotal = cart.reduce((s, i) => s + parseFloat(i.selectedPrice) * i.quantity, 0);
                 try {
                     if (!window.validateAndApplyCoupon) { fb.textContent = 'Coupon system loading, try again.'; fb.style.color = '#9b2226'; return; }
@@ -971,7 +971,7 @@
             const fgRow = document.getElementById('free-gift-row');
             const fgLabel = document.getElementById('free-gift-label');
             if (promoResult?.freeGift) {
-                fgLabel.textContent = '🎁 Free Gift: ' + promoResult.freeGift.name;
+                fgLabel.textContent = 'ðŸŽ Free Gift: ' + promoResult.freeGift.name;
                 fgRow.style.display = 'flex';
             } else {
                 fgRow.style.display = 'none';
@@ -1009,8 +1009,8 @@
 
             zoneInfo.style.display = '';
             zoneInfo.innerHTML = isDhaka
-                ? `📍 <strong>Inside Dhaka</strong> — Delivery charge: <strong>Tk ${dhakaCharge}</strong>`
-                : `🚚 <strong>Outside Dhaka</strong> — Delivery charge: <strong>Tk ${outsideCharge}</strong>`;
+                ? `ðŸ“ <strong>Inside Dhaka</strong> â€” Delivery charge: <strong>Tk ${dhakaCharge}</strong>`
+                : `ðŸšš <strong>Outside Dhaka</strong> â€” Delivery charge: <strong>Tk ${outsideCharge}</strong>`;
 
             calculateTotal();
             checkFormValidity();
@@ -1051,7 +1051,7 @@
                 return;
             }
 
-            // Stock validation — check current product stock before accepting order
+            // Stock validation â€” check current product stock before accepting order
             const allProducts = window.products || (window.ZahrounStore && window.ZahrounStore.products) || [];
             const stockErrors = [];
             for (const item of cart) {
@@ -1098,7 +1098,7 @@
             const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.selectedPrice) * item.quantity), 0);
             let coupon = window.appliedCoupon || null;
 
-            // ── H8-fix: re-validate session coupon against Firestore before placing order ──
+            // â”€â”€ H8-fix: re-validate session coupon against Firestore before placing order â”€â”€
             if (coupon) {
                 try {
                     const { getFirestore, doc: _doc, getDoc: _getDoc } =
@@ -1108,8 +1108,8 @@
                     if (!freshSnap.exists()) {
                         window.clearAppliedCoupon && window.clearAppliedCoupon();
                         coupon = null;
-                        if (window.showToast) window.showToast('Coupon no longer exists — it has been removed.', 'error');
-                        else alert('Coupon no longer exists — it has been removed.');
+                        if (window.showToast) window.showToast('Coupon no longer exists â€” it has been removed.', 'error');
+                        else alert('Coupon no longer exists â€” it has been removed.');
                         return;
                     }
                     const fresh = freshSnap.data();
@@ -1138,12 +1138,12 @@
                         return;
                     }
                 } catch (revalErr) {
-                    console.warn('Coupon re-validation failed — proceeding without coupon:', revalErr);
+                    console.warn('Coupon re-validation failed â€” proceeding without coupon:', revalErr);
                     window.clearAppliedCoupon && window.clearAppliedCoupon();
                     coupon = null;
                 }
             }
-            // ── end H8-fix ──
+            // â”€â”€ end H8-fix â”€â”€
 
             const discount = coupon ? (coupon.discount || 0) : 0;
             const promoResult = window._promoResult;
@@ -1199,29 +1199,29 @@
             if (freeDelivery && coupon && coupon.freeDelivery) message += `Coupon (${coupon.id}): FREE delivery\n`;
             else if (freeDelivery && window._freeDeliveryThreshold > 0 && subtotal >= window._freeDeliveryThreshold) message += `Free Delivery (Order >= ${window._freeDeliveryThreshold} BDT)\n`;
             message += `Delivery: ${freeDelivery ? 'FREE' : effectiveDelivery + ' BDT'}\n*Total:* ${total.toFixed(2)} BDT\n\n*Payment Method:* ${paymentMethod}\n`;
-            if (giftMessage) message += `\n🎁 *Gift Message:* "${giftMessage}"\n`;
+            if (giftMessage) message += `\nðŸŽ *Gift Message:* "${giftMessage}"\n`;
             if (senderMobile) message += `*Paid From:* ${senderMobile}\n`;
             if (txnId) message += `*Transaction ID:* ${txnId}\n`;
             const whatsappUrl = `https://wa.me/8801886936581?text=${encodeURIComponent(message)}`;
 
-            // ── C3-fix: guard loyalty/referral discounts against client-side tampering ──
+            // â”€â”€ C3-fix: guard loyalty/referral discounts against client-side tampering â”€â”€
             if (window._loyaltyDiscount && _loyaltyCfg?.loyaltyPoints?.enabled) {
                 const rv = _loyaltyCfg.loyaltyPoints.redeemValue || 1;
                 const maxDiscount = _loyaltyBal * rv;
                 if (!_loyaltyBal || window._loyaltyDiscount.points > _loyaltyBal ||
                         window._loyaltyDiscount.discount > maxDiscount + 0.01) {
-                    console.warn('[Loyalty] Discount out of bounds — discarded. bal=', _loyaltyBal, 'claimed=', window._loyaltyDiscount);
+                    console.warn('[Loyalty] Discount out of bounds â€” discarded. bal=', _loyaltyBal, 'claimed=', window._loyaltyDiscount);
                     window._loyaltyDiscount = null;
                 }
             }
             if (window._referralResult && _loyaltyCfg?.referral?.enabled) {
                 const maxRef = _loyaltyCfg.referral.refereeAmt || 0;
                 if (window._referralResult.discount > maxRef + 0.01) {
-                    console.warn('[Referral] Discount out of bounds — discarded. max=', maxRef, 'claimed=', window._referralResult.discount);
+                    console.warn('[Referral] Discount out of bounds â€” discarded. max=', maxRef, 'claimed=', window._referralResult.discount);
                     window._referralResult = null;
                 }
             }
-            // ── end C3-fix ──
+            // â”€â”€ end C3-fix â”€â”€
 
             // Save the order to Firestore
             const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -1298,13 +1298,13 @@
                         }).catch(() => {});
                     }
                     if (paymentMethod === 'COD') {
-                        // COD = unconfirmed — track as Lead only, not Purchase
+                        // COD = unconfirmed â€” track as Lead only, not Purchase
                         const _leadId = typeof generateEventId === 'function' ? generateEventId('LEAD') : 'LEAD_' + Date.now();
                         fbq('track', 'Lead', { content_name: 'COD Order Placed', value: total, currency: 'BDT', order_id: orderId }, { eventID: _leadId });
                         document.getElementById('field_purchase_event_id').value = _leadId;
                         _sendCAPI('Lead', _leadId);
                     } else if (!sessionStorage.getItem(_storageKey)) {
-                        // bKash / Nagad — payment confirmed, track as Purchase (once only)
+                        // bKash / Nagad â€” payment confirmed, track as Purchase (once only)
                         const _purId = typeof generateEventId === 'function' ? generateEventId('PUR') : 'PUR_' + Date.now();
                         fbq('track', 'Purchase', {
                             content_ids: items.map(i => String(i.id)),
@@ -1319,9 +1319,9 @@
                         _sendCAPI('Purchase', _purId);
                     }
                 }
-                // Email is sent by admin when order is confirmed — not here
+                // Email is sent by admin when order is confirmed â€” not here
                 // Increment coupon usage counter if one was applied
-                if (coupon && window.incrementCouponUsage) window.incrementCouponUsage(coupon.id).catch(e => console.error('[Coupon] Usage increment failed for', coupon.id, '—', e));
+                if (coupon && window.incrementCouponUsage) window.incrementCouponUsage(coupon.id).catch(e => console.error('[Coupon] Usage increment failed for', coupon.id, 'â€”', e));
                 if (window.clearAppliedCoupon) window.clearAppliedCoupon();
                 // Apply loyalty deduction + referral after order
                 // NOTE: Points are EARNED only when order status changes to "Delivered" (not here)
@@ -1367,7 +1367,7 @@
             }
         }
 
-        // ── Loyalty + Referral section initialiser ──────────────────────
+        // â”€â”€ Loyalty + Referral section initialiser â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         let _loyaltyInited = false;
         let _loyaltyCfg = null;
         let _loyaltyBal = 0;
@@ -1376,7 +1376,7 @@
             const lp = _loyaltyCfg?.loyaltyPoints || {};
             if (!lp.enabled) return { show: false, reason: '' };
 
-            // Min order amount check — show block but mark as not redeemable
+            // Min order amount check â€” show block but mark as not redeemable
             const subtotal = cart.reduce((s, i) => s + parseFloat(i.selectedPrice) * i.quantity, 0);
             const minOrder = lp.minOrderAmount || 0;
             if (minOrder > 0 && subtotal < minOrder) {
@@ -1441,7 +1441,7 @@
                 if (hintEl)   { hintEl.style.color = isError ? '#c0392b' : 'var(--text-muted)'; hintEl.innerHTML = html; }
             }
 
-            // Min order amount not met — locked state
+            // Min order amount not met â€” locked state
             if (!canRedeem) {
                 setHint(reason, true);
                 if (inp) { inp.disabled = true; inp.placeholder = 'Min order not met'; }
@@ -1466,9 +1466,9 @@
             } else {
                 let hintText = `<strong>Min ${minRedeem} pts</strong>`;
                 if (maxRedeemPct > 0 && effectiveMax < _loyaltyBal) {
-                    hintText += ` · Max <strong>${effectiveMax} pts</strong> (${maxRedeemPct}% of order = Tk ${(effectiveMax * rv).toFixed(0)})`;
+                    hintText += ` Â· Max <strong>${effectiveMax} pts</strong> (${maxRedeemPct}% of order = Tk ${(effectiveMax * rv).toFixed(0)})`;
                 } else {
-                    hintText += ` · Max <strong>${effectiveMax} pts</strong>`;
+                    hintText += ` Â· Max <strong>${effectiveMax} pts</strong>`;
                 }
                 setHint(hintText, false);
                 if (inp) { inp.disabled = false; inp.min = minRedeem; inp.max = effectiveMax; inp.placeholder = `Enter points to redeem`; }
@@ -1484,13 +1484,13 @@
             if (!user) return;
             _loyaltyInited = true;
 
-            // Use ready promise — config is already loading in background, no extra Firestore call
+            // Use ready promise â€” config is already loading in background, no extra Firestore call
             await Promise.race([window.ZahrounPromos.ready, new Promise(r => setTimeout(r, 3000))]);
             _loyaltyCfg = window.ZahrounPromos.getConfig();
             const lp = _loyaltyCfg.loyaltyPoints || {};
 
             if (lp.enabled) {
-                // Single Firestore read — extract both balance and tier from one getLoyaltyData call
+                // Single Firestore read â€” extract both balance and tier from one getLoyaltyData call
                 const lpData = await window.ZahrounPromos.getLoyaltyData(user.uid).catch(() => null);
                 _loyaltyBal = lpData?.points || 0;
                 const rv = lp.redeemValue || 1;
@@ -1501,7 +1501,7 @@
                 if (balEl)   balEl.textContent  = _loyaltyBal.toLocaleString();
                 if (worthEl) worthEl.textContent = 'Tk ' + (_loyaltyBal * rv).toFixed(2);
 
-                // Tier badge — extracted from the same lpData read above (no second Firestore call)
+                // Tier badge â€” extracted from the same lpData read above (no second Firestore call)
                 const tierEl = document.getElementById('loyalty-tier-label');
                 if (tierEl) {
                     const tier = lpData?.tier || 'silver';
@@ -1543,7 +1543,7 @@
                     const msgEl      = document.getElementById('loyalty-msg');
                     const da         = document.getElementById('loyalty-discount-amount');
 
-                    // REMOVE mode — clear applied discount
+                    // REMOVE mode â€” clear applied discount
                     if (_loyaltyApplied) {
                         _loyaltyApplied = false;
                         window._loyaltyDiscount = null;
@@ -1565,7 +1565,7 @@
                     // APPLY mode
                     const pts = parseInt(inpEl?.value) || 0;
                     const subtotal = cart.reduce((s, i) => s + parseFloat(i.selectedPrice) * i.quantity, 0);
-                    if (redeemBtn) { redeemBtn.disabled = true; redeemBtn.textContent = '…'; }
+                    if (redeemBtn) { redeemBtn.disabled = true; redeemBtn.textContent = 'â€¦'; }
                     const res = await window.ZahrounPromos.redeemLoyaltyPoints(user.uid, pts, subtotal);
                     if (res.success) {
                         _loyaltyApplied = true;
@@ -1579,7 +1579,7 @@
                         }
                         if (inpEl)    inpEl.disabled = true;
                         if (useAllBtn) useAllBtn.disabled = true;
-                        if (msgEl)    { msgEl.style.color = '#1e7e34'; msgEl.textContent = '✓ ' + pts + ' pts applied — Tk ' + res.discount.toFixed(2) + ' discount'; }
+                        if (msgEl)    { msgEl.style.color = '#1e7e34'; msgEl.textContent = 'âœ“ ' + pts + ' pts applied â€” Tk ' + res.discount.toFixed(2) + ' discount'; }
                         if (da)       { da.textContent = 'Tk ' + res.discount.toFixed(2); da.style.color = '#1e7e34'; }
                         await refreshTotals();
                     } else {
@@ -1600,7 +1600,7 @@
                     if (res?.success) {
                         window._referralResult = { ...res, label: 'Referral Discount', detail: 'Tk ' + res.discount + ' off', code: code.toUpperCase() };
                         msgEl.style.color = '#0b6e2a';
-                        msgEl.textContent = '✓ Referral code applied! Tk ' + res.discount + ' off';
+                        msgEl.textContent = 'âœ“ Referral code applied! Tk ' + res.discount + ' off';
                         await refreshTotals();
                     } else {
                         msgEl.style.color = '#c0392b';

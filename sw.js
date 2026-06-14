@@ -1,12 +1,12 @@
-/* =========================================================================
-   Zahroun Service Worker — cache-first for local assets, network-first for HTML
+﻿/* =========================================================================
+   Zahroun Service Worker â€” cache-first for local assets, network-first for HTML
    Scope: all pages at root (e.g. zahroun.com/*.html)
    ========================================================================= */
 
-const CACHE = 'zahroun-v1-20260612c'; // H4-fix: increment this string on every deployment to bust stale JS cache
+const CACHE = 'zahroun-v1-20260614d'; // H4-fix: increment this string on every deployment to bust stale JS cache
 
 const PRECACHE = [
-  'css/style.css?v=20260612',
+  'css/style.css?v=20260614d',
   'js/firebase-config.js',
   'js/store.js',
   'js/products.js',
@@ -25,7 +25,7 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', e => {
-  // cache:'no-cache' revalidates with the server — plain addAll() can be
+  // cache:'no-cache' revalidates with the server â€” plain addAll() can be
   // answered by the browser HTTP cache, silently precaching stale files.
   e.waitUntil(
     caches.open(CACHE).then(c =>
@@ -52,11 +52,11 @@ self.addEventListener('fetch', e => {
   const { request } = e;
   const url = new URL(request.url);
 
-  // Only handle same-origin requests — let Firebase/Cloudinary/CDN go to network
+  // Only handle same-origin requests â€” let Firebase/Cloudinary/CDN go to network
   if (url.origin !== self.location.origin) return;
 
   // Network-first for HTML navigation (always get fresh pages).
-  // cache:'no-cache' forces revalidation with the server — without it the
+  // cache:'no-cache' forces revalidation with the server â€” without it the
   // fetch can be answered by the HTTP cache (Firebase serves HTML with
   // max-age=3600), so users kept seeing day-old pages on first load.
   if (request.mode === 'navigate') {
@@ -72,7 +72,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Cache-first for CSS, JS, images, fonts — these are versioned or rarely change
+  // Cache-first for CSS, JS, images, fonts â€” these are versioned or rarely change
   if (
     request.destination === 'style' ||
     request.destination === 'script' ||

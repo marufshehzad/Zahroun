@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -16,7 +16,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
-    <meta name="description" content="Discover Zahroun luxury perfumes — niche fragrances for men, women, and unisex. Long-lasting, premium quality. Shop online in Bangladesh.">
+    <meta name="description" content="Discover Zahroun luxury perfumes â€” niche fragrances for men, women, and unisex. Long-lasting, premium quality. Shop online in Bangladesh.">
     <meta property="og:site_name" content="Zahroun">
     <meta property="og:type" content="product">
     <meta name="twitter:card" content="summary_large_image">
@@ -26,7 +26,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@500;600;700&display=swap">
-    <link rel="stylesheet" href="css/style.css?v=20260612">
+    <link rel="stylesheet" href="css/style.css?v=20260614d">
     <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/broadcast.js"></script>
@@ -702,7 +702,7 @@
                                 <span id="reviews-acc-label">Reviews</span> <ion-icon name="add-outline"></ion-icon>
                             </div>
                             <div class="accordion-content" id="product-reviews-section">
-                                <p style="color:var(--text-muted);font-size:.9rem;">Loading reviews…</p>
+                                <p style="color:var(--text-muted);font-size:.9rem;">Loading reviewsâ€¦</p>
                             </div>
                         </div>
                     </div>
@@ -755,7 +755,7 @@
             // Set document title + dynamic SEO
             document.title = `${product.name} | Zahroun`;
             const pid = new URLSearchParams(location.search).get("id") || "";
-            document.querySelector('meta[name="description"]').content = `${product.name} — ${(product.description || "").slice(0,120)}. Shop Zahroun luxury perfumes online in Bangladesh.`;
+            document.querySelector('meta[name="description"]').content = `${product.name} â€” ${(product.description || "").slice(0,120)}. Shop Zahroun luxury perfumes online in Bangladesh.`;
 
             // Clear existing dynamic SEO tags to prevent duplicates
             document.querySelectorAll(".dynamic-seo").forEach(el => el.remove());
@@ -771,7 +771,7 @@
                 <meta class="dynamic-seo" name="twitter:image" content="${product.image || "https://raw.githubusercontent.com/marufshehzad/Zahroun/main/logo.png"}">
             `);
 
-            // Product rich result schema — shows price + availability in Google search
+            // Product rich result schema â€” shows price + availability in Google search
             const _price = (product.prices && product.prices["50ML"]) ? product.prices["50ML"] : (product.price || 0);
             const _schema = document.createElement("script");
             _schema.type = "application/ld+json";
@@ -781,7 +781,7 @@
                 "@type": "Product",
                 "name": product.name,
                 "image": [product.image],
-                "description": product.description || `${product.name} — luxury niche perfume by Zahroun. Buy online in Bangladesh.`,
+                "description": product.description || `${product.name} â€” luxury niche perfume by Zahroun. Buy online in Bangladesh.`,
                 "brand": { "@type": "Brand", "name": "Zahroun" },
                 "sku": String(product.id),
                 "offers": {
@@ -831,7 +831,7 @@
             });
             document.head.appendChild(_breadcrumbs);
 
-            // Populate Upsell Grid — scored: same category + shared fragrance notes + shared gender + featured
+            // Populate Upsell Grid â€” scored: same category + shared fragrance notes + shared gender + featured
             const upsellGrid = document.getElementById('upsell-products');
             const _esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
             const myNotes = new Set((product.fragrance_notes || []).map(n => String(n).toLowerCase()));
@@ -848,7 +848,7 @@
             const _upCard = p => {
                 const minPrice = p.prices ? Math.min(...Object.values(p.prices).filter(v => v > 0)) : (p.price || 0);
                 const maxPrice = p.prices ? Math.max(...Object.values(p.prices).filter(v => v > 0)) : (p.price || 0);
-                const priceStr = minPrice === maxPrice ? `Tk ${minPrice.toLocaleString()}` : `Tk ${minPrice.toLocaleString()} – Tk ${maxPrice.toLocaleString()}`;
+                const priceStr = minPrice === maxPrice ? `Tk ${minPrice.toLocaleString()}` : `Tk ${minPrice.toLocaleString()} â€“ Tk ${maxPrice.toLocaleString()}`;
                 return `<div class="product-card" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;">
                     <div class="product-img-wrapper" style="position:relative;">
                         <img src="${_esc(_ctf(p.image, 'w_400,h_540,c_fill,g_auto,f_auto,q_auto'))}" alt="${_esc(p.name)}" class="product-img" loading="lazy" style="background-color:#FFFFFF;">
@@ -863,7 +863,7 @@
             };
             upsellGrid.innerHTML = upsellProducts.map(_upCard).join('');
 
-            // Recently viewed — localStorage only, no extra reads
+            // Recently viewed â€” localStorage only, no extra reads
             try {
                 const RV_KEY = 'zhr_recent_v1';
                 let rv = []; try { rv = JSON.parse(localStorage.getItem(RV_KEY)) || []; } catch {}
@@ -1040,7 +1040,7 @@
             subtotalEl.textContent = 'Tk ' + Math.round(subtotal).toLocaleString();
 
             if (subtotal >= 4000) {
-                spendMoreEl.textContent = '✅ 10% Discount Unlocked! Use code: myzahroun10';
+                spendMoreEl.textContent = 'âœ… 10% Discount Unlocked! Use code: myzahroun10';
                 spendMoreEl.style.color = '#27ae60';
             } else if (subtotal > 0) {
                 const diff = Math.round(4000 - subtotal);
@@ -1070,14 +1070,14 @@
             if (u && window.currentProductId) refreshWishlistIcon(window.currentProductId);
         });
 
-        /* ---- Back-in-stock notification (stores as a message — admin sees it in Messages) ---- */
+        /* ---- Back-in-stock notification (stores as a message â€” admin sees it in Messages) ---- */
         document.addEventListener("click", async e => {
             if (e.target.id !== "notify-btn") return;
             const emailEl = document.getElementById("notify-email");
             const msgEl = document.getElementById("notify-msg");
             const email = (emailEl?.value || "").trim();
             if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msgEl.textContent = "Please enter a valid email address."; return; }
-            e.target.disabled = true; e.target.textContent = "Saving…";
+            e.target.disabled = true; e.target.textContent = "Savingâ€¦";
             try {
                 const pid = window.currentProductId;
                 const pname = (window.products || []).find(p => p.id === Number(pid))?.name || ("Product #" + pid);
@@ -1089,12 +1089,12 @@
                     message: `Customer wants to be notified when "${pname}" is back in stock.`,
                     createdAt: serverTimestamp()
                 });
-                msgEl.textContent = "✓ We'll email you as soon as it's back.";
+                msgEl.textContent = "âœ“ We'll email you as soon as it's back.";
                 msgEl.style.color = "#1e7e34";
                 emailEl.disabled = true;
                 e.target.textContent = "Saved";
             } catch (err) {
-                msgEl.textContent = "Could not save — please try again.";
+                msgEl.textContent = "Could not save â€” please try again.";
                 e.target.disabled = false; e.target.textContent = "Notify Me";
             }
         });
@@ -1105,7 +1105,7 @@
 
         function renderStars(n, size) {
             const s = size || ".9rem";
-            return `<span style="color:#f0b429;font-size:${s};letter-spacing:1px;">${"★".repeat(n||0)}</span><span style="color:#ddd;font-size:${s};letter-spacing:1px;">${"★".repeat(5-(n||0))}</span>`;
+            return `<span style="color:#f0b429;font-size:${s};letter-spacing:1px;">${"â˜…".repeat(n||0)}</span><span style="color:#ddd;font-size:${s};letter-spacing:1px;">${"â˜…".repeat(5-(n||0))}</span>`;
         }
 
         function fmtDate(ts) {
@@ -1127,14 +1127,14 @@
                 if (!lbl) return;
                 if (!approved.length) { lbl.textContent = "Reviews"; return; }
                 const avg = (approved.reduce((s,r) => s+(r.rating||0), 0) / approved.length).toFixed(1);
-                lbl.innerHTML = `Reviews <span style="color:#f0b429;font-size:.85rem;letter-spacing:1px;">★</span><span style="font-size:.85rem;color:var(--primary-color);font-weight:700;">${avg}</span> <span style="font-size:.8rem;color:var(--text-muted);font-weight:400;">(${approved.length})</span>`;
+                lbl.innerHTML = `Reviews <span style="color:#f0b429;font-size:.85rem;letter-spacing:1px;">â˜…</span><span style="font-size:.85rem;color:var(--primary-color);font-weight:700;">${avg}</span> <span style="font-size:.8rem;color:var(--text-muted);font-weight:400;">(${approved.length})</span>`;
             } catch { /* silent */ }
         }
 
         window.loadProductReviews = async function(container) {
             const productId = window.currentProductId;
             if (!productId) return;
-            container.innerHTML = `<p style="color:var(--text-muted);font-size:.9rem;padding:.5rem 0;">Loading reviews…</p>`;
+            container.innerHTML = `<p style="color:var(--text-muted);font-size:.9rem;padding:.5rem 0;">Loading reviewsâ€¦</p>`;
             try {
                 const all = _cachedReviews || await fetchReviews(productId);
                 _cachedReviews = all;
@@ -1150,7 +1150,7 @@
                         const pct = reviews.length ? Math.round(counts[i]/reviews.length*100) : 0;
                         return `<div class="rv-bar-row">
                             <span class="rv-bar-star">${n}</span>
-                            <span style="color:#f0b429;font-size:.7rem;">★</span>
+                            <span style="color:#f0b429;font-size:.7rem;">â˜…</span>
                             <div class="rv-bar-track"><div class="rv-bar-fill" style="width:${pct}%"></div></div>
                             <span class="rv-bar-n">${counts[i]}</span>
                         </div>`;
@@ -1158,7 +1158,7 @@
                     summaryHtml = `<div class="rv-summary">
                         <div class="rv-avg-block">
                             <div class="rv-avg-num">${avgStr}</div>
-                            <div class="rv-avg-stars">${"★".repeat(Math.round(avg))}${"☆".repeat(5-Math.round(avg))}</div>
+                            <div class="rv-avg-stars">${"â˜…".repeat(Math.round(avg))}${"â˜†".repeat(5-Math.round(avg))}</div>
                             <div class="rv-avg-count">${reviews.length} review${reviews.length!==1?"s":""}</div>
                         </div>
                         <div class="rv-bars">${bars}</div>
@@ -1200,7 +1200,7 @@
                             <label class="rv-form-label">Your Rating *</label>
                             <div class="rv-star-row">
                                 <div class="rv-star-picker" id="star-picker">
-                                    ${[1,2,3,4,5].map(n=>`<span data-star="${n}">★</span>`).join("")}
+                                    ${[1,2,3,4,5].map(n=>`<span data-star="${n}">â˜…</span>`).join("")}
                                 </div>
                                 <span class="rv-star-label" id="star-label">Tap to rate</span>
                             </div>
@@ -1261,7 +1261,7 @@
                         if (!text) { if(window.showToast) window.showToast("Please write your review.", "error"); return; }
                         const btn = document.getElementById("rv-submit-btn");
                         btn.disabled = true;
-                        btn.innerHTML = `<ion-icon name="hourglass-outline" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>Submitting…`;
+                        btn.innerHTML = `<ion-icon name="hourglass-outline" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>Submittingâ€¦`;
                         try {
                             await addDoc(collection(db, "reviews"), {
                                 productId: window.currentProductId,
@@ -1290,7 +1290,7 @@
             }
         };
 
-        /* ---- Wishlist — unified via wishlist.js (users/{uid}.wishlist) ---- */
+        /* ---- Wishlist â€” unified via wishlist.js (users/{uid}.wishlist) ---- */
         function refreshWishlistIcon(productId) {
             const inList = window.Wishlist ? window.Wishlist.isIn(productId) : false;
             const icon = document.getElementById("wishlist-icon");
@@ -1336,7 +1336,7 @@
                     if (accItem) accItem.style.display = reviewsEnabled ? "" : "none";
                     if (reviewsEnabled) updateReviewHeader(window.currentProductId);
                 } catch {
-                    // Settings fetch failed silently — show reviews by default
+                    // Settings fetch failed silently â€” show reviews by default
                     updateReviewHeader(window.currentProductId);
                 }
             }

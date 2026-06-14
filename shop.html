@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -33,7 +33,7 @@
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      "name": "Buy Perfume Online Bangladesh — Zahroun",
+      "name": "Buy Perfume Online Bangladesh â€” Zahroun",
       "description": "Browse and buy luxury niche perfumes online in Bangladesh. Long-lasting fragrances for women, men, and unisex from Zahroun.",
       "url": "https://zahroun.com/shop.html",
       "isPartOf": { "@type": "WebSite", "name": "Zahroun", "url": "https://zahroun.com" },
@@ -51,14 +51,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://res.cloudinary.com">
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="dns-prefetch" href="https://unpkg.com">
-    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://res.cloudinary.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@500;600;700&display=swap">
-    <link rel="stylesheet" href="css/style.css?v=20260612">
+    <link rel="stylesheet" href="css/style.css?v=20260614d">
     <script defer src="js/analytics.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/broadcast.js"></script>
@@ -66,14 +61,14 @@
     <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
     <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <style>
-        /* ── Page background ── */
+        /* â”€â”€ Page background â”€â”€ */
         body { background-color: #FAF7F0; }
         @keyframes _skShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
         .skel-card{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);}
         .skel-img{height:260px;background:linear-gradient(90deg,#f0ede8 25%,#e5e0d8 50%,#f0ede8 75%);background-size:200% 100%;animation:_skShimmer 1.5s infinite;}
         .skel-line{height:14px;margin:12px 12px 0;border-radius:4px;background:linear-gradient(90deg,#f0ede8 25%,#e5e0d8 50%,#f0ede8 75%);background-size:200% 100%;animation:_skShimmer 1.5s infinite;margin-bottom:12px;}
 
-        /* ── Layout ── */
+        /* â”€â”€ Layout â”€â”€ */
         .shop-container {
             display: flex;
             gap: 2rem;
@@ -82,7 +77,7 @@
             padding-bottom: 5rem;
         }
 
-        /* ── Sidebar Card ── */
+        /* â”€â”€ Sidebar Card â”€â”€ */
         .sidebar-card {
             width: 248px;
             flex-shrink: 0;
@@ -160,7 +155,7 @@
             content: ''; flex: 1; height: 1px; background: #EAE4D9;
         }
 
-        /* ── Main column ── */
+        /* â”€â”€ Main column â”€â”€ */
         .shop-main { flex: 1; min-width: 0; }
 
         /* Title area */
@@ -181,13 +176,13 @@
         }
         .shop-page-sub { color: #999; font-size: .92rem; margin: 0; font-family: var(--font-sans); }
 
-        /* Product grid — 3 columns on desktop */
+        /* Product grid â€” 3 columns on desktop */
         #shop-products { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
         /* Image hover */
         .product-img { transition: opacity .15s ease; }
 
-        /* ── Mobile ── */
+        /* â”€â”€ Mobile â”€â”€ */
         @media (max-width: 768px) {
             .shop-container {
                 flex-direction: column;
@@ -205,7 +200,7 @@
             }
             .search-wrap { margin-bottom: .55rem; }
             .sb-label { margin-bottom: .3rem; font-size: .6rem; }
-            /* Mobile: same vertical accordion tree as desktop — no horizontal chips */
+            /* Mobile: same vertical accordion tree as desktop â€” no horizontal chips */
             .cat-list { display: block; margin-top: .7rem; }
             .cat-list li { margin: 0; }
             .cat-btn { padding: .45rem .6rem; font-size: .9rem; }
@@ -214,7 +209,7 @@
             #special-filter { flex-direction: column !important; }
             /* Above-the-fold: filter icon visible; Featured/Sort/Filters live in the bottom sheet */
             #mob-filter-btn { display: flex !important; }
-            /* Hide the filter controls while they're still in the sidebar — JS moves
+            /* Hide the filter controls while they're still in the sidebar â€” JS moves
                them into #mob-sheet-body; this prevents them flashing inline on slow
                first loads before the module script runs. !important beats the inline
                display:flex on #special-filter. Once relocated, these no longer match. */
@@ -239,7 +234,7 @@
             .cat-parent-row { display: flex; }
             .cat-children-list { margin-left: 1.1rem; }
         }
-        /* ── Category hierarchy tree (accordion — desktop & mobile) ── */
+        /* â”€â”€ Category hierarchy tree (accordion â€” desktop & mobile) â”€â”€ */
         .cat-children-list {
             list-style: none; padding: .15rem 0 .15rem 0;
             margin: 0 0 .1rem .9rem;
@@ -289,7 +284,7 @@
     <div class="container py-4">
         <div class="shop-container">
 
-            <!-- ── Sidebar ── -->
+            <!-- â”€â”€ Sidebar â”€â”€ -->
             <aside class="sidebar-card">
 
                 <!-- Search -->
@@ -300,7 +295,7 @@
 
                 <!-- Flash Sale Banner -->
                 <a href="sale.html" id="sidebar-flash-banner" style="display:none;align-items:center;gap:.6rem;background:linear-gradient(135deg,#7b1921 0%,#c0392b 100%);color:#fff;border-radius:10px;padding:.8rem 1rem;margin-bottom:1.25rem;text-decoration:none;overflow:hidden;position:relative;box-shadow:0 4px 12px rgba(192,57,43,.3);">
-                    <span style="font-size:1.4rem;flex-shrink:0;">⚡</span>
+                    <span style="font-size:1.4rem;flex-shrink:0;">âš¡</span>
                     <div>
                         <div style="font-weight:700;font-size:.92rem;letter-spacing:.04em;">FLASH SALE</div>
                         <div style="font-size:.75rem;opacity:.85;">Limited-time discounts</div>
@@ -360,13 +355,13 @@
                 <div id="mob-sheet-body"></div>
             </div>
 
-            <!-- ── Main Content ── -->
+            <!-- â”€â”€ Main Content â”€â”€ -->
             <div class="shop-main">
 
                 <!-- Page title -->
                 <div class="shop-title-area">
                     <h1 class="shop-page-title">All Products</h1>
-                    <div class="shop-orn">❖</div>
+                    <div class="shop-orn">â–</div>
                     <p class="shop-page-sub">Elevate your routine with our natural formulations.</p>
                 </div>
 
@@ -512,7 +507,7 @@
             return `<ion-icon name="${esc(icon)}"></ion-icon>`;
         }
 
-        // Delegated hover — swaps to second image on card hover
+        // Delegated hover â€” swaps to second image on card hover
         grid.addEventListener("mouseenter", e => {
             const wrapper = e.target.closest(".product-img-wrapper[data-img2]");
             if (!wrapper) return;
@@ -521,7 +516,7 @@
             img._swapping = true;
             img.style.opacity = "0";
             setTimeout(() => {
-                // srcset would override a swapped src — park it during the hover swap
+                // srcset would override a swapped src â€” park it during the hover swap
                 if (img.srcset) { img.dataset.srcset1 = img.srcset; img.removeAttribute("srcset"); }
                 img.src = wrapper.dataset.img2; img.style.opacity = "1"; img._swapping = false;
             }, 160);
@@ -569,16 +564,16 @@
             const h = Math.round(w * 1.35);
             return url.replace("/upload/", `/upload/w_${w},h_${h},c_fill,g_auto,f_auto,q_auto/`);
         }
-        // Responsive srcset — phones download ~250px files instead of 400px ones
+        // Responsive srcset â€” phones download ~250px files instead of 400px ones
         function cardSrcset(url) {
             if (!url || !url.includes("/upload/")) return "";
             return `${cardImg(url, 250)} 250w, ${cardImg(url, 400)} 400w, ${cardImg(url, 600)} 600w`;
         }
         const CARD_SIZES = "(max-width: 768px) 46vw, 280px";
 
-        /* ── Multi-field search: name, category, description, notes, tags, seasons, occasions.
-           Tokenised — every word in the query must match some field (substring),
-           with 1-typo tolerance for words of 5+ letters. ── */
+        /* â”€â”€ Multi-field search: name, category, description, notes, tags, seasons, occasions.
+           Tokenised â€” every word in the query must match some field (substring),
+           with 1-typo tolerance for words of 5+ letters. â”€â”€ */
         const _hayCache = new WeakMap();
         function _haystack(p) {
             let h = _hayCache.get(p);
@@ -659,7 +654,7 @@
                     : [];
                 if (!vals.length) return `Tk ${(p.basePrice || p.price || 0).toLocaleString()}`;
                 const mn = Math.min(...vals), mx = Math.max(...vals);
-                return mn === mx ? `Tk ${mn.toLocaleString()}` : `Tk ${mn.toLocaleString()} – Tk ${mx.toLocaleString()}`;
+                return mn === mx ? `Tk ${mn.toLocaleString()}` : `Tk ${mn.toLocaleString()} â€“ Tk ${mx.toLocaleString()}`;
             }
             grid.innerHTML = filtered.map((p, _idx) => {
                 const active = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
@@ -694,7 +689,7 @@
                     <div class="product-info">
                         <span class="product-category">${esc(p.category)}</span>
                         <h3 class="product-title"><a href="product.html?id=${p.id}">${esc(p.name)}</a></h3>
-                        ${(_reviewsEnabled && _ratings[p.id]) ? `<div style="font-size:.74rem;line-height:1;margin:.15rem 0 .3rem;"><span style="color:#f0b429;letter-spacing:1px;">${"★".repeat(Math.round(_ratings[p.id].avg))}</span><span style="color:#ddd;letter-spacing:1px;">${"★".repeat(5 - Math.round(_ratings[p.id].avg))}</span> <span style="color:var(--text-muted);">(${_ratings[p.id].count})</span></div>` : ""}
+                        ${(_reviewsEnabled && _ratings[p.id]) ? `<div style="font-size:.74rem;line-height:1;margin:.15rem 0 .3rem;"><span style="color:#f0b429;letter-spacing:1px;">${"â˜…".repeat(Math.round(_ratings[p.id].avg))}</span><span style="color:#ddd;letter-spacing:1px;">${"â˜…".repeat(5 - Math.round(_ratings[p.id].avg))}</span> <span style="color:var(--text-muted);">(${_ratings[p.id].count})</span></div>` : ""}
                         ${priceHtml}
                     </div>
                 </div>`;
@@ -730,10 +725,10 @@
             }
         });
 
-        /* ── Sort ── */
+        /* â”€â”€ Sort â”€â”€ */
         document.getElementById("sort-select")?.addEventListener("change", e => { _sortBy = e.target.value; renderProducts(); });
 
-        /* ── Review stars on cards — one cached reviews read per 10 min ── */
+        /* â”€â”€ Review stars on cards â€” one cached reviews read per 10 min â”€â”€ */
         (async () => {
             const RKEY = "zhr_ratings_v1";
             try { const r = sessionStorage.getItem(RKEY); if (r) { const { data, ts } = JSON.parse(r); if (Date.now() - ts < 10 * 60 * 1000) { _ratings = data || {}; if (Object.keys(_ratings).length && productsReady) renderProducts(); return; } } } catch {}
@@ -748,7 +743,7 @@
             } catch {}
         })();
 
-        /* ── Store settings: respect admin reviewsEnabled toggle ── */
+        /* â”€â”€ Store settings: respect admin reviewsEnabled toggle â”€â”€ */
         (async () => {
             try {
                 let sData = null;
@@ -764,7 +759,7 @@
             } catch {}
         })();
 
-        /* ── Advanced filters: chips built from live product data ── */
+        /* â”€â”€ Advanced filters: chips built from live product data â”€â”€ */
         function _buildAdvFilters() {
             const host = document.getElementById("adv-filters");
             if (!host || typeof products === "undefined" || !products.length) return;
@@ -794,10 +789,10 @@
                 renderProducts();
             }));
         }
-        _buildAdvFilters(); // initial build — covers the case where products-ready fired before this module loaded
+        _buildAdvFilters(); // initial build â€” covers the case where products-ready fired before this module loaded
 
-        /* ── Mobile filter sheet: Featured/Sort/Filters relocate out of the sidebar
-           so products appear above the fold; the funnel icon opens them. ── */
+        /* â”€â”€ Mobile filter sheet: Featured/Sort/Filters relocate out of the sidebar
+           so products appear above the fold; the funnel icon opens them. â”€â”€ */
         (function mobileFilterSheet() {
             const btn = document.getElementById("mob-filter-btn");
             const sheet = document.getElementById("mob-filter-sheet");
@@ -819,7 +814,7 @@
             });
         })();
 
-        /* ── Search autocomplete dropdown (thumbnail + name + price) ── */
+        /* â”€â”€ Search autocomplete dropdown (thumbnail + name + price) â”€â”€ */
         const _searchWrap = document.querySelector(".search-wrap");
         const _acBox = document.createElement("div");
         _acBox.id = "search-ac";
@@ -847,7 +842,7 @@
         document.addEventListener("click", e => { if (!_searchWrap.contains(e.target)) _acBox.style.display = "none"; });
         document.addEventListener("keydown", e => { if (e.key === "Escape") _acBox.style.display = "none"; });
 
-        /* ── Category landing header — banner + description set by admin ── */
+        /* â”€â”€ Category landing header â€” banner + description set by admin â”€â”€ */
         function _renderCatLanding() {
             let host = document.getElementById("cat-landing");
             if (!host) {
@@ -877,12 +872,12 @@
             });
         });
 
-        // Fetch categories — sessionStorage cache to skip Firestore on repeat visits
+        // Fetch categories â€” sessionStorage cache to skip Firestore on repeat visits
         const _CKEY = "zah_cats_v4";
         let _allCats = [];
         let _childNamesOf = {}; // { "Perfume": ["Men","Women","Unisex"], ... }
 
-        // Effective parent — guards against corrupt data (self-parent treated as root)
+        // Effective parent â€” guards against corrupt data (self-parent treated as root)
         function _catParentOf(c) { return (c.parentId && c.parentId !== c.id) ? c.parentId : null; }
 
         function _buildChildMap(cats) {
@@ -916,7 +911,7 @@
                 const childCats = activeCats.filter(ch => childNames.includes(ch.name))
                     .sort((a, b) => (a.order || 0) - (b.order || 0));
                 if (childCats.length) {
-                    // Parent with children — expandable row
+                    // Parent with children â€” expandable row
                     const childHtml = childCats.map(ch =>
                         `<li><button class="cat-btn cat-child-btn" data-filter="${esc(ch.name)}">
                             <span class="cat-icon">${_catIconHtml(ch)}</span>
@@ -968,7 +963,7 @@
         });
         const _catsPromise = _cachedCats ? Promise.resolve(_cachedCats) : _fetchCats();
         // Stale-while-revalidate: cached list renders instantly, fresh data is fetched
-        // in the background and the sidebar rebuilds only if something changed —
+        // in the background and the sidebar rebuilds only if something changed â€”
         // admin category changes appear within one page view instead of a whole session.
         if (_cachedCats) {
             _fetchCats().then(fresh => {
@@ -989,7 +984,7 @@
                         pli.querySelector(".cat-parent-btn")?.setAttribute("aria-expanded", "true");
                     }
                 } else if (!inSpecial) {
-                    // Current filter no longer exists (hidden/renamed) — fall back to All
+                    // Current filter no longer exists (hidden/renamed) â€” fall back to All
                     const allBtn = btns.find(b => b.dataset.filter === "all");
                     if (allBtn) allBtn.classList.add("active");
                     if (currentFilter !== "all") { currentFilter = "all"; renderProducts(); return; }
@@ -999,7 +994,7 @@
         }
         _catsPromise.then(cats => {
             _buildCatList(cats);
-            // Apply URL category param — also open parent if child is matched
+            // Apply URL category param â€” also open parent if child is matched
             if (categoryParam) {
                 // Slug-insensitive match so ?category=premium-attar finds "Premium Attar"
                 const slugify = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "");
@@ -1017,7 +1012,7 @@
                 }
             }
         }).catch(() => {
-            // Firestore unavailable — keep all-products view
+            // Firestore unavailable â€” keep all-products view
             currentFilter = "all";
         }).finally(() => {
             // Event delegation for category filters + tree expand/collapse
@@ -1037,7 +1032,7 @@
                     if (btn.classList.contains("cat-parent-btn")) {
                         const isOpen = parentLi.classList.contains("open");
                         if (!isOpen) {
-                            // First tap on a closed root: just expand — no filtering yet
+                            // First tap on a closed root: just expand â€” no filtering yet
                             parentLi.classList.add("open");
                             btn.setAttribute("aria-expanded", "true");
                             return;
@@ -1074,13 +1069,13 @@
             let _st; searchInput.addEventListener("input", e => { const v = e.target.value; clearTimeout(_st); _st = setTimeout(() => { searchQuery = v; renderProducts(); }, 200); });
             catsReady = true;
             tryRender();
-            // Fetch Flash Sale status — prefer sessionStorage cache set by auth.js
+            // Fetch Flash Sale status â€” prefer sessionStorage cache set by auth.js
             (async () => {
                 try {
                     let flashData = null;
                     try { const r = sessionStorage.getItem('zhr_flash_v1'); if (r) { const { data, ts } = JSON.parse(r); if (Date.now() - ts < 3 * 60 * 1000) flashData = data; } } catch {}
                     if (!flashData) {
-                        // Reuse auth.js's in-flight fetch when available — avoids a duplicate Firestore read
+                        // Reuse auth.js's in-flight fetch when available â€” avoids a duplicate Firestore read
                         const snap = await (window.__zhrFlashPromise || getDoc(doc(db, "settings", "flashSale")));
                         flashData = snap.exists() ? snap.data() : { enabled: false, items: [] };
                     }
@@ -1099,7 +1094,7 @@
                 t.style.cssText = "position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--primary-color,#2d6a4f);color:white;padding:.8rem 2rem;border-radius:50px;font-size:.9rem;font-family:var(--font-sans);z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;";
                 document.body.appendChild(t);
             }
-            t.textContent = "✓ " + name + " added to cart";
+            t.textContent = "âœ“ " + name + " added to cart";
             t.style.opacity = "1";
             clearTimeout(t._timer);
             t._timer = setTimeout(() => { t.style.opacity = "0"; }, 2500);
@@ -1114,7 +1109,7 @@
                 const email = emailInput.value.trim();
                 if (!email) return;
                 const btn = nlForm.querySelector("button");
-                btn.disabled = true; btn.textContent = "Subscribing…";
+                btn.disabled = true; btn.textContent = "Subscribingâ€¦";
                 try {
                     await addDoc(collection(db, "newsletter"), { email, subscribedAt: serverTimestamp() });
                     if (window.showToast) window.showToast("Subscribed! Thank you.");
@@ -1123,7 +1118,7 @@
                 } catch {
                     if (window.showToast) window.showToast("Could not subscribe. Try again.", "error");
                 }
-                btn.disabled = false; btn.textContent = "Subscribe →";
+                btn.disabled = false; btn.textContent = "Subscribe â†’";
             });
         }
     </script>

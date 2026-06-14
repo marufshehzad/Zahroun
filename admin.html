@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="icon" href="favicon.ico" sizes="48x48">
@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Zahroun</title>
     <meta name="robots" content="noindex, nofollow">
-    <link rel="stylesheet" href="css/style.css?v=20260612">
+    <link rel="stylesheet" href="css/style.css?v=20260614d">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
@@ -126,7 +126,7 @@
         .badge { font-size: .72rem; padding: .15rem .55rem; border-radius: 20px; background: var(--accent-color); color: var(--text-main); }
         .badge.green { background: #e6f4ea; color: #1e7e34; }
         .new-order-badge { display:inline-flex; align-items:center; gap:.28rem; background:#e63946; color:#fff; font-size:.62rem; font-weight:800; padding:.18rem .55rem; border-radius:20px; letter-spacing:.06em; text-transform:uppercase; vertical-align:middle; margin-left:.4rem; animation: newPulse 1.4s ease-in-out infinite; }
-        .new-order-badge::before { content:"●"; font-size:.5rem; }
+        .new-order-badge::before { content:"â—"; font-size:.5rem; }
         .new-order-row td:first-child { border-left: 3px solid #e63946; }
         @keyframes newPulse { 0%,100%{opacity:1} 50%{opacity:.65} }
         .o-status { font-size: .72rem; padding: .2rem .6rem; border-radius: 20px; text-transform: capitalize; background: #fdf3e3; color: #b8860b; }
@@ -215,7 +215,7 @@
         #crop-zoom-reset:hover { border-color:var(--primary-color); color:var(--primary-color); }
         /* Final Visible Area label overlay on main crop frame */
         #crop-wrap::after { content:"Final Visible Area"; position:absolute; top:8px; left:8px; background:rgba(0,0,0,.54); color:#fff; font-size:.58rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; padding:3px 9px; border-radius:4px; pointer-events:none; z-index:2; }
-        /* Device previews — side-by-side grid; scrollable when modal is height-constrained */
+        /* Device previews â€” side-by-side grid; scrollable when modal is height-constrained */
         #crop-previews { display:grid; grid-template-columns:1fr 1fr; gap:.7rem 1.8rem; padding:.65rem 1.2rem; border-bottom:1px solid var(--border-color); background:#eeebe5; align-items:start; overflow:visible; flex-shrink:0; }
         .crop-preview-device { display:flex; flex-direction:column; align-items:center; gap:.55rem; min-width:0; width:100%; }
         .crop-preview-label { display:inline-flex; align-items:center; gap:.32rem; font-size:.68rem; font-weight:700; color:#163e34; text-transform:uppercase; letter-spacing:.07em; white-space:nowrap; background:rgba(255,255,255,.88); border:1px solid rgba(26,60,42,.2); padding:.28rem .78rem; border-radius:20px; }
@@ -259,23 +259,23 @@
         }
         button:focus, .btn:focus, a.btn:focus, a:focus { outline: none; }
 
-        /* Hamburger button — desktop: hidden (sidebar always visible) */
+        /* Hamburger button â€” desktop: hidden (sidebar always visible) */
         #admin-menu-toggle { display:none; background:none; border:none; cursor:pointer; color:#fff; font-size:1.45rem; align-items:center; justify-content:center; line-height:1; flex-shrink:0; padding:.2rem; border-radius:6px; }
         #admin-menu-toggle:hover { background:rgba(255,255,255,.14); }
-        /* Header green brand section — hidden on desktop */
+        /* Header green brand section â€” hidden on desktop */
         .admin-header-brand { display:none; }
         .admin-brand-z { font-family:var(--font-serif); font-size:2rem; color:#c9a96e; font-weight:700; letter-spacing:1px; line-height:1; }
 
         #admin-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:199; }
         #admin-overlay.open { display:block; }
 
-        /* ══ MOBILE LUXURY HEADER (≤820px) ══ */
+        /* â•â• MOBILE LUXURY HEADER (â‰¤820px) â•â• */
         @media (max-width: 820px) {
             .admin-side { transform:translateX(-100%); transition:transform .28s ease; z-index:300; width:260px; }
             .admin-side.open { transform:translateX(0); }
             .admin-main { margin-left:0; padding:1.25rem 1rem; }
 
-            /* ── Header container: flush edges, no padding (green panel sits at left=0) ── */
+            /* â”€â”€ Header container: flush edges, no padding (green panel sits at left=0) â”€â”€ */
             .admin-top {
                 padding: 0;
                 margin: -1.25rem -1rem 1.5rem -1rem;
@@ -301,7 +301,7 @@
                 z-index: 0;
             }
 
-            /* ── Green panel: FLUSH to left edge, rounded right corners only ── */
+            /* â”€â”€ Green panel: FLUSH to left edge, rounded right corners only â”€â”€ */
             .admin-header-brand {
                 display: flex !important;
                 flex-direction: column;
@@ -331,7 +331,7 @@
             }
             #admin-menu-toggle:hover { background: rgba(255,255,255,.15); }
 
-            /* ── White content: column layout (icons top, title bottom) ── */
+            /* â”€â”€ White content: column layout (icons top, title bottom) â”€â”€ */
             .admin-top-content {
                 flex: 1;
                 display: flex;
@@ -342,7 +342,7 @@
                 z-index: 1;
             }
 
-            /* Row 1 — icons (right-aligned, equal circles, equal gap) */
+            /* Row 1 â€” icons (right-aligned, equal circles, equal gap) */
             .admin-top .actions {
                 display: flex;
                 align-items: center;
@@ -351,7 +351,7 @@
             }
             .admin-top .who { display: none; }
 
-            /* All 3 buttons — identical 40px circles */
+            /* All 3 buttons â€” identical 40px circles */
             #notif-btn,
             .admin-top a.btn,
             #admin-logout {
@@ -401,7 +401,7 @@
             }
             #admin-logout .logout-text { display: none; }
 
-            /* Row 2 — title + subtitle (below icons) */
+            /* Row 2 â€” title + subtitle (below icons) */
             .admin-top-title { min-width: 0; overflow: hidden; }
             .admin-top h1 {
                 font-size: 22px !important;
@@ -423,7 +423,7 @@
             .panel { overflow-x: auto; }
         }
 
-        /* ══ ≤480px: tighten up ══ */
+        /* â•â• â‰¤480px: tighten up â•â• */
         @media (max-width: 480px) {
             .admin-top { min-height: 108px; }
             .admin-header-brand { min-height: 108px; width: 64px; }
@@ -445,13 +445,13 @@
             #product-rows td:nth-child(1) { display: none; }
         }
 
-        /* === MOBILE TABLE OPTIMISATIONS (≤620px) === */
+        /* === MOBILE TABLE OPTIMISATIONS (â‰¤620px) === */
         @media (max-width: 620px) {
             /* Smaller table text + bigger touch targets */
             .admin-table td, .admin-table th { padding:.45rem .4rem; font-size:.8rem; }
             .icon-btn { padding:.45rem .5rem; min-height:36px; }
 
-            /* Orders: hide Items(3), Payment(5), Date(7) — show Order,Customer,Total,Status */
+            /* Orders: hide Items(3), Payment(5), Date(7) â€” show Order,Customer,Total,Status */
             [data-panel="orders"] thead th:nth-child(3),
             [data-panel="orders"] thead th:nth-child(5),
             [data-panel="orders"] thead th:nth-child(7),
@@ -460,7 +460,7 @@
             #order-rows td:nth-child(7) { display:none; }
             #order-rows select { font-size:.76rem; padding:.22rem .3rem; max-width:88px; }
 
-            /* Products: hide checkbox(1), #(2), Category(5), Flags(8) — show img,Name,Price,Stock,Actions */
+            /* Products: hide checkbox(1), #(2), Category(5), Flags(8) â€” show img,Name,Price,Stock,Actions */
             [data-panel="products"] thead th:nth-child(1),
             [data-panel="products"] thead th:nth-child(2),
             [data-panel="products"] thead th:nth-child(5),
@@ -486,14 +486,14 @@
             #coupon-rows td:nth-child(3),
             #coupon-rows td:nth-child(5) { display:none; }
 
-            /* Reviews: hide Customer(2), Date(6), Reply(7) — show Product,Rating,Review,Status,Actions */
+            /* Reviews: hide Customer(2), Date(6), Reply(7) â€” show Product,Rating,Review,Status,Actions */
             [data-panel="reviews"] thead th:nth-child(2),
             [data-panel="reviews"] thead th:nth-child(6),
             [data-panel="reviews"] thead th:nth-child(7),
             #review-rows td:nth-child(2),
             #review-rows td:nth-child(6),
             #review-rows td:nth-child(7) { display:none; }
-            /* Review text — clamp on mobile */
+            /* Review text â€” clamp on mobile */
             #review-rows td:nth-child(4) { max-width:110px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; }
 
             /* Messages: hide Email(2), Date(5) */
@@ -565,7 +565,7 @@
             .stat-card { gap: .65rem; padding: 1rem .8rem; }
         }
 
-        /* ===== LOYALTY MEMBERS TABLE → CARDS on mobile ===== */
+        /* ===== LOYALTY MEMBERS TABLE â†’ CARDS on mobile ===== */
         @media (max-width: 680px) {
             #lm-members-list table { display: block; }
             #lm-members-list table thead { display: none; }
@@ -604,14 +604,14 @@
             #lm-members-list table td[data-label="Actions"] > div { flex-wrap: wrap; gap: .4rem; justify-content: flex-end; width: 100%; }
         }
 
-        /* ===== LOYALTY SETTINGS — panel head on mobile ===== */
+        /* ===== LOYALTY SETTINGS â€” panel head on mobile ===== */
         @media (max-width: 600px) {
             [data-panel="loyalty"] .panel .panel-head { flex-direction: column; align-items: flex-start; gap: .75rem; }
             [data-panel="loyalty"] .panel .panel-head > div { width: 100%; justify-content: space-between; }
             [data-panel="loyalty"] #lp-save-btn { flex: 1; justify-content: center; }
         }
 
-        /* ===== GREEN THEME TOUCH — every panel on every page ===== */
+        /* ===== GREEN THEME TOUCH â€” every panel on every page ===== */
         .panel { border-top: 3px solid var(--primary-color); }
         .panel-head h3::before {
             content: "";
@@ -633,7 +633,7 @@
 
         /* ===== ORDERS PAGE REDESIGN ===== */
 
-        /* Filter pills — horizontal scroll */
+        /* Filter pills â€” horizontal scroll */
         .ord-pills-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-bottom: 1rem; }
         .ord-pills-wrap::-webkit-scrollbar { display: none; }
         .ord-pills { display: flex; gap: .4rem; padding-bottom: .1rem; }
@@ -666,7 +666,7 @@
         .orc-ordnum { font-weight: 700; font-size: .92rem; color: var(--text-main); }
         .orc-date-pay { font-size: .74rem; color: var(--text-muted); margin-top: .12rem; }
         .orc-badge { font-size: .72rem; padding: .28rem .75rem; border-radius: 20px; font-weight: 600; text-transform: capitalize; display: inline-flex; align-items: center; gap: .3rem; flex-shrink: 0; }
-        .orc-badge::before { content: "●"; font-size: .55rem; }
+        .orc-badge::before { content: "â—"; font-size: .55rem; }
         .orc-badge.st-pending   { background: #fdf3e3; color: #b8860b; }
         .orc-badge.st-confirmed { background: #e6f4ea; color: #1e7e34; }
         .orc-badge.st-shipped   { background: #ede7f6; color: #6f42c1; }
@@ -730,7 +730,7 @@
 <body>
     <div id="admin-gate">
         <ion-icon name="lock-closed-outline" style="font-size:2.5rem;color:var(--primary-color);"></ion-icon>
-        <p id="gate-msg">Verifying admin access…</p>
+        <p id="gate-msg">Verifying admin accessâ€¦</p>
     </div>
 
     <div id="admin-overlay"></div>
@@ -804,7 +804,7 @@
                     </div>
 
                     <!-- Sparkle decoration -->
-                    <span class="header-sparkle" aria-hidden="true" style="position:absolute;bottom:12px;right:16px;font-size:1.2rem;color:#0F4A3C;opacity:.15;pointer-events:none;z-index:0;line-height:1;">✦</span>
+                    <span class="header-sparkle" aria-hidden="true" style="position:absolute;bottom:12px;right:16px;font-size:1.2rem;color:#0F4A3C;opacity:.15;pointer-events:none;z-index:0;line-height:1;">âœ¦</span>
                 </div>
 
                 <!-- DASHBOARD -->
@@ -814,7 +814,7 @@
                     <div class="stat-grid">
                         <div class="stat-card">
                             <div class="stat-icon products"><ion-icon name="bag-handle-outline"></ion-icon></div>
-                            <div><div class="lbl">Total Products</div><div class="num" id="stat-products">—</div><div class="delta" id="delta-products">&nbsp;</div></div>
+                            <div><div class="lbl">Total Products</div><div class="num" id="stat-products">â€”</div><div class="delta" id="delta-products">&nbsp;</div></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon orders"><ion-icon name="cart-outline"></ion-icon></div>
@@ -822,15 +822,15 @@
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon revenue"><ion-icon name="cash-outline"></ion-icon></div>
-                            <div><div class="lbl">Total Sales</div><div class="num" id="stat-revenue">৳0</div><div class="delta" id="delta-revenue">&nbsp;</div></div>
+                            <div><div class="lbl">Total Sales</div><div class="num" id="stat-revenue">à§³0</div><div class="delta" id="delta-revenue">&nbsp;</div></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon customers"><ion-icon name="people-outline"></ion-icon></div>
-                            <div><div class="lbl">Total Customers</div><div class="num" id="stat-customers">—</div><div class="delta" id="delta-customers">&nbsp;</div></div>
+                            <div><div class="lbl">Total Customers</div><div class="num" id="stat-customers">â€”</div><div class="delta" id="delta-customers">&nbsp;</div></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon orders" style="background:rgba(212,175,55,.12);"><ion-icon name="trending-up-outline" style="color:#b8860b;"></ion-icon></div>
-                            <div><div class="lbl">Avg Order Value</div><div class="num" id="stat-avg-order">৳0</div><div class="delta" id="delta-avg-order">&nbsp;</div></div>
+                            <div><div class="lbl">Avg Order Value</div><div class="num" id="stat-avg-order">à§³0</div><div class="delta" id="delta-avg-order">&nbsp;</div></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon revenue" style="background:rgba(230,57,70,.1);"><ion-icon name="time-outline" style="color:#c0392b;"></ion-icon></div>
@@ -838,7 +838,7 @@
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon customers" style="background:rgba(22,62,52,.08);"><ion-icon name="calendar-outline" style="color:#163E34;"></ion-icon></div>
-                            <div><div class="lbl">This Month</div><div class="num" id="stat-month-revenue">৳0</div><div class="delta" id="delta-month-revenue">&nbsp;</div></div>
+                            <div><div class="lbl">This Month</div><div class="num" id="stat-month-revenue">à§³0</div><div class="delta" id="delta-month-revenue">&nbsp;</div></div>
                         </div>
                     </div>
 
@@ -851,14 +851,14 @@
                         </div>
                         <div class="panel">
                             <div class="panel-head"><h3>Recent Orders</h3><button class="link-btn" data-goto="orders">View All</button></div>
-                            <div id="recent-orders"><p class="muted-note">Loading…</p></div>
+                            <div id="recent-orders"><p class="muted-note">Loadingâ€¦</p></div>
                         </div>
                     </div>
 
                     <div class="dash-row-3">
                         <div class="panel">
                             <div class="panel-head"><h3>Top Selling</h3></div>
-                            <div id="top-selling"><p class="muted-note">Loading…</p></div>
+                            <div id="top-selling"><p class="muted-note">Loadingâ€¦</p></div>
                         </div>
                         <div class="panel">
                             <div class="panel-head"><h3>Orders by Status</h3></div>
@@ -887,23 +887,23 @@
                             <button class="btn" id="add-product-btn"><ion-icon name="add-outline"></ion-icon> Add Product</button>
                         </div>
                         <div id="product-filters" style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;padding:.75rem 0 1rem;border-bottom:1px solid var(--border-color);margin-bottom:.75rem;">
-                            <input type="search" id="pf-search" placeholder="Search products…" style="flex:1;min-width:160px;padding:.45rem .75rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;background:var(--bg-color);">
+                            <input type="search" id="pf-search" placeholder="Search productsâ€¦" style="flex:1;min-width:160px;padding:.45rem .75rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;background:var(--bg-color);">
                             <select id="pf-category" style="padding:.45rem .6rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;background:var(--bg-color);">
                                 <option value="">All Categories</option>
                             </select>
                             <select id="pf-sort" style="padding:.45rem .6rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;background:var(--bg-color);">
                                 <option value="default">Sort: Default</option>
-                                <option value="name">Name A–Z</option>
-                                <option value="price-asc">Price ↑</option>
-                                <option value="price-desc">Price ↓</option>
-                                <option value="stock-asc">Stock ↑</option>
+                                <option value="name">Name Aâ€“Z</option>
+                                <option value="price-asc">Price â†‘</option>
+                                <option value="price-desc">Price â†“</option>
+                                <option value="stock-asc">Stock â†‘</option>
                             </select>
                             <div style="display:flex;gap:.35rem;flex-wrap:wrap;">
                                 <button class="pf-flag-btn" data-flag="featured">Featured</button>
                                 <button class="pf-flag-btn" data-flag="bestseller">Bestseller</button>
-                                <button class="pf-flag-btn" data-flag="new-arrival">✦ New Arrivals</button>
-                                <button class="pf-flag-btn" data-flag="gift-sets">🎁 Gift Sets</button>
-                                <button class="pf-flag-btn" data-flag="lowstock">⚠ Low Stock</button>
+                                <button class="pf-flag-btn" data-flag="new-arrival">âœ¦ New Arrivals</button>
+                                <button class="pf-flag-btn" data-flag="gift-sets">ðŸŽ Gift Sets</button>
+                                <button class="pf-flag-btn" data-flag="lowstock">âš  Low Stock</button>
                                 <button class="pf-flag-btn" data-flag="hidden">Hidden</button>
                             </div>
                             <span id="pf-count" class="muted-note"></span>
@@ -912,12 +912,12 @@
                         <div id="bulk-bar" style="display:none;align-items:center;gap:.75rem;padding:.6rem 1rem;background:#fff8e1;border:1px solid #ffe082;border-radius:10px;margin-bottom:.75rem;">
                             <span id="bulk-count" style="font-size:.85rem;font-weight:600;"></span>
                             <select id="bulk-action" style="padding:.4rem .65rem;border:1px solid var(--border-color);border-radius:7px;font-size:.83rem;background:var(--bg-color);">
-                                <option value="">Choose action…</option>
-                                <option value="featured-on">★ Mark Featured</option>
-                                <option value="featured-off">☆ Unmark Featured</option>
+                                <option value="">Choose actionâ€¦</option>
+                                <option value="featured-on">â˜… Mark Featured</option>
+                                <option value="featured-off">â˜† Unmark Featured</option>
                                 <option value="hide">Hide</option>
                                 <option value="show">Show</option>
-                                <option value="move-category">Move to category…</option>
+                                <option value="move-category">Move to categoryâ€¦</option>
                                 <option value="delete">Delete</option>
                             </select>
                             <select id="bulk-move-cat" style="display:none;padding:.4rem .65rem;border:1px solid var(--border-color);border-radius:7px;font-size:.83rem;background:var(--bg-color);"></select>
@@ -927,7 +927,7 @@
                         <div style="overflow-x:auto;">
                             <table class="admin-table">
                                 <thead><tr><th style="width:2rem;padding-left:.75rem;"><input type="checkbox" id="bulk-select-all" title="Select all"></th><th style="width:2.5rem;text-align:center;">#</th><th></th><th>Name</th><th>Category</th><th>50ML Price</th><th>Stock</th><th>Flags</th><th></th></tr></thead>
-                                <tbody id="product-rows"><tr><td colspan="9" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                                <tbody id="product-rows"><tr><td colspan="9" class="muted-note" style="padding:2rem;text-align:center;">Loadingâ€¦</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -940,7 +940,7 @@
                         <ion-icon name="receipt-outline"></ion-icon>
                         <div>
                             <h2>Orders</h2>
-                            <small id="orders-subtitle">Loading…</small>
+                            <small id="orders-subtitle">Loadingâ€¦</small>
                         </div>
                         <button class="link-btn" id="export-orders-btn" style="margin-left:auto;display:flex;align-items:center;gap:.3rem;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);color:#fff;font-size:.8rem;flex-shrink:0;">
                             <ion-icon name="download-outline"></ion-icon> Export
@@ -961,9 +961,9 @@
                     <!-- Search -->
                     <div class="ord-search-bar">
                         <ion-icon name="search-outline"></ion-icon>
-                        <input type="text" id="of-search" placeholder="Order # or customer name / phone…">
+                        <input type="text" id="of-search" placeholder="Order # or customer name / phoneâ€¦">
                     </div>
-                    <!-- Desktop table (hidden ≤900px) -->
+                    <!-- Desktop table (hidden â‰¤900px) -->
                     <div class="panel ord-table-wrap" style="overflow-x:auto;">
                         <div class="panel-head">
                             <h3>All Orders</h3>
@@ -971,10 +971,10 @@
                         </div>
                         <table class="admin-table">
                             <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead>
-                            <tbody id="order-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                            <tbody id="order-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loadingâ€¦</td></tr></tbody>
                         </table>
                     </div>
-                    <!-- Mobile cards (shown ≤900px) -->
+                    <!-- Mobile cards (shown â‰¤900px) -->
                     <div class="ord-cards" id="ord-cards"></div>
                 </section>
 
@@ -989,12 +989,12 @@
                             </div>
                         </div>
                         <div style="margin-bottom:.75rem;">
-                            <input type="text" id="customer-search" placeholder="Search by name, email or phone…" style="width:100%;max-width:340px;padding:.5rem .85rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;font-family:var(--font-sans);background:var(--bg-color);">
+                            <input type="text" id="customer-search" placeholder="Search by name, email or phoneâ€¦" style="width:100%;max-width:340px;padding:.5rem .85rem;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;font-family:var(--font-sans);background:var(--bg-color);">
                         </div>
                         <div style="overflow-x:auto;">
                             <table class="admin-table">
                                 <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Total Spent</th></tr></thead>
-                                <tbody id="customer-rows"><tr><td colspan="5" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                                <tbody id="customer-rows"><tr><td colspan="5" class="muted-note" style="padding:2rem;text-align:center;">Loadingâ€¦</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -1010,7 +1010,7 @@
                         <div style="overflow-x:auto;">
                             <table class="admin-table">
                                 <thead><tr><th>Name</th><th>Parent</th><th>Slug</th><th>Order</th><th>Products</th><th>Status</th><th></th></tr></thead>
-                                <tbody id="cat-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                                <tbody id="cat-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loadingâ€¦</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -1026,7 +1026,7 @@
                         <div style="overflow-x:auto;">
                             <table class="admin-table">
                                 <thead><tr><th>Code</th><th>Discount</th><th>Min Order</th><th>Used/Max</th><th>Expires</th><th>Status</th><th>Sale?</th><th></th></tr></thead>
-                                <tbody id="coupon-rows"><tr><td colspan="8" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                                <tbody id="coupon-rows"><tr><td colspan="8" class="muted-note" style="padding:2rem;text-align:center;">Loadingâ€¦</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -1065,7 +1065,7 @@
                     .tog input:checked + .tog-slider { background:var(--primary-color); }
                     .tog input:checked + .tog-slider:before { transform:translateX(20px); }
 
-                    /* ── Mobile-first promo responsive overrides ───────────────────── */
+                    /* â”€â”€ Mobile-first promo responsive overrides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
                     @media (max-width: 640px) {
                       /* Grid: single column on mobile */
                       .promo-grid { grid-template-columns: 1fr !important; }
@@ -1144,7 +1144,7 @@
                         flex: none;
                         min-width: 0;
                       }
-                      /* % label sits next to prob input — push delete to far right */
+                      /* % label sits next to prob input â€” push delete to far right */
                       .promo-row[data-prize] > span:first-of-type { display: none; }
                       .promo-row[data-prize] > button { grid-column: 2; justify-self: end; }
 
@@ -1187,18 +1187,18 @@
                     <div class="promo-card" id="pcard-bxgy" style="grid-column:1/-1;">
                       <div class="promo-top">
                         <div class="promo-icon"><ion-icon name="gift-outline"></ion-icon></div>
-                        <div class="promo-label"><h4>Buy X Get Y Free</h4><small>Buy 2 get 1 free — admin selects which items qualify as free</small></div>
+                        <div class="promo-label"><h4>Buy X Get Y Free</h4><small>Buy 2 get 1 free â€” admin selects which items qualify as free</small></div>
                         <label class="tog"><input type="checkbox" id="p-bxgy-on"><span class="tog-slider"></span></label>
                       </div>
                       <div class="bxgy-top-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
                         <div>
                           <div class="promo-row">
-                            <label>Rule 1 — Buy</label>
+                            <label>Rule 1 â€” Buy</label>
                             <input class="promo-input" id="p-bxgy-buy1" type="number" min="1" value="2"> <label>get</label>
                             <input class="promo-input" id="p-bxgy-free1" type="number" min="1" value="1"> <label>free</label>
                           </div>
                           <div class="promo-row">
-                            <label>Rule 2 — Buy</label>
+                            <label>Rule 2 â€” Buy</label>
                             <input class="promo-input" id="p-bxgy-buy2" type="number" min="1" value="3"> <label>get</label>
                             <input class="promo-input" id="p-bxgy-free2" type="number" min="1" value="1"> <label>free</label>
                           </div>
@@ -1220,7 +1220,7 @@
                           <div id="bxgy-prod-list" style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:.3rem;font-size:.82rem;"></div>
                         </div>
                       </div>
-                      <div class="promo-help">📌 <strong>কীভাবে কাজ করে:</strong> Customer cart-এ নির্দিষ্ট সংখ্যক product add করলে একটি free item পাবে। <strong>Rule 1:</strong> ২টা কিনলে ১টা free। <strong>Rule 2:</strong> ৩টা কিনলে ১টা free। "Cheapest item" mode-এ সবচেয়ে সস্তা item automatic free হয়। "Selected products" mode-এ admin যে products বেছে দেবেন, customer checkout-এর সময় সেগুলো থেকে একটি বেছে নিতে পারবে।</div>
+                      <div class="promo-help">ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> Customer cart-à¦ à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦¸à¦‚à¦–à§à¦¯à¦• product add à¦•à¦°à¦²à§‡ à¦à¦•à¦Ÿà¦¿ free item à¦ªà¦¾à¦¬à§‡à¥¤ <strong>Rule 1:</strong> à§¨à¦Ÿà¦¾ à¦•à¦¿à¦¨à¦²à§‡ à§§à¦Ÿà¦¾ freeà¥¤ <strong>Rule 2:</strong> à§©à¦Ÿà¦¾ à¦•à¦¿à¦¨à¦²à§‡ à§§à¦Ÿà¦¾ freeà¥¤ "Cheapest item" mode-à¦ à¦¸à¦¬à¦šà§‡à¦¯à¦¼à§‡ à¦¸à¦¸à§à¦¤à¦¾ item automatic free à¦¹à¦¯à¦¼à¥¤ "Selected products" mode-à¦ admin à¦¯à§‡ products à¦¬à§‡à¦›à§‡ à¦¦à§‡à¦¬à§‡à¦¨, customer checkout-à¦à¦° à¦¸à¦®à¦¯à¦¼ à¦¸à§‡à¦—à§à¦²à§‹ à¦¥à§‡à¦•à§‡ à¦à¦•à¦Ÿà¦¿ à¦¬à§‡à¦›à§‡ à¦¨à¦¿à¦¤à§‡ à¦ªà¦¾à¦°à¦¬à§‡à¥¤</div>
                     </div>
 
                     <!-- 2. BOGO -->
@@ -1235,7 +1235,7 @@
                         <input class="promo-input" id="p-bogo-pct" type="number" min="1" max="100" value="100">
                         <label style="font-size:.76rem;color:var(--text-muted);">(100 = free)</label>
                       </div>
-                      <div class="promo-help">📌 <strong>কীভাবে কাজ করে:</strong> Customer যেকোনো ২টা product কিনলে ২য় product-এ discount পাবে। <strong>100%</strong> দিলে ২য় item সম্পূর্ণ FREE। <strong>50%</strong> দিলে ২য় item অর্ধেক দামে পাবে। Cart-এ সবচেয়ে সস্তা item-এ discount apply হয়।</div>
+                      <div class="promo-help">ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> Customer à¦¯à§‡à¦•à§‹à¦¨à§‹ à§¨à¦Ÿà¦¾ product à¦•à¦¿à¦¨à¦²à§‡ à§¨à¦¯à¦¼ product-à¦ discount à¦ªà¦¾à¦¬à§‡à¥¤ <strong>100%</strong> à¦¦à¦¿à¦²à§‡ à§¨à¦¯à¦¼ item à¦¸à¦®à§à¦ªà§‚à¦°à§à¦£ FREEà¥¤ <strong>50%</strong> à¦¦à¦¿à¦²à§‡ à§¨à¦¯à¦¼ item à¦…à¦°à§à¦§à§‡à¦• à¦¦à¦¾à¦®à§‡ à¦ªà¦¾à¦¬à§‡à¥¤ Cart-à¦ à¦¸à¦¬à¦šà§‡à¦¯à¦¼à§‡ à¦¸à¦¸à§à¦¤à¦¾ item-à¦ discount apply à¦¹à¦¯à¦¼à¥¤</div>
                     </div>
 
                     <!-- 3. Tiered Discount -->
@@ -1247,7 +1247,7 @@
                       </div>
                       <div id="p-tier-rows"></div>
                       <button class="link-btn" id="p-tier-add" style="font-size:.8rem;margin-top:.5rem;display:flex;align-items:center;gap:.3rem;"><ion-icon name="add-circle-outline"></ion-icon> Add Tier</button>
-                      <div class="promo-help">📌 <strong>কীভাবে কাজ করে:</strong> Customer যত বেশি টাকার order করবে, তত বেশি discount পাবে। যেমন: ৳১০০০+ হলে ৫% off, ৳২০০০+ হলে ১০% off। এটি cart total-এর উপর ভিত্তি করে automatic apply হয়।</div>
+                      <div class="promo-help">ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> Customer à¦¯à¦¤ à¦¬à§‡à¦¶à¦¿ à¦Ÿà¦¾à¦•à¦¾à¦° order à¦•à¦°à¦¬à§‡, à¦¤à¦¤ à¦¬à§‡à¦¶à¦¿ discount à¦ªà¦¾à¦¬à§‡à¥¤ à¦¯à§‡à¦®à¦¨: à§³à§§à§¦à§¦à§¦+ à¦¹à¦²à§‡ à§«% off, à§³à§¨à§¦à§¦à§¦+ à¦¹à¦²à§‡ à§§à§¦% offà¥¤ à¦à¦Ÿà¦¿ cart total-à¦à¦° à¦‰à¦ªà¦° à¦­à¦¿à¦¤à§à¦¤à¦¿ à¦•à¦°à§‡ automatic apply à¦¹à¦¯à¦¼à¥¤</div>
                     </div>
 
                     <!-- 4. Free Gift -->
@@ -1258,14 +1258,14 @@
                         <label class="tog"><input type="checkbox" id="p-fgift-on"><span class="tog-slider"></span></label>
                       </div>
                       <div class="promo-row">
-                        <label>Minimum Order (৳)</label>
+                        <label>Minimum Order (à§³)</label>
                         <input class="promo-input" id="p-fgift-min" type="number" min="0" value="2000">
                       </div>
                       <div class="promo-row">
                         <label>Gift Name</label>
                         <input class="promo-input wide" id="p-fgift-name" type="text" placeholder="Mini Sample">
                       </div>
-                      <div class="promo-help">📌 <strong>কীভাবে কাজ করে:</strong> Customer নির্দিষ্ট পরিমাণের বেশি order করলে একটি free gift পাবে। Gift-এর নাম checkout page-এ দেখানো হয়। উদাহরণ: ৳২০০০+ অর্ডারে "Mini Sample" gift।</div>
+                      <div class="promo-help">ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> Customer à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦ªà¦°à¦¿à¦®à¦¾à¦£à§‡à¦° à¦¬à§‡à¦¶à¦¿ order à¦•à¦°à¦²à§‡ à¦à¦•à¦Ÿà¦¿ free gift à¦ªà¦¾à¦¬à§‡à¥¤ Gift-à¦à¦° à¦¨à¦¾à¦® checkout page-à¦ à¦¦à§‡à¦–à¦¾à¦¨à§‹ à¦¹à¦¯à¦¼à¥¤ à¦‰à¦¦à¦¾à¦¹à¦°à¦£: à§³à§¨à§¦à§¦à§¦+ à¦…à¦°à§à¦¡à¦¾à¦°à§‡ "Mini Sample" giftà¥¤</div>
                     </div>
 
                     <!-- 5. First Order -->
@@ -1278,13 +1278,13 @@
                       <div class="promo-row">
                         <label>Type</label>
                         <select class="promo-input" id="p-fo-type" style="width:auto;">
-                          <option value="fixed">Fixed (৳)</option>
+                          <option value="fixed">Fixed (à§³)</option>
                           <option value="percent">Percent (%)</option>
                         </select>
                         <label>Amount</label>
                         <input class="promo-input" id="p-fo-amt" type="number" min="0" value="100">
                       </div>
-                      <div class="promo-help">📌 <strong>কীভাবে কাজ করে:</strong> কোনো customer-এর জীবনে প্রথমবার order করলে automatic discount পাবে। <strong>Fixed:</strong> নির্দিষ্ট টাকা বাদ যাবে (যেমন ৳১০০)। <strong>Percent:</strong> মোট order-এর একটি অংশ বাদ যাবে (যেমন ১০%)। একজন customer শুধু একবারই পাবে।</div>
+                      <div class="promo-help">ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> à¦•à§‹à¦¨à§‹ customer-à¦à¦° à¦œà§€à¦¬à¦¨à§‡ à¦ªà§à¦°à¦¥à¦®à¦¬à¦¾à¦° order à¦•à¦°à¦²à§‡ automatic discount à¦ªà¦¾à¦¬à§‡à¥¤ <strong>Fixed:</strong> à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦Ÿà¦¾à¦•à¦¾ à¦¬à¦¾à¦¦ à¦¯à¦¾à¦¬à§‡ (à¦¯à§‡à¦®à¦¨ à§³à§§à§¦à§¦)à¥¤ <strong>Percent:</strong> à¦®à§‹à¦Ÿ order-à¦à¦° à¦à¦•à¦Ÿà¦¿ à¦…à¦‚à¦¶ à¦¬à¦¾à¦¦ à¦¯à¦¾à¦¬à§‡ (à¦¯à§‡à¦®à¦¨ à§§à§¦%)à¥¤ à¦à¦•à¦œà¦¨ customer à¦¶à§à¦§à§ à¦à¦•à¦¬à¦¾à¦°à¦‡ à¦ªà¦¾à¦¬à§‡à¥¤</div>
                     </div>
 
                     <!-- 6. Free Shipping -->
@@ -1295,10 +1295,10 @@
                         <label class="tog"><input type="checkbox" id="p-fs-on"><span class="tog-slider"></span></label>
                       </div>
                       <div class="promo-row">
-                        <label>Minimum Order (৳)</label>
+                        <label>Minimum Order (à§³)</label>
                         <input class="promo-input" id="p-fs-thresh" type="number" min="0" value="1500">
                       </div>
-                      <div class="promo-help">📌 <strong>কীভাবে কাজ করে:</strong> Customer নির্দিষ্ট পরিমাণের বেশি order করলে delivery charge সম্পূর্ণ মাফ হয়ে যাবে। Cart page-এ progress bar দেখাবে কতটুকু বাকি আছে। উদাহরণ: ৳১৫০০+ অর্ডারে Free Delivery।</div>
+                      <div class="promo-help">ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> Customer à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦ªà¦°à¦¿à¦®à¦¾à¦£à§‡à¦° à¦¬à§‡à¦¶à¦¿ order à¦•à¦°à¦²à§‡ delivery charge à¦¸à¦®à§à¦ªà§‚à¦°à§à¦£ à¦®à¦¾à¦« à¦¹à¦¯à¦¼à§‡ à¦¯à¦¾à¦¬à§‡à¥¤ Cart page-à¦ progress bar à¦¦à§‡à¦–à¦¾à¦¬à§‡ à¦•à¦¤à¦Ÿà§à¦•à§ à¦¬à¦¾à¦•à¦¿ à¦†à¦›à§‡à¥¤ à¦‰à¦¦à¦¾à¦¹à¦°à¦£: à§³à§§à§«à§¦à§¦+ à¦…à¦°à§à¦¡à¦¾à¦°à§‡ Free Deliveryà¥¤</div>
                     </div>
 
                     <!-- 7. Min Qty Discount -->
@@ -1310,7 +1310,7 @@
                       </div>
                       <div id="p-mqd-rows"></div>
                       <button class="link-btn" id="p-mqd-add" style="font-size:.8rem;margin-top:.5rem;display:flex;align-items:center;gap:.3rem;"><ion-icon name="add-circle-outline"></ion-icon> Add Rule</button>
-                      <div class="promo-help">📌 <strong>কীভাবে কাজ করে:</strong> Customer cart-এ নির্দিষ্ট সংখ্যক item যোগ করলে discount পাবে। উদাহরণ: ২টা+ item কিনলে ৫% off, ৫টা+ কিনলে ১০% off। Item-এর সংখ্যা বেশি হলে বেশি discount।</div>
+                      <div class="promo-help">ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> Customer cart-à¦ à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦¸à¦‚à¦–à§à¦¯à¦• item à¦¯à§‹à¦— à¦•à¦°à¦²à§‡ discount à¦ªà¦¾à¦¬à§‡à¥¤ à¦‰à¦¦à¦¾à¦¹à¦°à¦£: à§¨à¦Ÿà¦¾+ item à¦•à¦¿à¦¨à¦²à§‡ à§«% off, à§«à¦Ÿà¦¾+ à¦•à¦¿à¦¨à¦²à§‡ à§§à§¦% offà¥¤ Item-à¦à¦° à¦¸à¦‚à¦–à§à¦¯à¦¾ à¦¬à§‡à¦¶à¦¿ à¦¹à¦²à§‡ à¦¬à§‡à¦¶à¦¿ discountà¥¤</div>
                     </div>
 
                     <!-- 8. Bundle Builder -->
@@ -1326,7 +1326,7 @@
                         <label>Discount %</label>
                         <input class="promo-input" id="p-bb-pct" type="number" min="1" max="80" value="15">
                       </div>
-                      <div class="promo-help">📌 <strong>কীভাবে কাজ করে:</strong> Customer নিজে পছন্দমতো ৩টা (বা বেশি) product বেছে নিলে set discount পাবে। উদাহরণ: যেকোনো ৩টা product বাছলে ১৫% off। Customer নিজেই bundle তৈরি করে।</div>
+                      <div class="promo-help">ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> Customer à¦¨à¦¿à¦œà§‡ à¦ªà¦›à¦¨à§à¦¦à¦®à¦¤à§‹ à§©à¦Ÿà¦¾ (à¦¬à¦¾ à¦¬à§‡à¦¶à¦¿) product à¦¬à§‡à¦›à§‡ à¦¨à¦¿à¦²à§‡ set discount à¦ªà¦¾à¦¬à§‡à¥¤ à¦‰à¦¦à¦¾à¦¹à¦°à¦£: à¦¯à§‡à¦•à§‹à¦¨à§‹ à§©à¦Ÿà¦¾ product à¦¬à¦¾à¦›à¦²à§‡ à§§à§«% offà¥¤ Customer à¦¨à¦¿à¦œà§‡à¦‡ bundle à¦¤à§ˆà¦°à¦¿ à¦•à¦°à§‡à¥¤</div>
                     </div>
 
                     <!-- 9. Referral -->
@@ -1337,12 +1337,12 @@
                         <label class="tog"><input type="checkbox" id="p-ref-on"><span class="tog-slider"></span></label>
                       </div>
                       <div class="promo-row">
-                        <label>Referee gets (৳)</label>
+                        <label>Referee gets (à§³)</label>
                         <input class="promo-input" id="p-ref-fee" type="number" min="0" value="100">
-                        <label>Referrer gets (৳)</label>
+                        <label>Referrer gets (à§³)</label>
                         <input class="promo-input" id="p-ref-rer" type="number" min="0" value="100">
                       </div>
-                      <div class="promo-help">📌 <strong>কীভাবে কাজ করে:</strong> প্রতিটি customer-এর একটি unique referral code থাকে। বন্ধুকে code দিলে বন্ধু প্রথম order-এ discount পাবে (<em>Referee</em>), এবং যে share করেছে সেও loyalty points পাবে (<em>Referrer</em>)। My Account → Rewards tab-এ code পাওয়া যাবে।</div>
+                      <div class="promo-help">ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> à¦ªà§à¦°à¦¤à¦¿à¦Ÿà¦¿ customer-à¦à¦° à¦à¦•à¦Ÿà¦¿ unique referral code à¦¥à¦¾à¦•à§‡à¥¤ à¦¬à¦¨à§à¦§à§à¦•à§‡ code à¦¦à¦¿à¦²à§‡ à¦¬à¦¨à§à¦§à§ à¦ªà§à¦°à¦¥à¦® order-à¦ discount à¦ªà¦¾à¦¬à§‡ (<em>Referee</em>), à¦à¦¬à¦‚ à¦¯à§‡ share à¦•à¦°à§‡à¦›à§‡ à¦¸à§‡à¦“ loyalty points à¦ªà¦¾à¦¬à§‡ (<em>Referrer</em>)à¥¤ My Account â†’ Rewards tab-à¦ code à¦ªà¦¾à¦“à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¬à§‡à¥¤</div>
                     </div>
 
                     <!-- 11. Spin to Win -->
@@ -1358,17 +1358,17 @@
                       </div>
                       <div id="p-spin-prizes-header" style="margin-top:.7rem;font-size:.78rem;color:var(--text-muted);display:grid;grid-template-columns:100px 90px 60px 80px auto;gap:.4rem;padding:.2rem .3rem;">
                         <span>Label</span><span>Coupon Code</span><span>Prob %</span>
-                        <span>Max Winners <span style="font-size:.72rem;color:#1a56b8;font-weight:600;" title="0 লিখলে unlimited — যেকোনো সংখ্যক customer জিততে পারবে">(0 = unlimited)</span></span>
+                        <span>Max Winners <span style="font-size:.72rem;color:#1a56b8;font-weight:600;" title="0 à¦²à¦¿à¦–à¦²à§‡ unlimited â€” à¦¯à§‡à¦•à§‹à¦¨à§‹ à¦¸à¦‚à¦–à§à¦¯à¦• customer à¦œà¦¿à¦¤à¦¤à§‡ à¦ªà¦¾à¦°à¦¬à§‡">(0 = unlimited)</span></span>
                         <span></span>
                       </div>
                       <div id="p-spin-prizes"></div>
                       <button class="link-btn" id="p-spin-add" style="font-size:.8rem;margin-top:.5rem;display:flex;align-items:center;gap:.3rem;"><ion-icon name="add-circle-outline"></ion-icon> Add Prize</button>
                       <div style="font-size:.75rem;color:var(--text-muted);margin-top:.5rem;background:#f0f7ff;border-radius:6px;padding:.4rem .65rem;line-height:1.5;">
-                        💡 <strong>Max Winners:</strong> কতজন customer এই prize জিততে পারবে।
-                        <strong>0 লিখলে unlimited</strong> — যত customer spin করুক সবাই পাবে।
-                        যেমন: <em>Free Delivery</em>-তে 50 দিলে শুধু ৫০ জন পাবে, তারপর আর আসবে না।
+                        ðŸ’¡ <strong>Max Winners:</strong> à¦•à¦¤à¦œà¦¨ customer à¦à¦‡ prize à¦œà¦¿à¦¤à¦¤à§‡ à¦ªà¦¾à¦°à¦¬à§‡à¥¤
+                        <strong>0 à¦²à¦¿à¦–à¦²à§‡ unlimited</strong> â€” à¦¯à¦¤ customer spin à¦•à¦°à§à¦• à¦¸à¦¬à¦¾à¦‡ à¦ªà¦¾à¦¬à§‡à¥¤
+                        à¦¯à§‡à¦®à¦¨: <em>Free Delivery</em>-à¦¤à§‡ 50 à¦¦à¦¿à¦²à§‡ à¦¶à§à¦§à§ à§«à§¦ à¦œà¦¨ à¦ªà¦¾à¦¬à§‡, à¦¤à¦¾à¦°à¦ªà¦° à¦†à¦° à¦†à¦¸à¦¬à§‡ à¦¨à¦¾à¥¤
                       </div>
-                      <div class="promo-help">📌 <strong>কীভাবে কাজ করে:</strong> Homepage-এ কিছুক্ষণ পর একটি spinning wheel popup আসে। Customer spin করলে prize পায় (discount coupon বা free delivery)। প্রতিদিন একজন customer মাত্র একবার দেখতে পাবে। <strong>Prob %</strong> বেশি দিলে ওই prize বেশিবার আসবে।</div>
+                      <div class="promo-help">ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> Homepage-à¦ à¦•à¦¿à¦›à§à¦•à§à¦·à¦£ à¦ªà¦° à¦à¦•à¦Ÿà¦¿ spinning wheel popup à¦†à¦¸à§‡à¥¤ Customer spin à¦•à¦°à¦²à§‡ prize à¦ªà¦¾à¦¯à¦¼ (discount coupon à¦¬à¦¾ free delivery)à¥¤ à¦ªà§à¦°à¦¤à¦¿à¦¦à¦¿à¦¨ à¦à¦•à¦œà¦¨ customer à¦®à¦¾à¦¤à§à¦° à¦à¦•à¦¬à¦¾à¦° à¦¦à§‡à¦–à¦¤à§‡ à¦ªà¦¾à¦¬à§‡à¥¤ <strong>Prob %</strong> à¦¬à§‡à¦¶à¦¿ à¦¦à¦¿à¦²à§‡ à¦“à¦‡ prize à¦¬à§‡à¦¶à¦¿à¦¬à¦¾à¦° à¦†à¦¸à¦¬à§‡à¥¤</div>
                     </div>
 
                     <!-- 12. Seasonal Offers -->
@@ -1380,7 +1380,7 @@
                       </div>
                       <div id="p-seas-events"></div>
                       <button class="link-btn" id="p-seas-add" style="font-size:.8rem;margin-top:.5rem;display:flex;align-items:center;gap:.3rem;"><ion-icon name="add-circle-outline"></ion-icon> Add Event</button>
-                      <div class="promo-help">📌 <strong>কীভাবে কাজ করে:</strong> নির্দিষ্ট তারিখের মধ্যে সব order-এ automatic discount apply হয়। উদাহরণ: Eid-ul-Fitr (মার্চ ২৯ — এপ্রিল ৫) তে ১৫% off। তারিখ শেষ হলে offer automatic বন্ধ।</div>
+                      <div class="promo-help">ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ à¦¤à¦¾à¦°à¦¿à¦–à§‡à¦° à¦®à¦§à§à¦¯à§‡ à¦¸à¦¬ order-à¦ automatic discount apply à¦¹à¦¯à¦¼à¥¤ à¦‰à¦¦à¦¾à¦¹à¦°à¦£: Eid-ul-Fitr (à¦®à¦¾à¦°à§à¦š à§¨à§¯ â€” à¦à¦ªà§à¦°à¦¿à¦² à§«) à¦¤à§‡ à§§à§«% offà¥¤ à¦¤à¦¾à¦°à¦¿à¦– à¦¶à§‡à¦· à¦¹à¦²à§‡ offer automatic à¦¬à¦¨à§à¦§à¥¤</div>
                     </div>
 
                     <!-- 13. Combo Discount -->
@@ -1392,7 +1392,7 @@
                       </div>
                       <div id="p-combo-rows"></div>
                       <button class="link-btn" id="p-combo-add" style="font-size:.8rem;margin-top:.5rem;display:flex;align-items:center;gap:.3rem;"><ion-icon name="add-circle-outline"></ion-icon> Add Combo</button>
-                      <div class="promo-help">📌 <strong>কীভাবে কাজ করে:</strong> দুটো নির্দিষ্ট product একসাথে কিনলে discount পাবে। Product IDs comma দিয়ে লিখতে হবে। উদাহরণ: "Oud Spray" + "Body Lotion" একসাথে কিনলে ১২% off। Product ID admin panel-এর Products section থেকে দেখা যাবে।</div>
+                      <div class="promo-help">ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> à¦¦à§à¦Ÿà§‹ à¦¨à¦¿à¦°à§à¦¦à¦¿à¦·à§à¦Ÿ product à¦à¦•à¦¸à¦¾à¦¥à§‡ à¦•à¦¿à¦¨à¦²à§‡ discount à¦ªà¦¾à¦¬à§‡à¥¤ Product IDs comma à¦¦à¦¿à¦¯à¦¼à§‡ à¦²à¦¿à¦–à¦¤à§‡ à¦¹à¦¬à§‡à¥¤ à¦‰à¦¦à¦¾à¦¹à¦°à¦£: "Oud Spray" + "Body Lotion" à¦à¦•à¦¸à¦¾à¦¥à§‡ à¦•à¦¿à¦¨à¦²à§‡ à§§à§¨% offà¥¤ Product ID admin panel-à¦à¦° Products section à¦¥à§‡à¦•à§‡ à¦¦à§‡à¦–à¦¾ à¦¯à¦¾à¦¬à§‡à¥¤</div>
                     </div>
 
                   </div><!-- /promo-grid -->
@@ -1404,14 +1404,14 @@
                       <button class="btn btn-outline" id="p-bundle-add-btn" style="font-size:.82rem;display:flex;align-items:center;gap:.3rem;"><ion-icon name="add-outline"></ion-icon> New Bundle</button>
                     </div>
                     <p class="muted-note" style="font-size:.82rem;margin-bottom:1rem;">Pre-packaged product sets shown on the shop page at a special price.</p>
-                    <div id="p-bundle-list"><p class="muted-note" style="text-align:center;padding:1.5rem 0;">Loading bundles…</p></div>
+                    <div id="p-bundle-list"><p class="muted-note" style="text-align:center;padding:1.5rem 0;">Loading bundlesâ€¦</p></div>
 
                     <!-- Bundle form (hidden by default) -->
                     <div id="p-bundle-form" style="display:none;border-top:1px solid var(--border-color);margin-top:1.25rem;padding-top:1.25rem;">
                       <h4 id="p-bundle-form-title" style="margin-bottom:1rem;font-size:.95rem;">New Bundle</h4>
                       <div class="grid2">
                         <div class="fg"><label>Bundle Name</label><input type="text" id="pb-name" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.88rem;background:var(--bg-color);"></div>
-                        <div class="fg"><label>Bundle Price (৳)</label><input type="number" id="pb-price" min="0" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.88rem;background:var(--bg-color);"></div>
+                        <div class="fg"><label>Bundle Price (à§³)</label><input type="number" id="pb-price" min="0" style="width:100%;padding:.6rem .85rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.88rem;background:var(--bg-color);"></div>
                       </div>
                       <div class="fg" style="margin-top:.75rem;"><label>Products in Bundle <span class="muted-note" style="font-weight:400;">(select multiple)</span></label>
                         <div id="pb-product-checks" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem;max-height:180px;overflow-y:auto;padding:.5rem;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-color);"></div>
@@ -1437,7 +1437,7 @@
                             <h2>Flash Sale</h2>
                             <small>Create limited-time offers with a live countdown timer</small>
                         </div>
-                        <span id="flash-live-badge" style="margin-left:auto;display:none;background:#e6f4ea;color:#1e7e34;font-size:.72rem;font-weight:700;padding:.25rem .75rem;border-radius:20px;letter-spacing:.06em;flex-shrink:0;">● LIVE</span>
+                        <span id="flash-live-badge" style="margin-left:auto;display:none;background:#e6f4ea;color:#1e7e34;font-size:.72rem;font-weight:700;padding:.25rem .75rem;border-radius:20px;letter-spacing:.06em;flex-shrink:0;">â— LIVE</span>
                     </div>
 
                     <div class="panel" style="max-width:720px;">
@@ -1459,11 +1459,11 @@
                             <div class="fg"><label>Sale Title</label><input type="text" id="flash-title" placeholder="Eid Special Sale" style="width:100%;padding:.65rem .85rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);"></div>
                             <div class="fg"><label>Badge / Tag Text <span class="muted-note" style="font-weight:400;">(shown on product cards)</span></label><input type="text" id="flash-badge" placeholder="EID SALE" maxlength="16" style="width:100%;padding:.65rem .85rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);text-transform:uppercase;"></div>
                         </div>
-                        <div class="fg"><label>Subtitle / Description</label><input type="text" id="flash-subtitle" placeholder="Limited time only — don't miss out!" style="width:100%;padding:.65rem .85rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);"></div>
+                        <div class="fg"><label>Subtitle / Description</label><input type="text" id="flash-subtitle" placeholder="Limited time only â€” don't miss out!" style="width:100%;padding:.65rem .85rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);"></div>
 
                         <!-- End date -->
                         <div class="grid2" style="margin-bottom:1.5rem;">
-                            <div class="fg"><label>Sale Ends — Date <span class="muted-note" style="font-weight:400;">(leave blank = no timer)</span></label><input type="date" id="flash-end-date" style="width:100%;padding:.65rem .85rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);"></div>
+                            <div class="fg"><label>Sale Ends â€” Date <span class="muted-note" style="font-weight:400;">(leave blank = no timer)</span></label><input type="date" id="flash-end-date" style="width:100%;padding:.65rem .85rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);"></div>
                             <div class="fg"><label>Time</label><input type="time" id="flash-end-time" value="23:59" style="width:100%;padding:.65rem .85rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);"></div>
                         </div>
 
@@ -1473,7 +1473,7 @@
                                 <h3>Sale Products</h3>
                                 <span class="muted-note" id="flash-selected-count"></span>
                             </div>
-                            <p class="muted-note" style="margin-bottom:1rem;font-size:.82rem;">Check a product to include it. Enter the discounted price (৳). Leave unchecked to exclude from sale.</p>
+                            <p class="muted-note" style="margin-bottom:1rem;font-size:.82rem;">Check a product to include it. Enter the discounted price (à§³). Leave unchecked to exclude from sale.</p>
                             <div style="overflow-x:auto;">
                                 <table class="admin-table">
                                     <thead>
@@ -1481,12 +1481,12 @@
                                             <th style="width:28px;"></th>
                                             <th>Product</th>
                                             <th>Regular (50ML)</th>
-                                            <th>Sale Price (৳)</th>
+                                            <th>Sale Price (à§³)</th>
                                             <th>You Save</th>
                                         </tr>
                                     </thead>
                                     <tbody id="flash-product-rows">
-                                        <tr><td colspan="5" class="muted-note" style="padding:2rem;text-align:center;">Loading products…</td></tr>
+                                        <tr><td colspan="5" class="muted-note" style="padding:2rem;text-align:center;">Loading productsâ€¦</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -1505,7 +1505,7 @@
                             <button class="btn btn-outline" onclick="window.fetchSaleAnalytics&&window.fetchSaleAnalytics()" style="font-size:.8rem;padding:.35rem .9rem;display:flex;align-items:center;gap:.3rem;"><ion-icon name="refresh-outline"></ion-icon> Refresh</button>
                         </div>
                         <div id="sale-analytics-card">
-                            <p class="muted-note" style="text-align:center;padding:1.5rem;">Loading analytics…</p>
+                            <p class="muted-note" style="text-align:center;padding:1.5rem;">Loading analyticsâ€¦</p>
                         </div>
                     </div>
                 </section>
@@ -1518,7 +1518,7 @@
                             <h2>Broadcast Message</h2>
                             <small>Show a site-wide announcement banner to all visitors</small>
                         </div>
-                        <span id="broadcast-live-badge" style="margin-left:auto;display:none;background:#e8f0fe;color:#1a56b8;font-size:.72rem;font-weight:700;padding:.25rem .75rem;border-radius:20px;letter-spacing:.06em;flex-shrink:0;">● LIVE</span>
+                        <span id="broadcast-live-badge" style="margin-left:auto;display:none;background:#e8f0fe;color:#1a56b8;font-size:.72rem;font-weight:700;padding:.25rem .75rem;border-radius:20px;letter-spacing:.06em;flex-shrink:0;">â— LIVE</span>
                     </div>
 
                     <div class="panel" style="max-width:640px;">
@@ -1535,12 +1535,12 @@
                         </div>
 
                         <div class="fg" id="bc-message-row">
-                            <label>Message <span class="muted-note" style="font-weight:400;">(shown on all pages — max 300 chars)</span></label>
-                            <textarea id="bc-message" rows="3" maxlength="300" placeholder="e.g. 🎉 Eid Special: 20% off all orders! Use code EID20 at checkout." style="width:100%;padding:.7rem 1rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;resize:vertical;box-sizing:border-box;background:var(--bg-color);"></textarea>
+                            <label>Message <span class="muted-note" style="font-weight:400;">(shown on all pages â€” max 300 chars)</span></label>
+                            <textarea id="bc-message" rows="3" maxlength="300" placeholder="e.g. ðŸŽ‰ Eid Special: 20% off all orders! Use code EID20 at checkout." style="width:100%;padding:.7rem 1rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;resize:vertical;box-sizing:border-box;background:var(--bg-color);"></textarea>
                         </div>
-                        <!-- Carousel messages — only visible when Carousel Slider style is selected -->
+                        <!-- Carousel messages â€” only visible when Carousel Slider style is selected -->
                         <div class="fg" id="bc-carousel-row" style="display:none;">
-                            <label>Carousel Messages <span class="muted-note" style="font-weight:400;">(one message per line — shown with ‹ › arrows)</span></label>
+                            <label>Carousel Messages <span class="muted-note" style="font-weight:400;">(one message per line â€” shown with â€¹ â€º arrows)</span></label>
                             <textarea id="bc-carousel-msgs" rows="5" placeholder="10% Off On Orders Over 4000 BDT&#10;Free shipping on orders over 2000 BDT&#10;New arrivals every week!&#10;Use code SAVE10 for 10% off" style="width:100%;padding:.7rem 1rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;resize:vertical;box-sizing:border-box;background:var(--bg-color);"></textarea>
                             <div style="display:flex;align-items:center;gap:.6rem;margin-top:.65rem;">
                                 <span style="font-size:.82rem;color:var(--text-muted);white-space:nowrap;font-weight:500;">Auto-rotate every</span>
@@ -1552,7 +1552,7 @@
                                     <option value="6">6 seconds</option>
                                     <option value="8">8 seconds</option>
                                     <option value="10">10 seconds</option>
-                                    <option value="0">Off — arrows only</option>
+                                    <option value="0">Off â€” arrows only</option>
                                 </select>
                             </div>
                         </div>
@@ -1565,19 +1565,19 @@
                                     <option value="info">Midnight Navy</option>
                                     <option value="emerald">Teal Fresh</option>
                                     <option value="warning">Deep Crimson</option>
-                                    <option value="carousel">↔ Carousel Slider</option>
-                                    <option value="custom">✏ Custom Color</option>
+                                    <option value="carousel">â†” Carousel Slider</option>
+                                    <option value="custom">âœ Custom Color</option>
                                 </select>
                             </div>
                             <div class="fg">
                                 <label>Background Animation</label>
                                 <select id="bc-animation" style="width:100%;padding:.65rem .8rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);">
-                                    <option value="none">— None —</option>
-                                    <option value="shimmer">✦ Shimmer Sweep</option>
-                                    <option value="shimmer-fast">⚡ Shimmer Fast</option>
-                                    <option value="golden-glow">◈ Golden Border Glow</option>
-                                    <option value="glass">◉ Glass Reflect</option>
-                                    <option value="neon">✶ Neon Pulse</option>
+                                    <option value="none">â€” None â€”</option>
+                                    <option value="shimmer">âœ¦ Shimmer Sweep</option>
+                                    <option value="shimmer-fast">âš¡ Shimmer Fast</option>
+                                    <option value="golden-glow">â—ˆ Golden Border Glow</option>
+                                    <option value="glass">â—‰ Glass Reflect</option>
+                                    <option value="neon">âœ¶ Neon Pulse</option>
                                 </select>
                             </div>
                         </div>
@@ -1586,26 +1586,26 @@
                             <div class="fg">
                                 <label>Background Effect Speed</label>
                                 <select id="bc-bg-speed" style="width:100%;padding:.65rem .8rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);">
-                                    <option value="slow">🐢 Slow</option>
-                                    <option value="normal">▷ Normal</option>
-                                    <option value="fast">⚡ Fast</option>
-                                    <option value="vfast">🔥 Very Fast</option>
+                                    <option value="slow">ðŸ¢ Slow</option>
+                                    <option value="normal">â–· Normal</option>
+                                    <option value="fast">âš¡ Fast</option>
+                                    <option value="vfast">ðŸ”¥ Very Fast</option>
                                 </select>
                             </div>
                             <div class="fg">
                                 <label>Text Animation</label>
                                 <select id="bc-text-anim" style="width:100%;padding:.65rem .8rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);">
-                                    <option value="none">— Static (No Movement) —</option>
-                                    <option value="ticker">📺 Ticker — Left Scroll</option>
-                                    <option value="ticker-r">📺 Ticker — Right Scroll</option>
-                                    <option value="slide-left">⟵ Slide in from Left</option>
-                                    <option value="slide-right">⟶ Slide in from Right</option>
-                                    <option value="slide-top">⬇ Drop from Top</option>
-                                    <option value="slide-bottom">⬆ Rise from Bottom</option>
-                                    <option value="fade">✦ Fade In / Out</option>
-                                    <option value="bounce">⊙ Bounce In</option>
-                                    <option value="flip">⟳ 3D Flip</option>
-                                    <option value="blink">◎ Flash Blink</option>
+                                    <option value="none">â€” Static (No Movement) â€”</option>
+                                    <option value="ticker">ðŸ“º Ticker â€” Left Scroll</option>
+                                    <option value="ticker-r">ðŸ“º Ticker â€” Right Scroll</option>
+                                    <option value="slide-left">âŸµ Slide in from Left</option>
+                                    <option value="slide-right">âŸ¶ Slide in from Right</option>
+                                    <option value="slide-top">â¬‡ Drop from Top</option>
+                                    <option value="slide-bottom">â¬† Rise from Bottom</option>
+                                    <option value="fade">âœ¦ Fade In / Out</option>
+                                    <option value="bounce">âŠ™ Bounce In</option>
+                                    <option value="flip">âŸ³ 3D Flip</option>
+                                    <option value="blink">â—Ž Flash Blink</option>
                                 </select>
                             </div>
                         </div>
@@ -1614,10 +1614,10 @@
                             <div class="fg">
                                 <label>Text Animation Speed</label>
                                 <select id="bc-text-speed" style="width:100%;padding:.65rem .8rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);">
-                                    <option value="slow">🐢 Slow</option>
-                                    <option value="normal">▷ Normal</option>
-                                    <option value="fast">⚡ Fast</option>
-                                    <option value="vfast">🔥 Very Fast</option>
+                                    <option value="slow">ðŸ¢ Slow</option>
+                                    <option value="normal">â–· Normal</option>
+                                    <option value="fast">âš¡ Fast</option>
+                                    <option value="vfast">ðŸ”¥ Very Fast</option>
                                 </select>
                             </div>
                             <div></div>
@@ -1645,12 +1645,12 @@
                             <div class="fg">
                                 <label>Light Effect Area</label>
                                 <select id="bc-effect-area" style="width:100%;padding:.65rem .8rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);">
-                                    <option value="inside">◻ Inside Beam Only</option>
-                                    <option value="outside">◼ Outer Glow</option>
-                                    <option value="both">◈ Beam + Outer Glow</option>
-                                    <option value="edge-rim">▣ Edge Rim (border glow)</option>
-                                    <option value="bottom-line">▂ Bottom Line Glow</option>
-                                    <option value="ambient">✦ Full Ambient Aura</option>
+                                    <option value="inside">â—» Inside Beam Only</option>
+                                    <option value="outside">â—¼ Outer Glow</option>
+                                    <option value="both">â—ˆ Beam + Outer Glow</option>
+                                    <option value="edge-rim">â–£ Edge Rim (border glow)</option>
+                                    <option value="bottom-line">â–‚ Bottom Line Glow</option>
+                                    <option value="ambient">âœ¦ Full Ambient Aura</option>
                                 </select>
                             </div>
                             <div></div>
@@ -1682,10 +1682,10 @@
                         <!-- Close button visibility -->
                         <div class="grid2" style="margin-bottom:.75rem;">
                             <div class="fg">
-                                <label>Close Button (×)</label>
+                                <label>Close Button (Ã—)</label>
                                 <select id="bc-dismissible" style="width:100%;padding:.65rem .8rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);">
-                                    <option value="1">✓ Visitors can close the banner</option>
-                                    <option value="0">✗ Always visible — no × button</option>
+                                    <option value="1">âœ“ Visitors can close the banner</option>
+                                    <option value="0">âœ— Always visible â€” no Ã— button</option>
                                 </select>
                             </div>
                             <div></div>
@@ -1698,11 +1698,11 @@
                             </div>
                             <div class="fg">
                                 <label>CTA Button Text</label>
-                                <input type="text" id="bc-link-text" placeholder="e.g. Shop Now →" maxlength="30" style="width:100%;padding:.65rem .8rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);">
+                                <input type="text" id="bc-link-text" placeholder="e.g. Shop Now â†’" maxlength="30" style="width:100%;padding:.65rem .8rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.9rem;background:var(--bg-color);">
                             </div>
                         </div>
                         <div style="background:var(--bg-color);border-radius:8px;padding:.9rem 1.1rem;margin-bottom:1.5rem;border-left:3px solid #1a56b8;">
-                            <p style="font-size:.78rem;color:var(--text-muted);margin:0;line-height:1.6;"><strong style="color:var(--text-main);">How it works:</strong> Visitors see the banner once per broadcast. When you update the message and save, all visitors will see it again. Clicking ✕ dismisses it until the next update.</p>
+                            <p style="font-size:.78rem;color:var(--text-muted);margin:0;line-height:1.6;"><strong style="color:var(--text-main);">How it works:</strong> Visitors see the banner once per broadcast. When you update the message and save, all visitors will see it again. Clicking âœ• dismisses it until the next update.</p>
                         </div>
                         <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
                             <button class="btn" id="save-broadcast" style="display:flex;align-items:center;gap:.4rem;"><ion-icon name="save-outline"></ion-icon> Save Broadcast</button>
@@ -1718,7 +1718,7 @@
                     <div><h2>Loyalty Program</h2><small>Configure points settings and manage member enrollments from one place</small></div>
                   </div>
 
-                  <!-- ── SETTINGS CARD ── -->
+                  <!-- â”€â”€ SETTINGS CARD â”€â”€ -->
                   <div class="panel" style="margin-bottom:1.75rem;">
                     <div class="panel-head">
                       <h3>Program Settings</h3>
@@ -1737,12 +1737,12 @@
                     <!-- Points config -->
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:.85rem;margin-bottom:1.1rem;">
                       <div>
-                        <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.3rem;font-weight:500;">Earn 1 pt per (৳)</label>
+                        <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.3rem;font-weight:500;">Earn 1 pt per (à§³)</label>
                         <input class="promo-input" id="p-lp-earn" type="number" min="1" value="100" style="width:100%;box-sizing:border-box;">
                         <div style="font-size:.72rem;color:var(--text-muted);margin-top:.2rem;">Customer spends this much to earn 1 point</div>
                       </div>
                       <div>
-                        <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.3rem;font-weight:500;">1 pt = (৳ value)</label>
+                        <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.3rem;font-weight:500;">1 pt = (à§³ value)</label>
                         <input class="promo-input" id="p-lp-val" type="number" min="0.1" step="0.1" value="1" style="width:100%;box-sizing:border-box;">
                         <div style="font-size:.72rem;color:var(--text-muted);margin-top:.2rem;">How much 1 point is worth in taka</div>
                       </div>
@@ -1752,7 +1752,7 @@
                         <div style="font-size:.72rem;color:var(--text-muted);margin-top:.2rem;">Must have at least this many points to redeem</div>
                       </div>
                       <div>
-                        <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.3rem;font-weight:500;">Min order amount (৳)</label>
+                        <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.3rem;font-weight:500;">Min order amount (à§³)</label>
                         <input class="promo-input" id="p-lp-min-order" type="number" min="0" value="500" style="width:100%;box-sizing:border-box;">
                         <div style="font-size:.72rem;color:var(--text-muted);margin-top:.2rem;">Order must be at least this value to use points</div>
                       </div>
@@ -1787,14 +1787,14 @@
                           <input type="radio" name="lp-enroll" id="p-lp-auto" value="auto" checked style="margin-top:.15rem;flex-shrink:0;">
                           <div>
                             <div style="font-size:.88rem;font-weight:600;">Automatic</div>
-                            <div style="font-size:.78rem;color:var(--text-muted);">All logged-in customers join the loyalty program instantly — no approval needed</div>
+                            <div style="font-size:.78rem;color:var(--text-muted);">All logged-in customers join the loyalty program instantly â€” no approval needed</div>
                           </div>
                         </label>
                         <label style="display:flex;align-items:flex-start;gap:.55rem;cursor:pointer;">
                           <input type="radio" name="lp-enroll" id="p-lp-approve" value="approve" style="margin-top:.15rem;flex-shrink:0;">
                           <div>
                             <div style="font-size:.88rem;font-weight:600;">Manual Approval</div>
-                            <div style="font-size:.78rem;color:var(--text-muted);">Customers request to join — admin reviews and approves each one individually</div>
+                            <div style="font-size:.78rem;color:var(--text-muted);">Customers request to join â€” admin reviews and approves each one individually</div>
                           </div>
                         </label>
                       </div>
@@ -1802,17 +1802,17 @@
                       <div id="lp-conditions-wrap" style="display:none;margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--border-color);">
                         <div style="font-size:.86rem;font-weight:600;color:var(--text-main);margin-bottom:.55rem;">
                           Approval Conditions
-                          <span style="font-weight:400;color:var(--text-muted);font-size:.76rem;"> — displayed to customers on their Rewards page</span>
+                          <span style="font-weight:400;color:var(--text-muted);font-size:.76rem;"> â€” displayed to customers on their Rewards page</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.6rem;flex-wrap:wrap;">
-                          <label style="font-size:.82rem;color:var(--text-muted);">Min Total Purchase (৳) to be eligible:</label>
+                          <label style="font-size:.82rem;color:var(--text-muted);">Min Total Purchase (à§³) to be eligible:</label>
                           <input class="promo-input" id="p-lp-cond-min" type="number" min="0" value="0" style="width:110px;">
                         </div>
                         <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.3rem;">
-                          Custom message for customers <span style="color:#c9a84c;font-size:.75rem;">★ shows on their Rewards page while pending approval</span>
+                          Custom message for customers <span style="color:#c9a84c;font-size:.75rem;">â˜… shows on their Rewards page while pending approval</span>
                         </label>
                         <textarea id="p-lp-cond-text" rows="2" style="width:100%;border:1px solid var(--border-color);border-radius:7px;padding:.5rem .7rem;font-size:.82rem;resize:vertical;font-family:inherit;box-sizing:border-box;background:#fff;" placeholder="e.g. Eligible for loyal customers with verified orders only."></textarea>
-                        <div style="font-size:.72rem;color:var(--text-muted);margin-top:.3rem;">💡 This message appears on the customer's <strong>My Account → Rewards</strong> page while they are waiting for approval. Leave blank to use the default message.</div>
+                        <div style="font-size:.72rem;color:var(--text-muted);margin-top:.3rem;">ðŸ’¡ This message appears on the customer's <strong>My Account â†’ Rewards</strong> page while they are waiting for approval. Leave blank to use the default message.</div>
                       </div>
                     </div>
 
@@ -1829,22 +1829,22 @@
                       <div id="lp-tiers-wrap" style="display:none;">
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;">
                           <div style="background:var(--bg-color);border-radius:10px;padding:.85rem;border:1px solid #e0e0e0;">
-                            <div style="font-weight:700;color:#9e9e9e;font-size:.92rem;margin-bottom:.6rem;">🥈 Silver</div>
-                            <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.2rem;">Min Spend (৳) to qualify</label>
+                            <div style="font-weight:700;color:#9e9e9e;font-size:.92rem;margin-bottom:.6rem;">ðŸ¥ˆ Silver</div>
+                            <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.2rem;">Min Spend (à§³) to qualify</label>
                             <input class="promo-input" id="p-lp-silver-min" type="number" min="0" value="0" style="width:100%;margin-bottom:.5rem;box-sizing:border-box;">
                             <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.2rem;">Earn rate multiplier</label>
                             <input class="promo-input" id="p-lp-silver-mult" type="number" min="1" step="0.1" value="1" style="width:100%;box-sizing:border-box;">
                           </div>
                           <div style="background:var(--bg-color);border-radius:10px;padding:.85rem;border:1px solid #e0e0e0;">
-                            <div style="font-weight:700;color:#f9a825;font-size:.92rem;margin-bottom:.6rem;">🥇 Gold</div>
-                            <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.2rem;">Min Spend (৳) to qualify</label>
+                            <div style="font-weight:700;color:#f9a825;font-size:.92rem;margin-bottom:.6rem;">ðŸ¥‡ Gold</div>
+                            <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.2rem;">Min Spend (à§³) to qualify</label>
                             <input class="promo-input" id="p-lp-gold-min" type="number" min="0" value="8000" style="width:100%;margin-bottom:.5rem;box-sizing:border-box;">
                             <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.2rem;">Earn rate multiplier</label>
                             <input class="promo-input" id="p-lp-gold-mult" type="number" min="1" step="0.1" value="2" style="width:100%;box-sizing:border-box;">
                           </div>
                           <div style="background:var(--bg-color);border-radius:10px;padding:.85rem;border:1px solid #e0e0e0;">
-                            <div style="font-weight:700;color:#7b5ea7;font-size:.92rem;margin-bottom:.6rem;">💎 Platinum</div>
-                            <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.2rem;">Min Spend (৳) to qualify</label>
+                            <div style="font-weight:700;color:#7b5ea7;font-size:.92rem;margin-bottom:.6rem;">ðŸ’Ž Platinum</div>
+                            <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.2rem;">Min Spend (à§³) to qualify</label>
                             <input class="promo-input" id="p-lp-plat-min" type="number" min="0" value="15000" style="width:100%;margin-bottom:.5rem;box-sizing:border-box;">
                             <label style="font-size:.77rem;color:var(--text-muted);display:block;margin-bottom:.2rem;">Earn rate multiplier</label>
                             <input class="promo-input" id="p-lp-plat-mult" type="number" min="1" step="0.1" value="3" style="width:100%;box-sizing:border-box;">
@@ -1854,11 +1854,11 @@
                     </div>
 
                     <div style="margin-top:1rem;padding:.65rem .95rem;background:#f6f8ff;border-left:3px solid var(--primary-color);border-radius:0 8px 8px 0;font-size:.78rem;color:var(--text-muted);line-height:1.75;">
-                      📌 <strong>কীভাবে কাজ করে:</strong> Order <strong>Delivered</strong> হওয়ার পরে customer points earn করবে (order place করার সাথে সাথে না)। Checkout-এ redeem করতে পারবে — <strong>Min Order Amount</strong> ও <strong>Max Redeem %</strong> অনুযায়ী। <strong>Tier:</strong> Silver (0৳+, ×1) → Gold (৳8,000+, ×2) → Platinum (৳15,000+, ×3). Cancel হলে points reverse হবে। My Account → Rewards tab-এ balance দেখা যাবে।
+                      ðŸ“Œ <strong>à¦•à§€à¦­à¦¾à¦¬à§‡ à¦•à¦¾à¦œ à¦•à¦°à§‡:</strong> Order <strong>Delivered</strong> à¦¹à¦“à¦¯à¦¼à¦¾à¦° à¦ªà¦°à§‡ customer points earn à¦•à¦°à¦¬à§‡ (order place à¦•à¦°à¦¾à¦° à¦¸à¦¾à¦¥à§‡ à¦¸à¦¾à¦¥à§‡ à¦¨à¦¾)à¥¤ Checkout-à¦ redeem à¦•à¦°à¦¤à§‡ à¦ªà¦¾à¦°à¦¬à§‡ â€” <strong>Min Order Amount</strong> à¦“ <strong>Max Redeem %</strong> à¦…à¦¨à§à¦¯à¦¾à¦¯à¦¼à§€à¥¤ <strong>Tier:</strong> Silver (0à§³+, Ã—1) â†’ Gold (à§³8,000+, Ã—2) â†’ Platinum (à§³15,000+, Ã—3). Cancel à¦¹à¦²à§‡ points reverse à¦¹à¦¬à§‡à¥¤ My Account â†’ Rewards tab-à¦ balance à¦¦à§‡à¦–à¦¾ à¦¯à¦¾à¦¬à§‡à¥¤
                     </div>
                   </div>
 
-                  <!-- ── MEMBERS SECTION ── -->
+                  <!-- â”€â”€ MEMBERS SECTION â”€â”€ -->
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1.1rem;flex-wrap:wrap;">
                     <div>
                       <h3 style="font-size:1.05rem;font-weight:700;color:var(--text-main);margin:0 0 .15rem;">Members</h3>
@@ -1870,19 +1870,19 @@
                   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem;">
                     <div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid #163E34;">
                       <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;">Total Members</div>
-                      <div style="font-size:1.75rem;font-weight:800;color:#163E34;" id="lm-stat-total">—</div>
+                      <div style="font-size:1.75rem;font-weight:800;color:#163E34;" id="lm-stat-total">â€”</div>
                     </div>
                     <div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid #e67e22;">
                       <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;">Pending Approval</div>
-                      <div style="font-size:1.75rem;font-weight:800;color:#e67e22;" id="lm-stat-pending">—</div>
+                      <div style="font-size:1.75rem;font-weight:800;color:#e67e22;" id="lm-stat-pending">â€”</div>
                     </div>
                     <div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid #27ae60;">
                       <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;">Approved</div>
-                      <div style="font-size:1.75rem;font-weight:800;color:#27ae60;" id="lm-stat-approved">—</div>
+                      <div style="font-size:1.75rem;font-weight:800;color:#27ae60;" id="lm-stat-approved">â€”</div>
                     </div>
                     <div style="background:#fff;border-radius:12px;padding:1rem 1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid #c9a84c;">
                       <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;">Total Points Issued</div>
-                      <div style="font-size:1.75rem;font-weight:800;color:#c9a84c;" id="lm-stat-points">—</div>
+                      <div style="font-size:1.75rem;font-weight:800;color:#c9a84c;" id="lm-stat-points">â€”</div>
                     </div>
                   </div>
 
@@ -1920,8 +1920,8 @@
                                 <input type="text" id="faq-q-input" placeholder="e.g. How long does delivery take?" style="width:100%;padding:.65rem 1rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);font-size:.9rem;background:var(--surface-color);">
                             </div>
                             <div class="fg">
-                                <label>Answer <span class="muted-note" style="font-weight:400;">(use • for bullet points, new line for paragraphs)</span></label>
-                                <textarea id="faq-a-input" rows="4" placeholder="e.g. We deliver within 1–2 days in Dhaka and 3–5 days outside Dhaka." style="width:100%;padding:.65rem 1rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);font-size:.9rem;resize:vertical;background:var(--surface-color);box-sizing:border-box;"></textarea>
+                                <label>Answer <span class="muted-note" style="font-weight:400;">(use â€¢ for bullet points, new line for paragraphs)</span></label>
+                                <textarea id="faq-a-input" rows="4" placeholder="e.g. We deliver within 1â€“2 days in Dhaka and 3â€“5 days outside Dhaka." style="width:100%;padding:.65rem 1rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);font-size:.9rem;resize:vertical;background:var(--surface-color);box-sizing:border-box;"></textarea>
                             </div>
                             <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
                                 <button class="btn" id="faq-save-btn" style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;"><ion-icon name="save-outline"></ion-icon> Save FAQ</button>
@@ -1931,7 +1931,7 @@
                         </div>
 
                         <!-- FAQ List -->
-                        <div id="faq-list-admin" style="color:var(--text-muted);text-align:center;padding:2rem;">Loading…</div>
+                        <div id="faq-list-admin" style="color:var(--text-muted);text-align:center;padding:2rem;">Loadingâ€¦</div>
                     </div>
                 </section>
 
@@ -1945,7 +1945,7 @@
                         <div style="overflow-x:auto;">
                             <table class="admin-table">
                                 <thead><tr><th>Product</th><th>Customer</th><th>Rating</th><th>Review</th><th>Status</th><th>Date</th><th>Reply</th><th></th></tr></thead>
-                                <tbody id="review-rows"><tr><td colspan="8" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                                <tbody id="review-rows"><tr><td colspan="8" class="muted-note" style="padding:2rem;text-align:center;">Loadingâ€¦</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -1961,7 +1961,7 @@
                         <div style="overflow-x:auto;">
                             <table class="admin-table">
                                 <thead><tr><th>Name</th><th>Email</th><th>Subject</th><th>Message</th><th>Date</th><th>Status</th><th></th></tr></thead>
-                                <tbody id="message-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                                <tbody id="message-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loadingâ€¦</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -1992,19 +1992,19 @@
                     <div class="stat-grid" style="margin-bottom:1.25rem;">
                         <div class="stat-card">
                             <div class="stat-icon revenue"><ion-icon name="cash-outline"></ion-icon></div>
-                            <div><div class="lbl">Sales</div><div class="num" id="an-revenue">—</div><div class="delta flat" id="an-avg-val">&nbsp;</div></div>
+                            <div><div class="lbl">Sales</div><div class="num" id="an-revenue">â€”</div><div class="delta flat" id="an-avg-val">&nbsp;</div></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon orders"><ion-icon name="cart-outline"></ion-icon></div>
-                            <div><div class="lbl">Orders</div><div class="num" id="an-orders">—</div><div class="delta flat" id="an-order-conv">&nbsp;</div></div>
+                            <div><div class="lbl">Orders</div><div class="num" id="an-orders">â€”</div><div class="delta flat" id="an-order-conv">&nbsp;</div></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon customers"><ion-icon name="person-add-outline"></ion-icon></div>
-                            <div><div class="lbl">New Customers</div><div class="num" id="an-customers">—</div><div class="delta flat">&nbsp;</div></div>
+                            <div><div class="lbl">New Customers</div><div class="num" id="an-customers">â€”</div><div class="delta flat">&nbsp;</div></div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon products"><ion-icon name="mail-outline"></ion-icon></div>
-                            <div><div class="lbl">Subscribers</div><div class="num" id="an-newsletter">—</div><div class="delta flat">Newsletter</div></div>
+                            <div><div class="lbl">Subscribers</div><div class="num" id="an-newsletter">â€”</div><div class="delta flat">Newsletter</div></div>
                         </div>
                     </div>
 
@@ -2015,7 +2015,7 @@
                         </div>
                         <div class="panel">
                             <div class="panel-head"><h3>Top Products by Sales</h3></div>
-                            <div id="an-top-products"><p class="muted-note">Loading…</p></div>
+                            <div id="an-top-products"><p class="muted-note">Loadingâ€¦</p></div>
                         </div>
                     </div>
 
@@ -2027,13 +2027,13 @@
                         </div>
                         <div class="panel">
                             <div class="panel-head"><h3>Sales Funnel</h3></div>
-                            <div id="an-funnel"><p class="muted-note">Loading…</p></div>
+                            <div id="an-funnel"><p class="muted-note">Loadingâ€¦</p></div>
                         </div>
                         <div class="an-ga-card">
                             <ion-icon name="analytics-outline" style="font-size:2.2rem;color:rgba(255,255,255,.55);"></ion-icon>
                             <h3>Visitor Analytics</h3>
                             <p>Page views, traffic sources, devices &amp; real-time users are in Google Analytics (GA4 ID: G-DWXJFVRHFE).</p>
-                            <a href="https://analytics.google.com" target="_blank" rel="noopener" class="btn">Open Google Analytics →</a>
+                            <a href="https://analytics.google.com" target="_blank" rel="noopener" class="btn">Open Google Analytics â†’</a>
                         </div>
                     </div>
                 </section>
@@ -2064,7 +2064,7 @@
                                             <button class="icon-btn danger" id="del-hero-desktop" title="Remove image" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-hero-desktop"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 1400×800px &middot; Ratio 16:9 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 1400Ã—800px &middot; Ratio 16:9 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                     <div class="img-field-wrap">
                                         <label class="fg" style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Mobile Hero Image</label>
@@ -2075,7 +2075,7 @@
                                             <button class="icon-btn danger" id="del-hero-mobile" title="Remove image" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-hero-mobile"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 768×900px &middot; Ratio 5:6 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 768Ã—900px &middot; Ratio 5:6 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                 </div>
 
@@ -2090,7 +2090,7 @@
                                             <button class="icon-btn danger" id="del-cat-forher" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-cat-forher"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 380×400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 380Ã—400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                     <div class="img-field-wrap">
                                         <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Unisex</label>
@@ -2101,7 +2101,7 @@
                                             <button class="icon-btn danger" id="del-cat-unisex" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-cat-unisex"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 380×400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 380Ã—400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                     <div class="img-field-wrap">
                                         <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">For Him</label>
@@ -2112,7 +2112,7 @@
                                             <button class="icon-btn danger" id="del-cat-forhim" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-cat-forhim"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 380×400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 380Ã—400px &middot; Ratio 19:20 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                 </div>
 
@@ -2127,7 +2127,7 @@
                                             <button class="icon-btn danger" id="del-why-0" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-why-0"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 96×96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 96Ã—96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                     <div class="img-field-wrap">
                                         <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Extreme Longevity Icon</label>
@@ -2138,7 +2138,7 @@
                                             <button class="icon-btn danger" id="del-why-1" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-why-1"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 96×96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 96Ã—96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                     <div class="img-field-wrap">
                                         <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Cruelty Free Icon</label>
@@ -2149,7 +2149,7 @@
                                             <button class="icon-btn danger" id="del-why-2" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-why-2"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 96×96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 96Ã—96px &middot; Ratio 1:1 &middot; PNG/WebP (transparent) &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                 </div>
 
@@ -2161,7 +2161,7 @@
                                     <input type="file" id="file-gallery-multi" accept="image/*" multiple style="display:none;">
                                     <span class="muted-note" id="status-gallery-multi"></span>
                                 </div>
-                                <div class="img-hint" style="margin-top:.5rem;">Recommended: 600×600px &middot; Ratio 1:1 &middot; JPG/PNG/WebP &middot; Max 3MB each<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                <div class="img-hint" style="margin-top:.5rem;">Recommended: 600Ã—600px &middot; Ratio 1:1 &middot; JPG/PNG/WebP &middot; Max 3MB each<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
 
                                 <div class="pages-save-row">
                                     <button class="btn" id="save-pages-homepage">Save Homepage Images</button>
@@ -2183,7 +2183,7 @@
                                         <button class="icon-btn danger" id="del-about-hero" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                         <span class="muted-note" id="status-about-hero"></span>
                                     </div>
-                                    <div class="img-hint">Recommended: 1400×600px &middot; Ratio 7:3 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    <div class="img-hint">Recommended: 1400Ã—600px &middot; Ratio 7:3 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     <div style="margin-top:1rem;">
                                         <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.5rem;">Overlay Opacity</label>
                                         <div class="opacity-row">
@@ -2203,7 +2203,7 @@
                                         <button class="icon-btn danger" id="del-about-mission" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                         <span class="muted-note" id="status-about-mission"></span>
                                     </div>
-                                    <div class="img-hint">Recommended: 560×500px &middot; Ratio 14:12.5 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    <div class="img-hint">Recommended: 560Ã—500px &middot; Ratio 14:12.5 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                 </div>
 
                                 <div class="pages-save-row">
@@ -2226,7 +2226,7 @@
                                 <div style="overflow-x:auto;">
                                     <table class="admin-table">
                                         <thead><tr><th>Question</th><th>Answer (preview)</th><th>Status</th><th>Order</th><th></th></tr></thead>
-                                        <tbody id="faq-rows"><tr><td colspan="5" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
+                                        <tbody id="faq-rows"><tr><td colspan="5" class="muted-note" style="padding:2rem;text-align:center;">Loadingâ€¦</td></tr></tbody>
                                     </table>
                                 </div>
                             </div>
@@ -2236,19 +2236,19 @@
                         <div class="pages-sub" data-sub="policies">
                             <div class="panel" style="background:var(--bg-color);border:none;padding:0;box-shadow:none;">
                                 <h4 style="font-size:1rem;color:var(--primary-color);margin-bottom:.35rem;">Store Policies</h4>
-                                <p class="muted-note" style="margin-bottom:1.5rem;">These appear on the public Policies page. Plain text — line breaks are preserved.</p>
+                                <p class="muted-note" style="margin-bottom:1.5rem;">These appear on the public Policies page. Plain text â€” line breaks are preserved.</p>
 
                                 <div class="fg" style="margin-bottom:1.25rem;">
                                     <label style="font-weight:600;font-size:.88rem;display:flex;align-items:center;gap:.4rem;margin-bottom:.5rem;"><ion-icon name="refresh-circle-outline" style="color:var(--primary-color);"></ion-icon> Return &amp; Refund Policy</label>
-                                    <textarea id="policy-return" rows="7" style="width:100%;padding:.75rem 1rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.88rem;resize:vertical;background:#fff;box-sizing:border-box;" placeholder="e.g. We accept returns within 7 days of delivery…"></textarea>
+                                    <textarea id="policy-return" rows="7" style="width:100%;padding:.75rem 1rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.88rem;resize:vertical;background:#fff;box-sizing:border-box;" placeholder="e.g. We accept returns within 7 days of deliveryâ€¦"></textarea>
                                 </div>
                                 <div class="fg" style="margin-bottom:1.25rem;">
                                     <label style="font-weight:600;font-size:.88rem;display:flex;align-items:center;gap:.4rem;margin-bottom:.5rem;"><ion-icon name="lock-closed-outline" style="color:var(--primary-color);"></ion-icon> Privacy Policy</label>
-                                    <textarea id="policy-privacy" rows="7" style="width:100%;padding:.75rem 1rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.88rem;resize:vertical;background:#fff;box-sizing:border-box;" placeholder="e.g. We collect your name and contact info only to fulfill orders…"></textarea>
+                                    <textarea id="policy-privacy" rows="7" style="width:100%;padding:.75rem 1rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.88rem;resize:vertical;background:#fff;box-sizing:border-box;" placeholder="e.g. We collect your name and contact info only to fulfill ordersâ€¦"></textarea>
                                 </div>
                                 <div class="fg" style="margin-bottom:1.5rem;">
                                     <label style="font-weight:600;font-size:.88rem;display:flex;align-items:center;gap:.4rem;margin-bottom:.5rem;"><ion-icon name="document-text-outline" style="color:var(--primary-color);"></ion-icon> Terms &amp; Conditions</label>
-                                    <textarea id="policy-terms" rows="7" style="width:100%;padding:.75rem 1rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.88rem;resize:vertical;background:#fff;box-sizing:border-box;" placeholder="e.g. By placing an order you agree to our terms…"></textarea>
+                                    <textarea id="policy-terms" rows="7" style="width:100%;padding:.75rem 1rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.88rem;resize:vertical;background:#fff;box-sizing:border-box;" placeholder="e.g. By placing an order you agree to our termsâ€¦"></textarea>
                                 </div>
                                 <div style="display:flex;align-items:center;gap:1rem;">
                                     <button class="btn" id="save-policies">Save Policies</button>
@@ -2269,7 +2269,7 @@
                                         <button class="icon-btn danger" id="del-contact-hero" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                         <span class="muted-note" id="status-contact-hero"></span>
                                     </div>
-                                    <div class="img-hint">Recommended: 1400×500px &middot; Ratio 14:5 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                    <div class="img-hint">Recommended: 1400Ã—500px &middot; Ratio 14:5 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                 </div>
 
                                 <h4 style="font-size:1rem;margin-bottom:1rem;color:var(--primary-color);">Map</h4>
@@ -2281,7 +2281,7 @@
                                     <div class="fg">
                                         <label style="font-size:.82rem;color:var(--text-muted);display:block;margin-bottom:.4rem;">Google Maps iframe src URL</label>
                                         <input type="url" id="contact-map-embed" placeholder="Paste the src= value from a Google Maps embed iframe" style="width:100%;padding:.65rem .8rem;border:1px solid var(--border-color);border-radius:8px;font-family:var(--font-sans);font-size:.85rem;background:var(--bg-color);">
-                                        <div class="img-hint" style="margin-top:.35rem;">Go to maps.google.com &rarr; Share &rarr; Embed a map &rarr; copy only the src="…" URL value.</div>
+                                        <div class="img-hint" style="margin-top:.35rem;">Go to maps.google.com &rarr; Share &rarr; Embed a map &rarr; copy only the src="â€¦" URL value.</div>
                                     </div>
                                 </div>
                                 <div id="map-sub-image" style="display:none;">
@@ -2293,7 +2293,7 @@
                                             <button class="icon-btn danger" id="del-contact-map" title="Remove" style="display:none;"><ion-icon name="trash-outline"></ion-icon></button>
                                             <span class="muted-note" id="status-contact-map"></span>
                                         </div>
-                                        <div class="img-hint">Recommended: 560×300px &middot; Ratio 28:15 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
+                                        <div class="img-hint">Recommended: 560Ã—300px &middot; Ratio 28:15 &middot; JPG/PNG/WebP &middot; Max 3MB<br>Cloudinary auto-compresses &amp; converts to WebP on delivery.</div>
                                     </div>
                                 </div>
 
@@ -2310,7 +2310,7 @@
                 <section data-panel="admins" style="display:none;">
                     <div class="panel" style="max-width:640px;">
                         <div class="panel-head"><h3>Admin Users</h3></div>
-                        <div id="admins-list"><p class="muted-note">Loading…</p></div>
+                        <div id="admins-list"><p class="muted-note">Loadingâ€¦</p></div>
                     </div>
                     <div class="panel" style="max-width:640px;margin-top:1.5rem;">
                         <div class="panel-head"><h3>Grant Admin Access</h3></div>
@@ -2330,7 +2330,7 @@
                             <div class="fg"><label>WhatsApp Number (with country code)</label><input type="text" name="whatsapp" placeholder="8801886936581"></div>
                             <div class="fg"><label>WhatsApp Default Message</label><input type="text" name="whatsappMessage" placeholder="Hi Zahroun! I'd like to place an order."></div>
                             <div class="fg"><label>Contact Email</label><input type="email" name="contactEmail" placeholder="support@zahroun.com"></div>
-                            <div class="fg"><label>Announcement Bar Text</label><input type="text" name="announcement" placeholder="Free shipping over ৳5000!"></div>
+                            <div class="fg"><label>Announcement Bar Text</label><input type="text" name="announcement" placeholder="Free shipping over à§³5000!"></div>
                             <div class="fg" style="display:flex;align-items:center;gap:.6rem;"><input type="checkbox" name="announcementActive" id="ann-chk" style="width:auto;margin:0;"><label for="ann-chk" style="margin:0;font-size:.9rem;color:var(--text-main);">Show Announcement Bar</label></div>
                             <div class="fg"><label>Hero Title (Homepage banner)</label><input type="text" name="heroTitle" placeholder="Discover Your Scent"></div>
                             <div class="fg"><label>Hero Subtitle</label><input type="text" name="heroSubtitle" placeholder="Premium perfumes crafted for you"></div>
@@ -2338,8 +2338,8 @@
                             <div style="border-top:1px solid var(--border-color);margin:1.25rem 0;padding-top:1.25rem;">
                                 <p style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);font-weight:600;margin-bottom:.85rem;">Delivery Charges (BDT)</p>
                                 <div class="grid2">
-                                    <div class="fg"><label>Inside Dhaka <span style="color:var(--text-muted);font-size:.78rem;">(min ৳0)</span></label><input type="number" name="deliveryDhaka" min="0" step="1" placeholder="60" oninvalid="this.setCustomValidity('Must be 0 or more')" oninput="this.setCustomValidity('')"></div>
-                                    <div class="fg"><label>Outside Dhaka <span style="color:var(--text-muted);font-size:.78rem;">(min ৳0)</span></label><input type="number" name="deliveryOutside" min="0" step="1" placeholder="120" oninvalid="this.setCustomValidity('Must be 0 or more')" oninput="this.setCustomValidity('')"></div>
+                                    <div class="fg"><label>Inside Dhaka <span style="color:var(--text-muted);font-size:.78rem;">(min à§³0)</span></label><input type="number" name="deliveryDhaka" min="0" step="1" placeholder="60" oninvalid="this.setCustomValidity('Must be 0 or more')" oninput="this.setCustomValidity('')"></div>
+                                    <div class="fg"><label>Outside Dhaka <span style="color:var(--text-muted);font-size:.78rem;">(min à§³0)</span></label><input type="number" name="deliveryOutside" min="0" step="1" placeholder="120" oninvalid="this.setCustomValidity('Must be 0 or more')" oninput="this.setCustomValidity('')"></div>
                                 </div>
                                 <div class="fg" style="display:flex;align-items:center;gap:.65rem;">
                                     <input type="number" name="freeDeliveryThreshold" min="0" step="1" placeholder="0" style="width:130px;" oninvalid="this.setCustomValidity('Must be 0 or more')" oninput="this.setCustomValidity('')">
@@ -2400,12 +2400,12 @@
                     <div class="muted-note" id="img-status" style="font-size:.78rem;"></div>
                 </div>
                 <p class="muted-note" style="margin-top:.45rem;font-size:.75rem;">
-                    <strong>Best size: 3:4 portrait (e.g. 900×1200px)</strong> · Up to 10 MB · Auto WebP + compressed on delivery
+                    <strong>Best size: 3:4 portrait (e.g. 900Ã—1200px)</strong> Â· Up to 10 MB Â· Auto WebP + compressed on delivery
                 </p>
             </div>
 
             <div class="fg" style="margin-top:.75rem;">
-                <label>Per-Size Images <span class="muted-note" style="font-weight:normal;font-size:.76rem;">Different bottle image per size · Empty = uses main image</span></label>
+                <label>Per-Size Images <span class="muted-note" style="font-weight:normal;font-size:.76rem;">Different bottle image per size Â· Empty = uses main image</span></label>
                 <div id="size-img-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-top:.5rem;"></div>
                 <button type="button" id="si-sync-btn" class="btn btn-outline" style="margin-top:.5rem;font-size:.78rem;padding:.35rem .8rem;">
                     <ion-icon name="sync-outline" style="vertical-align:middle;font-size:.9rem;margin-right:.25rem;"></ion-icon>Use main image for all sizes
@@ -2420,7 +2420,7 @@
                 <div class="fg"><label>Name</label><input type="text" name="name" required></div>
                 <div class="fg"><label>Category</label>
                     <select name="category" required>
-                        <option value="" disabled selected>— loading categories —</option>
+                        <option value="" disabled selected>â€” loading categories â€”</option>
                     </select>
                 </div>
             </div>
@@ -2428,7 +2428,7 @@
             <div class="fg"><label>Description</label><textarea name="description" rows="2"></textarea></div>
             <div class="fg"><label>Ingredients</label><textarea name="ingredients" rows="2"></textarea></div>
 
-            <label class="muted-note" style="display:block;margin-bottom:.4rem;">Sizes & Prices (BDT) <span style="font-size:.7rem;">— uncheck to hide a size from customers</span></label>
+            <label class="muted-note" style="display:block;margin-bottom:.4rem;">Sizes & Prices (BDT) <span style="font-size:.7rem;">â€” uncheck to hide a size from customers</span></label>
             <div class="grid4">
                 <div class="fg">
                     <label style="display:flex;align-items:center;gap:.3rem;margin-bottom:.35rem;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--text-main);">
@@ -2517,16 +2517,16 @@
                 <p class="muted-note" style="font-size:.76rem;margin-top:.35rem;">Select a parent category to create a child category. Leave as "Create as Root Category" to create a top-level category.</p>
             </div>
             <div class="fg"><label>Display Order</label><input type="number" name="order" value="0" min="0"></div>
-            <div class="fg"><label>Icon <span class="muted-note" style="font-weight:400;font-size:.76rem;">Ionicon name, e.g. man-outline, gift-outline — empty = automatic</span></label>
+            <div class="fg"><label>Icon <span class="muted-note" style="font-weight:400;font-size:.76rem;">Ionicon name, e.g. man-outline, gift-outline â€” empty = automatic</span></label>
                 <div style="display:flex;gap:.55rem;align-items:center;">
                     <input type="text" name="icon" placeholder="auto" style="flex:1;">
                     <span id="cat-icon-preview" style="font-size:1.35rem;display:flex;align-items:center;color:var(--primary-color);"><ion-icon name="pricetag-outline"></ion-icon></span>
                 </div>
             </div>
-            <div class="fg"><label>Description <span class="muted-note" style="font-weight:400;font-size:.76rem;">Optional — shows on the shop page when this category is selected</span></label>
-                <textarea name="description" rows="2" placeholder="Short text about this collection…" style="resize:vertical;"></textarea>
+            <div class="fg"><label>Description <span class="muted-note" style="font-weight:400;font-size:.76rem;">Optional â€” shows on the shop page when this category is selected</span></label>
+                <textarea name="description" rows="2" placeholder="Short text about this collectionâ€¦" style="resize:vertical;"></textarea>
             </div>
-            <div class="fg"><label>Banner Image <span class="muted-note" style="font-weight:400;font-size:.76rem;">Optional — used on category pages</span></label>
+            <div class="fg"><label>Banner Image <span class="muted-note" style="font-weight:400;font-size:.76rem;">Optional â€” used on category pages</span></label>
                 <div style="display:flex;gap:.55rem;align-items:center;flex-wrap:wrap;">
                     <img id="cat-banner-preview" alt="" style="width:72px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border-color);display:none;">
                     <label class="btn btn-outline" for="cat-banner-file" style="cursor:pointer;font-size:.8rem;padding:.35rem .85rem;"><ion-icon name="cloud-upload-outline" style="vertical-align:middle;margin-right:.25rem;"></ion-icon>Upload</label>
@@ -2548,18 +2548,18 @@
         <form class="admin-form" id="coupon-form" style="max-width:500px;">
             <h2 id="coupon-form-title">Add Coupon</h2>
             <div class="grid2">
-                <div class="fg"><label>Code (auto-uppercase)</label><div style="display:flex;gap:.4rem;align-items:center;"><input type="text" name="code" required placeholder="SAVE10" style="text-transform:uppercase;flex:1;"><button type="button" id="gen-coupon-btn" title="Auto-generate code" style="flex-shrink:0;padding:.45rem .75rem;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-color);cursor:pointer;font-size:.78rem;white-space:nowrap;">✨ Generate</button></div></div>
+                <div class="fg"><label>Code (auto-uppercase)</label><div style="display:flex;gap:.4rem;align-items:center;"><input type="text" name="code" required placeholder="SAVE10" style="text-transform:uppercase;flex:1;"><button type="button" id="gen-coupon-btn" title="Auto-generate code" style="flex-shrink:0;padding:.45rem .75rem;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-color);cursor:pointer;font-size:.78rem;white-space:nowrap;">âœ¨ Generate</button></div></div>
                 <div class="fg"><label>Discount Type</label>
                     <select name="type">
                         <option value="percent">Percentage (%)</option>
-                        <option value="flat">Flat Amount (৳)</option>
+                        <option value="flat">Flat Amount (à§³)</option>
                         <option value="freeship">Free Delivery</option>
                     </select>
                 </div>
             </div>
             <div class="grid2">
                 <div class="fg"><label>Discount Value <span class="muted-note" style="font-weight:400;">(ignored for Free Delivery)</span></label><input type="number" name="value" min="0" placeholder="10"></div>
-                <div class="fg"><label>Minimum Order (৳)</label><input type="number" name="minOrder" min="0" value="0"></div>
+                <div class="fg"><label>Minimum Order (à§³)</label><input type="number" name="minOrder" min="0" value="0"></div>
             </div>
             <div class="grid2">
                 <div class="fg"><label>Max Uses (0 = unlimited)</label><input type="number" name="maxUses" min="0" value="0"></div>
@@ -2581,7 +2581,7 @@
         <form class="admin-form" id="faq-form" style="max-width:560px;">
             <h2 id="faq-form-title">Add FAQ</h2>
             <div class="fg"><label>Question</label><input type="text" name="question" required placeholder="e.g. How long does delivery take?"></div>
-            <div class="fg"><label>Answer</label><textarea name="answer" rows="5" required placeholder="Provide a clear, helpful answer…" style="width:100%;padding:.7rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);font-size:.9rem;resize:vertical;box-sizing:border-box;"></textarea></div>
+            <div class="fg"><label>Answer</label><textarea name="answer" rows="5" required placeholder="Provide a clear, helpful answerâ€¦" style="width:100%;padding:.7rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);font-size:.9rem;resize:vertical;box-sizing:border-box;"></textarea></div>
             <div class="grid2">
                 <div class="fg"><label>Display Order <span class="muted-note" style="font-weight:400;">(lower = first)</span></label><input type="number" name="order" value="0" min="0"></div>
                 <div class="fg" style="display:flex;align-items:center;gap:.6rem;padding-top:1.6rem;">
@@ -2602,7 +2602,7 @@
             <div id="crop-modal-hdr">
                 <div>
                     <h4 id="crop-modal-title">Position Image</h4>
-                    <span class="crop-hint">Drag to pan · Scroll or pinch to zoom</span>
+                    <span class="crop-hint">Drag to pan Â· Scroll or pinch to zoom</span>
                 </div>
                 <span id="crop-ratio-badge" style="font-size:.7rem;background:#f0f4f2;padding:.18rem .52rem;border-radius:4px;color:var(--primary-color);font-weight:600;flex-shrink:0;display:none;"></span>
             </div>
@@ -2610,17 +2610,17 @@
             <div id="crop-wrap"><img id="crop-img" alt=""></div>
 
             <div id="crop-zoom-bar">
-                <button type="button" class="czb-btn" id="crop-zoom-out" title="Zoom out">−</button>
+                <button type="button" class="czb-btn" id="crop-zoom-out" title="Zoom out">âˆ’</button>
                 <input type="range" id="crop-zoom-slider" min="25" max="320" step="1" value="100">
                 <button type="button" class="czb-btn" id="crop-zoom-in" title="Zoom in">+</button>
                 <span id="crop-zoom-pct">100%</span>
-                <button type="button" id="crop-zoom-reset">↺ Reset</button>
+                <button type="button" id="crop-zoom-reset">â†º Reset</button>
             </div>
 
             <div id="crop-previews">
                 <!-- Filled dynamically by _cropSetupPreviews() -->
                 <div class="crop-preview-device" style="opacity:.4;pointer-events:none;">
-                    <div class="crop-preview-label">Loading…</div>
+                    <div class="crop-preview-label">Loadingâ€¦</div>
                 </div>
             </div>
 
@@ -2676,7 +2676,7 @@
             </label>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;">
                 <button onclick="document.getElementById('verify-confirm-modal').style.display='none';" class="btn btn-outline" style="padding:.55rem;">Cancel</button>
-                <button id="vcp-confirm-btn" onclick="window._confirmVerify()" class="btn" style="background:#1e7e34;border-color:#1e7e34;padding:.55rem;opacity:.45;pointer-events:none;">Yes, Verified ✓</button>
+                <button id="vcp-confirm-btn" onclick="window._confirmVerify()" class="btn" style="background:#1e7e34;border-color:#1e7e34;padding:.55rem;opacity:.45;pointer-events:none;">Yes, Verified âœ“</button>
             </div>
         </div>
     </div>

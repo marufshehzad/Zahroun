@@ -226,15 +226,22 @@ function _cropUpdateSliderUI() {
 
 function _cropUpdatePreviews() {
   const img = document.getElementById("crop-img");
-  if (!img || !_cropNatW || !img.src) return;
+  if (!img || !_cropNatW || !img.complete || !img.naturalWidth) return;
+  // Source region in the original image that is visible in the crop frame
+  const srcX = -_cropPanX / _cropScale;
+  const srcY = -_cropPanY / _cropScale;
+  const srcW = _cropFrameW / _cropScale;
+  const srcH = _cropFrameH / _cropScale;
   document.querySelectorAll(".crop-preview-frame").forEach(frame => {
-    const w = frame.offsetWidth, h = frame.offsetHeight;
+    const canvas = frame.querySelector(".cpf-canvas");
+    if (!canvas) return;
+    const w = canvas.width, h = canvas.height;
     if (!w || !h) return;
-    const sx = w / _cropFrameW, sy = h / _cropFrameH;
-    frame.style.backgroundImage    = `url(${img.src})`;
-    frame.style.backgroundSize     = `${_cropNatW * _cropScale * sx}px ${_cropNatH * _cropScale * sy}px`;
-    frame.style.backgroundPosition = `${_cropPanX * sx}px ${_cropPanY * sy}px`;
-    frame.style.backgroundRepeat   = "no-repeat";
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, 0, w, h);
+    try { ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, w, h); }
+    catch (e) { /* image not ready */ }
   });
 }
 
@@ -276,8 +283,8 @@ function _cropSetupPreviews(ar) {
     label1 = "Mobile Hero";          label2 = "Desktop Thumbnail";   arCSS = "9/16";
   } else if (Math.abs(ar - 1) < 0.05) {
     label1 = "Size Thumbnail";       label2 = "Size Thumbnail (sm)"; arCSS = "1/1";
-  } else if (Math.abs(ar - 19/20) < 0.05) {
-    label1 = "Category Card";        label2 = "Category Card (sm)";  arCSS = "19/20";
+  } else if (Math.abs(ar - 4/5) < 0.05) {
+    label1 = "Desktop Category";     label2 = "Mobile Category";     arCSS = "4/5";
   } else {
     label1 = "Desktop Preview";      label2 = "Mobile Preview";
     arCSS  = (!isNaN(ar) && ar > 0) ? ar.toFixed(4) : "4/3";
@@ -292,18 +299,20 @@ function _cropSetupPreviews(ar) {
 
   const isPdp = Math.abs(ar - 3/4) < 0.05;
   const pdpOverlay = isPdp ? `<div class="pdp-pad-overlay"></div>` : "";
+  const canvasH = (!isNaN(ar) && ar > 0) ? Math.round(200 / ar) : 250;
+  const cpfCanvas = `<canvas class="cpf-canvas" width="200" height="${canvasH}" style="display:block;width:100%;height:100%;"></canvas>`;
   container.innerHTML =
     `<div class="crop-preview-device">
        <div class="crop-preview-label">
          <ion-icon name="${_devIcon(label1)}"></ion-icon>${label1}
        </div>
-       <div class="crop-preview-frame" style="aspect-ratio:${arCSS};">${pdpOverlay}</div>
+       <div class="crop-preview-frame" style="aspect-ratio:${arCSS};">${pdpOverlay}${cpfCanvas}</div>
      </div>
      <div class="crop-preview-device">
        <div class="crop-preview-label">
          <ion-icon name="${_devIcon(label2)}"></ion-icon>${label2}
        </div>
-       <div class="crop-preview-frame crop-preview-frame--sm" style="aspect-ratio:${arCSS};">${pdpOverlay}</div>
+       <div class="crop-preview-frame crop-preview-frame--sm" style="aspect-ratio:${arCSS};">${pdpOverlay}${cpfCanvas}</div>
      </div>`;
 }
 
@@ -334,7 +343,7 @@ function openCropModal(file, { aspectRatio = NaN } = {}) {
     img.src = objUrl;
 
     // Set contextual modal title
-    const titleMap = { [3/4]: "Position Product Image", [16/9]: "Position Hero Banner", [9/16]: "Position Mobile Hero", [1]: "Position Size Image", [19/20]: "Position Category Image" };
+    const titleMap = { [3/4]: "Position Product Image", [16/9]: "Position Hero Banner", [9/16]: "Position Mobile Hero", [1]: "Position Size Image", [4/5]: "Position Category Image" };
     const titleEl = document.getElementById("crop-modal-title");
     if (titleEl) {
       const key = Object.keys(titleMap).find(k => Math.abs(aspectRatio - Number(k)) < 0.05);
@@ -4392,9 +4401,9 @@ function setupPagesSection() {
 
   bindPageUpload("file-hero-desktop",   "prev-hero-desktop",   "status-hero-desktop",   "del-hero-desktop",   { aspectRatio: 16/9 });
   bindPageUpload("file-hero-mobile",    "prev-hero-mobile",    "status-hero-mobile",    "del-hero-mobile",    { aspectRatio: 9/16 });
-  bindPageUpload("file-cat-forher",     "prev-cat-forher",     "status-cat-forher",     "del-cat-forher",     { aspectRatio: 19/20 });
-  bindPageUpload("file-cat-unisex",     "prev-cat-unisex",     "status-cat-unisex",     "del-cat-unisex",     { aspectRatio: 19/20 });
-  bindPageUpload("file-cat-forhim",     "prev-cat-forhim",     "status-cat-forhim",     "del-cat-forhim",     { aspectRatio: 19/20 });
+  bindPageUpload("file-cat-forher",     "prev-cat-forher",     "status-cat-forher",     "del-cat-forher",     { aspectRatio: 4/5 });
+  bindPageUpload("file-cat-unisex",     "prev-cat-unisex",     "status-cat-unisex",     "del-cat-unisex",     { aspectRatio: 4/5 });
+  bindPageUpload("file-cat-forhim",     "prev-cat-forhim",     "status-cat-forhim",     "del-cat-forhim",     { aspectRatio: 4/5 });
   bindPageUpload("file-why-0",          "prev-why-0",          "status-why-0",          "del-why-0",          { aspectRatio: 1 });
   bindPageUpload("file-why-1",          "prev-why-1",          "status-why-1",          "del-why-1",          { aspectRatio: 1 });
   bindPageUpload("file-why-2",          "prev-why-2",          "status-why-2",          "del-why-2",          { aspectRatio: 1 });

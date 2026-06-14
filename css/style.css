@@ -76,6 +76,8 @@ img {
 .mb-4 { margin-bottom: 2rem; }
 .py-4 { padding: 2rem 0; }
 .py-8 { padding: 4rem 0; }
+.bg-white { background-color: #ffffff; }
+.fade-in { opacity: 1; }
 
 
 section:not(.hero) {
@@ -1012,26 +1014,61 @@ section:not(.hero) {
   }
   .benefit-item { font-size: .83rem; }
 
-  /* Shop by Category: 3 cards side by side on mobile */
+  /* Shop by Category: compact 3-column on mobile */
   #home-category-grid {
     grid-template-columns: repeat(3, 1fr) !important;
-    gap: .5rem !important;
+    gap: 6px !important;
+    overflow-x: visible !important;
+    scroll-snap-type: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-  #home-category-grid > div {
-    height: 170px !important;
-    min-height: 0 !important;
+  #home-category-grid .cat-card {
     border-radius: 8px !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,.12) !important;
   }
-  /* Category overlay: compact text */
-  #home-category-grid > div > div {
-    padding: .6rem .5rem !important;
+  /* Hide arrow badge — too crowded at small size */
+  #home-category-grid .cat-arrow {
+    display: none !important;
   }
-  #home-category-grid > div > div h3 {
-    font-size: .82rem !important;
-    margin-bottom: 0 !important;
-    line-height: 1.2;
+  /* Compact inner padding */
+  #home-category-grid .cat-card > div:not(.cat-grad) {
+    padding: 8px 7px !important;
   }
-  #home-category-grid > div > div p { display: none !important; }
+  /* Tiny "COLLECTION" label — scales with viewport */
+  #home-category-grid .cat-card > div:not(.cat-grad) > span:not(.cat-cta) {
+    font-size: clamp(5px, 1.6vw, 7px) !important;
+    letter-spacing: .06em !important;
+    margin-bottom: 3px !important;
+  }
+  /* Compact heading — scales with viewport */
+  #home-category-grid .cat-card > div:not(.cat-grad) > h3 {
+    font-size: clamp(9px, 3vw, 12px) !important;
+    margin: 0 !important;
+  }
+  /* Hide description paragraph */
+  #home-category-grid .cat-card > div:not(.cat-grad) > p {
+    display: none !important;
+  }
+  /* Compact CTA pill — full-width, text scales with viewport */
+  #home-category-grid .cat-card .cat-cta {
+    display: flex !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    justify-content: center !important;
+    margin-top: 7px !important;
+    padding: 5px 4px !important;
+    font-size: clamp(6px, 2.2vw, 8.5px) !important;
+    letter-spacing: .03em !important;
+    gap: 3px !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+  }
+  #home-category-grid .cat-card .cat-cta svg {
+    flex-shrink: 0;
+    width: 9px !important;
+    height: 9px !important;
+  }
 
   /* Reviews slider: compact */
   .py-8 p[style*="font-size: 1.5rem"] {

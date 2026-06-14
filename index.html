@@ -81,7 +81,7 @@
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="preload" as="image" href="product pictures/New product pic and price/Home.webp" type="image/webp" fetchpriority="high">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@500;600;700&display=swap">
-    <link rel="stylesheet" href="css/style.css?v=20260612">
+    <link rel="stylesheet" href="css/style.css?v=20260614d">
     <style>
         @keyframes _skShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
         .skel-card{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);}
@@ -168,29 +168,91 @@
                 <h2>Shop by Category</h2>
                 <p>Curated essentials for your natural beauty routine.</p>
             </div>
-            <div id="home-category-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
-                <div style="position: relative; height: 400px; overflow: hidden; border-radius: 4px; cursor: pointer;" onclick="window.location.href='shop.html?category=women'">
-                    <img src="product pictures/New product pic and price/women Rosy Diva 50ml.webp" alt="Women" id="cat-img-forher" style="width: 100%; height: 100%; object-fit: cover; background-color: var(--surface-color); transition: transform 0.5s;" loading="lazy">
-                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 2rem; color: white;">
-                        <h3 style="color: white; font-size: 1.5rem;">For Her</h3>
-                        <p style="color: #eee;">Elegant and radiant</p>
+            <div id="home-category-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;">
+
+                <!-- FOR HER -->
+                <a href="shop.html?category=women" class="cat-card" style="position:relative;display:block;aspect-ratio:4/5;border-radius:14px;overflow:hidden;text-decoration:none;background:#E8E4DB;box-shadow:0 10px 30px rgba(0,0,0,.10);transition:transform .5s cubic-bezier(.22,.8,.26,1),box-shadow .5s cubic-bezier(.22,.8,.26,1);outline-offset:4px;">
+                    <img id="cat-img-forher" src="product pictures/New product pic and price/women Rosy Diva 50ml.webp" alt="For Her — Rosy Diva" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform .7s cubic-bezier(.22,.8,.26,1);">
+                    <div class="cat-grad" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(13,28,23,.94) 4%,rgba(13,28,23,.55) 30%,rgba(13,28,23,.05) 56%);opacity:.85;transition:opacity .5s;pointer-events:none;"></div>
+                    <span class="cat-arrow" style="position:absolute;top:18px;right:18px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.45);backdrop-filter:blur(3px);transition:background .4s,color .4s,transform .4s;">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="18" x2="18" y2="6"></line><polyline points="9 6 18 6 18 15"></polyline></svg>
+                    </span>
+                    <div style="position:absolute;left:0;bottom:0;width:100%;padding:30px 28px;z-index:2;">
+                        <span style="display:block;font-family:'Inter',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.22em;color:#D7BE86;text-transform:uppercase;margin-bottom:8px;">Collection</span>
+                        <h3 style="font-family:'Cinzel',serif;font-weight:600;font-size:1.95rem;line-height:1;color:#fff;text-transform:uppercase;letter-spacing:.04em;">For Her</h3>
+                        <p style="font-family:'Inter',sans-serif;font-size:.96rem;color:rgba(255,255,255,.82);margin-top:7px;">Elegant &amp; radiant florals</p>
+                        <span class="cat-cta" style="display:inline-flex;align-items:center;gap:9px;margin-top:18px;padding:11px 22px;border-radius:999px;border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.10);color:#fff;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;transition:background .4s,color .4s,border-color .4s,padding-right .4s;">
+                            Shop For Her
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="13 6 19 12 13 18"></polyline></svg>
+                        </span>
                     </div>
-                </div>
-                <div style="position: relative; height: 400px; overflow: hidden; border-radius: 4px; cursor: pointer;" onclick="window.location.href='shop.html?category=unisex'">
-                    <img src="product pictures/New product pic and price/Unisex.webp" alt="Unisex" id="cat-img-unisex" style="width: 100%; height: 100%; object-fit: cover; background-color: var(--surface-color); transition: transform 0.5s;" loading="lazy">
-                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 2rem; color: white;">
-                        <h3 style="color: white; font-size: 1.5rem;">Unisex</h3>
-                        <p style="color: #eee;">Versatile and balanced</p>
+                </a>
+
+                <!-- UNISEX -->
+                <a href="shop.html?category=unisex" class="cat-card" style="position:relative;display:block;aspect-ratio:4/5;border-radius:14px;overflow:hidden;text-decoration:none;background:#E8E4DB;box-shadow:0 10px 30px rgba(0,0,0,.10);transition:transform .5s cubic-bezier(.22,.8,.26,1),box-shadow .5s cubic-bezier(.22,.8,.26,1);outline-offset:4px;">
+                    <img id="cat-img-unisex" src="product pictures/New product pic and price/Unisex.webp" alt="Unisex — Dulce Oud" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:transform .7s cubic-bezier(.22,.8,.26,1);">
+                    <div class="cat-grad" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(13,28,23,.94) 4%,rgba(13,28,23,.55) 30%,rgba(13,28,23,.05) 56%);opacity:.85;transition:opacity .5s;pointer-events:none;"></div>
+                    <span class="cat-arrow" style="position:absolute;top:18px;right:18px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.45);backdrop-filter:blur(3px);transition:background .4s,color .4s,transform .4s;">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="18" x2="18" y2="6"></line><polyline points="9 6 18 6 18 15"></polyline></svg>
+                    </span>
+                    <div style="position:absolute;left:0;bottom:0;width:100%;padding:30px 28px;z-index:2;">
+                        <span style="display:block;font-family:'Inter',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.22em;color:#D7BE86;text-transform:uppercase;margin-bottom:8px;">Collection</span>
+                        <h3 style="font-family:'Cinzel',serif;font-weight:600;font-size:1.95rem;line-height:1;color:#fff;text-transform:uppercase;letter-spacing:.04em;">Unisex</h3>
+                        <p style="font-family:'Inter',sans-serif;font-size:.96rem;color:rgba(255,255,255,.82);margin-top:7px;">Versatile &amp; balanced oud</p>
+                        <span class="cat-cta" style="display:inline-flex;align-items:center;gap:9px;margin-top:18px;padding:11px 22px;border-radius:999px;border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.10);color:#fff;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;transition:background .4s,color .4s,border-color .4s,padding-right .4s;">
+                            Shop Unisex
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="13 6 19 12 13 18"></polyline></svg>
+                        </span>
                     </div>
-                </div>
-                <div style="position: relative; height: 400px; overflow: hidden; border-radius: 4px; cursor: pointer;" onclick="window.location.href='shop.html?category=men'">
-                    <img src="product pictures/New product pic and price/FOR men.webp" alt="For Him" id="cat-img-forhim" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;" loading="lazy">
-                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 2rem; color: white;">
-                        <h3 style="color: white; font-size: 1.5rem;">For Him</h3>
-                        <p style="color: #eee;">Bold and refined</p>
+                </a>
+
+                <!-- FOR HIM -->
+                <a href="shop.html?category=men" class="cat-card" style="position:relative;display:block;aspect-ratio:4/5;border-radius:14px;overflow:hidden;text-decoration:none;background:#E8E4DB;box-shadow:0 10px 30px rgba(0,0,0,.10);transition:transform .5s cubic-bezier(.22,.8,.26,1),box-shadow .5s cubic-bezier(.22,.8,.26,1);outline-offset:4px;">
+                    <img id="cat-img-forhim" src="product pictures/New product pic and price/FOR men.webp" alt="For Him — Al Khayran Oud" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform .7s cubic-bezier(.22,.8,.26,1);">
+                    <div class="cat-grad" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(13,28,23,.94) 4%,rgba(13,28,23,.55) 30%,rgba(13,28,23,.05) 56%);opacity:.85;transition:opacity .5s;pointer-events:none;"></div>
+                    <span class="cat-arrow" style="position:absolute;top:18px;right:18px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.45);backdrop-filter:blur(3px);transition:background .4s,color .4s,transform .4s;">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="18" x2="18" y2="6"></line><polyline points="9 6 18 6 18 15"></polyline></svg>
+                    </span>
+                    <div style="position:absolute;left:0;bottom:0;width:100%;padding:30px 28px;z-index:2;">
+                        <span style="display:block;font-family:'Inter',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.22em;color:#D7BE86;text-transform:uppercase;margin-bottom:8px;">Collection</span>
+                        <h3 style="font-family:'Cinzel',serif;font-weight:600;font-size:1.95rem;line-height:1;color:#fff;text-transform:uppercase;letter-spacing:.04em;">For Him</h3>
+                        <p style="font-family:'Inter',sans-serif;font-size:.96rem;color:rgba(255,255,255,.82);margin-top:7px;">Bold &amp; refined warmth</p>
+                        <span class="cat-cta" style="display:inline-flex;align-items:center;gap:9px;margin-top:18px;padding:11px 22px;border-radius:999px;border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.10);color:#fff;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;transition:background .4s,color .4s,border-color .4s,padding-right .4s;">
+                            Shop For Him
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="13 6 19 12 13 18"></polyline></svg>
+                        </span>
                     </div>
-                </div>
+                </a>
+
             </div>
+            <script>
+            document.querySelectorAll('.cat-card').forEach(function(card) {
+                card.addEventListener('mouseenter', function() {
+                    card.style.transform = 'translateY(-10px)';
+                    card.style.boxShadow = '0 28px 54px rgba(22,62,52,.30)';
+                    var img = card.querySelector('img');
+                    if (img) img.style.transform = 'scale(1.07)';
+                    var grad = card.querySelector('.cat-grad');
+                    if (grad) grad.style.opacity = '1';
+                    var cta = card.querySelector('.cat-cta');
+                    if (cta) { cta.style.background = '#F5F3EF'; cta.style.color = '#163E34'; cta.style.borderColor = '#F5F3EF'; cta.style.paddingRight = '26px'; }
+                    var arr = card.querySelector('.cat-arrow');
+                    if (arr) { arr.style.background = '#fff'; arr.style.color = '#163E34'; arr.style.transform = 'scale(1.1)'; }
+                });
+                card.addEventListener('mouseleave', function() {
+                    card.style.transform = '';
+                    card.style.boxShadow = '0 10px 30px rgba(0,0,0,.10)';
+                    var img = card.querySelector('img');
+                    if (img) img.style.transform = '';
+                    var grad = card.querySelector('.cat-grad');
+                    if (grad) grad.style.opacity = '.85';
+                    var cta = card.querySelector('.cat-cta');
+                    if (cta) { cta.style.background = 'rgba(255,255,255,.10)'; cta.style.color = '#fff'; cta.style.borderColor = 'rgba(255,255,255,.55)'; cta.style.paddingRight = '22px'; }
+                    var arr = card.querySelector('.cat-arrow');
+                    if (arr) { arr.style.background = 'rgba(255,255,255,.18)'; arr.style.color = '#fff'; arr.style.transform = ''; }
+                });
+            });
+            </script>
         </div>
     </section>
 
@@ -445,15 +507,15 @@
 
                 if (d.catImages?.forHer) {
                     const el = document.getElementById("cat-img-forher");
-                    if (el) el.src = cloudinaryTransform(d.catImages.forHer, "w_400,h_400,c_fill,f_auto,q_auto");
+                    if (el) el.src = cloudinaryTransform(d.catImages.forHer, "w_800,f_auto,q_auto");
                 }
                 if (d.catImages?.unisex) {
                     const el = document.getElementById("cat-img-unisex");
-                    if (el) el.src = cloudinaryTransform(d.catImages.unisex, "w_400,h_400,c_fill,f_auto,q_auto");
+                    if (el) el.src = cloudinaryTransform(d.catImages.unisex, "w_800,f_auto,q_auto");
                 }
                 if (d.catImages?.forHim) {
                     const el = document.getElementById("cat-img-forhim");
-                    if (el) el.src = cloudinaryTransform(d.catImages.forHim, "w_400,h_400,c_fill,f_auto,q_auto");
+                    if (el) el.src = cloudinaryTransform(d.catImages.forHim, "w_800,f_auto,q_auto");
                 }
 
                 const why = d.whyChoose || [];
