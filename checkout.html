@@ -1540,8 +1540,8 @@
             if (!user) return;
             _loyaltyInited = true;
 
-            // Use ready promise — config is already loading in background, no extra Firestore call
-            await Promise.race([window.ZahrounPromos.ready, new Promise(r => setTimeout(r, 3000))]);
+            // Wait for config — up to 8s; promos-updated listener handles late arrivals
+            await Promise.race([window.ZahrounPromos.ready, new Promise(r => setTimeout(r, 8000))]);
             _loyaltyCfg = window.ZahrounPromos.getConfig();
             const lp = _loyaltyCfg.loyaltyPoints || {};
 
@@ -1666,10 +1666,21 @@
             }
         }
 
-        // Init promos on page load
+        // Retry loyalty init whenever promotions config loads/refreshes
+        window.addEventListener('promos-updated', () => {
+            if (!_loyaltyInited) {
+                initLoyaltySection();
+            } else {
+                // Config refreshed via realtime sync — re-evaluate visibility
+                _loyaltyCfg = window.ZahrounPromos?.getConfig() || _loyaltyCfg;
+                updateLoyaltyVisibility();
+            }
+        });
+
+        // Init promos on page load — cart is synchronously populated, no delay needed
         document.addEventListener('DOMContentLoaded', async () => {
             initLoyaltySection(); // runs if user already signed in
-            setTimeout(async () => { await refreshTotals(); }, 800);
+            await refreshTotals();
         });
     </script>
 </body>
