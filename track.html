@@ -29,7 +29,7 @@
     <script type="module" src="vendor/ionicons/ionicons.esm.js"></script>
     <script nomodule src="vendor/ionicons/ionicons.js"></script>
     <style>
-        /* â”€â”€ Hero â”€â”€ */
+        /* ── Hero ── */
         .track-hero {
             background: linear-gradient(135deg, #163E34 0%, #1e5246 100%);
             padding: 4rem 0 5rem;
@@ -46,7 +46,7 @@
         .track-hero h1 { color: #fff; font-size: 2rem; margin-bottom: .5rem; position: relative; }
         .track-hero p  { color: rgba(255,255,255,.7); font-size: .95rem; position: relative; }
 
-        /* â”€â”€ Search card (overlaps hero) â”€â”€ */
+        /* ── Search card (overlaps hero) ── */
         .track-search-wrap {
             max-width: 520px;
             margin: -2.5rem auto 2.5rem;
@@ -126,7 +126,7 @@
             gap: .35rem;
         }
 
-        /* â”€â”€ Loading skeleton â”€â”€ */
+        /* ── Loading skeleton ── */
         .track-loading {
             text-align: center;
             padding: 2.5rem 1rem;
@@ -142,14 +142,14 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* â”€â”€ Fade-in animation â”€â”€ */
+        /* ── Fade-in animation ── */
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(18px); }
             to   { opacity: 1; transform: translateY(0); }
         }
         .fade-up { animation: fadeUp .4s ease both; }
 
-        /* â”€â”€ Order summary card (for phone results) â”€â”€ */
+        /* ── Order summary card (for phone results) ── */
         .orders-list-label {
             font-size: .78rem;
             text-transform: uppercase;
@@ -194,7 +194,7 @@
         }
         .order-summary-card.open .order-detail-wrap { display: block; }
 
-        /* â”€â”€ Timeline â”€â”€ */
+        /* ── Timeline ── */
         .timeline-wrap {
             background: var(--surface-color);
             border: 1px solid var(--border-color);
@@ -407,7 +407,7 @@
                 </div>
                 <div class="track-hint">
                     <ion-icon name="information-circle-outline"></ion-icon>
-                    <span>Enter your <strong style="color:var(--text-main);">6-digit Order ID</strong> â€” or your <strong style="color:var(--text-main);">Phone Number</strong> to see all orders</span>
+                    <span>Enter your <strong style="color:var(--text-main);">6-digit Order ID</strong> — or your <strong style="color:var(--text-main);">Phone Number</strong> to see all orders</span>
                 </div>
                 <div id="track-err">
                     <ion-icon name="alert-circle-outline"></ion-icon>
@@ -479,7 +479,7 @@
             const isCancelled = status === "cancelled";
             const isDelivered = status === "delivered";
             const idx = getStepIdx(status);
-            // Build a map of status â†’ timestamp from history
+            // Build a map of status → timestamp from history
             const histMap = {};
             (statusHistory || []).forEach(h => {
                 if (h.status && h.at && !histMap[h.status]) histMap[h.status] = h.at;
@@ -544,7 +544,7 @@
                     ${i.image ? `<img src="${esc(i.image)}" alt="" loading="lazy">` : ""}
                     <div class="o-item-info">
                         <strong>${esc(i.name)}</strong>
-                        <span>${esc(i.size)} Â· Qty ${i.quantity || 1}</span>
+                        <span>${esc(i.size)} · Qty ${i.quantity || 1}</span>
                     </div>
                     <div class="o-item-price">Tk ${((i.price||0)*(i.quantity||1)).toLocaleString()}</div>
                 </div>`).join("")}
@@ -552,14 +552,14 @@
 
             <div class="o-summary">
                 <div class="o-summary-row"><span>Subtotal</span><span>Tk ${subtotal.toLocaleString()}</span></div>
-                ${order.discount ? `<div class="o-summary-row" style="color:#1e7e34;"><span>Discount</span><span>âˆ’Tk ${Number(order.discount).toLocaleString()}</span></div>` : ""}
+                ${order.discount ? `<div class="o-summary-row" style="color:#1e7e34;"><span>Discount</span><span>−Tk ${Number(order.discount).toLocaleString()}</span></div>` : ""}
                 ${order.delivery ? `<div class="o-summary-row"><span>Delivery</span><span>Tk ${Number(order.delivery).toLocaleString()}</span></div>` : ""}
                 <div class="o-summary-row total"><span>Total</span><span>Tk ${(order.total||0).toLocaleString()}</span></div>
             </div>
 
             <div class="o-meta">
-                <strong>Delivery to:</strong> ${esc(c.address || "â€”")}${c.area ? ` Â· ${esc(c.area)}` : ""}<br>
-                <strong>Payment:</strong> ${esc(order.payment?.method || "â€”")}
+                <strong>Delivery to:</strong> ${esc(c.address || "—")}${c.area ? ` · ${esc(c.area)}` : ""}<br>
+                <strong>Payment:</strong> ${esc(order.payment?.method || "—")}
             </div>
 
             <div style="text-align:center;margin-top:1.25rem;">
@@ -569,7 +569,7 @@
             </div>`;
         }
 
-        // â”€â”€ Firestore lookups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Firestore lookups ──────────────────────────────────────────────
 
         async function lookupByOrderId(numStr) {
             const num = parseInt(numStr.replace(/\D/g, ""));
@@ -598,19 +598,19 @@
                 .slice(0, 20);
         }
 
-        // â”€â”€ Detect input type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Detect input type ──────────────────────────────────────────────
         function detectInputType(val) {
             const digits = val.replace(/\D/g, "");
             // 6-digit order ID
             if (/^\d{6}$/.test(digits) && /^\d+$/.test(val.trim())) return "orderId";
             // Looks like a phone number (8-15 digits, may start with 0/+)
             if (digits.length >= 8 && digits.length <= 15) return "phone";
-            // Numeric but short â†’ could be order ID attempt
+            // Numeric but short → could be order ID attempt
             if (/^\d+$/.test(val.trim())) return "orderId";
             return "phone";
         }
 
-        // â”€â”€ Render functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Render functions ───────────────────────────────────────────────
         const resultEl = document.getElementById("track-result");
 
         function showError(msg) {
@@ -659,7 +659,7 @@
             if (card) card.classList.toggle("open");
         };
 
-        // â”€â”€ Form submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Form submit ────────────────────────────────────────────────────
         const form    = document.getElementById("track-form");
         const errEl   = document.getElementById("track-err");
         const errMsg  = document.getElementById("track-err-msg");
@@ -679,16 +679,16 @@
 
             if (!val) { setErr("Please enter your Order ID or Phone Number."); return; }
 
-            // Invalid input â€” needs to look like a 6-digit Order ID or a phone number
+            // Invalid input — needs to look like a 6-digit Order ID or a phone number
             const digitCount = (val.match(/\d/g) || []).length;
             if (digitCount < 4) {
-                setErr("Invalid input â€” enter your 6-digit Order ID or your phone number.");
+                setErr("Invalid input — enter your 6-digit Order ID or your phone number.");
                 return;
             }
 
             btn.disabled = true;
-            btn.innerHTML = `<span class="spinner" style="width:18px;height:18px;border-width:2px;margin:0;display:inline-block;vertical-align:middle;margin-right:.4rem;"></span>Searchingâ€¦`;
-            resultEl.innerHTML = `<div class="track-loading"><div class="spinner"></div><p>Looking up your orderâ€¦</p></div>`;
+            btn.innerHTML = `<span class="spinner" style="width:18px;height:18px;border-width:2px;margin:0;display:inline-block;vertical-align:middle;margin-right:.4rem;"></span>Searching…`;
+            resultEl.innerHTML = `<div class="track-loading"><div class="spinner"></div><p>Looking up your order…</p></div>`;
 
             try {
                 const type = detectInputType(val);
@@ -722,7 +722,7 @@
                 const msg = code === "permission-denied"
                     ? "Order tracking is temporarily unavailable. Please try again shortly."
                     : isNet
-                        ? "Network error â€” please check your connection and try again."
+                        ? "Network error — please check your connection and try again."
                         : "Something went wrong. Please try again.";
                 resultEl.innerHTML = `<div class="track-error fade-up">
                     <ion-icon name="${isNet ? 'cloud-offline-outline' : 'alert-circle-outline'}" class="err-icon"></ion-icon>

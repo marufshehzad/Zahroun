@@ -33,12 +33,12 @@
             overflow: hidden;
         }
         .account-head::before {
-            content: 'âœ¦';
+            content: '✦';
             position: absolute; left: 8%; top: 30%;
             font-size: .75rem; color: rgba(255,255,255,.32); pointer-events: none;
         }
         .account-head::after {
-            content: 'âœ¦';
+            content: '✦';
             position: absolute; right: 11%; top: 22%;
             font-size: 1.05rem; color: rgba(201,168,76,.28); pointer-events: none;
         }
@@ -188,9 +188,9 @@
     </header>
 
     <div class="account-head">
-        <span aria-hidden="true" style="position:absolute;left:22%;top:68%;font-size:.55rem;color:rgba(255,255,255,.22);">âœ¦</span>
-        <span aria-hidden="true" style="position:absolute;right:22%;top:72%;font-size:.65rem;color:rgba(255,255,255,.18);">âœ¦</span>
-        <span aria-hidden="true" style="position:absolute;left:48%;top:10%;font-size:.45rem;color:rgba(201,168,76,.22);">âœ¦</span>
+        <span aria-hidden="true" style="position:absolute;left:22%;top:68%;font-size:.55rem;color:rgba(255,255,255,.22);">✦</span>
+        <span aria-hidden="true" style="position:absolute;right:22%;top:72%;font-size:.65rem;color:rgba(255,255,255,.18);">✦</span>
+        <span aria-hidden="true" style="position:absolute;left:48%;top:10%;font-size:.45rem;color:rgba(201,168,76,.22);">✦</span>
         <div class="container">
             <div class="account-avatar" id="acc-avatar">?</div>
             <h1 id="account-greeting">My Account</h1>
@@ -253,14 +253,14 @@
                 <div class="acc-field">
                     <label>Area</label>
                     <select id="addr-area">
-                        <option value="">Select areaâ€¦</option>
+                        <option value="">Select area…</option>
                         <option value="Dhaka">Inside Dhaka</option>
                         <option value="Outside Dhaka">Outside Dhaka</option>
                     </select>
                 </div>
                 <div class="acc-field">
                     <label>Full Address</label>
-                    <textarea id="addr-address" placeholder="House/Flat, Road, Area, Cityâ€¦"></textarea>
+                    <textarea id="addr-address" placeholder="House/Flat, Road, Area, City…"></textarea>
                 </div>
                 <div class="acc-save-row">
                     <button class="btn" id="addr-save-btn">Save Address</button>
@@ -272,13 +272,13 @@
         <!-- WISHLIST tab -->
         <div class="acc-panel" id="panel-wishlist">
             <div id="wish-content">
-                <p style="text-align:center;color:var(--text-muted);padding:3rem 0;">Loading wishlistâ€¦</p>
+                <p style="text-align:center;color:var(--text-muted);padding:3rem 0;">Loading wishlist…</p>
             </div>
         </div>
 
         <!-- REWARDS tab -->
         <div class="acc-panel" id="panel-rewards">
-            <!-- Loyalty skeleton â€” shown while data loads, hidden by initRewardsTab -->
+            <!-- Loyalty skeleton — shown while data loads, hidden by initRewardsTab -->
             <div id="loyalty-skeleton" style="margin-bottom:1.5rem;">
                 <style>
                     @keyframes _lskShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -313,7 +313,7 @@
                     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
                         <div>
                             <div id="rw-tier-badge" style="display:inline-flex;align-items:center;gap:.4rem;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.35);border-radius:20px;padding:.25rem .75rem;margin-bottom:.65rem;">
-                                <span id="rw-tier-icon" style="font-size:.9rem;">ðŸ¥ˆ</span>
+                                <span id="rw-tier-icon" style="font-size:.9rem;">🥈</span>
                                 <span id="rw-tier-label" style="font-size:.72rem;font-weight:700;color:#c9a84c;letter-spacing:.08em;text-transform:uppercase;">Silver Member</span>
                             </div>
                             <div style="font-family:var(--font-serif);color:#fff;font-size:1.05rem;font-weight:400;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.2rem;">Loyalty Points</div>
@@ -377,7 +377,7 @@
                 <div style="display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;">
                     <div style="flex:1;min-width:160px;background:var(--bg-color);border:2px dashed var(--primary-color);border-radius:10px;padding:.65rem 1rem;text-align:center;">
                         <div style="font-size:.72rem;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.2rem;">Your Referral Code</div>
-                        <div id="my-referral-code" style="font-size:1.2rem;font-weight:800;color:var(--primary-color);letter-spacing:.1em;">â€”</div>
+                        <div id="my-referral-code" style="font-size:1.2rem;font-weight:800;color:var(--primary-color);letter-spacing:.1em;">—</div>
                     </div>
                     <button id="copy-ref-btn" class="btn btn-outline" style="display:flex;align-items:center;gap:.35rem;font-size:.85rem;white-space:nowrap;">
                         <ion-icon name="copy-outline"></ion-icon> Copy Code
@@ -456,7 +456,7 @@
             // Load orders
             await loadOrders(user);
 
-            // Rewards tab (loyalty + referral) â€” wrapped so errors don't block the page
+            // Rewards tab (loyalty + referral) — wrapped so errors don't block the page
             try { initRewardsTab(user); } catch(e) { console.warn("Rewards tab error:", e); }
 
             // Profile tab
@@ -474,7 +474,7 @@
                 } catch (e) { status.textContent = "Failed: " + (e.code || e.message); status.className = "acc-save-status err"; }
             };
 
-            // Saved Address tab â€” load existing
+            // Saved Address tab — load existing
             try {
                 const uSnap = await getDoc(doc(db, "users", user.uid));
                 if (uSnap.exists()) {
@@ -523,7 +523,7 @@
                     return `
                     <div class="order-card">
                         <div class="top">
-                            <div><span class="oid">${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</span> <span style="color:var(--text-muted);font-size:.82rem;">Â· ${fmtDate(o.createdAt)}</span></div>
+                            <div><span class="oid">${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</span> <span style="color:var(--text-muted);font-size:.82rem;">· ${fmtDate(o.createdAt)}</span></div>
                             <span class="o-status ${esc(o.status)}">${esc(o.status || "pending")}</span>
                         </div>
                         ${(o.items || []).map(i => i.isFreeGift ? `
@@ -531,7 +531,7 @@
                                 <img src="${esc(i.image)}" alt="" loading="lazy" style="border:1px solid #c3dfd2;">
                                 <div style="flex:1;">
                                     <strong style="font-size:.95rem;">${esc(i.name)}</strong><br>
-                                    <span style="color:var(--text-muted);font-size:.82rem;">${esc(i.size)} Â· Qty 1</span><br>
+                                    <span style="color:var(--text-muted);font-size:.82rem;">${esc(i.size)} · Qty 1</span><br>
                                     <span style="display:inline-block;margin-top:.25rem;font-size:.62rem;font-weight:800;background:#0b231a;color:#c9a84c;border-radius:3px;padding:.15rem .45rem;letter-spacing:.1em;text-transform:uppercase;">Free Item</span>
                                 </div>
                                 <div style="text-align:right;">
@@ -542,12 +542,12 @@
                             <div class="o-item">
                                 <img src="${esc(i.image)}" alt="" loading="lazy">
                                 <div style="flex:1;"><strong style="font-size:.95rem;">${esc(i.name)}</strong><br>
-                                <span style="color:var(--text-muted);font-size:.82rem;">${esc(i.size)} Â· Qty ${i.quantity}</span></div>
+                                <span style="color:var(--text-muted);font-size:.82rem;">${esc(i.size)} · Qty ${i.quantity}</span></div>
                                 <div>Tk ${i.price * i.quantity}</div>
                             </div>`).join("")}
                         ${o.giftMessage ? `<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:.5rem .75rem;margin-top:.4rem;font-size:.82rem;color:#7a5800;display:flex;gap:.45rem;align-items:flex-start;"><ion-icon name="gift-outline" style="flex-shrink:0;font-size:.9rem;margin-top:.1rem;"></ion-icon><span><em>"${esc(o.giftMessage)}"</em></span></div>` : ""}
                         <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border-color);padding-top:.8rem;margin-top:.6rem;flex-wrap:wrap;gap:.5rem;">
-                            <span style="color:var(--text-muted);font-size:.82rem;">${esc(o.payment?.method || "")} Â· ${esc(o.customer?.area || "")}</span>
+                            <span style="color:var(--text-muted);font-size:.82rem;">${esc(o.payment?.method || "")} · ${esc(o.customer?.area || "")}</span>
                             <div style="display:flex;align-items:center;gap:.75rem;">
                                 <strong>Total: Tk ${o.total}</strong>
                                 <button class="btn-reorder" data-oid="${o.id}" style="display:inline-flex;align-items:center;gap:.3rem;font-size:.8rem;font-weight:600;border:1px solid var(--border-color);border-radius:6px;padding:.25rem .7rem;background:none;cursor:pointer;color:var(--text-main);"><ion-icon name="refresh-outline" style="font-size:.9rem;"></ion-icon>Reorder</button>
@@ -597,7 +597,7 @@
                 prods = ids.map(id => window.products.find(p => p.id === Number(id))).filter(Boolean);
             }
             if (!prods.length) {
-                container.innerHTML = `<p style="text-align:center;color:var(--text-muted);padding:2rem;">Loadingâ€¦</p>`;
+                container.innerHTML = `<p style="text-align:center;color:var(--text-muted);padding:2rem;">Loading…</p>`;
                 return;
             }
 
@@ -653,7 +653,7 @@
                 if (guideSection) {
                     guideSection.style.display = "";
                     guideSection.innerHTML = '<div style="background:#faf8f4;border:1px dashed var(--border-color);border-radius:14px;padding:2rem 1.5rem;text-align:center;">' +
-                        '<div style="font-size:2rem;margin-bottom:.75rem;">ðŸ†</div>' +
+                        '<div style="font-size:2rem;margin-bottom:.75rem;">🏆</div>' +
                         '<div style="font-family:var(--font-serif);font-size:1rem;color:var(--text-main);font-weight:400;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.45rem;">Loyalty Program</div>' +
                         '<div style="font-size:.85rem;color:var(--text-muted);">Our rewards program is coming soon. Stay tuned for exciting points, tiers, and exclusive member benefits!</div>' +
                         '</div>';
@@ -704,15 +704,15 @@
                     const platMin = tiers.platinum?.minSpend || 15000;
                     const spend = totalSpend || 0;
 
-                    let tierIcon = "ðŸ¥ˆ", tierLabel = "Silver Member";
+                    let tierIcon = "🥈", tierLabel = "Silver Member";
                     let nextLabel = "", pct = 0, nextMsg = "";
 
                     if (spend >= platMin) {
-                        tierIcon = "ðŸ’Ž"; tierLabel = "Platinum Member";
+                        tierIcon = "💎"; tierLabel = "Platinum Member";
                         pct = 100;
                         nextMsg = "You have reached the highest tier!";
                     } else if (spend >= goldMin) {
-                        tierIcon = "ðŸ¥‡"; tierLabel = "Gold Member";
+                        tierIcon = "🥇"; tierLabel = "Gold Member";
                         const toPlat = platMin - spend;
                         pct = Math.round(((spend - goldMin) / (platMin - goldMin)) * 100);
                         nextLabel = "Progress to Platinum";
@@ -750,14 +750,14 @@
                     try { sessionStorage.setItem(_spendKey, JSON.stringify({ v: totalSpend, ts: Date.now() })); } catch {}
                 } catch {}
 
-                // â”€â”€ Render loyalty status (called by onSnapshot for real-time updates) â”€â”€
+                // ── Render loyalty status (called by onSnapshot for real-time updates) ──
                 let _lpJoinListenerAdded = false;
                 function renderLpStatus(lpData) {
                     const status = lpData?.status || null;
 
                     if (isApproveMode && !lpData) {
-                        // Not yet enrolled â€” show Request to Join
-                        if (ptsEl) ptsEl.textContent = "â€”";
+                        // Not yet enrolled — show Request to Join
+                        if (ptsEl) ptsEl.textContent = "—";
                         if (redValEl) redValEl.textContent = "";
                         if (earnedEl) earnedEl.textContent = "0";
                         if (redmEl) redmEl.textContent = "0";
@@ -767,7 +767,7 @@
                             '<div style="background:#faf6ee;border-radius:10px;padding:.9rem 1rem;font-size:.82rem;color:var(--text-muted);line-height:1.6;">' +
                             'Join our <strong style="color:var(--text-main);">Loyalty Program</strong> to earn points on every delivered order!<br>' +
                             'Earn <strong style="color:var(--text-main);">1 point</strong> per <strong style="color:var(--text-main);">Tk ' + lp.earnPer + '</strong> spent. ' +
-                            'Redeem at checkout â€” min <strong style="color:var(--text-main);">' + lp.minRedeem + ' pts</strong> (1 pt = Tk ' + rv + ').' +
+                            'Redeem at checkout — min <strong style="color:var(--text-main);">' + lp.minRedeem + ' pts</strong> (1 pt = Tk ' + rv + ').' +
                             '<br><button id="lp-join-btn" class="btn" style="margin-top:.75rem;padding:.45rem 1.2rem;font-size:.83rem;">Request to Join</button></div>';
                         if (!_lpJoinListenerAdded) {
                             _lpJoinListenerAdded = true;
@@ -782,7 +782,7 @@
                         }
                     } else if (isApproveMode && status === "pending") {
                         // Waiting for admin approval
-                        if (ptsEl) ptsEl.textContent = "â³";
+                        if (ptsEl) ptsEl.textContent = "⏳";
                         if (redValEl) redValEl.textContent = "Pending approval";
                         renderTierProgress(totalSpend);
                         if (info) info.innerHTML = lpInfoRows([
@@ -791,7 +791,7 @@
                             { icon: "gift-outline", text: "Redeem points at checkout for discounts (1 pt = Tk " + rv + ")." }
                         ]);
                     } else if (isApproveMode && status === "rejected") {
-                        if (ptsEl) ptsEl.textContent = "â€”";
+                        if (ptsEl) ptsEl.textContent = "—";
                         if (redValEl) redValEl.textContent = "";
                         if (info) info.innerHTML = lpInfoRows([
                             { icon: "close-circle-outline", text: "Your enrollment request was not approved. Please contact us for assistance." }
@@ -829,7 +829,7 @@
                     getDoc(lpRef).then(s => renderLpStatus(s.exists() ? s.data() : null)).catch(() => renderLpStatus(null));
                 });
 
-                // â”€â”€ Dynamic Loyalty Program Guide â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Dynamic Loyalty Program Guide ─────────────────────────────
                 renderLoyaltyGuide(lp, isApproveMode);
             }
 
@@ -841,7 +841,7 @@
                 if (codeEl && code) codeEl.textContent = code;
                 const info = document.getElementById("rewards-ref-info");
                 const rc = cfg.referral;
-                if (info) info.innerHTML = `Share your code with friends. When they place their first order:<br><strong>They get Tk ${rc.refereeAmt} off</strong> Â· <strong>You earn loyalty points worth Tk ${rc.referrerAmt}!</strong>`;
+                if (info) info.innerHTML = `Share your code with friends. When they place their first order:<br><strong>They get Tk ${rc.refereeAmt} off</strong> · <strong>You earn loyalty points worth Tk ${rc.referrerAmt}!</strong>`;
                 const copyBtn = document.getElementById("copy-ref-btn");
                 if (copyBtn) copyBtn.addEventListener("click", () => {
                     navigator.clipboard.writeText(code || "").then(() => {
@@ -853,7 +853,7 @@
             } catch(e) { console.warn("initRewardsTab error:", e); }
         }
 
-        /* â”€â”€ Dynamic Loyalty Program Guide â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+        /* ── Dynamic Loyalty Program Guide ─────────────────────────────────── */
         function renderLoyaltyGuide(lp, isApproveMode) {
             const container = document.getElementById("loyalty-guide-section");
             if (!container) return;
@@ -880,13 +880,13 @@
             // Helper: check/cross row
             function checkRow(text) {
                 return `<div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;">
-                    <span style="color:#c9a84c;font-weight:700;flex-shrink:0;font-size:1rem;line-height:1.45;">âœ“</span>
+                    <span style="color:#c9a84c;font-weight:700;flex-shrink:0;font-size:1rem;line-height:1.45;">✓</span>
                     <span style="font-size:.84rem;color:var(--text-muted);line-height:1.55;">${text}</span>
                 </div>`;
             }
             function crossRow(text) {
                 return `<div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;">
-                    <span style="color:#c0392b;font-weight:700;flex-shrink:0;font-size:1rem;line-height:1.45;">âœ—</span>
+                    <span style="color:#c0392b;font-weight:700;flex-shrink:0;font-size:1rem;line-height:1.45;">✗</span>
                     <span style="font-size:.84rem;color:var(--text-muted);line-height:1.55;">${text}</span>
                 </div>`;
             }
@@ -906,7 +906,7 @@
             // Light-colored helpers for use inside dark invitation card
             function checkRowLight(text) {
                 return `<div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;">
-                    <span style="color:#c9a84c;font-weight:700;flex-shrink:0;font-size:1rem;line-height:1.45;">âœ“</span>
+                    <span style="color:#c9a84c;font-weight:700;flex-shrink:0;font-size:1rem;line-height:1.45;">✓</span>
                     <span style="font-size:.84rem;color:rgba(255,255,255,.82);line-height:1.55;">${text}</span>
                 </div>`;
             }
@@ -924,11 +924,11 @@
                 const condBlock = (condMinPurchase > 0 || condText)
                     ? `<div style="background:rgba(255,255,255,.07);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1rem;">
                         <div style="font-size:.78rem;font-weight:700;color:#c9a84c;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;">Approval Conditions</div>
-                        ${condMinPurchase > 0 ? `<div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;"><span style="color:#c9a84c;font-size:1rem;line-height:1.45;">â†’</span><span style="font-size:.84rem;color:rgba(255,255,255,.82);line-height:1.55;">You must have a minimum total purchase of <strong style="color:#fff;">Tk ${condMinPurchase.toLocaleString()}</strong> to be eligible to apply.</span></div>` : ''}
+                        ${condMinPurchase > 0 ? `<div style="display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.5rem;"><span style="color:#c9a84c;font-size:1rem;line-height:1.45;">→</span><span style="font-size:.84rem;color:rgba(255,255,255,.82);line-height:1.55;">You must have a minimum total purchase of <strong style="color:#fff;">Tk ${condMinPurchase.toLocaleString()}</strong> to be eligible to apply.</span></div>` : ''}
                         ${condText ? `<div style="font-size:.82rem;color:rgba(255,255,255,.75);line-height:1.65;margin-top:${condMinPurchase > 0 ? '.5rem' : '0'};">${condText}</div>` : ''}
                     </div>` : '';
 
-                // â”€â”€ Invite-only / approval mode â”€â”€
+                // ── Invite-only / approval mode ──
                 container.innerHTML = guideTitle + `
                 <div style="background:linear-gradient(135deg,#0b231a,#163E34);border-radius:14px;padding:1.5rem 1.75rem;color:#fff;margin-bottom:1rem;">
                     <div style="font-family:var(--font-serif);font-size:.95rem;letter-spacing:.08em;text-transform:uppercase;color:#c9a84c;margin-bottom:.65rem;">Invitation-Based Loyalty Program</div>
@@ -937,7 +937,7 @@
                         <div style="font-size:.78rem;font-weight:700;color:#c9a84c;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;">How to Join</div>
                         ${numRowLight(1,'Create an account on Zahroun.')}
                         ${numRowLight(2,'Request loyalty membership by clicking "Request to Join" above.')}
-                        ${numRowLight(3,'Wait for admin approval â€” you will be notified.')}
+                        ${numRowLight(3,'Wait for admin approval — you will be notified.')}
                         ${numRowLight(4,'After approval, start earning and redeeming points!')}
                     </div>
                     ${condBlock}
@@ -951,7 +951,7 @@
                     <div style="font-size:.78rem;color:rgba(255,255,255,.38);font-style:italic;">Only verified customers are enrolled in the loyalty program.</div>
                 </div>`;
             } else {
-                // â”€â”€ Auto enrollment mode â”€â”€
+                // ── Auto enrollment mode ──
                 let sections = '';
 
                 // Section 1: How It Works
@@ -963,7 +963,7 @@
                     checkRow('Minimum redeem: <strong style="color:var(--text-main);">' + minRedeem + ' pts</strong>') +
                     checkRow('Point value: <strong style="color:var(--text-main);">1 pt = Tk ' + rv + '</strong>') +
                     checkRow('Earn rate: Earn <strong style="color:var(--text-main);">1 point</strong> for every <strong style="color:var(--text-main);">Tk ' + earnPer + '</strong> spent.');
-                sections += accordion('how-it-works', 'âœ¦  How It Works', howItWorks, true);
+                sections += accordion('how-it-works', '✦  How It Works', howItWorks, true);
 
                 // Section 2: Membership Tiers (only if tiers enabled)
                 if (lp.tiers?.enabled) {
@@ -975,50 +975,50 @@
                         `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.65rem;margin-bottom:.25rem;">
                             <div style="border-radius:10px;overflow:hidden;border:2px solid #b0b0b0;background:linear-gradient(160deg,#f8f8f8,#e8e8e8);">
                                 <div style="background:linear-gradient(135deg,#9e9e9e,#bdbdbd);padding:.6rem .75rem;text-align:center;">
-                                    <span style="font-size:1.3rem;">ðŸ¥ˆ</span>
+                                    <span style="font-size:1.3rem;">🥈</span>
                                     <div style="font-size:.72rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem;">Silver</div>
                                 </div>
                                 <div style="padding:.65rem .75rem;">
                                     <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">Spend Tk ${(silver.minSpend||0).toLocaleString()}+</div>
-                                    <div style="font-size:.9rem;font-weight:700;color:#0b231a;">Ã—${silver.mult || 1} multiplier</div>
+                                    <div style="font-size:.9rem;font-weight:700;color:#0b231a;">×${silver.mult || 1} multiplier</div>
                                 </div>
                             </div>
                             <div style="border-radius:10px;overflow:hidden;border:2px solid #c9a84c;background:linear-gradient(160deg,#fffdf4,#fff3cc);">
                                 <div style="background:linear-gradient(135deg,#c9a84c,#e0b84c);padding:.6rem .75rem;text-align:center;">
-                                    <span style="font-size:1.3rem;">ðŸ¥‡</span>
+                                    <span style="font-size:1.3rem;">🥇</span>
                                     <div style="font-size:.72rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem;">Gold</div>
                                 </div>
                                 <div style="padding:.65rem .75rem;">
                                     <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">Spend Tk ${(gold.minSpend||0).toLocaleString()}+</div>
-                                    <div style="font-size:.9rem;font-weight:700;color:#0b231a;">Ã—${gold.mult || 2} multiplier</div>
+                                    <div style="font-size:.9rem;font-weight:700;color:#0b231a;">×${gold.mult || 2} multiplier</div>
                                 </div>
                             </div>
                             <div style="border-radius:10px;overflow:hidden;border:2px solid #7986cb;background:linear-gradient(160deg,#f3f4fd,#e8eaf6);">
                                 <div style="background:linear-gradient(135deg,#5c6bc0,#7986cb);padding:.6rem .75rem;text-align:center;">
-                                    <span style="font-size:1.3rem;">ðŸ’Ž</span>
+                                    <span style="font-size:1.3rem;">💎</span>
                                     <div style="font-size:.72rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem;">Platinum</div>
                                 </div>
                                 <div style="padding:.65rem .75rem;">
                                     <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">Spend Tk ${(platinum.minSpend||0).toLocaleString()}+</div>
-                                    <div style="font-size:.9rem;font-weight:700;color:#0b231a;">Ã—${platinum.mult || 3} multiplier</div>
+                                    <div style="font-size:.9rem;font-weight:700;color:#0b231a;">×${platinum.mult || 3} multiplier</div>
                                 </div>
                             </div>
                         </div>
                         <div style="font-size:.75rem;color:var(--text-muted);margin-top:.35rem;">Tier is based on your total delivered order spend. Higher tiers earn more points per Tk ${earnPer} spent.</div>`;
-                    sections += accordion('tiers', 'ðŸ…  Membership Tiers', tierCards, false);
+                    sections += accordion('tiers', '🏅  Membership Tiers', tierCards, false);
                 }
 
                 // Section 3: How to Redeem
                 const howToRedeem =
                     numRow(1, 'Add items to your cart and go to <strong style="color:var(--text-main);">Checkout</strong>.') +
                     numRow(2, 'In the Order Summary panel, find the <strong style="color:var(--text-main);">Loyalty Points</strong> section.') +
-                    numRow(3, 'Enter how many points you want to use â€” or click <strong style="color:var(--text-main);">"Use All"</strong> to apply your maximum redeemable points.') +
-                    numRow(4, 'Click <strong style="color:var(--text-main);">"Apply"</strong> â€” the discount is applied instantly to your total.') +
+                    numRow(3, 'Enter how many points you want to use — or click <strong style="color:var(--text-main);">"Use All"</strong> to apply your maximum redeemable points.') +
+                    numRow(4, 'Click <strong style="color:var(--text-main);">"Apply"</strong> — the discount is applied instantly to your total.') +
                     `<div style="margin-top:.65rem;padding:.6rem .9rem;background:#f0f7f4;border-radius:8px;border-left:3px solid #c9a84c;font-size:.8rem;color:var(--text-muted);">
                         Minimum <strong style="color:var(--text-main);">${minRedeem} pts</strong> required to redeem. 1 pt = Tk ${rv}.
                         ${lp.maxRedeemPct ? ' Max <strong style="color:var(--text-main);">' + lp.maxRedeemPct + '%</strong> of order value can be covered by points.' : ''}
                     </div>`;
-                sections += accordion('how-to-redeem', 'ðŸ›’  How to Redeem', howToRedeem, false);
+                sections += accordion('how-to-redeem', '🛒  How to Redeem', howToRedeem, false);
 
                 // Section 4: Promotion & Coupon Rules
                 const promoRows =
@@ -1027,22 +1027,22 @@
                         : crossRow('Loyalty points <strong style="color:var(--text-main);">cannot</strong> be used during promotional offers.')) +
                     (lp.allowWithCoupon
                         ? checkRow('Coupons and loyalty points <strong style="color:var(--text-main);">can</strong> be combined in one order.')
-                        : crossRow('You may use <strong style="color:var(--text-main);">either</strong> a coupon or loyalty points â€” not both simultaneously.')) +
+                        : crossRow('You may use <strong style="color:var(--text-main);">either</strong> a coupon or loyalty points — not both simultaneously.')) +
                     (lp.allowWithFreeGift
                         ? checkRow('Loyalty points <strong style="color:var(--text-main);">can</strong> be used alongside Buy X Get Y free gift offers.')
                         : crossRow('Loyalty points <strong style="color:var(--text-main);">cannot</strong> be used when a free gift offer is active in your cart.'));
-                sections += accordion('promo-rules', 'âš¡  Promotion & Coupon Rules', promoRows, false);
+                sections += accordion('promo-rules', '⚡  Promotion & Coupon Rules', promoRows, false);
 
                 // Section 5: FAQ
                 const faqItems = [
                     { q: 'When are points credited to my account?', a: 'Points are credited automatically after your order status changes to <strong style="color:var(--text-main);">Delivered</strong>. Pending or confirmed orders do not earn points yet.' },
                     { q: 'Do loyalty points expire?', a: 'Points do not expire as long as your Zahroun account remains active.' },
                     { q: 'Can I use points on discounted items?', a: lp.allowDuringPromos
-                        ? 'Yes â€” loyalty points can be used even on orders that already have promotional discounts applied.'
+                        ? 'Yes — loyalty points can be used even on orders that already have promotional discounts applied.'
                         : 'Loyalty points cannot be applied when there are active promotional discounts on your order. Remove the promotion or use your points on a full-price order.' },
                     { q: 'What if I cancel an order after redeeming points?', a: 'If your order is cancelled or refunded, your redeemed points will be restored to your account.' },
                     { q: 'Is there a limit to how many points I can redeem at once?', a: lp.maxRedeemPct
-                        ? `Yes â€” you can redeem up to <strong style="color:var(--text-main);">${lp.maxRedeemPct}%</strong> of your order value in points per order. For example, on a Tk 1,000 order, you can use up to ${lp.maxRedeemPct} pts (Tk ${Math.floor(1000 * lp.maxRedeemPct / 100)}).`
+                        ? `Yes — you can redeem up to <strong style="color:var(--text-main);">${lp.maxRedeemPct}%</strong> of your order value in points per order. For example, on a Tk 1,000 order, you can use up to ${lp.maxRedeemPct} pts (Tk ${Math.floor(1000 * lp.maxRedeemPct / 100)}).`
                         : 'You can redeem all your available points in a single order, subject to the minimum redeem threshold of ' + minRedeem + ' pts.' }
                 ];
                 const faqHtml = faqItems.map(f =>
@@ -1051,7 +1051,7 @@
                         <div style="font-size:.82rem;color:var(--text-muted);line-height:1.6;">A: ${f.a}</div>
                     </div>`
                 ).join('') + '';
-                sections += accordion('faq', 'â“  Frequently Asked Questions', faqHtml, false);
+                sections += accordion('faq', '❓  Frequently Asked Questions', faqHtml, false);
 
                 container.innerHTML = guideTitle + sections;
             }
