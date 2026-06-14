@@ -162,6 +162,54 @@
             padding-top: 1rem;
             border-top: 2px solid #0b231a;
         }
+        /* ---- Delivery area picker ---- */
+        .delivery-area-picker {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .65rem;
+        }
+        .area-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: .3rem;
+            padding: .9rem .75rem;
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--surface-color);
+            cursor: pointer;
+            transition: border-color .18s, background .18s, box-shadow .18s;
+            font-family: var(--font-sans);
+            text-align: center;
+            width: 100%;
+        }
+        .area-btn ion-icon {
+            font-size: 1.35rem;
+            color: var(--text-muted);
+            transition: color .18s;
+        }
+        .area-btn .area-label {
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+        .area-btn .area-price {
+            font-size: .75rem;
+            color: var(--text-muted);
+        }
+        .area-btn:hover { border-color: var(--primary-color); }
+        .area-btn:hover ion-icon { color: var(--primary-color); }
+        .area-btn.selected {
+            border-color: var(--primary-color);
+            background: rgba(11,35,26,.05);
+            box-shadow: 0 0 0 1px var(--primary-color);
+        }
+        .area-btn.selected ion-icon { color: var(--primary-color); }
+        .area-btn.selected .area-label { color: var(--primary-color); }
+        .area-btn.selected .area-price { color: var(--primary-color); }
+
         @media (max-width: 768px) {
             .checkout-container {
                 grid-template-columns: 1fr;
@@ -243,24 +291,39 @@
                         <input type="text" id="fullName" class="form-control" required placeholder="John Doe">
                     </div>
                     <div class="form-group">
-                        <label for="customerEmail">Email <span style="font-size:.78rem;font-weight:400;color:var(--text-muted);">(optional — for order confirmation)</span></label>
-                        <input type="email" id="customerEmail" class="form-control" placeholder="your@email.com" autocomplete="email">
-                    </div>
-                    <div class="form-group">
                         <label for="mobile">Mobile Number *</label>
                         <input type="tel" id="mobile" class="form-control" required placeholder="01XXXXXXXXX" pattern="01[3-9][0-9]{8}" title="Please enter a valid Bangladesh mobile number (e.g. 01711000000)">
+                    </div>
+                    <div class="form-group">
+                        <label for="customerEmail">Email <span style="font-size:.78rem;font-weight:400;color:var(--text-muted);">(optional — for order confirmation)</span></label>
+                        <input type="email" id="customerEmail" class="form-control" placeholder="your@email.com" autocomplete="email">
                     </div>
                     <div class="form-group">
                         <label for="address">Full Delivery Address *</label>
                         <textarea id="address" class="form-control" rows="3" required placeholder="House, Road, Block, Area..."></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="district">District *</label>
-                        <select id="district" class="form-control" required onchange="autoSetDelivery()">
-                            <option value="">— Select your district —</option>
+                        <label>Delivery Area *</label>
+                        <div class="delivery-area-picker" id="delivery-area-picker">
+                            <button type="button" class="area-btn" data-area="inside" onclick="selectDeliveryArea('inside')">
+                                <ion-icon name="location-outline"></ion-icon>
+                                <span class="area-label">Inside Dhaka</span>
+                                <span class="area-price">Tk 60</span>
+                            </button>
+                            <button type="button" class="area-btn" data-area="outside" onclick="selectDeliveryArea('outside')">
+                                <ion-icon name="car-outline"></ion-icon>
+                                <span class="area-label">Outside Dhaka</span>
+                                <span class="area-price">Tk 120</span>
+                            </button>
+                        </div>
+                        <!-- hidden select keeps native form.checkValidity() working -->
+                        <select id="district" required style="position:absolute;opacity:0;height:0;pointer-events:none;" aria-hidden="true" tabindex="-1">
+                            <option value=""></option>
+                            <option value="Dhaka">Dhaka</option>
+                            <option value="Outside Dhaka">Outside Dhaka</option>
                         </select>
                     </div>
-                    <!-- Auto-detected delivery zone info -->
+                    <!-- delivery zone confirmation -->
                     <div id="delivery-zone-info" style="display:none; background:#f0f7f4; border:1px solid #c3dfd2; border-radius:6px; padding:.65rem 1rem; margin-bottom:1.5rem; font-size:.9rem; color:#163e34;"></div>
                     <!-- Hidden: auto-set by autoSetDelivery() based on district -->
                     <select id="deliveryArea" style="display:none;" aria-hidden="true">
@@ -771,18 +834,17 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Populate Bangladesh districts dropdown
-            const BD_DISTRICTS = ["Bagerhat","Bandarban","Barguna","Barishal","Bhola","Bogura","Brahmanbaria","Chandpur","Chapai Nawabganj","Chattogram","Chuadanga","Cox's Bazar","Cumilla","Dinajpur","Faridpur","Feni","Gaibandha","Gazipur","Gopalganj","Habiganj","Jamalpur","Jashore","Jhalokathi","Jhenaidah","Joypurhat","Khagrachhari","Khulna","Kishoreganj","Kurigram","Kushtia","Lakshmipur","Lalmonirhat","Madaripur","Magura","Manikganj","Meherpur","Moulvibazar","Munshiganj","Mymensingh","Naogaon","Narail","Narayanganj","Narsingdi","Natore","Netrokona","Nilphamari","Noakhali","Pabna","Panchagarh","Patuakhali","Pirojpur","Rajbari","Rajshahi","Rangamati","Rangpur","Satkhira","Shariatpur","Sherpur","Sirajganj","Sunamganj","Sylhet","Tangail","Thakurgaon"];
+        function selectDeliveryArea(type) {
+            const isInside = type === 'inside';
             const districtSel = document.getElementById('district');
-            if (districtSel) {
-                ["Dhaka", ...BD_DISTRICTS.sort()].forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d; opt.textContent = d;
-                    districtSel.appendChild(opt);
-                });
-            }
+            districtSel.value = isInside ? 'Dhaka' : 'Outside Dhaka';
+            document.querySelectorAll('.area-btn').forEach(b =>
+                b.classList.toggle('selected', b.dataset.area === type)
+            );
+            autoSetDelivery();
+        }
 
+        document.addEventListener('DOMContentLoaded', () => {
             renderCheckoutCart();
             calculateTotal();
             document.getElementById('giftMessage').addEventListener('input', function() {
