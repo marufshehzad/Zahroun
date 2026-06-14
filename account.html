@@ -67,8 +67,8 @@
         /* ---- Tabs ---- */
         .acc-tabs {
             display: flex;
-            gap: .5rem;
-            padding: .75rem 1.25rem;
+            gap: .45rem;
+            padding: .7rem 1.1rem;
             border-bottom: 1px solid var(--border-color);
             overflow-x: auto;
             scrollbar-width: none;
@@ -76,23 +76,33 @@
         }
         .acc-tabs::-webkit-scrollbar { display: none; }
         .acc-tab {
-            padding: .5rem 1.1rem;
-            border: 1.5px solid var(--border-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .3rem;
+            padding: .48rem 1rem;
+            border: 1px solid var(--border-color);
             border-radius: 100px;
             background: var(--surface-color);
             font-family: var(--font-sans);
-            font-size: .85rem;
+            font-size: .82rem;
             font-weight: 500;
+            letter-spacing: .02em;
             color: var(--text-muted);
             cursor: pointer;
             white-space: nowrap;
-            transition: color .18s, border-color .18s, background .18s;
-            display: flex;
-            align-items: center;
-            gap: .35rem;
+            line-height: 1;
+            transition: color .18s, border-color .18s, background .18s, box-shadow .18s;
         }
-        .acc-tab:hover { color: var(--primary-color); border-color: var(--primary-color); background: var(--surface-color); }
-        .acc-tab.active { background: var(--primary-color); border-color: var(--primary-color); color: #fff; font-weight: 600; }
+        .acc-tab ion-icon { font-size: .82rem; display: block; }
+        .acc-tab:hover { color: var(--primary-color); border-color: var(--primary-color); }
+        .acc-tab.active {
+            background: #0b231a;
+            border-color: #0b231a;
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(11,35,26,.28);
+        }
 
         .acc-panel { display: none; }
         .acc-panel.active { display: block; }
@@ -163,19 +173,20 @@
         .login-cta ion-icon { font-size: 3rem; color: var(--primary-color); display: block; margin: 0 auto 1rem; }
 
         @media (max-width: 768px) {
-            /* Shrink profile header */
-            .account-head { padding: 1.25rem 0 1rem; }
+            /* Compact profile header */
+            .account-head { padding: .7rem 0 .6rem; }
             .account-avatar {
-                width: 44px; height: 44px;
-                font-size: 1.1rem;
-                margin-bottom: .6rem;
+                width: 34px; height: 34px;
+                font-size: .9rem;
+                margin-bottom: .4rem;
             }
-            .account-head h1 { font-size: 1rem; letter-spacing: .09em; margin-bottom: .25rem; }
-            .account-head p { font-size: .78rem; }
+            .account-head h1 { font-size: .82rem; letter-spacing: .08em; margin-bottom: .12rem; }
+            .account-head p { font-size: .7rem; }
 
-            /* Slightly smaller pills on mobile */
-            .acc-tabs { padding: .6rem .75rem; gap: .4rem; }
-            .acc-tab { padding: .42rem .85rem; font-size: .78rem; gap: .3rem; }
+            /* Tighter tabs on mobile */
+            .acc-tabs { padding: .5rem .65rem; gap: .35rem; }
+            .acc-tab { padding: .38rem .78rem; font-size: .74rem; gap: .22rem; }
+            .acc-tab ion-icon { font-size: .74rem; }
         }
         @media (max-width: 540px) {
             .acc-form-card { padding: 1.25rem; }
