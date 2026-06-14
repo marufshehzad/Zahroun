@@ -276,6 +276,8 @@ function _cropSetupPreviews(ar) {
     label1 = "Mobile Hero";          label2 = "Desktop Thumbnail";   arCSS = "9/16";
   } else if (Math.abs(ar - 1) < 0.05) {
     label1 = "Size Thumbnail";       label2 = "Size Thumbnail (sm)"; arCSS = "1/1";
+  } else if (Math.abs(ar - 19/20) < 0.05) {
+    label1 = "Category Card";        label2 = "Category Card (sm)";  arCSS = "19/20";
   } else {
     label1 = "Desktop Preview";      label2 = "Mobile Preview";
     arCSS  = (!isNaN(ar) && ar > 0) ? ar.toFixed(4) : "4/3";
@@ -332,7 +334,7 @@ function openCropModal(file, { aspectRatio = NaN } = {}) {
     img.src = objUrl;
 
     // Set contextual modal title
-    const titleMap = { [3/4]: "Position Product Image", [16/9]: "Position Hero Banner", [9/16]: "Position Mobile Hero", [1]: "Position Size Image" };
+    const titleMap = { [3/4]: "Position Product Image", [16/9]: "Position Hero Banner", [9/16]: "Position Mobile Hero", [1]: "Position Size Image", [19/20]: "Position Category Image" };
     const titleEl = document.getElementById("crop-modal-title");
     if (titleEl) {
       const key = Object.keys(titleMap).find(k => Math.abs(aspectRatio - Number(k)) < 0.05);
@@ -4390,9 +4392,9 @@ function setupPagesSection() {
 
   bindPageUpload("file-hero-desktop",   "prev-hero-desktop",   "status-hero-desktop",   "del-hero-desktop",   { aspectRatio: 16/9 });
   bindPageUpload("file-hero-mobile",    "prev-hero-mobile",    "status-hero-mobile",    "del-hero-mobile",    { aspectRatio: 9/16 });
-  bindPageUpload("file-cat-forher",     "prev-cat-forher",     "status-cat-forher",     "del-cat-forher",     { aspectRatio: 1 });
-  bindPageUpload("file-cat-unisex",     "prev-cat-unisex",     "status-cat-unisex",     "del-cat-unisex",     { aspectRatio: 1 });
-  bindPageUpload("file-cat-forhim",     "prev-cat-forhim",     "status-cat-forhim",     "del-cat-forhim",     { aspectRatio: 1 });
+  bindPageUpload("file-cat-forher",     "prev-cat-forher",     "status-cat-forher",     "del-cat-forher",     { aspectRatio: 19/20 });
+  bindPageUpload("file-cat-unisex",     "prev-cat-unisex",     "status-cat-unisex",     "del-cat-unisex",     { aspectRatio: 19/20 });
+  bindPageUpload("file-cat-forhim",     "prev-cat-forhim",     "status-cat-forhim",     "del-cat-forhim",     { aspectRatio: 19/20 });
   bindPageUpload("file-why-0",          "prev-why-0",          "status-why-0",          "del-why-0",          { aspectRatio: 1 });
   bindPageUpload("file-why-1",          "prev-why-1",          "status-why-1",          "del-why-1",          { aspectRatio: 1 });
   bindPageUpload("file-why-2",          "prev-why-2",          "status-why-2",          "del-why-2",          { aspectRatio: 1 });
