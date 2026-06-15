@@ -892,6 +892,12 @@ async function fetchCoupons() {
   try {
     const snap = await getDocs(collection(db, "coupons"));
     coupons = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const now = new Date();
+    const expiredActive = coupons.filter(c => c.active && c.expiresAt && (c.expiresAt.toDate ? c.expiresAt.toDate() : new Date(c.expiresAt)) < now);
+    if (expiredActive.length) {
+      await Promise.all(expiredActive.map(c => updateDoc(doc(db, "coupons", c.id), { active: false })));
+      expiredActive.forEach(c => { c.active = false; });
+    }
   } catch (e) { console.error("fetchCoupons:", e); }
 }
 
@@ -2134,6 +2140,10 @@ async function saveCoupon(e) {
   const couponValue = parseFloat(f.querySelector("[name=value]").value) || 0;
   if (couponType !== "freeship" && couponValue <= 0) {
     alert("Discount value is required for this coupon type.");
+    btn.disabled = false; btn.textContent = "Save Coupon"; return;
+  }
+  if (couponType === "percent" && couponValue > 100) {
+    alert("Percentage discount cannot exceed 100%.");
     btn.disabled = false; btn.textContent = "Save Coupon"; return;
   }
   const expiresVal = f.querySelector("[name=expiresAt]").value;
