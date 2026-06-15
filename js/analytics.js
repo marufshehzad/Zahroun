@@ -1,11 +1,11 @@
 /* =========================================================================
-   ZAHROUN — Google Analytics 4 (GA4)  |  Measurement ID: G-DWXJFVRHFE
+   ZAHROUN — Google Analytics 4 (GA4)  |  Measurement ID: G-RQQ5NDW51V
    =========================================================================
    Loads gtag.js and exposes window.zahrounGA with typed tracking helpers.
    All helpers are safe to call before gtag is ready (they silently no-op).
    ========================================================================= */
 
-const GA_ID = "G-DWXJFVRHFE";
+const GA_ID = "G-RQQ5NDW51V";
 
 (function () {
   const s = document.createElement("script");
