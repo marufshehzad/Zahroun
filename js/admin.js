@@ -456,8 +456,8 @@ const SUBTITLES = {
   settings: "Store configuration",
   admins: "Manage who has admin access to this panel"
 };
-const ORDER_STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
-const STATUS_COLORS = { pending: "#f0b429", confirmed: "#1a56b8", shipped: "#7c3aed", delivered: "#1e7e34", cancelled: "#9b2226" };
+const ORDER_STATUSES = ["pending", "follow-up", "confirmed", "shipped", "delivered", "cancelled", "returned"];
+const STATUS_COLORS = { pending: "#f0b429", "follow-up": "#c05c00", confirmed: "#1a56b8", shipped: "#7c3aed", delivered: "#1e7e34", cancelled: "#9b2226", returned: "#7b2d8b" };
 
 /* ---- Admin gate -------------------------------------------------------- */
 onAuthStateChanged(auth, async (user) => {
@@ -1049,7 +1049,7 @@ function renderRecentOrders() {
       <span><strong>${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</strong></span>
       <span>${escapeHtml(o.customer?.name || "—")}</span>
       <span>৳${o.total || 0}</span>
-      <span><span class="o-status ${escapeHtml(o.status || "pending")}">${escapeHtml(o.status || "pending")}</span></span>
+      <span><span class="o-status ${escapeHtml(o.status || "pending")}">${escapeHtml((o.status || "pending").replace('-',' '))}</span></span>
     </div>`).join("");
 }
 
@@ -1433,7 +1433,7 @@ function renderOrderTable() {
 
   // Update pill counts
   const newCount = orders.filter(isNewOrder).length;
-  const statusKeys = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+  const statusKeys = ["pending", "follow-up", "confirmed", "shipped", "delivered", "cancelled", "returned"];
   const tcAll = document.getElementById("ord-tc-all"); if (tcAll) tcAll.textContent = orders.length;
   const tcNew = document.getElementById("ord-tc-new"); if (tcNew) tcNew.textContent = newCount;
   statusKeys.forEach(s => {
@@ -1485,7 +1485,7 @@ function renderOrderTable() {
           ? `<br><span style="color:#1e7e34;font-size:.74rem;font-weight:600;">✓ Verified</span><br><button onclick="window._unverifyPayment('${o.id}')" style="margin-top:.2rem;background:none;color:#9b2226;border:1px solid #d9a5a5;border-radius:4px;padding:.15rem .5rem;font-size:.7rem;cursor:pointer;">Undo</button>`
           : `<br><button onclick="window._verifyPayment('${o.id}')" style="margin-top:.3rem;background:#e65100;color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.75rem;font-weight:600;cursor:pointer;">Verify Payment</button>`) : ""}
       </td>
-      <td>${(()=>{const nm={pending:{s:'confirmed',l:'Confirm',bg:'#163E34'},confirmed:{s:'shipped',l:'Ship',bg:'#1a56b8'},shipped:{s:'delivered',l:'Delivered',bg:'#1e7e34'}};const nx=nm[st];return `<select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);width:100%;">${opts(st)}</select>${nx?`<button class="tbl-quickact" data-oid="${o.id}" data-next="${nx.s}" style="display:block;margin-top:.3rem;width:100%;background:${nx.bg};color:#fff;border:none;border-radius:5px;padding:.28rem .5rem;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font-sans);">${nx.l}</button>`:''}`})()}</td>
+      <td>${(()=>{const nm={pending:{s:'confirmed',l:'Confirm',bg:'#163E34'},'follow-up':{s:'confirmed',l:'Confirm',bg:'#163E34'},confirmed:{s:'shipped',l:'Ship',bg:'#1a56b8'},shipped:{s:'delivered',l:'Delivered',bg:'#1e7e34'}};const nx=nm[st];return `<select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);width:100%;">${opts(st)}</select>${nx?`<button class="tbl-quickact" data-oid="${o.id}" data-next="${nx.s}" style="display:block;margin-top:.3rem;width:100%;background:${nx.bg};color:#fff;border:none;border-radius:5px;padding:.28rem .5rem;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font-sans);">${nx.l}</button>`:''}`})()}</td>
       <td class="muted-note">${fmtDate(o.createdAt)}</td>
     </tr>`;
   }).join("");
@@ -1530,10 +1530,10 @@ function renderOrderTable() {
     return `<div class="orc" data-oid="${o.id}" ${isNewCard ? 'style="border-left:3px solid #e63946;"' : ''}>
       <div class="orc-head">
         <div>
-          <div class="orc-ordnum">${ordId}${isNewCard ? '<span class="new-order-badge" style="font-size:.58rem;padding:.14rem .45rem;">New</span>' : ''}</div>
+          <div class="orc-ordnum">${ordId}${isNewCard ? '<span class="new-order-badge" style="font-size:.58rem;padding:.14rem .45rem;">New</span>' : ''}${o.adminNotes ? '<span class="note-dot" title="Has staff note"><ion-icon name="document-text-outline" style="font-size:.62rem;"></ion-icon></span>' : ''}</div>
           <div class="orc-date-pay">${d} · ${escapeHtml(o.payment?.method || "")}</div>
         </div>
-        <span class="orc-badge st-${st}">${st}</span>
+        <span class="orc-badge st-${st}">${st.replace('-',' ')}</span>
       </div>
       ${(o.payment?.method === 'bKash' || o.payment?.method === 'Nagad') ? `
       <div class="orc-pay-strip ${o.paymentStatus === 'verified' ? 'orc-pay-verified' : 'orc-pay-pending'}">
@@ -1555,7 +1555,7 @@ function renderOrderTable() {
         <div class="orc-amount">৳${(o.total || 0).toLocaleString()}</div>
       </div>
       <div class="orc-items-block">${itemsHtml}</div>
-      ${(()=>{ const nm={pending:{s:'confirmed',l:'Confirm',ic:'checkmark-circle-outline',bg:'#163E34'},confirmed:{s:'shipped',l:'Ship',ic:'car-outline',bg:'#1a56b8'},shipped:{s:'delivered',l:'Delivered',ic:'bag-check-outline',bg:'#1e7e34'}};const nx=nm[st];return nx?`<div style="padding:.4rem .85rem .1rem;"><button class="orc-quickact" data-oid="${o.id}" data-next="${nx.s}" style="width:100%;background:${nx.bg};color:#fff;border:none;border-radius:8px;padding:.5rem;font-size:.84rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;font-family:var(--font-sans);"><ion-icon name="${nx.ic}" style="font-size:1rem;"></ion-icon>${nx.l}</button></div>`:'';})()}
+      ${(()=>{ const nm={pending:{s:'confirmed',l:'Confirm',ic:'checkmark-circle-outline',bg:'#163E34'},'follow-up':{s:'confirmed',l:'Confirm',ic:'checkmark-circle-outline',bg:'#163E34'},confirmed:{s:'shipped',l:'Ship',ic:'car-outline',bg:'#1a56b8'},shipped:{s:'delivered',l:'Delivered',ic:'bag-check-outline',bg:'#1e7e34'}};const nx=nm[st];return nx?`<div style="padding:.4rem .85rem .1rem;"><button class="orc-quickact" data-oid="${o.id}" data-next="${nx.s}" style="width:100%;background:${nx.bg};color:#fff;border:none;border-radius:8px;padding:.5rem;font-size:.84rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;font-family:var(--font-sans);"><ion-icon name="${nx.ic}" style="font-size:1rem;"></ion-icon>${nx.l}</button></div>`:'';})()}
       <div class="orc-actions">
         <button class="orc-act-btn" data-view="${o.id}"><ion-icon name="eye-outline"></ion-icon> View</button>
         <button class="orc-act-btn" data-call="${escapeHtml(c.mobile || "")}"><ion-icon name="call-outline"></ion-icon> Call</button>
@@ -4112,7 +4112,7 @@ function openOrderDetail(order) {
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
       <div>
         <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin-bottom:.3rem;">Status</div>
-        <span class="o-status ${escapeHtml(order.status || "pending")}">${escapeHtml(order.status || "pending")}</span>
+        <span class="o-status ${escapeHtml(order.status || "pending")}">${escapeHtml((order.status || "pending").replace('-',' '))}</span>
       </div>
       <div style="text-align:right;">
         <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin-bottom:.3rem;">Ordered</div>
