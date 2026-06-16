@@ -36,4 +36,32 @@
     window.getSafeFbp = getSafeFbp;
     window.getSafeFbc = getSafeFbc;
     cacheFbIdentifiers();
+
+    // Generic CAPI sender — usable from any page.
+    // userData is optional; when omitted only fbp/fbc are sent (pre-checkout pages).
+    window.sendCAPI = function (eventName, eventId, customData, userData) {
+        try {
+            var ud = userData || {};
+            fetch('/api/facebook-capi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event_name: eventName,
+                    event_id: eventId,
+                    event_time: Math.floor(Date.now() / 1000),
+                    user_data: {
+                        em: ud.email || '',
+                        ph: ud.phone || '',
+                        fn: ud.first_name || '',
+                        ln: ud.last_name || '',
+                        ct: ud.city || '',
+                        fbp: getSafeFbp(),
+                        fbc: getSafeFbc()
+                    },
+                    custom_data: customData || {},
+                    source_url: window.location.href
+                })
+            }).catch(function () {});
+        } catch (e) {}
+    };
 })();

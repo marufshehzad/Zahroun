@@ -18,13 +18,15 @@
                 var cartTotal = cartData.reduce(function(s, i) { return s + parseFloat(i.selectedPrice) * i.quantity; }, 0);
                 var icoId = typeof generateEventId === 'function' ? generateEventId('ICO') : 'ICO_' + Date.now();
                 sessionStorage.setItem('zhr_ico_event_id', icoId);
-                fbq('track', 'InitiateCheckout', {
+                var icoPayload = {
                     content_ids: cartData.map(function(i) { return String(i.id); }),
                     content_type: 'product',
                     value: Math.round(cartTotal),
                     currency: 'BDT',
                     num_items: cartData.reduce(function(s, i) { return s + i.quantity; }, 0)
-                }, { eventID: icoId });
+                };
+                fbq('track', 'InitiateCheckout', icoPayload, { eventID: icoId });
+                if (typeof sendCAPI === 'function') sendCAPI('InitiateCheckout', icoId, icoPayload);
             }
             // Fill hidden fbp/fbc fields after helpers load
             setTimeout(function() {
@@ -1353,12 +1355,19 @@
                             }),
                         }).catch(() => {});
                     }
-                    if (paymentMethod === 'COD') {
-                        // COD = unconfirmed — track as Lead only, not Purchase
-                        const _leadId = typeof generateEventId === 'function' ? generateEventId('LEAD') : 'LEAD_' + Date.now();
-                        fbq('track', 'Lead', { content_name: 'COD Order Placed', value: total, currency: 'BDT', order_id: orderId }, { eventID: _leadId });
-                        document.getElementById('field_purchase_event_id').value = _leadId;
-                        _sendCAPI('Lead', _leadId);
+                    if (paymentMethod === 'COD' && !sessionStorage.getItem(_storageKey)) {
+                        const _codId = typeof generateEventId === 'function' ? generateEventId('PUR') : 'PUR_' + Date.now();
+                        fbq('track', 'Purchase', {
+                            content_ids: items.map(i => String(i.id)),
+                            content_type: 'product',
+                            value: total,
+                            currency: 'BDT',
+                            num_items: items.reduce((s, i) => s + i.quantity, 0),
+                            order_id: orderId
+                        }, { eventID: _codId });
+                        document.getElementById('field_purchase_event_id').value = _codId;
+                        sessionStorage.setItem(_storageKey, '1');
+                        _sendCAPI('Purchase', _codId);
                     } else if (!sessionStorage.getItem(_storageKey)) {
                         // bKash / Nagad — payment confirmed, track as Purchase (once only)
                         const _purId = typeof generateEventId === 'function' ? generateEventId('PUR') : 'PUR_' + Date.now();
