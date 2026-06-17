@@ -9,7 +9,7 @@
 
 import { db, auth } from "./firebase-config.js";
 import {
-  collection, addDoc, serverTimestamp, doc, getDoc, runTransaction
+  collection, addDoc, updateDoc, serverTimestamp, doc, getDoc, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 window.getCurrentUser = () => auth.currentUser;
@@ -169,4 +169,13 @@ window.saveOrder = async function (order) {
   }));
 
   return { id: ref.id, orderNum };
+};
+
+// Persists the browser pixel eventId to the order document so admin can
+// reference it when sending CAPI cancellation signals later.
+window.updateOrderPixelEventId = async function (orderId, eventId) {
+  if (!orderId || !eventId) return;
+  try {
+    await updateDoc(doc(db, "orders", orderId), { pixelEventId: eventId });
+  } catch (e) { /* non-critical — silent */ }
 };

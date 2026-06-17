@@ -1392,6 +1392,27 @@ async function reverseLoyaltyPointsForOrder(order) {
   } catch (e) { console.warn("Loyalty reversal failed:", e); }
 }
 
+function sendCancelCAPI(order, orderId) {
+  if (!order?.pixelEventId) return; // no pixel event was ever fired for this order
+  fetch('/api/facebook-capi', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      event_name: 'Purchase',
+      event_id: 'CANCEL_' + orderId + '_' + Date.now(),
+      event_time: Math.floor(Date.now() / 1000),
+      user_data: {},
+      custom_data: {
+        value: 0,
+        currency: 'BDT',
+        order_id: orderId,
+        original_event_id: order.pixelEventId,
+      },
+      source_url: 'https://zahroun.com/checkout.html',
+    }),
+  }).catch(() => {});
+}
+
 async function changeOrderStatus(orderId, newStatus) {
   const order = orders.find(o => o.id === orderId);
   const prevStatus = order?.status || "pending";
@@ -1424,6 +1445,9 @@ async function changeOrderStatus(orderId, newStatus) {
           reverseReferralRewardForOrder(order, cfg).catch(e => console.warn("Referral reverse:", e));
         }).catch(e => console.warn("Failed to fetch settings for referral reversal:", e));
       }
+      sendCancelCAPI(order, orderId);
+    } else if (newStatus === "returned" && prevStatus !== "returned") {
+      sendCancelCAPI(order, orderId);
     }
 
     updateOrdersBadge(); renderOrderTable(); renderDashboard(); updateNotifications();

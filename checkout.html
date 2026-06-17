@@ -1368,6 +1368,7 @@
                         document.getElementById('field_purchase_event_id').value = _codId;
                         sessionStorage.setItem(_storageKey, '1');
                         _sendCAPI('Purchase', _codId);
+                        if (typeof window.updateOrderPixelEventId === 'function') window.updateOrderPixelEventId(orderId, _codId);
                     } else if (!sessionStorage.getItem(_storageKey)) {
                         // bKash / Nagad — payment confirmed, track as Purchase (once only)
                         const _purId = typeof generateEventId === 'function' ? generateEventId('PUR') : 'PUR_' + Date.now();
@@ -1382,6 +1383,7 @@
                         document.getElementById('field_purchase_event_id').value = _purId;
                         sessionStorage.setItem(_storageKey, '1');
                         _sendCAPI('Purchase', _purId);
+                        if (typeof window.updateOrderPixelEventId === 'function') window.updateOrderPixelEventId(orderId, _purId);
                     }
                 }
                 // Email is sent by admin when order is confirmed — not here
