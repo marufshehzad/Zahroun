@@ -711,7 +711,8 @@
                     </div>
                 </div>
             `;
-            
+            refreshPriceDisplay();
+
             // Wire gallery strip thumbnails
             const gallStripEl = document.getElementById('gallery-strip');
             if (gallStripEl) {
@@ -890,6 +891,31 @@
             return product.prices && product.prices[size] ? product.prices[size] : product.price;
         }
 
+        function getFlashSaleForProduct(productId) {
+            const fs = window.zahFlashSale;
+            if (!fs || !fs.enabled || !Array.isArray(fs.items)) return null;
+            // Only check enabled flag — endDate is for countdown display only
+            return fs.items.find(fi => String(fi.productId) === String(productId)) || null;
+        }
+
+        function buildPriceHtml(regularPrice, salePrice) {
+            if (!salePrice || Number(salePrice) >= Number(regularPrice)) {
+                return `Tk ${Number(regularPrice).toLocaleString()}`;
+            }
+            const pct = Math.round((regularPrice - salePrice) / regularPrice * 100);
+            return `<span style="text-decoration:line-through;color:var(--text-muted);font-weight:400;font-size:1.05rem;margin-right:.4rem;display:inline-block;">Tk ${Number(regularPrice).toLocaleString()}</span><span style="color:#c0392b;">Tk ${Number(salePrice).toLocaleString()}</span>&nbsp;<span style="background:#c0392b;color:#fff;font-size:.62rem;font-weight:700;border-radius:4px;padding:.15rem .45rem;vertical-align:middle;letter-spacing:.04em;">${pct}% OFF</span>`;
+        }
+
+        function refreshPriceDisplay() {
+            if (!currentProduct) return;
+            const fsItem = getFlashSaleForProduct(currentProduct.id);
+            const catalogPrice = getSizePrice(currentProduct, currentSelectedSize);
+            const salePrice = (fsItem && currentSelectedSize === '50ML') ? fsItem.salePrice : null;
+            currentSelectedPrice = salePrice || catalogPrice;
+            const displayEl = document.getElementById('display-price');
+            if (displayEl) displayEl.innerHTML = buildPriceHtml(catalogPrice, salePrice);
+        }
+
         function getSizeImage(product, size) {
             const raw = product.sizeImages && product.sizeImages[size] ? product.sizeImages[size] : product.image;
             return _ctf(raw, 'w_800,f_auto,q_auto');
@@ -1018,11 +1044,13 @@
         window.selectSize = function(size, price, btnElement) {
             currentSelectedSize = size;
             currentSelectedPrice = price;
-            
-            document.getElementById('display-price').textContent = 'Tk ' + Number(price).toLocaleString();
+            refreshPriceDisplay();
             updateProductImage(getSizeImage(currentProduct, size));
             updateSelectedSizeUI(size);
         };
+
+        // If auth.js sets zahFlashSale after product renders, re-evaluate price
+        document.addEventListener('zahroun-auth-changed', () => { refreshPriceDisplay(); });
 
         window.addCurrentSizeToCart = function(productId) {
             addToCart(productId, currentSelectedSize, currentSelectedPrice);

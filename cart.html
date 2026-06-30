@@ -175,11 +175,16 @@
                 ${cartData.map((item, idx) => {
                     const price = parseFloat(item.selectedPrice) || item.price || 0;
                     const lineTotal = price * (item.quantity || 1);
+                    const regPrice = item.flashSalePrice && item.prices ? (item.prices[item.size] || item.prices['50ML'] || 0) : 0;
+                    const isSale = regPrice && price < regPrice;
+                    const priceMeta = isSale
+                        ? `<span style="text-decoration:line-through;color:#aaa;font-size:.78rem;margin-right:.25rem;">Tk ${regPrice.toLocaleString()}</span><span style="color:#c0392b;font-weight:600;">Tk ${price.toLocaleString()}</span> each`
+                        : `Tk ${price.toLocaleString()} each`;
                     return `<div class="cart-item">
                         <img src="${esc(item.image)}" alt="${esc(item.name)}" loading="lazy">
                         <div class="cart-item-info">
                             <div class="cart-item-name">${esc(item.name)}</div>
-                            <div class="cart-item-meta">${esc(item.size || "50ML")} &middot; Tk ${price.toLocaleString()} each</div>
+                            <div class="cart-item-meta">${esc(item.size || "50ML")} &middot; ${priceMeta}</div>
                             <div class="qty-row">
                                 <button class="qty-btn" data-action="dec" data-idx="${idx}"><ion-icon name="remove-outline"></ion-icon></button>
                                 <span class="qty-val">${item.quantity || 1}</span>

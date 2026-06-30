@@ -12,13 +12,29 @@ function reconcileCart() {
             const prod = products.find(p => p.id === item.id);
             if (!item.size || item.size === 'undefined') item.size = '50ML';
             if (!prod.prices[item.size] && prod.prices['50ML']) item.size = '50ML';
-            // Preserve flash sale price — do NOT overwrite with regular catalog price
+            const catalogPrice = (prod.prices && prod.prices[item.size]) ? prod.prices[item.size] : prod.price;
+            // Layer 1: explicit flash sale marker (set by addToCart when price < catalog)
             if (item.flashSalePrice) {
                 item.selectedPrice = item.flashSalePrice;
                 return { ...prod, size: item.size, selectedPrice: item.flashSalePrice, flashSalePrice: item.flashSalePrice, quantity: item.quantity || 1 };
             }
-            if (prod.prices && prod.prices[item.size]) {
-                item.selectedPrice = prod.prices[item.size];
+            // Layer 2: active flash sale covers this product (handles pre-marker cart items)
+            const fs = window.zahFlashSale;
+            if (fs && fs.enabled && Array.isArray(fs.items)) {
+                const fsItem = fs.items.find(fi => String(fi.productId) === String(item.id));
+                if (fsItem && fsItem.salePrice) {
+                    item.selectedPrice = fsItem.salePrice;
+                    item.flashSalePrice = fsItem.salePrice;
+                    return { ...prod, size: item.size, selectedPrice: fsItem.salePrice, flashSalePrice: fsItem.salePrice, quantity: item.quantity || 1 };
+                }
+            }
+            // Layer 3: never overwrite with a higher price (price below catalog = intentional)
+            if (item.selectedPrice && catalogPrice && Number(item.selectedPrice) < Number(catalogPrice)) {
+                return { ...prod, size: item.size, selectedPrice: item.selectedPrice, quantity: item.quantity || 1 };
+            }
+            // Regular catalog price
+            if (catalogPrice) {
+                item.selectedPrice = catalogPrice;
             } else if (item.selectedPrice === undefined || isNaN(item.selectedPrice) || item.selectedPrice === null) {
                 item.selectedPrice = prod.price;
             }
@@ -154,7 +170,14 @@ function updateCartUI() {
                 <div style="flex: 1;">
                     <h4 style="font-size: 0.95rem; margin-bottom: 0.25rem;">${item.name}</h4>
                     <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Size: ${item.size}</span>
-                    <div style="color: var(--primary-color); font-weight: 600; margin-bottom: 0.5rem;">Tk ${Number(item.selectedPrice).toLocaleString()}</div>
+                    ${(() => {
+                        const reg = (item.prices && item.prices[item.size]) ? item.prices[item.size] : 0;
+                        const sp = item.flashSalePrice;
+                        if (sp && reg && sp < reg) {
+                            return `<div style="margin-bottom:.5rem;"><span style="text-decoration:line-through;color:#aaa;font-size:.78rem;margin-right:.3rem;">Tk ${Number(reg).toLocaleString()}</span><span style="color:#c0392b;font-weight:700;">Tk ${Number(sp).toLocaleString()}</span> <span style="background:#c0392b;color:#fff;font-size:.6rem;font-weight:700;border-radius:3px;padding:.1rem .3rem;">SALE</span></div>`;
+                        }
+                        return `<div style="color:var(--primary-color);font-weight:600;margin-bottom:.5rem;">Tk ${Number(item.selectedPrice).toLocaleString()}</div>`;
+                    })()}
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <button onclick="updateQuantity(${item.id}, '${item.size}', ${item.quantity - 1})" style="width: 36px; height: 36px; border: 1px solid var(--border-color); background: none; cursor: pointer; border-radius: 8px; font-size: 1.1rem; display:flex; align-items:center; justify-content:center; touch-action:manipulation;">−</button>
                         <span style="font-size: 0.95rem; font-weight:600; min-width:20px; text-align:center;">${item.quantity}</span>

@@ -400,6 +400,12 @@
                             <span id="discount-label">Discount</span>
                             <span id="summary-discount">-Tk 0</span>
                         </div>
+                        <div id="flash-sale-row" style="display:none;margin-bottom:.5rem;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;background:#fff8f0;border:1px solid #f5c6a0;border-radius:8px;padding:.4rem .75rem;">
+                                <span style="font-size:.78rem;color:#c0392b;display:flex;align-items:center;gap:.3rem;font-weight:600;"><ion-icon name="flame-outline" style="font-size:.85rem;"></ion-icon>Flash Sale Savings</span>
+                                <span id="flash-savings-amount" style="font-size:.82rem;font-weight:700;color:#c0392b;">Saved Tk 0</span>
+                            </div>
+                        </div>
                         <div id="promo-discount-row" style="display:none;flex-direction:column;gap:.3rem;margin-bottom:.5rem;color:#163E34;background:#f0f7f4;border-radius:8px;padding:.5rem .75rem;">
                             <div id="promo-discount-lines"></div>
                         </div>
@@ -843,6 +849,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             renderCheckoutCart();
             calculateTotal();
+            // Re-render order summary after reconcileCart has synced catalog prices
+            // (reconcileCart listens to products-ready too — registered before this, so runs first)
+            document.addEventListener('products-ready', () => {
+                renderCheckoutCart();
+                refreshTotals();
+            });
             document.getElementById('giftMessage').addEventListener('input', function() {
                 document.getElementById('gift-char-count').textContent = this.value.length;
             });
@@ -921,7 +933,15 @@
                             <div class="osi-meta">Size: ${item.size}<br>Qty: ${item.quantity}</div>
                         </div>
                     </div>
-                    <div class="osi-price">Tk ${Math.round(parseFloat(item.selectedPrice) * item.quantity).toLocaleString()}</div>
+                    <div class="osi-price" style="text-align:right;">${(() => {
+                        const unitPrice = parseFloat(item.selectedPrice) || 0;
+                        const catalogPr = item.flashSalePrice && item.prices ? (item.prices[item.size] || item.prices['50ML'] || 0) : 0;
+                        const lineTotal = Math.round(unitPrice * item.quantity);
+                        if (catalogPr > unitPrice) {
+                            return `<div style="font-size:.7rem;text-decoration:line-through;color:var(--text-muted);line-height:1.2;">Tk ${Math.round(catalogPr * item.quantity).toLocaleString()}</div><div style="color:#c0392b;">Tk ${lineTotal.toLocaleString()}</div>`;
+                        }
+                        return `Tk ${lineTotal.toLocaleString()}`;
+                    })()}</div>
                 </div>
             `).join('');
 
@@ -999,6 +1019,22 @@
             const total = (subtotal - discount - promoDiscount) + effectiveDelivery;
 
             document.getElementById('summary-subtotal').textContent = 'Tk ' + Math.round(subtotal).toLocaleString();
+
+            // Flash sale savings (informational — already baked into selectedPrice)
+            const flashSavings = cart.reduce((sum, item) => {
+                if (!item.flashSalePrice) return sum;
+                const catalogPr = (item.prices && item.prices[item.size]) ? item.prices[item.size] : 0;
+                return sum + Math.max(0, (catalogPr - item.flashSalePrice) * item.quantity);
+            }, 0);
+            const flashRow = document.getElementById('flash-sale-row');
+            if (flashRow) {
+                if (flashSavings > 0) {
+                    document.getElementById('flash-savings-amount').textContent = 'Saved Tk ' + Math.round(flashSavings).toLocaleString();
+                    flashRow.style.display = '';
+                } else {
+                    flashRow.style.display = 'none';
+                }
+            }
 
             const discountRow = document.getElementById('discount-row');
             if (discount > 0) {
