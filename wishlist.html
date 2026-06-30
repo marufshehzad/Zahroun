@@ -144,15 +144,25 @@
                         return mn === mx ? `Tk ${mn.toLocaleString()}` : `Tk ${mn.toLocaleString()} – Tk ${mx.toLocaleString()}`;
                     };
                     content.innerHTML = `<div class="wl-grid">${wishlisted.map(p => {
-                        const price = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : p.price;
-                        return `<div class="wl-card">
+                        const active = p.activeSizes ?? ['6ML','15ML','30ML','50ML'];
+                        const bestSize = ['50ML','30ML','15ML','6ML'].find(s => active.includes(s)) || '50ML';
+                        const regularPrice = (p.prices && p.prices[bestSize]) ? p.prices[bestSize] : (p.basePrice || p.price || 0);
+                        const _fsItem = window.getFlashSaleItem ? window.getFlashSaleItem(p.id) : null;
+                        const isSale = !!(_fsItem && _fsItem.salePrice);
+                        const effectivePrice = isSale ? _fsItem.salePrice : regularPrice;
+                        const discPct = isSale ? Math.round((regularPrice - effectivePrice) / regularPrice * 100) : 0;
+                        const priceHtml = isSale
+                            ? `<div class="price" style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;"><span style="color:#e63946;font-weight:700;">Tk ${effectivePrice.toLocaleString()}</span><span style="font-size:.78rem;color:var(--text-muted);text-decoration:line-through;">Tk ${regularPrice.toLocaleString()}</span>${discPct > 0 ? `<span style="background:#fdecea;color:#e63946;font-size:.65rem;font-weight:700;padding:.1rem .35rem;border-radius:3px;">${discPct}% OFF</span>` : ''}</div>`
+                            : `<div class="price">${priceRange(p)}</div>`;
+                        return `<div class="wl-card" style="position:relative;">
                             <a href="product.html?id=${p.id}"><img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy"></a>
+                            ${isSale ? `<span style="position:absolute;top:.5rem;left:.5rem;background:#c0392b;color:#fff;font-size:.62rem;font-weight:700;padding:.2rem .48rem;border-radius:4px;letter-spacing:.04em;z-index:2;">SALE</span>` : ''}
                             <button class="wl-remove" data-remove="${p.id}" title="Remove from wishlist"><ion-icon name="heart"></ion-icon></button>
                             <div class="wl-card-body">
                                 <h3><a href="product.html?id=${p.id}" style="color:inherit;text-decoration:none;">${esc(p.name)}</a></h3>
-                                <div class="price">${priceRange(p)}</div>
+                                ${priceHtml}
                                 <div class="wl-actions">
-                                    <button class="btn" style="flex:1;font-size:.85rem;padding:.55rem;" onclick="addToCart(${p.id},'50ML',${price})">Add to Cart</button>
+                                    <button class="btn" style="flex:1;font-size:.85rem;padding:.55rem;" onclick="addToCart(${p.id},'${active.length ? bestSize : '50ML'}',${effectivePrice})">Add to Cart</button>
                                     <a href="product.html?id=${p.id}" class="btn btn-outline" style="font-size:.85rem;padding:.55rem;">View</a>
                                 </div>
                             </div>
@@ -183,6 +193,10 @@
             } else {
                 document.addEventListener("products-ready", loadWishlist, { once: true });
             }
+            // Re-render when flash sale data arrives so prices update even if wishlist rendered first
+            document.addEventListener("flashsale-status", () => {
+                if (typeof products !== "undefined" && products.length) loadWishlist();
+            });
         });
     </script>
 </body>

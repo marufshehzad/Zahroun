@@ -605,6 +605,14 @@ async function loadSiteSettings() {
     flashData.items = flashData.items || [];
     window.zahFlashSale = flashData;
 
+    // Global helper — single source of truth for flash sale item lookup.
+    // Returns { productId, salePrice } if product is in an active flash sale, else null.
+    window.getFlashSaleItem = function(productId) {
+        const fs = window.zahFlashSale;
+        if (!fs || !fs.enabled || !Array.isArray(fs.items)) return null;
+        return fs.items.find(fi => String(fi.productId) === String(productId)) || null;
+    };
+
     // Inject nav link based on enabled state
     injectFlashSaleNav(flashData.enabled);
 
