@@ -1049,8 +1049,9 @@
             updateSelectedSizeUI(size);
         };
 
-        // If auth.js sets zahFlashSale after product renders, re-evaluate price
+        // Re-evaluate price whenever flash sale data or auth state arrives (race-safe)
         document.addEventListener('zahroun-auth-changed', () => { refreshPriceDisplay(); });
+        document.addEventListener('flashsale-status', () => { refreshPriceDisplay(); });
 
         window.addCurrentSizeToCart = function(productId) {
             addToCart(productId, currentSelectedSize, currentSelectedPrice);
