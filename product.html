@@ -605,7 +605,7 @@
             const addCartHtml = product.stock === 0
                 ? `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;opacity:.5;cursor:not-allowed;" disabled>OUT OF STOCK</button>`
                 : noSizes
-                    ? `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;" onclick="addToCart(${product.id},'Set',${productPrice});showAddedToast&&showAddedToast('${product.name}')">ADD TO CART</button>`
+                    ? `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>`
                     : `<button class="btn btn-black" style="width:100%;margin-bottom:1rem;" onclick="addCurrentSizeToCart(${product.id})">ADD TO CART</button>`;
             const buyNowHtml = product.stock === 0 ? `<button class="btn btn-outline" style="width:100%;margin-bottom:.75rem;opacity:.5;cursor:not-allowed;" disabled>BUY IT NOW</button>` : `<button class="btn btn-outline" style="width: 100%; margin-bottom: 2rem;" onclick="buyItNow(${product.id})">BUY IT NOW</button>`;
             // Back-in-stock notification form (out of stock only)
@@ -738,11 +738,11 @@
                 const spr  = document.getElementById('sticky-pp');
                 const sBtn = document.getElementById('sticky-atc-btn');
                 if (snm) snm.textContent = product.name;
-                const updatePrice = () => { if (spr) spr.textContent = 'Tk ' + Number(noSizes ? productPrice : (currentSelectedPrice || productPrice)).toLocaleString(); };
+                const updatePrice = () => { if (spr) spr.textContent = 'Tk ' + Number(currentSelectedPrice || productPrice).toLocaleString(); };
                 updatePrice();
                 if (sBtn) {
                     if (product.stock === 0) { sBtn.disabled = true; sBtn.textContent = 'OUT OF STOCK'; sBtn.style.opacity = '.5'; }
-                    else sBtn.onclick = () => { noSizes ? addToCart(product.id, 'Set', productPrice) : addCurrentSizeToCart(product.id); };
+                    else sBtn.onclick = () => { addCurrentSizeToCart(product.id); };
                 }
                 const prevSelectSize = window.selectSize;
                 window.selectSize = function(size, price, btnEl) { prevSelectSize(size, price, btnEl); updatePrice(); };
@@ -1074,15 +1074,19 @@
         window.addCurrentSizeToCart = function(productId) {
             // Always resolve effective price at the moment of click — never trust stale currentSelectedPrice
             const _fs = window.getFlashSaleItem ? window.getFlashSaleItem(productId) : null;
-            const effectivePrice = (_fs && _fs.salePrice && currentSelectedSize === '50ML')
+            const effectivePrice = (_fs && _fs.salePrice && (currentSelectedSize === '50ML' || !currentSelectedSize))
                 ? _fs.salePrice
                 : currentSelectedPrice;
-            addToCart(productId, currentSelectedSize, effectivePrice);
+            addToCart(productId, currentSelectedSize || 'Set', effectivePrice);
             updateInlineCart();
         };
 
         window.buyItNow = function(productId) {
-            addToCart(productId, currentSelectedSize, currentSelectedPrice);
+            const _fs = window.getFlashSaleItem ? window.getFlashSaleItem(productId) : null;
+            const effectivePrice = (_fs && _fs.salePrice && currentSelectedSize === '50ML')
+                ? _fs.salePrice
+                : currentSelectedPrice;
+            addToCart(productId, currentSelectedSize, effectivePrice);
             window.location.href = 'checkout.html';
         };
 

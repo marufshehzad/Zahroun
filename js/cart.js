@@ -30,7 +30,9 @@ function reconcileCart() {
             }
             // Layer 3: never overwrite with a higher price (price below catalog = intentional)
             if (item.selectedPrice && catalogPrice && Number(item.selectedPrice) < Number(catalogPrice)) {
-                return { ...prod, size: item.size, selectedPrice: item.selectedPrice, quantity: item.quantity || 1 };
+                return { ...prod, size: item.size, selectedPrice: item.selectedPrice,
+                         ...(item.flashSalePrice ? { flashSalePrice: item.flashSalePrice } : {}),
+                         quantity: item.quantity || 1 };
             }
             // Regular catalog price
             if (catalogPrice) {
@@ -83,7 +85,10 @@ window.addToCart = function(productId, size = '50ML', price = null) {
         cartToast("Quantity updated ✓");
     } else {
         const newItem = { ...product, size, selectedPrice: itemPrice, quantity: 1 };
-        if (isFlashSale) newItem.flashSalePrice = Number(price);
+        if (isFlashSale) {
+            newItem.flashSalePrice = Number(price);
+            newItem.originalPrice = Number(regularPrice);
+        }
         cart.push(newItem);
         cartToast("Added to cart ✓");
     }
