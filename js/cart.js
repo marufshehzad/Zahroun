@@ -12,6 +12,11 @@ function reconcileCart() {
             const prod = products.find(p => p.id === item.id);
             if (!item.size || item.size === 'undefined') item.size = '50ML';
             if (!prod.prices[item.size] && prod.prices['50ML']) item.size = '50ML';
+            // Preserve flash sale price — do NOT overwrite with regular catalog price
+            if (item.flashSalePrice) {
+                item.selectedPrice = item.flashSalePrice;
+                return { ...prod, size: item.size, selectedPrice: item.flashSalePrice, flashSalePrice: item.flashSalePrice, quantity: item.quantity || 1 };
+            }
             if (prod.prices && prod.prices[item.size]) {
                 item.selectedPrice = prod.prices[item.size];
             } else if (item.selectedPrice === undefined || isNaN(item.selectedPrice) || item.selectedPrice === null) {
@@ -52,12 +57,18 @@ window.addToCart = function(productId, size = '50ML', price = null) {
         itemPrice = (product.prices && product.prices[size]) ? product.prices[size] : product.price;
     }
 
+    const regularPrice = (product.prices && product.prices[size]) ? product.prices[size] : product.price;
+    const isFlashSale = price !== null && !isNaN(price) && Number(price) !== Number(regularPrice);
+
     const existingItem = cart.find(item => item.id === productId && item.size === size);
     if (existingItem) {
         existingItem.quantity += 1;
+        if (isFlashSale) existingItem.flashSalePrice = Number(price);
         cartToast("Quantity updated ✓");
     } else {
-        cart.push({ ...product, size: size, selectedPrice: itemPrice, quantity: 1 });
+        const newItem = { ...product, size, selectedPrice: itemPrice, quantity: 1 };
+        if (isFlashSale) newItem.flashSalePrice = Number(price);
+        cart.push(newItem);
         cartToast("Added to cart ✓");
     }
 
