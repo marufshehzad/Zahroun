@@ -544,11 +544,15 @@
             const displaySizes = sizeOrder.filter(s => activeSizeList.includes(s));
             const noSizes = displaySizes.length === 0;
 
-            // Default selected = admin-chosen size, else 50ML, else last available
+            // Default selected = 50ML when flash sale active for this product (sale is always 50ML),
+            // else admin-chosen defaultDisplaySize, else 50ML, else last available
             const _dds = product.defaultDisplaySize;
-            currentSelectedSize = (_dds && displaySizes.includes(_dds))
-                ? _dds
-                : (displaySizes.includes('50ML') ? '50ML' : (displaySizes[displaySizes.length - 1] || null));
+            const _fsAtLoad = window.getFlashSaleItem ? window.getFlashSaleItem(product.id) : null;
+            currentSelectedSize = (_fsAtLoad && _fsAtLoad.salePrice && displaySizes.includes('50ML'))
+                ? '50ML'
+                : (_dds && displaySizes.includes(_dds)
+                    ? _dds
+                    : (displaySizes.includes('50ML') ? '50ML' : (displaySizes[displaySizes.length - 1] || null)));
             const productPrice = noSizes
                 ? (product.basePrice || Object.values(product.prices || {}).filter(v => v > 0).sort((a,b) => b - a)[0] || 0)
                 : getSizePrice(product, currentSelectedSize);
@@ -908,9 +912,21 @@
 
         function refreshPriceDisplay() {
             if (!currentProduct) return;
-            const fsItem = getFlashSaleForProduct(currentProduct.id);
+            // Single source of truth: window.getFlashSaleItem (global, set by auth.js)
+            const fsItem = (window.getFlashSaleItem ? window.getFlashSaleItem(currentProduct.id) : null)
+                           || getFlashSaleForProduct(currentProduct.id);
+            // If flash sale arrived after initial render and user hasn't manually picked a size,
+            // switch to 50ML so the deal is immediately visible (matches shop page behavior)
+            if (fsItem && fsItem.salePrice && !_userPickedSize) {
+                const _avail = currentProduct.activeSizes ?? ['6ML','15ML','30ML','50ML'];
+                if (_avail.includes('50ML') && currentSelectedSize !== '50ML') {
+                    currentSelectedSize = '50ML';
+                    updateSelectedSizeUI('50ML');
+                    updateProductImage(getSizeImage(currentProduct, '50ML'));
+                }
+            }
             const catalogPrice = getSizePrice(currentProduct, currentSelectedSize);
-            const salePrice = (fsItem && currentSelectedSize === '50ML') ? fsItem.salePrice : null;
+            const salePrice = (fsItem && fsItem.salePrice && currentSelectedSize === '50ML') ? fsItem.salePrice : null;
             currentSelectedPrice = salePrice || catalogPrice;
             const displayEl = document.getElementById('display-price');
             if (displayEl) displayEl.innerHTML = buildPriceHtml(catalogPrice, salePrice);
@@ -1040,11 +1056,13 @@
 
         let currentSelectedSize = '50ML';
         let currentSelectedPrice = 0;
+        let _userPickedSize = false; // true once user manually taps a size button
 
         window.selectSize = function(size, price, btnElement) {
+            _userPickedSize = true;
             currentSelectedSize = size;
             currentSelectedPrice = price;
-            refreshPriceDisplay();
+            refreshPriceDisplay(); // recalculates salePrice for chosen size
             updateProductImage(getSizeImage(currentProduct, size));
             updateSelectedSizeUI(size);
         };
@@ -1054,7 +1072,12 @@
         document.addEventListener('flashsale-status', () => { refreshPriceDisplay(); });
 
         window.addCurrentSizeToCart = function(productId) {
-            addToCart(productId, currentSelectedSize, currentSelectedPrice);
+            // Always resolve effective price at the moment of click — never trust stale currentSelectedPrice
+            const _fs = window.getFlashSaleItem ? window.getFlashSaleItem(productId) : null;
+            const effectivePrice = (_fs && _fs.salePrice && currentSelectedSize === '50ML')
+                ? _fs.salePrice
+                : currentSelectedPrice;
+            addToCart(productId, currentSelectedSize, effectivePrice);
             updateInlineCart();
         };
 
