@@ -65,10 +65,7 @@ window.incrementCouponUsage = async function (code) {
         limitReached = true;
         return; // do not increment — abort is implicit (no writes)
       }
-      const newCount = used + 1;
-      const updates = { usedCount: increment(1) };
-      if (max !== undefined && max > 0 && newCount >= max) updates.active = false;
-      txn.update(ref, updates);
+      txn.update(ref, { usedCount: increment(1) });
     });
     return !limitReached;
   } catch (e) {
