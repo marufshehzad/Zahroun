@@ -4063,8 +4063,13 @@ function openOrderDetail(order) {
   const c = order.customer || {};
   const items = order.items || [];
   const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0);
-  const couponCode = typeof order.coupon === "string" ? order.coupon : (order.coupon?.id || order.coupon?.code || "");
-  const discount = order.couponDiscount || (typeof order.coupon === "object" ? order.coupon?.discount : 0) || 0;
+  const couponCode = (typeof order.coupon === "string" ? order.coupon : (order.coupon?.id || order.coupon?.code)) || order.couponCode || "";
+  const couponDiscount = +(order.couponDiscount || (typeof order.coupon === "object" ? order.coupon?.discount : 0) || (couponCode ? order.discount : 0) || 0);
+  const promos = Array.isArray(order.promos) ? order.promos : [];
+  const promoDiscount = +(order.promoDiscount || promos.reduce((s, p) => s + (p.discount || 0), 0) || 0);
+  const loyaltyAmt = +(order.loyaltyDiscountAmount || 0);
+  const loyaltyPts = +(order.loyaltyRedeemedPoints || 0);
+  const delivery = +(order.delivery || order.deliveryCharge || 0);
   const orderNumDisplay = order.orderNum ? `#${order.orderNum}` : `#${order.id.slice(0, 8).toUpperCase()}`;
 
   document.getElementById("od-order-id").textContent = `Order ${orderNumDisplay}`;
@@ -4093,7 +4098,8 @@ function openOrderDetail(order) {
           ${(order.payment?.method === 'bKash' || order.payment?.method === 'Nagad') && order.paymentStatus !== "verified"
             ? `<button onclick="window._verifyPayment('${order.id}')" style="margin-top:.4rem;background:#1e7e34;color:#fff;border:none;border-radius:6px;padding:.4rem 1rem;font-size:.82rem;cursor:pointer;font-family:var(--font-sans);">✓ Mark as Verified</button><br>`
             : ""}
-          ${couponCode ? `Coupon: <code style="font-size:.82rem;background:#e6f4ea;color:#1e7e34;padding:.1rem .4rem;border-radius:4px;font-weight:600;">${escapeHtml(couponCode)}</code>` : `<span style="color:var(--text-muted);font-size:.85rem;">No coupon</span>`}
+          ${couponCode ? `Coupon: <code style="font-size:.82rem;background:#e6f4ea;color:#1e7e34;padding:.1rem .4rem;border-radius:4px;font-weight:600;">${escapeHtml(couponCode)}</code>${couponDiscount > 0 ? ` <span style="font-size:.82rem;color:#1e7e34;">−৳${couponDiscount.toLocaleString()}</span>` : ""}` : `<span style="color:var(--text-muted);font-size:.85rem;">No coupon</span>`}
+          ${promos.length ? `<div style="margin-top:.25rem;font-size:.82rem;color:#163E34;">${promos.map(p => `<span style="background:#e6f0ea;border-radius:3px;padding:.05rem .35rem;margin-right:.3rem;">${escapeHtml(p.label)}: −৳${Number(p.discount).toLocaleString()}</span>`).join("")}</div>` : ""}
         </div>
       </div>
     </div>
@@ -4136,8 +4142,10 @@ function openOrderDetail(order) {
 
     <div style="background:var(--bg-color);border-radius:8px;padding:1rem;margin-bottom:1rem;">
       <div style="display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:.4rem;"><span style="color:var(--text-muted);">Subtotal</span><span>৳${subtotal.toLocaleString()}</span></div>
-      ${discount ? `<div style="display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:.4rem;color:#1e7e34;"><span>Discount (${escapeHtml(couponCode)})</span><span>−৳${Number(discount).toLocaleString()}</span></div>` : ""}
-      ${order.deliveryCharge ? `<div style="display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:.4rem;"><span style="color:var(--text-muted);">Delivery</span><span>৳${Number(order.deliveryCharge).toLocaleString()}</span></div>` : ""}
+      ${couponDiscount > 0 ? `<div style="display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:.4rem;color:#1e7e34;"><span>Coupon${couponCode ? ` (${escapeHtml(couponCode)})` : ""}</span><span>−৳${couponDiscount.toLocaleString()}</span></div>` : ""}
+      ${promos.map(p => `<div style="display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:.4rem;color:#163E34;"><span>${escapeHtml(p.label)}</span><span>−৳${Number(p.discount).toLocaleString()}</span></div>`).join("")}
+      ${loyaltyAmt > 0 ? `<div style="display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:.4rem;color:#7b5ea7;"><span>Loyalty Points${loyaltyPts > 0 ? ` (${loyaltyPts} pts)` : ""}</span><span>−৳${loyaltyAmt.toLocaleString()}</span></div>` : ""}
+      ${delivery > 0 ? `<div style="display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:.4rem;"><span style="color:var(--text-muted);">Delivery</span><span>৳${delivery.toLocaleString()}</span></div>` : ""}
       <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1rem;border-top:1px solid var(--border-color);padding-top:.65rem;margin-top:.5rem;">
         <span>Total</span><span style="color:var(--primary-color);">৳${(order.total || 0).toLocaleString()}</span>
       </div>
@@ -4179,8 +4187,11 @@ function printOrderInvoice(order) {
   const c = order.customer || {};
   const items = order.items || [];
   const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0);
-  const discount = order.couponDiscount || (typeof order.coupon === "object" ? order.coupon?.discount : 0) || 0;
-  const couponCode = typeof order.coupon === "string" ? order.coupon : (order.coupon?.id || order.coupon?.code || "");
+  const couponCode = (typeof order.coupon === "string" ? order.coupon : (order.coupon?.id || order.coupon?.code)) || order.couponCode || "";
+  const couponDiscount = +(order.couponDiscount || (typeof order.coupon === "object" ? order.coupon?.discount : 0) || (couponCode ? order.discount : 0) || 0);
+  const invoicePromos = Array.isArray(order.promos) ? order.promos : [];
+  const invoiceLoyalty = +(order.loyaltyDiscountAmount || 0);
+  const invoiceDelivery = +(order.delivery || order.deliveryCharge || 0);
   const dateStr = fmtDate(order.createdAt);
   const orderNumDisplay = order.orderNum ? `#${order.orderNum}` : `#${order.id.slice(0, 8).toUpperCase()}`;
   const logoUrl = window.location.origin + "/product%20pictures/main%20logo.png";
@@ -4195,8 +4206,10 @@ function printOrderInvoice(order) {
     <td style="text-align:right;">৳${((item.price || 0) * (item.quantity || 1)).toLocaleString()}</td>
   </tr>`).join("");
 
-  const discountRow = discount ? `<tr class="tot"><td colspan="5" style="text-align:right;color:#1e7e34;">Discount (${escapeHtml(couponCode)})</td><td style="text-align:right;color:#1e7e34;">−৳${Number(discount).toLocaleString()}</td></tr>` : "";
-  const deliveryRow = order.deliveryCharge ? `<tr class="tot"><td colspan="5" style="text-align:right;color:#555;">Delivery</td><td style="text-align:right;">৳${Number(order.deliveryCharge).toLocaleString()}</td></tr>` : "";
+  const discountRow = couponDiscount > 0 ? `<tr class="tot"><td colspan="5" style="text-align:right;color:#1e7e34;">Coupon Discount${couponCode ? ` (${escapeHtml(couponCode)})` : ""}</td><td style="text-align:right;color:#1e7e34;">−৳${couponDiscount.toLocaleString()}</td></tr>` : "";
+  const promoRows = invoicePromos.map(p => `<tr class="tot"><td colspan="5" style="text-align:right;color:#163E34;">${escapeHtml(p.label)}</td><td style="text-align:right;color:#163E34;">−৳${Number(p.discount).toLocaleString()}</td></tr>`).join("");
+  const loyaltyRow = invoiceLoyalty > 0 ? `<tr class="tot"><td colspan="5" style="text-align:right;color:#7b5ea7;">Loyalty Points</td><td style="text-align:right;color:#7b5ea7;">−৳${invoiceLoyalty.toLocaleString()}</td></tr>` : "";
+  const deliveryRow = invoiceDelivery > 0 ? `<tr class="tot"><td colspan="5" style="text-align:right;color:#555;">Delivery</td><td style="text-align:right;">৳${invoiceDelivery.toLocaleString()}</td></tr>` : "";
 
   const win = window.open("", "_blank", "width=720,height=960,scrollbars=yes");
   win.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
@@ -4283,7 +4296,7 @@ function printOrderInvoice(order) {
   <tbody>${itemRows}</tbody>
   <tfoot>
     <tr class="tot"><td colspan="5" style="text-align:right;">Subtotal</td><td style="text-align:right;">৳${subtotal.toLocaleString()}</td></tr>
-    ${discountRow}${deliveryRow}
+    ${discountRow}${promoRows}${loyaltyRow}${deliveryRow}
     <tr class="tot tot-sep"><td colspan="6"></td></tr>
     <tr class="grand"><td colspan="5" style="text-align:right;">Total Payable</td><td style="text-align:right;">৳${(order.total || 0).toLocaleString()}</td></tr>
   </tfoot>
