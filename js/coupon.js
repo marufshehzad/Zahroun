@@ -51,7 +51,7 @@ window.clearAppliedCoupon = function () {
 /* H3-fix: atomic transaction — check maxUses before incrementing.
    Returns true on success, false if limit already reached, throws on Firestore error. */
 window.incrementCouponUsage = async function (code) {
-  if (!code || !auth.currentUser) return true;
+  if (!code) return true;
   const ref = doc(db, "coupons", code);
   try {
     let limitReached = false;
