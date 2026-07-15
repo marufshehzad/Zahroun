@@ -60,8 +60,8 @@ window.incrementCouponUsage = async function (code) {
       if (!snap.exists()) return; // coupon deleted — no-op
       const data = snap.data();
       const used = data.usedCount || 0;
-      const max  = data.maxUses;           // undefined means unlimited
-      if (max !== undefined && used >= max) {
+      const max  = data.maxUses;           // 0/undefined/null all mean unlimited (matches validateAndApplyCoupon)
+      if (max && used >= max) {
         limitReached = true;
         return; // do not increment — abort is implicit (no writes)
       }

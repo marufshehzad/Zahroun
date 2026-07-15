@@ -1224,7 +1224,7 @@
                             return;
                         }
                     }
-                    if (fresh.maxUses !== undefined && (fresh.usedCount || 0) >= fresh.maxUses) {
+                    if (fresh.maxUses && (fresh.usedCount || 0) >= fresh.maxUses) {
                         window.clearAppliedCoupon && window.clearAppliedCoupon();
                         coupon = null;
                         if (window.showToast) window.showToast('This coupon\'s usage limit has been reached.', 'error');
