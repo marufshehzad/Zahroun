@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="icon" href="favicon.ico" sizes="48x48">
@@ -253,6 +253,94 @@
         .flash-prod-inp { width:110px; padding:.38rem .6rem; border:1px solid var(--border-color); border-radius:6px; font-size:.85rem; font-family:var(--font-sans); color:var(--text-main); background:var(--bg-color); }
         .flash-prod-inp:disabled { opacity:.4; cursor:not-allowed; }
         .flash-prod-inp:focus { outline:none; border-color:var(--primary-color); }
+
+        .flash-table-hdr {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .4rem .9rem;
+            font-size: .7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: .5rem;
+        }
+        .flash-table-hdr .fhdr-sz { width: 52px; flex-shrink: 0; }
+        .flash-table-hdr .fhdr-reg { width: 74px; flex-shrink: 0; }
+        .flash-table-hdr .fhdr-disc { width: 200px; flex-shrink: 0; }
+        .flash-table-hdr .fhdr-save { flex: 1; }
+
+        .fprod-card {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: .75rem;
+            overflow: hidden;
+            background: #fff;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .fprod-card.is-selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(15,74,60,.08);
+        }
+        .fprod-hdr {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .75rem .9rem;
+            background: var(--bg-color);
+            cursor: pointer;
+            user-select: none;
+            transition: background .2s;
+        }
+        .fprod-card.is-selected .fprod-hdr {
+            background: rgba(15,74,60,.05);
+        }
+        .fsize-row {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .45rem 0;
+            border-bottom: 1px dashed #f0eee8;
+        }
+        .fsize-row:last-child { border-bottom: none; }
+        .fsize-meta { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
+        .fsize-name { font-size: .82rem; font-weight: 700; width: 52px; flex-shrink: 0; color: var(--text-main); }
+        .fsize-reg { font-size: .78rem; color: var(--text-muted); width: 74px; flex-shrink: 0; }
+        .fsize-controls { display: flex; align-items: center; gap: .4rem; width: 200px; flex-shrink: 0; }
+        .ftype-toggle { display: flex; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+        .ftype-btn { padding: .3rem .55rem; font-size: .72rem; border: none; background: var(--bg-color); color: var(--text-muted); cursor: pointer; transition: all .15s; font-family: var(--font-sans); }
+        .ftype-btn.active { background: var(--primary-color); color: #fff; font-weight: 600; }
+        .fsize-input { width: 95px; padding: .32rem .5rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: .82rem; font-family: var(--font-sans); background: #fff; box-sizing: border-box; }
+        .fsize-input:focus { outline: none; border-color: var(--primary-color); }
+        .fsize-save { font-size: .78rem; font-weight: 600; flex: 1; }
+
+        @media (max-width: 600px) {
+            .flash-table-hdr { display: none !important; }
+            .fprod-hdr { padding: .75rem .75rem; }
+            .fsize-row {
+                display: grid !important;
+                grid-template-columns: 1fr auto !important;
+                grid-template-areas:
+                    "meta save"
+                    "ctrl ctrl" !important;
+                gap: .45rem .5rem !important;
+                padding: .65rem .75rem !important;
+                background: #fafaf8;
+                border: 1px solid #e8e5df;
+                border-radius: 8px;
+                margin-bottom: .5rem;
+            }
+            .fsize-meta { grid-area: meta; width: auto !important; gap: .6rem; }
+            .fsize-name { width: auto !important; font-size: .85rem; font-weight: 700; color: var(--primary-color); }
+            .fsize-reg { width: auto !important; font-size: .8rem; }
+            .fsize-save { grid-area: save; text-align: right; font-size: .78rem; align-self: center; }
+            .fsize-controls { grid-area: ctrl; width: 100% !important; gap: .5rem; }
+            .ftype-toggle { flex-shrink: 0; }
+            .fsize-input { flex: 1 !important; width: 100% !important; font-size: .85rem !important; padding: .38rem .6rem !important; }
+            [data-panel="flash-sale"] .panel { padding: 1rem; box-sizing: border-box; width: 100%; max-width: 100%; }
+        }
 
         /* Prevent tap-highlight & sticky hover on touch devices */
         * { -webkit-tap-highlight-color: transparent; }
@@ -1491,22 +1579,14 @@
                                 <h3>Sale Products</h3>
                                 <span class="muted-note" id="flash-selected-count"></span>
                             </div>
-                            <p class="muted-note" style="margin-bottom:1rem;font-size:.82rem;">Check a product to include it. Enter the discounted price (৳). Leave unchecked to exclude from sale.</p>
-                            <div style="overflow-x:auto;">
-                                <table class="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:28px;"></th>
-                                            <th>Product</th>
-                                            <th>Regular (50ML)</th>
-                                            <th>Sale Price (৳)</th>
-                                            <th>You Save</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="flash-product-rows">
-                                        <tr><td colspan="5" class="muted-note" style="padding:2rem;text-align:center;">Loading products…</td></tr>
-                                    </tbody>
-                                </table>
+                            <div class="flash-table-hdr">
+                                <span class="fhdr-sz">Size</span>
+                                <span class="fhdr-reg">Regular</span>
+                                <span class="fhdr-disc">Discount</span>
+                                <span class="fhdr-save">You Save</span>
+                            </div>
+                            <div id="flash-product-rows">
+                                <p class="muted-note" style="padding:2rem;text-align:center;">Loading products…</p>
                             </div>
                         </div>
 

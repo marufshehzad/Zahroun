@@ -348,11 +348,23 @@
             const countEl = document.getElementById("sale-product-count");
             if (!grid) return;
 
+            const cheapest = window.cheapestFlashSale || function(salePrices, regularPrices) {
+                let best;
+                Object.entries(salePrices || {}).forEach(([size, sp]) => {
+                    const reg = regularPrices?.[size];
+                    if (!reg || sp <= 0 || sp >= reg) return;
+                    if (!best || sp < best.salePrice) best = { size, salePrice: sp };
+                });
+                return best;
+            };
+
             const saleProducts = saleItems
                 .map(item => {
                     const p = allProducts.find(x => x.id === item.productId);
                     if (!p) return null;
-                    return { ...p, salePrice: item.salePrice };
+                    const best = cheapest(item.prices, p.prices);
+                    if (!best) return null;
+                    return { ...p, saleSize: best.size, salePrice: best.salePrice };
                 })
                 .filter(Boolean);
 
@@ -364,7 +376,7 @@
             }
 
             grid.innerHTML = saleProducts.map(p => {
-                const reg = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : (p.price || 0);
+                const reg = (p.prices && p.prices[p.saleSize]) ? p.prices[p.saleSize] : (p.price || 0);
                 const discPct = reg > 0 ? Math.round((reg - p.salePrice) / reg * 100) : 0;
                 return `<div class="sale-card">
                     <div class="sale-card-badge">${esc(badgeText || "SALE")}</div>
@@ -378,8 +390,9 @@
                             <span class="sale-price">Tk ${p.salePrice.toLocaleString()}</span>
                             <span class="sale-orig">Tk ${reg.toLocaleString()}</span>
                             ${discPct > 0 ? `<span class="sale-discount-tag">${discPct}% OFF</span>` : ""}
+                            <span class="sale-size-tag" style="font-size:.7rem;color:var(--text-muted);">${esc(p.saleSize)}</span>
                         </div>
-                        <button class="btn" onclick="addToCart(${p.id}, '50ML', ${p.salePrice}); if(window.showToast) window.showToast('Added to cart!');">
+                        <button class="btn" onclick="addToCart(${p.id}, '${p.saleSize}', ${p.salePrice}); if(window.showToast) window.showToast('Added to cart!');">
                             <ion-icon name="bag-add-outline" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>Add to Cart
                         </button>
                     </div>
@@ -426,7 +439,7 @@
 
                     // Fetch sale products directly from Firestore by their IDs
                     // (avoids race condition with bundled vs Firestore product IDs)
-                    const saleItems = sale.items || [];
+                    const saleItems = window.upgradeFlashSaleItems ? window.upgradeFlashSaleItems(sale.items) : (sale.items || []);
                     if (saleItems.length) {
                         try {
                             const idStrings = saleItems.map(i => String(i.productId));

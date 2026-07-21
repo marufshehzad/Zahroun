@@ -544,12 +544,15 @@
             const displaySizes = sizeOrder.filter(s => activeSizeList.includes(s));
             const noSizes = displaySizes.length === 0;
 
-            // Default selected = 50ML when flash sale active for this product (sale is always 50ML),
+            // Default selected = the size with the cheapest active flash-sale discount (if any),
             // else admin-chosen defaultDisplaySize, else 50ML, else last available
             const _dds = product.defaultDisplaySize;
             const _fsAtLoad = window.getFlashSaleItem ? window.getFlashSaleItem(product.id) : null;
-            currentSelectedSize = (_fsAtLoad && _fsAtLoad.salePrice && displaySizes.includes('50ML'))
-                ? '50ML'
+            const _fsBestAtLoad = (_fsAtLoad && _fsAtLoad.prices && window.cheapestFlashSale)
+                ? window.cheapestFlashSale(_fsAtLoad.prices, product.prices)
+                : null;
+            currentSelectedSize = (_fsBestAtLoad && displaySizes.includes(_fsBestAtLoad.size))
+                ? _fsBestAtLoad.size
                 : (_dds && displaySizes.includes(_dds)
                     ? _dds
                     : (displaySizes.includes('50ML') ? '50ML' : (displaySizes[displaySizes.length - 1] || null)));
@@ -895,13 +898,6 @@
             return product.prices && product.prices[size] ? product.prices[size] : product.price;
         }
 
-        function getFlashSaleForProduct(productId) {
-            const fs = window.zahFlashSale;
-            if (!fs || !fs.enabled || !Array.isArray(fs.items)) return null;
-            // Only check enabled flag — endDate is for countdown display only
-            return fs.items.find(fi => String(fi.productId) === String(productId)) || null;
-        }
-
         function buildPriceHtml(regularPrice, salePrice) {
             if (!salePrice || Number(salePrice) >= Number(regularPrice)) {
                 return `Tk ${Number(regularPrice).toLocaleString()}`;
@@ -913,20 +909,22 @@
         function refreshPriceDisplay() {
             if (!currentProduct) return;
             // Single source of truth: window.getFlashSaleItem (global, set by auth.js)
-            const fsItem = (window.getFlashSaleItem ? window.getFlashSaleItem(currentProduct.id) : null)
-                           || getFlashSaleForProduct(currentProduct.id);
+            const fsItem = window.getFlashSaleItem ? window.getFlashSaleItem(currentProduct.id) : null;
+            const fsPrices = fsItem ? fsItem.prices : null;
             // If flash sale arrived after initial render and user hasn't manually picked a size,
-            // switch to 50ML so the deal is immediately visible (matches shop page behavior)
-            if (fsItem && fsItem.salePrice && !_userPickedSize) {
+            // switch to the cheapest discounted size so the deal is immediately visible
+            if (fsPrices && !_userPickedSize && window.cheapestFlashSale) {
+                const best = window.cheapestFlashSale(fsPrices, currentProduct.prices);
                 const _avail = currentProduct.activeSizes ?? ['6ML','15ML','30ML','50ML'];
-                if (_avail.includes('50ML') && currentSelectedSize !== '50ML') {
-                    currentSelectedSize = '50ML';
-                    updateSelectedSizeUI('50ML');
-                    updateProductImage(getSizeImage(currentProduct, '50ML'));
+                if (best && _avail.includes(best.size) && currentSelectedSize !== best.size) {
+                    currentSelectedSize = best.size;
+                    updateSelectedSizeUI(best.size);
+                    updateProductImage(getSizeImage(currentProduct, best.size));
                 }
             }
             const catalogPrice = getSizePrice(currentProduct, currentSelectedSize);
-            const salePrice = (fsItem && fsItem.salePrice && currentSelectedSize === '50ML') ? fsItem.salePrice : null;
+            const rawSalePrice = fsPrices ? fsPrices[currentSelectedSize] : null;
+            const salePrice = (typeof rawSalePrice === 'number' && rawSalePrice > 0 && rawSalePrice < catalogPrice) ? rawSalePrice : null;
             currentSelectedPrice = salePrice || catalogPrice;
             const displayEl = document.getElementById('display-price');
             if (displayEl) displayEl.innerHTML = buildPriceHtml(catalogPrice, salePrice);
@@ -1073,18 +1071,22 @@
 
         window.addCurrentSizeToCart = function(productId) {
             // Always resolve effective price at the moment of click — never trust stale currentSelectedPrice
+            const _catalogPrice = currentSelectedSize ? getSizePrice(currentProduct, currentSelectedSize) : currentSelectedPrice;
             const _fs = window.getFlashSaleItem ? window.getFlashSaleItem(productId) : null;
-            const effectivePrice = (_fs && _fs.salePrice && (currentSelectedSize === '50ML' || !currentSelectedSize))
-                ? _fs.salePrice
+            const _fsSale = _fs && currentSelectedSize ? _fs.prices?.[currentSelectedSize] : null;
+            const effectivePrice = (typeof _fsSale === 'number' && _fsSale > 0 && _fsSale < _catalogPrice)
+                ? _fsSale
                 : currentSelectedPrice;
             addToCart(productId, currentSelectedSize || 'Set', effectivePrice);
             updateInlineCart();
         };
 
         window.buyItNow = function(productId) {
+            const _catalogPrice = currentSelectedSize ? getSizePrice(currentProduct, currentSelectedSize) : currentSelectedPrice;
             const _fs = window.getFlashSaleItem ? window.getFlashSaleItem(productId) : null;
-            const effectivePrice = (_fs && _fs.salePrice && currentSelectedSize === '50ML')
-                ? _fs.salePrice
+            const _fsSale = _fs && currentSelectedSize ? _fs.prices?.[currentSelectedSize] : null;
+            const effectivePrice = (typeof _fsSale === 'number' && _fsSale > 0 && _fsSale < _catalogPrice)
+                ? _fsSale
                 : currentSelectedPrice;
             addToCart(productId, currentSelectedSize, effectivePrice);
             window.location.href = 'checkout.html';

@@ -146,10 +146,13 @@
                     content.innerHTML = `<div class="wl-grid">${wishlisted.map(p => {
                         const active = p.activeSizes ?? ['6ML','15ML','30ML','50ML'];
                         const bestSize = ['50ML','30ML','15ML','6ML'].find(s => active.includes(s)) || '50ML';
-                        const regularPrice = (p.prices && p.prices[bestSize]) ? p.prices[bestSize] : (p.basePrice || p.price || 0);
+                        const regularPriceAtBestSize = (p.prices && p.prices[bestSize]) ? p.prices[bestSize] : (p.basePrice || p.price || 0);
                         const _fsItem = window.getFlashSaleItem ? window.getFlashSaleItem(p.id) : null;
-                        const isSale = !!(_fsItem && _fsItem.salePrice);
-                        const effectivePrice = isSale ? _fsItem.salePrice : regularPrice;
+                        const _fsBest = (_fsItem && _fsItem.prices && window.cheapestFlashSale) ? window.cheapestFlashSale(_fsItem.prices, p.prices) : null;
+                        const isSale = !!_fsBest;
+                        const saleSize = isSale ? _fsBest.size : bestSize;
+                        const regularPrice = isSale ? (p.prices[saleSize] || regularPriceAtBestSize) : regularPriceAtBestSize;
+                        const effectivePrice = isSale ? _fsBest.salePrice : regularPrice;
                         const discPct = isSale ? Math.round((regularPrice - effectivePrice) / regularPrice * 100) : 0;
                         const priceHtml = isSale
                             ? `<div class="price" style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;"><span style="color:#e63946;font-weight:700;">Tk ${effectivePrice.toLocaleString()}</span><span style="font-size:.78rem;color:var(--text-muted);text-decoration:line-through;">Tk ${regularPrice.toLocaleString()}</span>${discPct > 0 ? `<span style="background:#fdecea;color:#e63946;font-size:.65rem;font-weight:700;padding:.1rem .35rem;border-radius:3px;">${discPct}% OFF</span>` : ''}</div>`
@@ -162,7 +165,7 @@
                                 <h3><a href="product.html?id=${p.id}" style="color:inherit;text-decoration:none;">${esc(p.name)}</a></h3>
                                 ${priceHtml}
                                 <div class="wl-actions">
-                                    <button class="btn" style="flex:1;font-size:.85rem;padding:.55rem;" onclick="addToCart(${p.id},'${active.length ? bestSize : '50ML'}',${effectivePrice})">Add to Cart</button>
+                                    <button class="btn" style="flex:1;font-size:.85rem;padding:.55rem;" onclick="addToCart(${p.id},'${active.length ? saleSize : '50ML'}',${effectivePrice})">Add to Cart</button>
                                     <a href="product.html?id=${p.id}" class="btn btn-outline" style="font-size:.85rem;padding:.55rem;">View</a>
                                 </div>
                             </div>

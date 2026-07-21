@@ -22,10 +22,11 @@ function reconcileCart() {
             const fs = window.zahFlashSale;
             if (fs && fs.enabled && Array.isArray(fs.items)) {
                 const fsItem = fs.items.find(fi => String(fi.productId) === String(item.id));
-                if (fsItem && fsItem.salePrice) {
-                    item.selectedPrice = fsItem.salePrice;
-                    item.flashSalePrice = fsItem.salePrice;
-                    return { ...prod, size: item.size, selectedPrice: fsItem.salePrice, flashSalePrice: fsItem.salePrice, quantity: item.quantity || 1 };
+                const fsPrice = fsItem?.prices?.[item.size];
+                if (typeof fsPrice === 'number' && fsPrice > 0 && fsPrice < catalogPrice) {
+                    item.selectedPrice = fsPrice;
+                    item.flashSalePrice = fsPrice;
+                    return { ...prod, size: item.size, selectedPrice: fsPrice, flashSalePrice: fsPrice, quantity: item.quantity || 1 };
                 }
             }
             // Layer 3: never overwrite with a higher price (price below catalog = intentional)

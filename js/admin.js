@@ -2474,7 +2474,7 @@ async function fetchFlashSale() {
   try {
     const snap = await getDoc(doc(db, "settings", "flashSale"));
     flashSaleData = snap.exists() ? snap.data() : { enabled: false, items: [] };
-    flashSaleData.items = flashSaleData.items || [];
+    flashSaleData.items = window.upgradeFlashSaleItems ? window.upgradeFlashSaleItems(flashSaleData.items) : (flashSaleData.items || []);
   } catch (e) { console.error("fetchFlashSale:", e); }
 }
 
@@ -2509,76 +2509,196 @@ function renderFlashSaleForm() {
   fetchSaleAnalytics();
 }
 
-function buildFlashProductRows() {
-  const tbody = document.getElementById("flash-product-rows");
-  if (!tbody) return;
-  const items = flashSaleData.items || [];
-  let selectedCount = 0;
+function _flashRowSalePrice(row) {
+  const reg = parseFloat(row.dataset.reg) || 0;
+  const mode = row.dataset.mode || "fixed";
+  if (mode === "pct") {
+    const pct = parseFloat(row.querySelector(".fpct").value) || 0;
+    if (pct > 0 && pct <= 95 && reg > 0) return Math.max(1, Math.round(reg * (1 - pct / 100)));
+    return 0;
+  }
+  return parseFloat(row.querySelector(".ffixed").value) || 0;
+}
 
-  tbody.innerHTML = products.filter(p => !p.hidden).map(p => {
+function _flashRefreshRowBadge(row) {
+  const reg = parseFloat(row.dataset.reg) || 0;
+  const sale = _flashRowSalePrice(row);
+  const badge = row.querySelector(".fsize-save");
+  const attempted = (row.dataset.mode === "pct" ? parseFloat(row.querySelector(".fpct").value) || 0 : parseFloat(row.querySelector(".ffixed").value) || 0) > 0;
+  const valid = sale > 0 && sale < reg;
+  if (badge) {
+    if (valid) {
+      const saveAmt = reg - sale;
+      const pct = reg > 0 ? Math.round(saveAmt / reg * 100) : 0;
+      badge.innerHTML = `<span style="color:#1e7e34;font-weight:700;">৳${sale.toLocaleString()}</span> <span style="color:#1e7e34;font-size:.75rem;font-weight:500;">(৳${saveAmt.toLocaleString()} off, ${pct}%)</span>`;
+    } else if (attempted) {
+      badge.innerHTML = `<span style="color:#c0392b;">Must be less than ৳${reg.toLocaleString()}</span>`;
+    } else {
+      badge.innerHTML = `<span style="color:var(--text-muted);">—</span>`;
+    }
+  }
+  row.style.background = (attempted && !valid) ? "#fdecea" : "";
+}
+
+function _flashUpdateProductSummary(pid) {
+  const container = document.getElementById(`fsizes-${pid}`);
+  if (!container) return;
+  let n = 0;
+  container.querySelectorAll(".fsize-row").forEach(row => {
+    const reg = parseFloat(row.dataset.reg) || 0;
+    const sale = _flashRowSalePrice(row);
+    if (sale > 0 && sale < reg) n++;
+  });
+  const el = document.getElementById(`fsummary-${pid}`);
+  if (el) el.textContent = n > 0 ? `${n} size${n !== 1 ? "s" : ""} on sale` : "";
+}
+
+function _flashUpdateSelectedCount() {
+  const wrap = document.getElementById("flash-product-rows");
+  if (!wrap) return;
+  const count = wrap.querySelectorAll(".fchk:checked").length;
+  const cEl = document.getElementById("flash-selected-count");
+  if (cEl) cEl.textContent = `${count} product${count !== 1 ? "s" : ""} selected`;
+}
+
+function _flashSizeRowHtml(p, sz, item) {
+  const reg = (p.prices && p.prices[sz]) ? p.prices[sz] : 0;
+  const saved = item?.prices?.[sz];
+  const hasSaved = typeof saved === "number" && saved > 0;
+  return `<div class="fsize-row" data-pid="${p.id}" data-size="${sz}" data-reg="${reg}" data-mode="fixed">
+    <div class="fsize-meta">
+      <span class="fsize-name">${sz}</span>
+      <span class="fsize-reg">৳${reg.toLocaleString()}</span>
+    </div>
+    <div class="fsize-controls">
+      <div class="ftype-toggle">
+        <button type="button" class="ftype-btn active" data-mode="fixed">Tk</button>
+        <button type="button" class="ftype-btn" data-mode="pct">%</button>
+      </div>
+      <input type="number" class="fsize-input ffixed" value="${hasSaved ? saved : ""}" min="1" max="${reg}" placeholder="Sale price">
+      <input type="number" class="fsize-input fpct" value="" min="1" max="95" placeholder="% off" style="display:none;">
+    </div>
+    <div class="fsize-save">—</div>
+  </div>`;
+}
+
+function buildFlashProductRows() {
+  const wrap = document.getElementById("flash-product-rows");
+  if (!wrap) return;
+  const items = flashSaleData.items || [];
+
+  wrap.innerHTML = products.filter(p => !p.hidden).map(p => {
     const item = items.find(i => i.productId === p.id);
     const checked = !!item;
-    if (checked) selectedCount++;
-    const regularPrice = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : (p.price || 0);
-    const salePrice = item?.salePrice || "";
-    const saving = (item && item.salePrice && regularPrice > item.salePrice)
-      ? `<span style="color:#1e7e34;font-weight:600;">৳${(regularPrice - item.salePrice).toLocaleString()} off</span>`
-      : `<span style="color:var(--text-muted);">—</span>`;
+    const activeSzs = p.activeSizes ?? SIZE_KEYS;
+    const sizesToShow = activeSzs.filter(sz => p.prices && p.prices[sz]);
 
-    return `<tr id="frow-${p.id}">
-      <td><input type="checkbox" class="fchk" data-pid="${p.id}" ${checked ? "checked" : ""} style="width:15px;height:15px;cursor:pointer;accent-color:var(--primary-color);"></td>
-      <td>
-        <div style="display:flex;align-items:center;gap:.6rem;">
-          ${p.image ? `<img src="${optimizedUrl(p.image, 36)}" style="width:36px;height:36px;object-fit:contain;background:var(--bg-color);border-radius:5px;flex-shrink:0;">` : ""}
-          <span style="font-size:.85rem;font-weight:500;">${escapeHtml(p.name)}</span>
-        </div>
-      </td>
-      <td style="font-size:.85rem;">৳${regularPrice.toLocaleString()}</td>
-      <td><input type="number" class="flash-prod-inp fprice" data-pid="${p.id}" data-reg="${regularPrice}" value="${salePrice}" min="1" max="${regularPrice}" placeholder="Sale price" ${!checked ? "disabled" : ""}></td>
-      <td id="fsaving-${p.id}">${saving}</td>
-    </tr>`;
+    return `<div class="fprod-card ${checked ? "is-selected" : ""}" id="fcard-${p.id}">
+      <div class="fprod-hdr" data-pid="${p.id}">
+        <input type="checkbox" class="fchk" data-pid="${p.id}" ${checked ? "checked" : ""} style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary-color);flex-shrink:0;">
+        ${p.image ? `<img src="${optimizedUrl(p.image, 32)}" style="width:32px;height:32px;object-fit:contain;background:#fff;border-radius:5px;flex-shrink:0;">` : ""}
+        <span style="font-size:.85rem;font-weight:600;flex:1;color:var(--text-main);">${escapeHtml(p.name)}</span>
+        <span id="fsummary-${p.id}" style="font-size:.75rem;color:var(--text-muted);margin-right:.2rem;"></span>
+        <ion-icon name="chevron-down-outline" class="fprod-arrow" style="font-size:1.1rem;color:var(--text-muted);transition:transform .25s ease;transform:${checked ? "rotate(180deg)" : "rotate(0deg)"};flex-shrink:0;"></ion-icon>
+      </div>
+      <div id="fsizes-${p.id}" class="fsizes-wrap" style="display:${checked ? "block" : "none"};padding:.6rem .9rem;border-top:1px solid var(--border-color);background:#fff;">
+        ${sizesToShow.length ? sizesToShow.map(sz => _flashSizeRowHtml(p, sz, item)).join("") : `<span class="muted-note" style="font-size:.78rem;">No sizes priced for this product.</span>`}
+      </div>
+    </div>`;
   }).join("");
 
-  // Update count
-  const countEl = document.getElementById("flash-selected-count");
-  if (countEl) countEl.textContent = `${selectedCount} product${selectedCount !== 1 ? "s" : ""} selected`;
+  // Wire product header bar & checkbox toggle
+  wrap.querySelectorAll(".fprod-hdr").forEach(hdr => {
+    const pid = hdr.dataset.pid;
+    const chk = hdr.querySelector(".fchk");
+    const card = document.getElementById(`fcard-${pid}`);
+    const sizesEl = document.getElementById(`fsizes-${pid}`);
+    const arrow = hdr.querySelector(".fprod-arrow");
 
-  // Wire checkboxes
-  tbody.querySelectorAll(".fchk").forEach(chk => {
-    chk.addEventListener("change", () => {
-      const inp = tbody.querySelector(`.fprice[data-pid="${chk.dataset.pid}"]`);
-      if (inp) inp.disabled = !chk.checked;
-      // Update count
-      const total = tbody.querySelectorAll(".fchk:checked").length;
-      const cEl = document.getElementById("flash-selected-count");
-      if (cEl) cEl.textContent = `${total} product${total !== 1 ? "s" : ""} selected`;
+    const updateState = (isOpen) => {
+      if (sizesEl) sizesEl.style.display = isOpen ? "block" : "none";
+      if (arrow) arrow.style.transform = isOpen ? "rotate(180deg)" : "rotate(0deg)";
+      if (card) card.classList.toggle("is-selected", isOpen);
+      _flashUpdateSelectedCount();
+    };
+
+    chk.addEventListener("change", (e) => {
+      e.stopPropagation();
+      updateState(chk.checked);
+    });
+
+    hdr.addEventListener("click", (e) => {
+      if (e.target === chk) return;
+      chk.checked = !chk.checked;
+      updateState(chk.checked);
     });
   });
 
-  // Wire price inputs → live savings
-  tbody.querySelectorAll(".fprice").forEach(inp => {
-    inp.addEventListener("input", () => {
-      const reg = parseInt(inp.dataset.reg) || 0;
-      const sale = parseInt(inp.value) || 0;
-      const savEl = document.getElementById(`fsaving-${inp.dataset.pid}`);
-      if (savEl) {
-        savEl.innerHTML = sale > 0 && sale < reg
-          ? `<span style="color:#1e7e34;font-weight:600;">৳${(reg - sale).toLocaleString()} off</span>`
-          : `<span style="color:var(--text-muted);">—</span>`;
-      }
+  // Wire Tk/% toggle buttons + inputs per size row
+  wrap.querySelectorAll(".fsize-row").forEach(row => {
+    row.dataset.mode = "fixed";
+    const setMode = (mode) => {
+      row.dataset.mode = mode;
+      row.querySelectorAll(".ftype-btn").forEach(b => {
+        const active = b.dataset.mode === mode;
+        b.classList.toggle("active", active);
+      });
+      row.querySelector(".ffixed").style.display = mode === "fixed" ? "" : "none";
+      row.querySelector(".fpct").style.display = mode === "pct" ? "" : "none";
+      _flashRefreshRowBadge(row);
+      _flashUpdateProductSummary(row.dataset.pid);
+      _flashUpdateSelectedCount();
+    };
+    row.querySelectorAll(".ftype-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setMode(btn.dataset.mode);
+      });
     });
+    setMode("fixed");
+    row.querySelectorAll(".ffixed, .fpct").forEach(inp => {
+      inp.addEventListener("input", () => {
+        _flashRefreshRowBadge(row);
+        _flashUpdateProductSummary(row.dataset.pid);
+        _flashUpdateSelectedCount();
+      });
+    });
+    _flashRefreshRowBadge(row);
   });
+
+  products.filter(p => !p.hidden).forEach(p => _flashUpdateProductSummary(p.id));
+  _flashUpdateSelectedCount();
 }
 
 async function saveFlashSale() {
-  const tbody = document.getElementById("flash-product-rows");
+  const wrap = document.getElementById("flash-product-rows");
   const items = [];
-  tbody.querySelectorAll(".fchk:checked").forEach(chk => {
+  const invalid = [];
+
+  wrap.querySelectorAll(".fchk:checked").forEach(chk => {
     const pid = parseInt(chk.dataset.pid);
-    const inp = tbody.querySelector(`.fprice[data-pid="${pid}"]`);
-    const salePrice = parseInt(inp?.value) || 0;
-    if (pid && salePrice > 0) items.push({ productId: pid, salePrice });
+    const container = document.getElementById(`fsizes-${pid}`);
+    if (!container) return;
+    const prices = {};
+    container.querySelectorAll(".fsize-row").forEach(row => {
+      const size = row.dataset.size;
+      const reg = parseFloat(row.dataset.reg) || 0;
+      const sale = _flashRowSalePrice(row);
+      if (sale <= 0) return; // blank/unset size = not discounted
+      if (!reg || sale >= reg) {
+        const p = products.find(pp => pp.id === pid);
+        invalid.push(`${p ? p.name : pid} (${size})`);
+        return;
+      }
+      prices[size] = sale;
+    });
+    if (Object.keys(prices).length > 0) items.push({ productId: pid, prices });
   });
+
+  if (invalid.length) {
+    alert("Fix these sizes before saving — sale price must be less than the regular price:\n" + invalid.join("\n"));
+    return;
+  }
 
   const dateVal = document.getElementById("flash-end-date").value;
   const timeVal = document.getElementById("flash-end-time").value || "23:59";
@@ -2621,9 +2741,9 @@ async function fetchSaleAnalytics() {
   try {
     const saleIds = new Set(saleItems.map(i => i.productId));
     const salePriceMap = {};
-    saleItems.forEach(i => { salePriceMap[i.productId] = i.salePrice; });
+    saleItems.forEach(i => { salePriceMap[i.productId] = i.prices || {}; });
     const regularPriceMap = {};
-    products.forEach(p => { regularPriceMap[p.id] = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : (p.price || 0); });
+    products.forEach(p => { regularPriceMap[p.id] = p.prices || {}; });
 
     const snap = await getDocs(collection(db, "orders"));
     let totalOrders = 0, totalRevenue = 0, totalDiscount = 0, totalUnitsSold = 0;
@@ -2637,8 +2757,8 @@ async function fetchSaleAnalytics() {
       totalOrders++;
       saleOrderItems.forEach(it => {
         const qty = it.quantity || 1;
-        const salePrice = salePriceMap[it.id] || it.selectedPrice || 0;
-        const regPrice = regularPriceMap[it.id] || salePrice;
+        const salePrice = salePriceMap[it.id]?.[it.size] || it.selectedPrice || 0;
+        const regPrice = regularPriceMap[it.id]?.[it.size] || salePrice;
         totalRevenue += salePrice * qty;
         totalDiscount += Math.max(0, (regPrice - salePrice)) * qty;
         totalUnitsSold += qty;

@@ -443,6 +443,50 @@ window.zahrounAuth = {
 /* Site-wide settings: announcement bar, hero text override, WhatsApp link, Flash Sale status. */
 const _ZSK = 'zhr_store_v1', _ZFK = 'zhr_flash_v1', _ZTTL = 3 * 60 * 1000; // short TTL — admin changes appear within minutes, sessionStorage still skips most reads
 
+/* Flash Sale per-size helpers — single source of truth, shared by admin.js and every storefront page.
+   items shape: [{ productId, prices: { [size]: salePrice } }]. Legacy docs may still have a flat
+   { productId, salePrice } shape (pre-per-size); upgradeFlashSaleItems() normalizes those on read. */
+window.upgradeFlashSaleItems = function(items) {
+    return (items || []).map(it =>
+        it.prices ? it : { productId: it.productId, prices: (it.salePrice ? { "50ML": it.salePrice } : {}) }
+    );
+};
+
+window.buildFlashSalePriceMap = function(items) {
+    const map = {};
+    (items || []).forEach(it => {
+        if (it.prices && Object.keys(it.prices).length > 0) map[it.productId] = it.prices;
+    });
+    return map;
+};
+
+window.cheapestFlashSale = function(salePrices, regularPrices) {
+    let best;
+    if (!salePrices || !regularPrices) return best;
+    Object.entries(salePrices).forEach(([size, sp]) => {
+        const reg = regularPrices[size];
+        if (!reg || sp <= 0 || sp >= reg) return;
+        if (!best || sp < best.salePrice) best = { size, salePrice: sp };
+    });
+    return best;
+};
+
+window.isFlashSaleLive = function(fs) {
+    if (!fs || !fs.enabled) return false;
+    if (fs.endDate) {
+        const end = fs.endDate.toDate ? fs.endDate.toDate() : new Date(fs.endDate);
+        if (end < new Date()) return false;
+    }
+    return true;
+};
+
+window.getFlashSalePriceForSize = function(productId, size) {
+    const fs = window.zahFlashSale;
+    if (!window.isFlashSaleLive(fs)) return undefined;
+    const item = fs.items.find(fi => String(fi.productId) === String(productId));
+    return item?.prices?.[size];
+};
+
 async function loadSiteSettings() {
   try {
     // sessionStorage cache — store/flash settings change rarely; 30-min TTL shared with all pages
@@ -602,11 +646,11 @@ async function loadSiteSettings() {
 
     // Flash Sale global state
     const flashData = flashSnap.exists() ? flashSnap.data() : { enabled: false, items: [] };
-    flashData.items = flashData.items || [];
+    flashData.items = window.upgradeFlashSaleItems(flashData.items);
     window.zahFlashSale = flashData;
 
     // Global helper — single source of truth for flash sale item lookup.
-    // Returns { productId, salePrice } if product is in an active flash sale, else null.
+    // Returns { productId, prices: { [size]: salePrice } } if product is in an active flash sale, else null.
     window.getFlashSaleItem = function(productId) {
         const fs = window.zahFlashSale;
         if (!fs || !fs.enabled || !Array.isArray(fs.items)) return null;
