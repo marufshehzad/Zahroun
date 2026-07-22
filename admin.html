@@ -564,11 +564,7 @@
             [data-panel="customers"] thead th:nth-child(2),
             #customer-rows td:nth-child(2) { display:none; }
 
-            /* Categories: hide Slug(2), Order(3) */
-            [data-panel="categories"] thead th:nth-child(3),
-            [data-panel="categories"] thead th:nth-child(4),
-            #cat-rows td:nth-child(3),
-            #cat-rows td:nth-child(4) { display:none; }
+            /* Categories: show all columns on mobile with horizontal scroll */
 
             /* Coupons: hide Min Order(3), Expires(5) */
             [data-panel="coupons"] thead th:nth-child(3),
@@ -829,6 +825,104 @@
         .notif-new-pill { background: #e65100; color: #fff; font-size: .58rem; font-weight: 700; padding: .05rem .38rem; border-radius: 3px; margin-left: .3rem; vertical-align: middle; letter-spacing: .02em; }
         .orc-unverify-btn { background: none; color: #9b2226; border: 1px solid #d9a5a5; border-radius: 5px; padding: .22rem .6rem; font-size: .72rem; font-weight: 500; cursor: pointer; font-family: var(--font-sans); white-space: nowrap; margin-top: .25rem; }
         .orc-unverify-btn:hover { background: #fdecea; }
+
+        .icon-tab {
+            padding: 0 .9rem;
+            height: 34px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background: #fff;
+            font-size: .78rem;
+            line-height: 1;
+            cursor: pointer;
+            white-space: nowrap;
+            color: var(--text-muted);
+            font-family: var(--font-sans);
+            transition: all .15s;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-tab.active, .icon-tab:hover {
+            background: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+            font-weight: 600;
+        }
+        .icon-picker-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: .65rem .25rem;
+            border: 1px solid #e8e4dc;
+            border-radius: 10px;
+            background: #fff;
+            cursor: pointer;
+            transition: all .15s;
+            user-select: none;
+            min-height: 64px;
+        }
+        .icon-picker-card:hover {
+            border-color: var(--primary-color);
+            background: rgba(15,74,60,.06);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15,74,60,.12);
+        }
+        .icon-picker-card.is-selected {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: #fff;
+        }
+        .icon-picker-card ion-icon {
+            font-size: 1.45rem;
+            margin-bottom: .25rem;
+            color: inherit;
+        }
+        .icon-picker-card .icon-lbl {
+            font-size: .6rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 68px;
+            color: inherit;
+            font-weight: 500;
+        }
+
+        /* Responsive Mobile Icon Picker Fixes */
+        @media (max-width: 540px) {
+            #icon-picker-modal .admin-form {
+                padding: 1.1rem .85rem !important;
+                max-height: 94vh !important;
+                width: 95% !important;
+                border-radius: 16px !important;
+            }
+            #icon-picker-footer {
+                flex-direction: column-reverse !important;
+                gap: .6rem !important;
+                align-items: stretch !important;
+                text-align: center !important;
+            }
+            #clear-icon-btn {
+                width: 100% !important;
+                text-align: center !important;
+                justify-content: center !important;
+                display: flex !important;
+            }
+            #icon-picker-count {
+                text-align: center !important;
+                display: block !important;
+                width: 100% !important;
+                font-size: .8rem !important;
+            }
+            #icon-picker-grid {
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)) !important;
+                gap: 6px !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1113,9 +1207,13 @@
                             <h3>Categories</h3>
                             <button class="btn" id="add-cat-btn"><ion-icon name="add-outline"></ion-icon> Add Category</button>
                         </div>
-                        <div style="overflow-x:auto;">
-                            <table class="admin-table">
-                                <thead><tr><th>Name</th><th>Parent</th><th>Slug</th><th>Order</th><th>Products</th><th>Status</th><th></th></tr></thead>
+                        <div class="cat-table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;">
+                            <div class="mobile-scroll-hint" style="display:none;font-size:.74rem;color:var(--text-muted);margin-bottom:.6rem;align-items:center;gap:.35rem;background:#f7f6f2;padding:.4rem .75rem;border-radius:6px;border:1px solid #e8e4dc;">
+                                <ion-icon name="swap-horizontal-outline" style="font-size:1rem;color:var(--primary-color);flex-shrink:0;"></ion-icon>
+                                <span>Swipe horizontally to view all details (Slug, Order, Status, Actions)</span>
+                            </div>
+                            <table class="admin-table" style="min-width:650px;">
+                                <thead><tr><th>Name</th><th>Parent</th><th>Slug</th><th>Order</th><th>Products</th><th>Status</th><th>Actions</th></tr></thead>
                                 <tbody id="cat-rows"><tr><td colspan="7" class="muted-note" style="padding:2rem;text-align:center;">Loading…</td></tr></tbody>
                             </table>
                         </div>
@@ -2615,10 +2713,11 @@
                 <p class="muted-note" style="font-size:.76rem;margin-top:.35rem;">Select a parent category to create a child category. Leave as "Create as Root Category" to create a top-level category.</p>
             </div>
             <div class="fg"><label>Display Order</label><input type="number" name="order" value="0" min="0"></div>
-            <div class="fg"><label>Icon <span class="muted-note" style="font-weight:400;font-size:.76rem;">Ionicon name, e.g. man-outline, gift-outline — empty = automatic</span></label>
+            <div class="fg"><label>Icon <span class="muted-note" style="font-weight:400;font-size:.76rem;">Ionicon name — empty = automatic</span></label>
                 <div style="display:flex;gap:.55rem;align-items:center;">
-                    <input type="text" name="icon" placeholder="auto" style="flex:1;">
-                    <span id="cat-icon-preview" style="font-size:1.35rem;display:flex;align-items:center;color:var(--primary-color);"><ion-icon name="pricetag-outline"></ion-icon></span>
+                    <input type="text" name="icon" id="cat-icon-input" placeholder="auto" style="flex:1;">
+                    <span id="cat-icon-preview" onclick="window._openIconPicker()" style="font-size:1.35rem;display:flex;align-items:center;color:var(--primary-color);cursor:pointer;padding:.2rem;border-radius:4px;" title="Click to choose icon"><ion-icon name="pricetag-outline"></ion-icon></span>
+                    <button type="button" class="btn btn-outline" id="open-icon-picker-btn" onclick="window._openIconPicker()" style="padding:.4rem .75rem;font-size:.8rem;white-space:nowrap;display:inline-flex;align-items:center;gap:.35rem;"><ion-icon name="grid-outline"></ion-icon> Choose Icon</button>
                 </div>
             </div>
             <div class="fg"><label>Description <span class="muted-note" style="font-weight:400;font-size:.76rem;">Optional — shows on the shop page when this category is selected</span></label>
@@ -2730,7 +2829,7 @@
     </div>
 
     <script type="module" src="js/promotions.js"></script>
-    <script type="module" src="js/admin.js"></script>
+    <script type="module" src="js/admin.js?v=7.0"></script>
     <script>
     (function(){
         const toggle  = document.getElementById('admin-menu-toggle');
@@ -2775,6 +2874,40 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;">
                 <button onclick="document.getElementById('verify-confirm-modal').style.display='none';" class="btn btn-outline" style="padding:.55rem;">Cancel</button>
                 <button id="vcp-confirm-btn" onclick="window._confirmVerify()" class="btn" style="background:#1e7e34;border-color:#1e7e34;padding:.55rem;opacity:.45;pointer-events:none;">Yes, Verified ✓</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 350+ Premium Icon Picker Modal -->
+    <div class="admin-modal" id="icon-picker-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:999999;align-items:center;justify-content:center;padding:.75rem;">
+        <div class="admin-form" style="max-width:680px;width:100%;max-height:88vh;display:flex;flex-direction:column;padding:1.25rem;background:#fff;border-radius:18px;box-shadow:0 24px 64px rgba(0,0,0,.35);">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem;gap:.5rem;flex-shrink:0;">
+                <div>
+                    <h3 style="margin:0;font-size:1.05rem;color:var(--primary-color);font-weight:700;display:flex;align-items:center;gap:.4rem;line-height:1.25;">
+                        <ion-icon name="flower-outline" style="font-size:1.25rem;flex-shrink:0;"></ion-icon> <span>Choose Category Icon</span>
+                    </h3>
+                    <p class="muted-note" style="margin:.2rem 0 0 0;font-size:.74rem;">Select a luxury vector icon for your perfume category</p>
+                </div>
+                <button type="button" id="close-icon-picker" style="background:none;border:none;font-size:1.6rem;cursor:pointer;color:#888;line-height:1;padding:.1rem .3rem;">&times;</button>
+            </div>
+            <div style="margin-bottom:.65rem;flex-shrink:0;">
+                <input type="text" id="icon-picker-search" placeholder="🔍 Search perfume icons (e.g. oud, attar, rose, flower, men, women, gift)..." style="width:100%;padding:.6rem .85rem;border:1px solid var(--border-color);border-radius:10px;font-size:.85rem;font-family:var(--font-sans);background:#fafafa;">
+            </div>
+            <div id="icon-picker-tabs" style="display:flex;gap:.5rem;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:6px 4px;margin-bottom:.85rem;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;min-height:50px;flex-shrink:0;box-sizing:border-box;">
+                <button type="button" class="icon-tab active" data-cat="all">✨ All (300+)</button>
+                <button type="button" class="icon-tab" data-cat="perfume">🔥 Oud & Attar</button>
+                <button type="button" class="icon-tab" data-cat="floral">🌸 Floral & Garden</button>
+                <button type="button" class="icon-tab" data-cat="gender">👤 Men, Women & Unisex</button>
+                <button type="button" class="icon-tab" data-cat="luxury">👑 Luxury & Royal</button>
+                <button type="button" class="icon-tab" data-cat="fresh">☀️ Fresh & Night</button>
+                <button type="button" class="icon-tab" data-cat="shopping">🎁 Gifts, Combos & Travel</button>
+            </div>
+            <div id="icon-picker-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(76px, 1fr));gap:8px;overflow-y:auto;flex:1;padding:.6rem;border:1px solid #e8e4dc;border-radius:12px;background:#fcfbf9;min-height:220px;">
+                <!-- Dynamically rendered by JS -->
+            </div>
+            <div id="icon-picker-footer" style="display:flex;justify-content:space-between;align-items:center;margin-top:.75rem;padding-top:.65rem;border-top:1px solid #eee;gap:.5rem;flex-shrink:0;">
+                <button type="button" class="btn btn-outline" id="clear-icon-btn" style="font-size:.8rem;padding:.4rem .85rem;color:#9b2226;border-color:#d9a5a5;">Set to Auto (Default)</button>
+                <span class="muted-note" id="icon-picker-count" style="font-size:.78rem;font-weight:600;color:var(--primary-color);">300+ icons available</span>
             </div>
         </div>
     </div>

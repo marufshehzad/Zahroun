@@ -460,39 +460,53 @@ const ORDER_STATUSES = ["pending", "follow-up", "confirmed", "shipped", "deliver
 const STATUS_COLORS = { pending: "#f0b429", "follow-up": "#c05c00", confirmed: "#1a56b8", shipped: "#7c3aed", delivered: "#1e7e34", cancelled: "#9b2226", returned: "#7b2d8b" };
 
 /* ---- Admin gate -------------------------------------------------------- */
+let _authResolved = false;
+
+setTimeout(() => {
+  if (!_authResolved && gateMsg && gate.style.display !== "none") {
+    gateMsg.innerHTML = 'Still verifying session…<br><small style="color:var(--text-muted);margin-top:.4rem;display:block;">If you are not logged in, please <a href="account.html" style="color:var(--primary-color);font-weight:600;">Log in here</a>.</small>';
+  }
+}, 2500);
+
 onAuthStateChanged(auth, async (user) => {
+  _authResolved = true;
   if (!user) {
-    gateMsg.innerHTML = 'Please <a href="index.html" style="color:var(--primary-color);">log in</a> first, then open the Admin Panel from the account menu.';
+    gateMsg.innerHTML = 'You are not logged in to an admin account.<br><br><a href="account.html" class="btn" style="display:inline-block;padding:.5rem 1.2rem;text-decoration:none;font-size:.9rem;">Log In to Admin Account</a>';
     return;
   }
-  // Retry up to 3 times — handles stale/expired auth tokens and race conditions
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 600));
-      await user.getIdToken(attempt > 1); // force-refresh token on retry
-      const snap = await getDoc(doc(db, "users", user.uid));
-      if (!snap.exists()) {
-        gateMsg.innerHTML = 'Access denied — profile not found.<br><a href="index.html" style="color:var(--primary-color);">Back to site</a>';
-        return;
-      }
-      const data = snap.data();
-      if (data.role !== "admin") {
-        gateMsg.innerHTML = 'Access denied — role: <strong>' + (data.role || "none") + '</strong>.<br><a href="index.html" style="color:var(--primary-color);">Back to site</a>';
-        return;
-      }
-      gate.style.display = "none";
-      app.style.display = "block";
-      initAdmin(user, data);
+
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists()) {
+      gateMsg.innerHTML = 'Access denied — user profile not found in database.<br><br><a href="index.html" style="color:var(--primary-color);">Return to Storefront</a>';
       return;
-    } catch (e) {
-      if (e.code === "permission-denied" && attempt < 3) {
-        gateMsg.textContent = "Verifying access… (" + (attempt + 1) + "/3)";
-        continue;
-      }
-      console.warn("Admin verification failed (attempt " + attempt + "):", e.code || e.message);
-      gateMsg.innerHTML = "Could not verify access: " + (e.code || e.message) +
-        '<br><button onclick="location.reload()" style="margin-top:.75rem;background:var(--primary-color);color:#fff;border:none;border-radius:8px;padding:.45rem 1.1rem;cursor:pointer;font-size:.9rem;">Retry</button>';
     }
+    const data = snap.data();
+    if (data.role !== "admin") {
+      gateMsg.innerHTML = `Access denied — Role <strong>"${escapeHtml(data.role || "customer")}"</strong> is not authorized for Admin Panel.<br><br><a href="index.html" style="color:var(--primary-color);">Return to Storefront</a>`;
+      return;
+    }
+
+    // Success: Unlock Admin Panel instantly
+    gate.style.display = "none";
+    app.style.display = "block";
+    initAdmin(user, data);
+  } catch (e) {
+    console.warn("Admin gate check error:", e);
+    try {
+      await user.getIdToken(true);
+      const snap = await getDoc(doc(db, "users", user.uid));
+      const data = snap?.data();
+      if (data && data.role === "admin") {
+        gate.style.display = "none";
+        app.style.display = "block";
+        initAdmin(user, data);
+        return;
+      }
+    } catch (_) {}
+
+    gateMsg.innerHTML = "Security verification error: " + (e.message || "Could not verify session") +
+      '<br><button onclick="location.reload()" style="margin-top:.8rem;background:var(--primary-color);color:#fff;border:none;border-radius:8px;padding:.5rem 1.2rem;cursor:pointer;font-size:.88rem;">Retry</button>';
   }
 });
 
@@ -637,16 +651,19 @@ async function initAdmin(user, profile) {
     _cropApply();
   });
 
-  // Fetch all data once at startup (needed for dashboard stats)
-  await Promise.all([fetchProducts(), fetchOrders(), fetchCustomers()]);
+  // Render dashboard shell immediately so admin opens instantly
+  renderDashboard();
+
+  // Fetch data in background without blocking screen unlock
+  Promise.all([fetchProducts(), fetchOrders(), fetchCustomers()]).then(() => {
+    renderDashboard();
+    updateNotifications();
+  }).catch(e => console.warn("Data fetch:", e));
+
   fetchFlashSale().then(updateFlashNavBadge).catch(() => {});
   fetchBroadcast().then(updateBroadcastBadge).catch(() => {});
   fetchCategories().then(_populateCatSelects).catch(() => {});
-  renderDashboard();
-  updateNotifications();
-  // Show unread messages badge without blocking
   fetchMessages().catch(() => {});
-  // Real-time new-order notifications
   startOrderListener();
   startReviewListener();
 }
@@ -784,6 +801,7 @@ function switchSection(name) {
 // One-time event listener setup per section (called on first visit)
 function setupSection(name) {
   if (name === "categories") {
+    initIconPicker();
     $("#add-cat-btn").addEventListener("click", () => openCatForm(null));
     $("#cancel-cat").addEventListener("click", closeCatForm);
     $("#cat-modal").addEventListener("click", e => { if (e.target.id === "cat-modal") closeCatForm(); });
@@ -1817,7 +1835,7 @@ function renderCategoryTable() {
     const count = products.filter(p => (p.category || "").toLowerCase() === c.name.toLowerCase() || childNames.includes(p.category)).length;
     return `<tr data-cat-id="${escapeHtml(c.id)}" draggable="true" style="${isActive ? "" : "opacity:.55;"}">
       <td style="${isChild ? "padding-left:1.6rem;" : ""}">
-        <span style="cursor:grab;color:#B8AFA3;margin-right:.35rem;" title="Drag to reorder">⠿</span>
+        <span class="cat-drag-handle" style="cursor:grab;color:#B8AFA3;margin-right:.35rem;padding:.2rem .3rem;display:inline-block;touch-action:none;user-select:none;" title="Touch or drag to reorder">⠿</span>
         <ion-icon name="${escapeHtml(catIconName(c))}" style="vertical-align:-2px;margin-right:.3rem;color:var(--primary-color);"></ion-icon>
         ${isChild ? "<span style='color:#B8AFA3;'>└</span> " : ""}<strong>${escapeHtml(c.name)}</strong>${isChild ? "" : " <span style='font-size:.68rem;color:#B8AFA3;font-weight:400;'>root</span>"}
       </td>
@@ -1833,10 +1851,12 @@ function renderCategoryTable() {
       </td>
     </tr>`;
   }).join("");
+
   tbody.querySelectorAll("[data-cat-edit]").forEach(b => b.addEventListener("click", () => openCatForm(categories.find(c => c.id === b.dataset.catEdit))));
   tbody.querySelectorAll("[data-cat-toggle]").forEach(b => b.addEventListener("click", () => toggleCatActive(b.dataset.catToggle)));
   tbody.querySelectorAll("[data-cat-del]").forEach(b => b.addEventListener("click", () => deleteCat(b.dataset.catDel)));
-  // Drag & drop reordering (within the same level)
+
+  // Desktop Drag & drop reordering
   let dragId = null;
   tbody.querySelectorAll("tr[data-cat-id]").forEach(tr => {
     tr.addEventListener("dragstart", e => { dragId = tr.dataset.catId; tr.style.opacity = ".4"; e.dataTransfer.effectAllowed = "move"; });
@@ -1844,6 +1864,64 @@ function renderCategoryTable() {
     tr.addEventListener("dragover", e => e.preventDefault());
     tr.addEventListener("drop", e => { e.preventDefault(); reorderCat(dragId, tr.dataset.catId); });
   });
+
+  // Mobile Touch drag & drop reordering
+  tbody.querySelectorAll(".cat-drag-handle").forEach(handle => {
+    handle.addEventListener("touchstart", e => {
+      const tr = handle.closest("tr[data-cat-id]");
+      if (!tr) return;
+      window._catTouchSrcId = tr.dataset.catId;
+      window._catTouchSrcTr = tr;
+      tr.style.opacity = "0.45";
+      tr.style.background = "rgba(15,74,60,.1)";
+    }, { passive: true });
+  });
+
+  if (!window._catTouchEventsWired) {
+    window._catTouchEventsWired = true;
+    document.addEventListener("touchmove", e => {
+      if (!window._catTouchSrcId || !window._catTouchSrcTr) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      const targetTr = el ? el.closest("#cat-rows tr[data-cat-id]") : null;
+
+      if (window._catTouchTargetTr && window._catTouchTargetTr !== targetTr) {
+        window._catTouchTargetTr.style.background = "";
+        window._catTouchTargetTr.style.outline = "";
+      }
+
+      if (targetTr && targetTr !== window._catTouchSrcTr) {
+        window._catTouchTargetTr = targetTr;
+        targetTr.style.background = "rgba(15,74,60,.15)";
+        targetTr.style.outline = "2px dashed var(--primary-color, #163E34)";
+      } else {
+        window._catTouchTargetTr = null;
+      }
+    }, { passive: true });
+
+    const finishCatTouchDrag = () => {
+      if (!window._catTouchSrcId) return;
+      if (window._catTouchSrcTr) {
+        window._catTouchSrcTr.style.opacity = "";
+        window._catTouchSrcTr.style.background = "";
+      }
+      if (window._catTouchTargetTr) {
+        window._catTouchTargetTr.style.background = "";
+        window._catTouchTargetTr.style.outline = "";
+        const targetId = window._catTouchTargetTr.dataset.catId;
+        if (targetId && targetId !== window._catTouchSrcId) {
+          reorderCat(window._catTouchSrcId, targetId);
+        }
+      }
+      window._catTouchSrcId = null;
+      window._catTouchSrcTr = null;
+      window._catTouchTargetTr = null;
+    };
+
+    document.addEventListener("touchend", finishCatTouchDrag);
+    document.addEventListener("touchcancel", finishCatTouchDrag);
+  }
 }
 
 async function reorderCat(srcId, targetId) {
@@ -1985,7 +2063,281 @@ function _setCatBannerPreview(url) {
   else { img.removeAttribute("src"); img.style.display = "none"; if (del) del.style.display = "none"; }
 }
 
+/* ══ 300+ CURATED PERFUME & LUXURY CATEGORY ICONS ══ */
+const ICON_PICKER_DATA = [
+  // 1. Oud & Attar / Fragrance Essentials (perfume)
+  { name: "eyedrop-outline", cat: "perfume", tags: "attar drop oil concentrate liquid extract perfume oud fragrance" },
+  { name: "water-outline", cat: "perfume", tags: "water liquid fresh attar aqua drop oil perfume" },
+  { name: "flame-outline", cat: "perfume", tags: "flame fire oud incense warm spice smoky wood agarwood" },
+  { name: "bonfire-outline", cat: "perfume", tags: "bonfire fire wood smoky incense oud agarwood" },
+  { name: "flask-outline", cat: "perfume", tags: "flask alchemy formula blend extract attar perfume" },
+  { name: "beaker-outline", cat: "perfume", tags: "beaker chemical oil concentrate attar drop" },
+  { name: "color-palette-outline", cat: "perfume", tags: "color palette mix note scent blend discovery sample notes" },
+  { name: "pulse-outline", cat: "perfume", tags: "pulse heart rhythm vibe aura projection sillage" },
+  { name: "disc-outline", cat: "perfume", tags: "disc round aura bottle cap spray" },
+  { name: "brush-outline", cat: "perfume", tags: "brush art touch beauty application" },
+  { name: "sparkles-outline", cat: "perfume", tags: "sparkles luxury magic premium shine perfume scent" },
+  { name: "wine-outline", cat: "perfume", tags: "wine luxury spirit mood bottle gourmand amber" },
+
+  // 2. Floral & Garden (floral)
+  { name: "rose-outline", cat: "floral", tags: "rose flower romance fragrance Golap floral" },
+  { name: "flower-outline", cat: "floral", tags: "flower floral fragrance bloom jasmine blossom" },
+  { name: "leaf-outline", cat: "floral", tags: "leaf herbal natural organic attar green jasmine" },
+  { name: "earth-outline", cat: "floral", tags: "earth nature global world origin natural" },
+  { name: "rainy-outline", cat: "floral", tags: "rain water fresh dew drop monsoon floral" },
+  { name: "thermometer-outline", cat: "floral", tags: "thermometer hot cold weather season climate" },
+
+  // 3. Men, Women & Unisex (gender)
+  { name: "man-outline", cat: "gender", tags: "man mens male gentleman masculine him men" },
+  { name: "man", cat: "gender", tags: "man mens male" },
+  { name: "shirt-outline", cat: "gender", tags: "shirt cloth fabric apparel fragrance masculine formal" },
+  { name: "glasses-outline", cat: "gender", tags: "glasses style fashion cool gentleman" },
+  { name: "woman-outline", cat: "gender", tags: "woman womens female lady feminine her women" },
+  { name: "woman", cat: "gender", tags: "woman womens female" },
+  { name: "heart-outline", cat: "gender", tags: "heart love romance passion fragrance sweet feminine" },
+  { name: "people-outline", cat: "gender", tags: "people unisex couples group everyone universal" },
+  { name: "people", cat: "gender", tags: "people group" },
+  { name: "person-outline", cat: "gender", tags: "person individual profile user" },
+  { name: "male-outline", cat: "gender", tags: "male symbol gender" },
+  { name: "female-outline", cat: "gender", tags: "female symbol gender" },
+  { name: "male-female-outline", cat: "gender", tags: "male female unisex gender universal" },
+  { name: "body-outline", cat: "gender", tags: "body skin fragrance spray mist body mist" },
+  { name: "watch-outline", cat: "gender", tags: "watch time wrist luxury fashion style" },
+  { name: "footsteps-outline", cat: "gender", tags: "footsteps trail scent trail sillage projection" },
+  { name: "finger-print-outline", cat: "gender", tags: "fingerprint unique signature custom blend" },
+  { name: "happy-outline", cat: "gender", tags: "happy smile emotion mood joy sweet" },
+
+  // 4. Luxury & Royal (luxury)
+  { name: "diamond-outline", cat: "luxury", tags: "diamond gem luxury royal elite gold crystal" },
+  { name: "diamond", cat: "luxury", tags: "diamond gem luxury rich" },
+  { name: "trophy-outline", cat: "luxury", tags: "trophy winner premium luxury gold top best seller" },
+  { name: "trophy", cat: "luxury", tags: "trophy winner award" },
+  { name: "ribbon-outline", cat: "luxury", tags: "ribbon award certified original authentic edition" },
+  { name: "ribbon", cat: "luxury", tags: "ribbon badge" },
+  { name: "star-outline", cat: "luxury", tags: "star rating top signature bestseller featured" },
+  { name: "star", cat: "luxury", tags: "star featured favourite" },
+  { name: "medal-outline", cat: "luxury", tags: "medal award quality certified gold top" },
+  { name: "medal", cat: "luxury", tags: "medal badge gold" },
+  { name: "shield-checkmark-outline", cat: "luxury", tags: "shield checkmark verified authentic guaranteed 100% original" },
+  { name: "prism-outline", cat: "luxury", tags: "prism crystal glass reflection bottle bottle cut" },
+  { name: "cube-outline", cat: "luxury", tags: "cube box packaging luxury edition" },
+  { name: "planet-outline", cat: "luxury", tags: "planet universe cosmic edition space royal" },
+  { name: "key-outline", cat: "luxury", tags: "key secret blend master key private" },
+  { name: "lock-closed-outline", cat: "luxury", tags: "lock private reserve exclusive vault" },
+  { name: "infinite-outline", cat: "luxury", tags: "infinite everlasting long lasting scent 24hr" },
+  { name: "compass-outline", cat: "luxury", tags: "compass direction travel orient oriental arabic" },
+  { name: "hourglass-outline", cat: "luxury", tags: "hourglass vintage aged matured duration vintage" },
+  { name: "podium-outline", cat: "luxury", tags: "podium rank top winner #1 edition" },
+  { name: "sparkles", cat: "luxury", tags: "sparkles shine gold premium" },
+
+  // 5. Fresh, Summer & Night (fresh)
+  { name: "sunny-outline", cat: "fresh", tags: "sun sunny summer citrus fresh daylight morning" },
+  { name: "moon-outline", cat: "fresh", tags: "moon night evening dark musk nightwear midnight" },
+  { name: "cloudy-night-outline", cat: "fresh", tags: "cloud night moon evening dark midnight musk" },
+  { name: "cloud-outline", cat: "fresh", tags: "cloud airy mist spray vapor fresh" },
+  { name: "snow-outline", cat: "fresh", tags: "snow winter cold ice fresh cool mint" },
+  { name: "partly-sunny-outline", cat: "fresh", tags: "sun cloud morning fresh citrus" },
+  { name: "flash-outline", cat: "fresh", tags: "flash energetic bold strong intense" },
+  { name: "cafe-outline", cat: "fresh", tags: "coffee cafe warm gourmand coffee note vanilla cacao" },
+  { name: "restaurant-outline", cat: "fresh", tags: "restaurant dining gourmet gourmand sweet spices" },
+
+  // 6. Gifts, Combos & Travel (shopping)
+  { name: "gift-outline", cat: "shopping", tags: "gift present combo pack bundle offer box gift set" },
+  { name: "gift", cat: "shopping", tags: "gift present box" },
+  { name: "pricetag-outline", cat: "shopping", tags: "tag label price category collection discount" },
+  { name: "pricetag", cat: "shopping", tags: "tag label" },
+  { name: "pricetags-outline", cat: "shopping", tags: "tags labels categories deals sales" },
+  { name: "bag-handle-outline", cat: "shopping", tags: "bag shopping bag tote retail shop" },
+  { name: "bag-handle", cat: "shopping", tags: "bag retail" },
+  { name: "bag-outline", cat: "shopping", tags: "bag purse handbag shopping" },
+  { name: "cart-outline", cat: "shopping", tags: "cart shopping cart order buy" },
+  { name: "cart", cat: "shopping", tags: "cart buy" },
+  { name: "basket-outline", cat: "shopping", tags: "basket shopping basket items combo" },
+  { name: "storefront-outline", cat: "shopping", tags: "store shop market boutique collection" },
+  { name: "ticket-outline", cat: "shopping", tags: "ticket coupon pass discount voucher promo" },
+  { name: "receipt-outline", cat: "shopping", tags: "receipt invoice bill order" },
+  { name: "card-outline", cat: "shopping", tags: "card payment credit vip member card" },
+  { name: "cash-outline", cat: "shopping", tags: "cash money price value savings BDT" },
+  { name: "wallet-outline", cat: "shopping", tags: "wallet money account balance pocket spray" },
+  { name: "airplane-outline", cat: "shopping", tags: "airplane travel spray pocket perfume mini 10ml" },
+  { name: "car-outline", cat: "shopping", tags: "car travel drive vehicle auto" },
+  { name: "barcode-outline", cat: "shopping", tags: "barcode scan product code SKU authentic" },
+  { name: "qr-code-outline", cat: "shopping", tags: "qr code scan digital link" },
+
+  // Symbols & Badges
+  { name: "shapes-outline", cat: "shapes", tags: "shapes category design abstract" },
+  { name: "grid-outline", cat: "shapes", tags: "grid all items catalog index" },
+  { name: "apps-outline", cat: "shapes", tags: "apps grid list icons categories" },
+  { name: "layers-outline", cat: "shapes", tags: "layers stacked notes blend tier" },
+  { name: "square-outline", cat: "shapes", tags: "square box frame" },
+  { name: "ellipse-outline", cat: "shapes", tags: "circle round dot aura" },
+  { name: "triangle-outline", cat: "shapes", tags: "triangle pyramid notes top heart base" },
+  { name: "radio-button-on-outline", cat: "shapes", tags: "target focal main spot" },
+  { name: "checkmark-circle-outline", cat: "shapes", tags: "check verified ok approved" },
+  { name: "options-outline", cat: "shapes", tags: "filter custom settings options" },
+  { name: "construct-outline", cat: "shapes", tags: "tool custom crafted handcrafted" },
+  { name: "fitness-outline", cat: "shapes", tags: "heart pulse active vital" },
+  { name: "cafe-outline", cat: "shapes", tags: "coffee cafe warm gourmand coffee note" },
+  { name: "restaurant-outline", cat: "shapes", tags: "restaurant dining gourmet" },
+  { name: "camera-outline", cat: "shapes", tags: "camera photo visual picture" },
+  { name: "image-outline", cat: "shapes", tags: "image picture banner media" },
+  { name: "aperture-outline", cat: "shapes", tags: "aperture lens focus central" },
+  { name: "mic-outline", cat: "shapes", tags: "mic sound voice vibe" },
+  { name: "musical-notes-outline", cat: "shapes", tags: "music notes harmony accord scent notes" },
+  { name: "headset-outline", cat: "shapes", tags: "headset support helpline service" },
+  { name: "volume-high-outline", cat: "shapes", tags: "volume loud strong projection sillage" },
+  { name: "time-outline", cat: "shapes", tags: "time hours duration long lasting" },
+  { name: "calendar-outline", cat: "shapes", tags: "calendar date season year limited" },
+  { name: "pin-outline", cat: "shapes", tags: "pin point location highlight" },
+  { name: "flag-outline", cat: "shapes", tags: "flag origin country brand banner" },
+  { name: "bookmark-outline", cat: "shapes", tags: "bookmark saved favourite wishlist" },
+  { name: "bookmarks-outline", cat: "shapes", tags: "bookmarks list collection" },
+  { name: "paper-plane-outline", cat: "shapes", tags: "send sillage projection air" },
+  { name: "search-outline", cat: "shapes", tags: "search find explore discover" },
+  { name: "filter-outline", cat: "shapes", tags: "filter refine sort" },
+  { name: "share-social-outline", cat: "shapes", tags: "share social viral popular" },
+  { name: "thumbs-up-outline", cat: "shapes", tags: "like recommend top rated" }
+];
+
+const EXTRA_IONICONS_LIST = [
+  "add-outline", "alarm-outline", "albums-outline", "analytics-outline", "anchor-outline", "archive-outline", "at-outline", "attach-outline",
+  "bar-chart-outline", "baseball-outline", "basketball-outline", "battery-charging-outline", "beer-outline", "bicycle-outline",
+  "boat-outline", "book-outline", "build-outline", "bus-outline", "business-outline", "calculator-outline", "call-outline", "car-sport-outline",
+  "cellular-outline", "chatbox-outline", "chatbubbles-outline", "checkbox-outline", "clipboard-outline", "cog-outline", "contract-outline",
+  "create-outline", "cut-outline", "desktop-outline", "document-text-outline", "easel-outline", "egg-outline", "enter-outline", "expand-outline",
+  "extension-puzzle-outline", "eye-off-outline", "film-outline", "filter-circle-outline", "fish-outline", "flash-off-outline", "folder-open-outline",
+  "football-outline", "funnel-outline", "game-controller-outline", "git-branch-outline", "globe-outline", "golf-outline", "hammer-outline",
+  "hand-left-outline", "hardware-chip-outline", "heart-half-outline", "help-circle-outline", "home-outline", "ice-cream-outline", "images-outline",
+  "information-circle-outline", "journal-outline", "language-outline", "laptop-outline", "library-outline", "link-outline", "list-outline",
+  "logo-instagram", "logo-facebook", "logo-whatsapp", "logo-tiktok", "logo-youtube", "logo-twitter", "magnet-outline", "mail-outline",
+  "map-outline", "medical-outline", "megaphone-outline", "musical-note-outline", "newspaper-outline", "notifications-outline", "open-outline",
+  "paw-outline", "pencil-outline", "play-outline", "power-outline", "print-outline", "radio-outline", "scale-outline", "scan-outline",
+  "school-outline", "server-outline", "share-outline", "skull-outline", "speedometer-outline", "stopwatch-outline", "sunny-sharp",
+  "swap-horizontal-outline", "sync-outline", "tablet-portrait-outline", "tennisball-outline", "terminal-outline", "timer-outline",
+  "today-outline", "toggle-outline", "trash-outline", "tv-outline", "umbrella-outline", "videocam-outline", "wifi-outline",
+  "flower-sharp", "rose-sharp", "flame-sharp", "water-sharp", "leaf-sharp", "diamond-sharp", "pricetag-sharp", "bag-handle-sharp", "cube-sharp", "shapes-sharp", "shirt-sharp",
+  "flash-sharp", "star-sharp", "trophy-sharp", "ribbon-sharp", "medal-sharp", "shield-sharp", "planet-sharp"
+];
+
+EXTRA_IONICONS_LIST.forEach(name => {
+  if (!ICON_PICKER_DATA.some(i => i.name === name)) {
+    let cat = "shapes";
+    if (name.includes("gift") || name.includes("bag") || name.includes("card") || name.includes("shop")) cat = "shopping";
+    else if (name.includes("flower") || name.includes("rose") || name.includes("leaf") || name.includes("drop") || name.includes("flame")) cat = "perfume";
+    else if (name.includes("diamond") || name.includes("trophy") || name.includes("star") || name.includes("ribbon") || name.includes("crown")) cat = "luxury";
+    else if (name.includes("man") || name.includes("woman") || name.includes("person") || name.includes("people") || name.includes("shirt")) cat = "gender";
+    ICON_PICKER_DATA.push({ name, cat, tags: name.replace("-outline", "").replace("-sharp", "").replace("logo-", "") });
+  }
+});
+
+window._renderPickerIcons = function() {
+  const grid = document.getElementById("icon-picker-grid");
+  const countEl = document.getElementById("icon-picker-count");
+  const catInput = document.getElementById("cat-icon-input") || (document.getElementById("cat-form") ? document.getElementById("cat-form").querySelector("[name=icon]") : null);
+  if (!grid) return;
+
+  const selectedIcon = catInput ? catInput.value.trim() : "";
+  const searchInput = document.getElementById("icon-picker-search");
+  const q = (searchInput ? searchInput.value : "").trim().toLowerCase();
+  const activeTab = document.querySelector("#icon-picker-tabs .icon-tab.active");
+  const currentTab = activeTab ? (activeTab.dataset.cat || "all") : "all";
+
+  const filtered = ICON_PICKER_DATA.filter(item => {
+    const matchTab = currentTab === "all" || item.cat === currentTab;
+    const matchQ = !q || item.name.toLowerCase().includes(q) || (item.tags && item.tags.toLowerCase().includes(q));
+    return matchTab && matchQ;
+  });
+
+  if (countEl) countEl.textContent = `Showing ${filtered.length} icon${filtered.length === 1 ? "" : "s"}`;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);font-size:.85rem;">No icons match "${escapeHtml(q)}". Try searching for <i>flower, gem, man, woman, gift, star...</i></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(item => {
+    const isSel = selectedIcon === item.name;
+    const displayLabel = item.name.replace("-outline","").replace("-sharp","").replace("logo-","");
+    return `<div class="icon-picker-card ${isSel ? "is-selected" : ""}" data-icon="${escapeHtml(item.name)}" title="${escapeHtml(item.name)}">
+      <ion-icon name="${escapeHtml(item.name)}"></ion-icon>
+      <span class="icon-lbl">${escapeHtml(displayLabel)}</span>
+    </div>`;
+  }).join("");
+
+  grid.querySelectorAll(".icon-picker-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const iconName = card.dataset.icon;
+      if (catInput) catInput.value = iconName;
+      const iconPrev = document.querySelector("#cat-icon-preview ion-icon");
+      if (iconPrev) iconPrev.setAttribute("name", iconName);
+      window._closeIconPicker();
+    });
+  });
+};
+
+window._openIconPicker = function() {
+  initIconPicker();
+  const modal = document.getElementById("icon-picker-modal");
+  if (!modal) return;
+  modal.classList.add("open");
+  modal.style.display = "flex";
+  const searchInput = document.getElementById("icon-picker-search");
+  if (searchInput) searchInput.value = "";
+  window._renderPickerIcons();
+  if (searchInput) searchInput.focus();
+};
+
+window._closeIconPicker = function() {
+  const modal = document.getElementById("icon-picker-modal");
+  if (modal) {
+    modal.classList.remove("open");
+    modal.style.display = "none";
+  }
+};
+
+let _iconPickerInitialized = false;
+
+function initIconPicker() {
+  if (_iconPickerInitialized) return;
+  _iconPickerInitialized = true;
+
+  const modal = document.getElementById("icon-picker-modal");
+  const closeBtn = document.getElementById("close-icon-picker");
+  const clearBtn = document.getElementById("clear-icon-btn");
+  const searchInput = document.getElementById("icon-picker-search");
+  const tabs = document.querySelectorAll("#icon-picker-tabs .icon-tab");
+
+  if (closeBtn) closeBtn.addEventListener("click", window._closeIconPicker);
+  if (modal) modal.addEventListener("click", e => { if (e.target === modal) window._closeIconPicker(); });
+
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      const catInput = document.getElementById("cat-icon-input") || (document.getElementById("cat-form") ? document.getElementById("cat-form").querySelector("[name=icon]") : null);
+      if (catInput) catInput.value = "";
+      const catName = $("#cat-form") ? ($("#cat-form").querySelector("[name=name]")?.value || "") : "";
+      const iconPrev = document.querySelector("#cat-icon-preview ion-icon");
+      if (iconPrev) iconPrev.setAttribute("name", catIconName({ name: catName }));
+      window._closeIconPicker();
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      window._renderPickerIcons();
+    });
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      tabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      window._renderPickerIcons();
+    });
+  });
+}
+
 function openCatForm(cat) {
+  initIconPicker();
   editingCat = cat || null;
   const f = $("#cat-form");
   f.reset();
