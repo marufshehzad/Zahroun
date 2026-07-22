@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -214,6 +214,10 @@
             .cd-num { font-size: 1.5rem; }
             .cd-unit { min-width: 40px; }
             .sale-hero { padding: 3rem 0 2.5rem; }
+            #sale-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 18px !important;
+            }
         }
     </style>
     <script>if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
@@ -262,7 +266,7 @@
                 <h2>Sale Products</h2>
                 <span class="sale-count" id="sale-product-count"></span>
             </div>
-            <div class="sale-grid" id="sale-grid">
+            <div class="product-grid" id="sale-grid">
                 <p style="color:var(--text-muted);">Loading products…</p>
             </div>
         </div>
@@ -305,6 +309,7 @@
     </div>
 
     <script type="module" src="js/store.js"></script>
+    <script type="module" src="js/wishlist.js"></script>
     <script defer src="js/cart.js"></script>
     <script defer src="js/ui.js"></script>
     <script type="module">
@@ -343,10 +348,20 @@
             _timerInterval = setInterval(tick, 1000);
         }
 
+        let productsReady = false;
+        let lastSaleItems = [];
+        let lastBadgeText = "";
+        let lastFetchedProds = [];
+
         function renderSaleProducts(saleItems, allProducts, badgeText) {
             const grid = document.getElementById("sale-grid");
             const countEl = document.getElementById("sale-product-count");
             if (!grid) return;
+
+            // Cache inputs for wishlist/other redraws
+            lastSaleItems = saleItems || lastSaleItems;
+            lastBadgeText = badgeText || lastBadgeText;
+            lastFetchedProds = allProducts || lastFetchedProds;
 
             const cheapest = window.cheapestFlashSale || function(salePrices, regularPrices) {
                 let best;
@@ -358,9 +373,9 @@
                 return best;
             };
 
-            const saleProducts = saleItems
+            const saleProducts = lastSaleItems
                 .map(item => {
-                    const p = allProducts.find(x => x.id === item.productId);
+                    const p = lastFetchedProds.find(x => x.id === item.productId);
                     if (!p) return null;
                     const best = cheapest(item.prices, p.prices);
                     if (!best) return null;
@@ -378,27 +393,62 @@
             grid.innerHTML = saleProducts.map(p => {
                 const reg = (p.prices && p.prices[p.saleSize]) ? p.prices[p.saleSize] : (p.price || 0);
                 const discPct = reg > 0 ? Math.round((reg - p.salePrice) / reg * 100) : 0;
-                return `<div class="sale-card">
-                    <div class="sale-card-badge">${esc(badgeText || "SALE")}</div>
-                    <a href="product.html?id=${p.id}" class="sale-card-img">
-                        <img src="${esc(p.image || "")}" alt="${esc(p.name)}" loading="lazy">
-                    </a>
-                    <div class="sale-card-body">
-                        <div class="sale-card-cat">${esc(p.category || "")}</div>
-                        <div class="sale-card-name">${esc(p.name)}</div>
-                        <div class="sale-price-row">
-                            <span class="sale-price">Tk ${p.salePrice.toLocaleString()}</span>
-                            <span class="sale-orig">Tk ${reg.toLocaleString()}</span>
-                            ${discPct > 0 ? `<span class="sale-discount-tag">${discPct}% OFF</span>` : ""}
-                            <span class="sale-size-tag" style="font-size:.7rem;color:var(--text-muted);">${esc(p.saleSize)}</span>
-                        </div>
-                        <button class="btn" onclick="addToCart(${p.id}, '${p.saleSize}', ${p.salePrice}); if(window.showToast) window.showToast('Added to cart!');">
-                            <ion-icon name="bag-add-outline" style="vertical-align:middle;margin-right:.3rem;"></ion-icon>Add to Cart
-                        </button>
+                
+                const outOfStock = p.stock !== undefined && p.stock !== null && p.stock === 0;
+                const oosBadge = outOfStock ? `<span style="position:absolute;top:.5rem;left:.5rem;background:#9b2226;color:#fff;font-size:.68rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;letter-spacing:.04em;z-index:1;">OUT OF STOCK</span>` : "";
+                const saleBadge = !outOfStock ? `<span style="position:absolute;top:.5rem;left:.5rem;background:#c0392b;color:#fff;font-size:.62rem;font-weight:700;padding:.2rem .48rem;border-radius:4px;letter-spacing:.04em;z-index:1;">${esc(lastBadgeText || "SALE")}</span>` : "";
+                
+                const inWish = window.Wishlist ? window.Wishlist.isIn(p.id) : false;
+                const wishBtn = `<button class="wish-btn${inWish ? ' active' : ''}" data-pid="${p.id}" onclick="event.stopPropagation();window.Wishlist&&window.Wishlist.toggle(${p.id})" title="Add to wishlist" aria-label="Wishlist" style="position:absolute;top:.5rem;right:.5rem;background:rgba(255,255,255,.85);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.15rem;color:${inWish?'#c0392b':'#888'};box-shadow:0 1px 4px rgba(0,0,0,.12);z-index:2;transition:all .2s;"><ion-icon name="${inWish?'heart':'heart-outline'}"></ion-icon></button>`;
+                
+                const cartBtn = outOfStock
+                    ? `<button class="add-to-cart-quick" disabled style="cursor:not-allowed;opacity:.7;background:#aaa;">Out of Stock</button>`
+                    : `<button class="add-to-cart-quick" onclick="event.stopPropagation();addToCart(${p.id}, '${p.saleSize}', ${p.salePrice}); if(window.showToast) window.showToast('Added to cart!');">Add to Cart</button>`;
+                
+                const priceHtml = `<div class="product-price" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;justify-content:center;">
+                    <span style="color:#e63946;font-weight:700;">Tk ${p.salePrice.toLocaleString()}</span>
+                    <span style="font-size:.78rem;color:var(--text-muted);text-decoration:line-through;">Tk ${reg.toLocaleString()}</span>
+                    ${discPct > 0 ? `<span style="background:#fdecea;color:#e63946;font-size:.65rem;font-weight:700;padding:.1rem .35rem;border-radius:3px;">${discPct}% OFF</span>` : ""}
+                    <span style="font-size:.7rem;color:var(--text-muted);font-weight:normal;background:#f5f3f0;padding:.1rem .3rem;border-radius:4px;margin-left:.1rem;">${esc(p.saleSize)}</span>
+                </div>`;
+
+                const src1 = p.image || "";
+                const img2 = (p.images && p.images.length > 1) ? p.images[1] : "";
+                const wrapAttrs = img2 ? ` data-img1="${esc(src1)}" data-img2="${esc(img2)}"` : "";
+
+                return `<div class="product-card">
+                    <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;position:relative;"${wrapAttrs}>
+                        <img src="${esc(src1)}" alt="${esc(p.name)}" class="product-img" loading="lazy" style="background-color:#FFFFFF;${outOfStock ? "opacity:.75;" : ""}">
+                        ${oosBadge}
+                        ${saleBadge}
+                        ${wishBtn}
+                        ${cartBtn}
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">${esc(p.category || "")}</span>
+                        <h3 class="product-title"><a href="product.html?id=${p.id}">${esc(p.name)}</a></h3>
+                        ${priceHtml}
                     </div>
                 </div>`;
             }).join("");
+
+            productsReady = true;
         }
+
+        document.addEventListener("wishlist-ready", () => { if (productsReady) renderSaleProducts(); });
+        document.addEventListener("wishlist-changed", () => {
+            if (!productsReady) return;
+            const grid = document.getElementById("sale-grid");
+            if (!grid) return;
+            grid.querySelectorAll(".wish-btn[data-pid]").forEach(btn => {
+                const pid = Number(btn.dataset.pid);
+                const isIn = window.Wishlist ? window.Wishlist.isIn(pid) : false;
+                btn.classList.toggle("active", isIn);
+                btn.style.color = isIn ? "#c0392b" : "#888";
+                const ic = btn.querySelector("ion-icon");
+                if (ic) ic.setAttribute("name", isIn ? "heart" : "heart-outline");
+            });
+        });
 
         // Load flash sale data + products
         try {
