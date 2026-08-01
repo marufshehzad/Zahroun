@@ -1,3 +1,13 @@
+# Maps the /api/* path every frontend fetch() call actually uses to the real
+# Netlify serverless functions in netlify/functions/. Without this, calls to
+# /api/facebook-capi 404 silently (the frontend's .catch(()=>{}) swallows
+# it) — this was the root cause of Conversions API events never reaching
+# Meta at all.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

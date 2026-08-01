@@ -5,9 +5,8 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Meta Pixel Code -->
-    <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1009881314767011');fbq('init','2542211759531144');fbq('track','PageView');</script>
-    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1009881314767011&ev=PageView&noscript=1"/></noscript>
-    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2542211759531144&ev=PageView&noscript=1"/></noscript>
+    <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1581299296765663');fbq('track','PageView');</script>
+    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1581299296765663&ev=PageView&noscript=1"/></noscript>
     <!-- End Meta Pixel Code -->
     <script defer src="js/pixel-helpers.js"></script>
     <script>
@@ -1135,6 +1134,22 @@
                 nagadTxn.required = true;
                 nagadMobile.required = true;
             }
+
+            // AddPaymentInfo — fires each time the customer picks a payment
+            // method, per Meta's required trigger for this event.
+            try {
+                if (typeof fbq !== 'undefined' && typeof cart !== 'undefined' && cart.length > 0) {
+                    const apiEventId = typeof generateEventId === 'function' ? generateEventId('API') : 'API_' + Date.now();
+                    const apiPayload = {
+                        content_ids: cart.map(function(i) { return String(i.id); }),
+                        content_type: 'product',
+                        value: Math.round(typeof getCartTotal === 'function' ? getCartTotal() : 0),
+                        currency: 'BDT'
+                    };
+                    fbq('track', 'AddPaymentInfo', apiPayload, { eventID: apiEventId });
+                    if (typeof sendCAPI === 'function') sendCAPI('AddPaymentInfo', apiEventId, apiPayload);
+                }
+            } catch (e) {}
         }
 
         async function handleCheckout(e) {
@@ -1365,8 +1380,7 @@
                         ct: district || '',
                         country: 'bd'
                     };
-                    fbq('init', '1009881314767011', _amData);
-                    fbq('init', '2542211759531144', _amData);
+                    fbq('init', '1581299296765663', _amData);
                     const _storageKey = 'zhr_px_' + orderId;
                     const _capiUserData = {
                         email: customerEmail || '',

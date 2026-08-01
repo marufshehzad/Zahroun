@@ -5,9 +5,8 @@
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Meta Pixel Code -->
-    <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1009881314767011');fbq('init','2542211759531144');fbq('track','PageView');</script>
-    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1009881314767011&ev=PageView&noscript=1"/></noscript>
-    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2542211759531144&ev=PageView&noscript=1"/></noscript>
+    <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1581299296765663');fbq('track','PageView');</script>
+    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1581299296765663&ev=PageView&noscript=1"/></noscript>
     <!-- End Meta Pixel Code -->
     <script defer src="js/pixel-helpers.js"></script>
     <title>Product Details | Zahroun</title>
@@ -513,6 +512,12 @@
         const sizeOrder = ['6ML', '15ML', '30ML', '50ML'];
         let currentProduct = null;
         let hoverPreviewTimer = null;
+        // js/store.js publishes products up to 3x per page load (bundled →
+        // cache → Firestore, each re-dispatching "products-ready"), so this
+        // listener runs that many times too. Without this guard, ViewContent
+        // fired 2-3 real (non-duplicate — each with its own fresh event_id)
+        // events per actual visit, inflating reported ViewContent counts.
+        let viewContentFired = false;
 
         document.addEventListener('products-ready', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -523,7 +528,8 @@
             window.currentProduct = product;
             window.currentProductId = product.id;
             if (window.zahrounGA) window.zahrounGA.trackProductView(product);
-            if (typeof fbq !== 'undefined') {
+            if (typeof fbq !== 'undefined' && !viewContentFired) {
+                viewContentFired = true;
                 const _sizes = product.sizes || {};
                 const _prices = Object.values(_sizes).map(Number).filter(Boolean);
                 const _price = _prices.length ? Math.min(..._prices) : (parseFloat(product.price) || 0);

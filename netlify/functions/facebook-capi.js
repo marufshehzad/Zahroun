@@ -6,7 +6,7 @@
 const crypto = require('crypto');
 const https  = require('https');
 
-const PIXEL_ID = '1009881314767011';
+const PIXEL_ID = '1581299296765663';
 
 function sha256(value) {
     if (!value) return '';
