@@ -102,18 +102,15 @@ window.addToCart = function(productId, size = '50ML', price = null) {
     // point every "Add to Cart" button on the site calls into), not
     // aggregated once when the cart page happens to load.
     try {
-        if (typeof fbq !== 'undefined') {
-            const atcEventId = typeof generateEventId === 'function' ? generateEventId('ATC') : 'ATC_' + Date.now();
-            const atcPayload = {
+        if (typeof window.TrackingManager !== 'undefined') {
+            window.TrackingManager.processTracking('add_to_cart', {
                 content_ids: [String(productId)],
                 content_type: 'product',
                 content_name: product.name,
                 value: Math.round(Number(itemPrice) || 0),
                 currency: 'BDT',
                 num_items: 1
-            };
-            fbq('track', 'AddToCart', atcPayload, { eventID: atcEventId });
-            if (typeof sendCAPI === 'function') sendCAPI('AddToCart', atcEventId, atcPayload);
+            });
         }
     } catch (e) {}
 }

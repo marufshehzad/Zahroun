@@ -528,22 +528,19 @@
             window.currentProduct = product;
             window.currentProductId = product.id;
             if (window.zahrounGA) window.zahrounGA.trackProductView(product);
-            if (typeof fbq !== 'undefined' && !viewContentFired) {
+            if (typeof window.TrackingManager !== 'undefined' && !viewContentFired) {
                 viewContentFired = true;
                 const _sizes = product.sizes || {};
                 const _prices = Object.values(_sizes).map(Number).filter(Boolean);
                 const _price = _prices.length ? Math.min(..._prices) : (parseFloat(product.price) || 0);
-                const _vcId = typeof generateEventId === 'function' ? generateEventId('VC') : 'VC_' + Date.now();
-                const _vcPayload = {
+                window.TrackingManager.processTracking('view_item', {
                     content_ids: [String(product.id)],
                     content_type: 'product',
                     content_name: product.name,
                     content_category: product.category || 'Perfume',
                     value: _price,
                     currency: 'BDT'
-                };
-                fbq('track', 'ViewContent', _vcPayload, { eventID: _vcId });
-                if (typeof sendCAPI === 'function') sendCAPI('ViewContent', _vcId, _vcPayload);
+                });
             }
             // Filter active sizes (backward compat: if no activeSizes, all 4 are shown)
             const activeSizeList = product.activeSizes ?? sizeOrder;
