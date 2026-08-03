@@ -101,8 +101,12 @@ window.saveOrder = async function (order) {
     }
   }
 
-  // Referral discount: cap to the admin-configured refereeAmt (prevents client inflation)
-  let verifiedReferralDiscount = 0;
+  // Referral discount: cap to the admin-configured refereeAmt (prevents client inflation).
+  // The referral entry lives INSIDE order.promos (the promo engine folds opts.referralDiscount
+  // into its own discounts[]/totalDiscount — see js/promotions.js evaluate()), so order.promoDiscount
+  // already includes it. Clamp the entry in place and recompute promoDiscount from the corrected
+  // promos array — do NOT also subtract verifiedReferralDiscount separately below, or the referral
+  // amount gets discounted twice.
   const clientReferralEntry = (order.promos || []).find(p => p.label === 'Referral Discount');
   if (clientReferralEntry && user) {
     try {
@@ -110,7 +114,7 @@ window.saveOrder = async function (order) {
       const rc = cfgSnap2.exists() ? (cfgSnap2.data()?.referral || {}) : {};
       if (rc.enabled) {
         const maxReferral = rc.refereeAmt || 0;
-        verifiedReferralDiscount = Math.min(clientReferralEntry.discount || 0, maxReferral);
+        const verifiedReferralDiscount = Math.min(clientReferralEntry.discount || 0, maxReferral);
         if (verifiedReferralDiscount !== (clientReferralEntry.discount || 0)) {
           console.warn(`[saveOrder] C3: referral discount clamped from ${clientReferralEntry.discount} to ${verifiedReferralDiscount}`);
         }
@@ -119,21 +123,22 @@ window.saveOrder = async function (order) {
       } else {
         // Referral not enabled server-side — strip it
         order.promos = (order.promos || []).filter(p => p.label !== 'Referral Discount');
-        verifiedReferralDiscount = 0;
       }
     } catch (e) {
       console.warn('[saveOrder] C3: referral verification read failed, discarding:', e);
       order.promos = (order.promos || []).filter(p => p.label !== 'Referral Discount');
     }
+    // promoDiscount must reflect the (possibly clamped/stripped) promos array, not the
+    // client's original aggregate — otherwise a clamp above silently doesn't take effect.
+    order.promoDiscount = (order.promos || []).reduce((s, p) => s + (p.discount || 0), 0);
   }
 
   // Rebuild the verified total (server-side recompute to match clamped discounts)
   const verifiedTotal = Math.max(0,
     (order.subtotal     || 0)
     - (order.discount   || 0)        // coupon (already re-validated at submit in H8-fix)
-    - (order.promoDiscount || 0)     // promo engine discounts
+    - (order.promoDiscount || 0)     // promo engine discounts (referral discount, if any, is included here)
     - verifiedLoyaltyDiscount
-    - verifiedReferralDiscount
     + (order.delivery   || 0)
   );
   // ── end C3-fix ──
@@ -151,6 +156,11 @@ window.saveOrder = async function (order) {
     userEmail: user ? (user.email || order.guestEmail || null) : (order.guestEmail || null),
     isGuest:   !user,
     status:    "pending",
+    // Stock is decremented right below, at placement time — flag it here so
+    // admin.js's deductOrderStock()/restoreOrderStock() (which gate on this
+    // flag when the order is later confirmed/cancelled) don't double-deduct
+    // on confirm or skip restoring stock when an unconfirmed order is cancelled.
+    stockDeducted: true,
     createdAt: serverTimestamp()
   });
 

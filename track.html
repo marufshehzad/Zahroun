@@ -222,6 +222,7 @@
         .o-status.confirmed { background: #e8f0fe; color: #1a56b8; }
         .o-status.shipped   { background: #ede7f6; color: #5e35b1; }
         .o-status.pending   { background: #fff8e1; color: #b8860b; }
+        .o-status.returned  { background: #fff3e0; color: #e65100; }
 
         /* Steps progress bar */
         .steps-row {
@@ -254,6 +255,7 @@
         }
         .step-item.done:not(:last-child)::after { background: var(--primary-color); }
         .step-item.cancelled-step:not(:last-child)::after { background: #e8d0d0; }
+        .step-item.returned-step:not(:last-child)::after { background: #f5d9b8; }
 
         .step-dot {
             width: 34px; height: 34px;
@@ -285,6 +287,11 @@
             border-color: #d9a5a5;
             color: #9b2226;
         }
+        .step-item.returned-step .step-dot {
+            background: #fff3e0;
+            border-color: #f0b878;
+            color: #e65100;
+        }
         @keyframes pulse-ring {
             0%   { box-shadow: 0 0 0 0 rgba(22,62,52,.25); }
             70%  { box-shadow: 0 0 0 7px rgba(22,62,52,0); }
@@ -302,6 +309,7 @@
         .step-item.done .step-label,
         .step-item.active .step-label { color: var(--primary-color); font-weight: 700; }
         .step-item.cancelled-step .step-label { color: #9b2226; }
+        .step-item.returned-step .step-label { color: #e65100; }
         .step-ts { font-size:.6rem; color:var(--text-muted); text-align:center; margin-top:.25rem; max-width:68px; line-height:1.3; }
         .step-item.done .step-ts, .step-item.active .step-ts { color:var(--primary-color); opacity:.75; }
 
@@ -312,6 +320,18 @@
             border-radius: 10px;
             padding: .9rem 1.1rem;
             color: #9b2226;
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            margin-bottom: 1.5rem;
+            font-size: .88rem;
+        }
+        .returned-banner {
+            background: #fff3e0;
+            border: 1px solid #f5d9b8;
+            border-radius: 10px;
+            padding: .9rem 1.1rem;
+            color: #e65100;
             display: flex;
             align-items: center;
             gap: .65rem;
@@ -468,7 +488,7 @@
         ];
 
         function getStepIdx(status) {
-            if (status === "delivered") return 3;
+            if (status === "delivered" || status === "returned") return 3;
             if (status === "shipped")   return 2;
             if (status === "confirmed") return 1;
             return 0;
@@ -476,7 +496,8 @@
 
         function buildSteps(status, statusHistory) {
             const isCancelled = status === "cancelled";
-            const isDelivered = status === "delivered";
+            const isReturned = status === "returned";
+            const isDelivered = status === "delivered" || isReturned;
             const idx = getStepIdx(status);
             // Build a map of status → timestamp from history
             const histMap = {};
@@ -492,15 +513,18 @@
             };
             return STEPS.map((s, i) => {
                 let cls = "";
-                if (isCancelled)         cls = "cancelled-step";
-                else if (i < idx)        cls = "done";
-                else if (i === idx)      cls = (i === 0 || isDelivered) ? "done" : "active";
+                if (isCancelled)              cls = "cancelled-step";
+                else if (isReturned && i === idx) cls = "returned-step";
+                else if (i < idx)             cls = "done";
+                else if (i === idx)           cls = (i === 0 || isDelivered) ? "done" : "active";
 
                 const isDone = cls === "done";
                 const icon = isCancelled
                     ? `<ion-icon name="close-outline"></ion-icon>`
-                    : (isDone ? `<ion-icon name="checkmark-outline"></ion-icon>`
-                              : `<ion-icon name="${s.icon}"></ion-icon>`);
+                    : cls === "returned-step"
+                        ? `<ion-icon name="arrow-undo-outline"></ion-icon>`
+                        : (isDone ? `<ion-icon name="checkmark-outline"></ion-icon>`
+                                  : `<ion-icon name="${s.icon}"></ion-icon>`);
                 const ts = histMap[s.key] ? `<div class="step-ts">${fmtHistDate(histMap[s.key])}</div>` : "";
 
                 return `<div class="step-item ${cls}" style="animation-delay:${i*80}ms">
@@ -516,6 +540,7 @@
             const items = order.items || [];
             const ordNum = order.orderNum ? `#${order.orderNum}` : `#${order.id.slice(0,8).toUpperCase()}`;
             const isCancelled = order.status === "cancelled";
+            const isReturned = order.status === "returned";
             const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0);
 
             const header = compact ? "" : `
@@ -532,6 +557,10 @@
             ${isCancelled ? `<div class="cancelled-banner">
                 <ion-icon name="close-circle-outline" style="font-size:1.4rem;flex-shrink:0;"></ion-icon>
                 <span>This order has been <strong>cancelled</strong>. Contact us if you need help.</span>
+            </div>` : ""}
+            ${isReturned ? `<div class="returned-banner">
+                <ion-icon name="arrow-undo-circle-outline" style="font-size:1.4rem;flex-shrink:0;"></ion-icon>
+                <span>This order was delivered and has since been <strong>returned</strong>. Contact us if you need help.</span>
             </div>` : ""}
 
             <div class="steps-row fade-up">${buildSteps(order.status || "pending", order.statusHistory)}</div>

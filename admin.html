@@ -595,6 +595,11 @@
             .admin-modal { padding:.4rem; align-items:flex-end; overflow-y:auto; }
             .admin-form { border-radius:14px 14px 0 0; max-height:92vh; overflow-y:auto; padding:1.25rem; }
 
+            /* Order detail header: icon-only Customize/Invoice buttons so the order
+               number never gets squeezed into a wrapped, two-line title */
+            #od-customize, #od-print { padding:.4rem .5rem; }
+            .od-btn-label { display:none; }
+
             /* panel-head wrap */
             .panel-head { flex-wrap:wrap; gap:.5rem; }
             .panel-head .btn, .panel-head .link-btn { font-size:.78rem; padding:.3rem .65rem; }
@@ -2567,14 +2572,55 @@
     <!-- Order details modal -->
     <div class="admin-modal" id="order-detail-modal">
         <div class="admin-form" style="max-width:600px;padding:1.75rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--border-color);">
-                <h2 id="od-order-id" style="font-size:1.25rem;color:var(--primary-color);margin:0;"></h2>
-                <div style="display:flex;align-items:center;gap:.5rem;">
-                    <button id="od-print" style="display:flex;align-items:center;gap:.3rem;background:none;border:1px solid var(--border-color);border-radius:6px;padding:.3rem .7rem;font-size:.8rem;cursor:pointer;color:var(--text-main);"><ion-icon name="print-outline" style="font-size:.95rem;"></ion-icon>Invoice</button>
-                    <button id="od-close" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);padding:0;line-height:1;"><ion-icon name="close-outline"></ion-icon></button>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--border-color);">
+                <h2 id="od-order-id" style="font-size:1.25rem;color:var(--primary-color);margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></h2>
+                <div style="display:flex;align-items:center;gap:.4rem;flex-shrink:0;">
+                    <button id="od-customize" style="display:none;align-items:center;gap:.3rem;background:none;border:1px solid var(--border-color);border-radius:6px;padding:.3rem .7rem;font-size:.8rem;cursor:pointer;color:var(--text-main);white-space:nowrap;"><ion-icon name="create-outline" style="font-size:.95rem;"></ion-icon><span class="od-btn-label">Customize</span></button>
+                    <button id="od-print" style="display:flex;align-items:center;gap:.3rem;background:none;border:1px solid var(--border-color);border-radius:6px;padding:.3rem .7rem;font-size:.8rem;cursor:pointer;color:var(--text-main);white-space:nowrap;"><ion-icon name="print-outline" style="font-size:.95rem;"></ion-icon><span class="od-btn-label">Invoice</span></button>
+                    <button id="od-close" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);padding:0;line-height:1;flex-shrink:0;"><ion-icon name="close-outline"></ion-icon></button>
                 </div>
             </div>
             <div id="od-content" style="max-height:70vh;overflow-y:auto;padding-right:.25rem;"></div>
+        </div>
+    </div>
+
+    <!-- Customize order modal -->
+    <div class="admin-modal" id="customize-order-modal">
+        <div class="admin-form" style="max-width:620px;width:100%;max-height:90vh;display:flex;flex-direction:column;padding:1.5rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding-bottom:.85rem;border-bottom:1px solid var(--border-color);flex-shrink:0;">
+                <h2 style="font-size:1.1rem;color:var(--primary-color);margin:0;">Customize Order <span id="co-order-id" style="color:var(--text-muted);font-weight:400;font-size:.85rem;"></span></h2>
+                <button id="co-close" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);padding:0;line-height:1;"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding-right:.25rem;">
+                <div class="fg" style="position:relative;">
+                    <label>Add Product</label>
+                    <input type="text" id="co-search" placeholder="Search products by name…" autocomplete="off">
+                    <div id="co-search-results" style="display:none;position:absolute;left:0;right:0;z-index:20;margin-top:.25rem;background:#fff;border:1px solid var(--border-color);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.12);"></div>
+                </div>
+                <div class="fg">
+                    <label>Order Items</label>
+                    <div id="co-items"></div>
+                </div>
+                <div class="fg">
+                    <label>Delivery Charge (৳)</label>
+                    <input type="number" id="co-delivery" min="0">
+                </div>
+                <div class="fg">
+                    <label>Extra Discount (on subtotal)</label>
+                    <div style="display:flex;gap:.5rem;">
+                        <select id="co-discount-type" style="max-width:90px;flex-shrink:0;">
+                            <option value="percentage">%</option>
+                            <option value="fixed">৳ flat</option>
+                        </select>
+                        <input type="number" id="co-discount-value" min="0" placeholder="0" style="flex:1;">
+                    </div>
+                </div>
+                <div id="co-summary" style="background:var(--bg-color);border-radius:8px;padding:.9rem 1rem;font-size:.86rem;"></div>
+            </div>
+            <div class="form-actions" style="flex-shrink:0;">
+                <button type="button" class="btn btn-outline" id="co-cancel">Cancel</button>
+                <button type="button" class="btn" id="co-save">Save Changes</button>
+            </div>
         </div>
     </div>
 

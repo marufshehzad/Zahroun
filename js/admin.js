@@ -6,7 +6,8 @@ import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   collection, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, addDoc,
-  serverTimestamp, Timestamp, query, limit, onSnapshot, where, orderBy, arrayUnion
+  serverTimestamp, Timestamp, query, limit, onSnapshot, where, orderBy, arrayUnion,
+  runTransaction, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { uploadImage, optimizedUrl } from "./cloudinary.js";
 
@@ -606,6 +607,15 @@ async function initAdmin(user, profile) {
   document.getElementById("od-close")?.addEventListener("click", () => document.getElementById("order-detail-modal")?.classList.remove("open"));
   document.getElementById("order-detail-modal")?.addEventListener("click", e => { if (e.target.id === "order-detail-modal") e.target.classList.remove("open"); });
   document.getElementById("od-print")?.addEventListener("click", () => { if (currentDetailOrder) printOrderInvoice(currentDetailOrder); });
+  document.getElementById("od-customize")?.addEventListener("click", () => { if (currentDetailOrder) openCustomizeOrderModal(currentDetailOrder); });
+  document.getElementById("co-close")?.addEventListener("click", closeCustomizeOrderModal);
+  document.getElementById("co-cancel")?.addEventListener("click", closeCustomizeOrderModal);
+  document.getElementById("customize-order-modal")?.addEventListener("click", e => { if (e.target.id === "customize-order-modal") closeCustomizeOrderModal(); });
+  document.getElementById("co-search")?.addEventListener("input", renderCustomizeSearchResults);
+  document.getElementById("co-delivery")?.addEventListener("input", renderCustomizeSummary);
+  document.getElementById("co-discount-type")?.addEventListener("change", renderCustomizeSummary);
+  document.getElementById("co-discount-value")?.addEventListener("input", renderCustomizeSummary);
+  document.getElementById("co-save")?.addEventListener("click", submitCustomizeOrder);
 
   // Crop modal — Cancel
   document.getElementById("crop-cancel")?.addEventListener("click", () => {
@@ -883,7 +893,11 @@ async function fetchProducts() {
 
 async function fetchOrders() {
   try {
-    const q = query(collection(db, "orders"), limit(200));
+    // Raised from 200: the customer table's "Total Spent"/order-count columns are computed
+    // by filtering this in-memory cache, so a low cap was silently undercounting long-time
+    // customers once the store passed 200 total orders. (Loyalty tier calc no longer depends
+    // on this cache at all — it queries Firestore directly, see awardLoyaltyPointsForOrder.)
+    const q = query(collection(db, "orders"), limit(1000));
     const snap = await getDocs(q);
     orders = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
@@ -1330,8 +1344,12 @@ async function awardLoyaltyPointsForOrder(order) {
       if (!lpSnap.exists() || lpSnap.data().status !== "approved") return;
     }
 
-    const deliveredOrders = orders.filter(o => o.uid === order.uid && o.status === "delivered");
-    const userTotalSpend = deliveredOrders.reduce((s, o) => s + (o.total || 0), 0);
+    // Query Firestore directly rather than filtering the in-memory `orders` cache —
+    // fetchOrders() caps that cache at the 200 most recent orders, which would silently
+    // undercount (and misassign the tier of) any customer with older order history.
+    const deliveredSnap = await getDocs(query(collection(db, "orders"),
+      where("uid", "==", order.uid), where("status", "==", "delivered")));
+    const userTotalSpend = deliveredSnap.docs.reduce((s, d) => s + (d.data().total || 0), 0);
 
     let mult = 1;
     if (lp.tiers?.enabled) {
@@ -1435,14 +1453,18 @@ async function changeOrderStatus(orderId, newStatus) {
   const order = orders.find(o => o.id === orderId);
   const prevStatus = order?.status || "pending";
   try {
+    // Cancelled and returned both give back the product — same stock/loyalty/referral
+    // reversal applies to either (a "returned" order that keeps its stock deducted and
+    // its loyalty/referral rewards awarded forever is exactly the same bug as an unreversed cancel).
+    const isReversal = (newStatus === "cancelled" || newStatus === "returned") && prevStatus !== newStatus;
     if (newStatus === "confirmed" && prevStatus !== "confirmed") await deductOrderStock(order);
-    if (newStatus === "cancelled" && prevStatus !== "cancelled") await restoreOrderStock(order);
+    if (isReversal) await restoreOrderStock(order);
     const histEntry = { status: newStatus, at: new Date().toISOString() };
     await updateDoc(doc(db, "orders", orderId), { status: newStatus, statusHistory: arrayUnion(histEntry) });
     if (order) { order.status = newStatus; order.statusHistory = [...(order.statusHistory || []), histEntry]; }
     if (newStatus === "confirmed" && prevStatus !== "confirmed") sendConfirmationEmail(order);
 
-    // Loyalty and Referral: award on delivery, reverse on cancellation
+    // Loyalty and Referral: award on delivery, reverse on cancellation/return
     if (newStatus === "delivered" && prevStatus !== "delivered") {
       if (order?.uid && !order?.loyaltyPointsAwarded) {
         awardLoyaltyPointsForOrder(order).catch(e => console.warn("LP award:", e));
@@ -1453,7 +1475,7 @@ async function changeOrderStatus(orderId, newStatus) {
           handleReferralRewardForOrder(order, cfg).catch(e => console.warn("Referral award:", e));
         }).catch(e => console.warn("Failed to fetch settings for referral award:", e));
       }
-    } else if (newStatus === "cancelled" && prevStatus !== "cancelled") {
+    } else if (isReversal) {
       if (order?.loyaltyPointsAwarded || order?.loyaltyRedeemedPoints > 0) {
         reverseLoyaltyPointsForOrder(order).catch(e => console.warn("LP reverse:", e));
       }
@@ -1463,8 +1485,6 @@ async function changeOrderStatus(orderId, newStatus) {
           reverseReferralRewardForOrder(order, cfg).catch(e => console.warn("Referral reverse:", e));
         }).catch(e => console.warn("Failed to fetch settings for referral reversal:", e));
       }
-      sendCancelCAPI(order, orderId);
-    } else if (newStatus === "returned" && prevStatus !== "returned") {
       sendCancelCAPI(order, orderId);
     }
 
@@ -4529,9 +4549,16 @@ function renderAnFunnel(filtered, active, newCusts) {
     </div>`).join("");
 }
 
+// Orders in these terminal statuses can no longer have their items/pricing edited
+// (stock has already been finalized one way or another, and re-opening a
+// delivered/returned/cancelled order for editing would desync the books).
+const CUSTOMIZE_LOCKED_STATUSES = new Set(["cancelled", "delivered", "returned"]);
+
 /* ---- Order detail modal ----------------------------------------------- */
 function openOrderDetail(order) {
   currentDetailOrder = order;
+  const customizeBtn = document.getElementById("od-customize");
+  if (customizeBtn) customizeBtn.style.display = CUSTOMIZE_LOCKED_STATUSES.has(order.status || "pending") ? "none" : "flex";
   const c = order.customer || {};
   const items = order.items || [];
   const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0);
@@ -4654,8 +4681,451 @@ function openOrderDetail(order) {
   });
 }
 
+/* ---- Customize Order modal --------------------------------------------- */
+let coOrder = null;      // order being edited (snapshot at time modal opened)
+let coItems = [];        // working copy of items: {id,name,size,price,qty,image,originalPrice,isFreeGift}
+let coSalePriceMap = {}; // { productId: { size: salePrice } } from the live flash sale, if any
+
+function coParseSizeValue(size) {
+  const m = String(size).match(/(\d+(?:\.\d+)?)/);
+  return m ? parseFloat(m[1]) : Number.MAX_SAFE_INTEGER;
+}
+
+function getOrderedSizesCO(product, fallback) {
+  if (!product) return fallback ? [fallback] : [];
+  return Object.keys(product.prices || {}).sort((a, b) => coParseSizeValue(a) - coParseSizeValue(b));
+}
+
+function buildCOSalePriceMap() {
+  coSalePriceMap = {};
+  if (!flashSaleData?.enabled) return;
+  const endDate = flashSaleData.endDate?.toDate ? flashSaleData.endDate.toDate() : (flashSaleData.endDate ? new Date(flashSaleData.endDate) : null);
+  if (endDate && endDate < new Date()) return;
+  (flashSaleData.items || []).forEach(it => {
+    if (it?.productId != null) coSalePriceMap[String(it.productId)] = it.prices || {};
+  });
+}
+
+// Current catalog price for a product+size, accounting for a live flash sale —
+// matches what a customer would actually pay at checkout right now.
+function getCatalogPriceCO(product, size) {
+  const regular = product?.prices?.[size];
+  if (typeof regular !== "number") return { price: 0, originalPrice: undefined };
+  const sale = coSalePriceMap[String(product.id)]?.[size];
+  const isOnSale = typeof sale === "number" && sale > 0 && sale < regular;
+  return isOnSale ? { price: sale, originalPrice: regular } : { price: regular, originalPrice: undefined };
+}
+
+function openCustomizeOrderModal(order) {
+  if (CUSTOMIZE_LOCKED_STATUSES.has(order.status || "pending")) {
+    adminToast(`Cannot edit an order that is already ${order.status}.`, false);
+    return;
+  }
+  coOrder = order;
+  buildCOSalePriceMap();
+  coItems = (order.items || []).map(i => ({
+    id: String(i.id), name: i.name || "", size: i.size || "",
+    price: i.price ?? 0, qty: i.quantity ?? i.qty ?? 1, image: i.image || "",
+    originalPrice: i.originalPrice, isFreeGift: !!i.isFreeGift
+  }));
+  document.getElementById("co-order-id").textContent = order.orderNum ? `#${order.orderNum}` : `#${order.id.slice(0, 8).toUpperCase()}`;
+  document.getElementById("co-delivery").value = order.delivery ?? 0;
+  document.getElementById("co-discount-type").value = order.manualDiscountType || "percentage";
+  document.getElementById("co-discount-value").value = order.manualDiscountValue || "";
+  document.getElementById("co-search").value = "";
+  document.getElementById("co-search-results").style.display = "none";
+  renderCustomizeItems();
+  document.getElementById("customize-order-modal").classList.add("open");
+}
+
+function closeCustomizeOrderModal() {
+  document.getElementById("customize-order-modal")?.classList.remove("open");
+  coOrder = null;
+  coItems = [];
+}
+
+function renderCustomizeSearchResults() {
+  const q = document.getElementById("co-search").value.trim().toLowerCase();
+  const box = document.getElementById("co-search-results");
+  if (!q) { box.style.display = "none"; box.innerHTML = ""; return; }
+  const matches = products.filter(p => !p.hidden && (p.name || "").toLowerCase().includes(q)).slice(0, 6);
+  if (!matches.length) { box.style.display = "none"; box.innerHTML = ""; return; }
+  box.innerHTML = matches.map(p => {
+    const sizes = getOrderedSizesCO(p);
+    return `<div style="padding:.5rem .65rem;border-bottom:1px solid var(--border-color);">
+      <div style="font-size:.85rem;font-weight:600;margin-bottom:.3rem;">${escapeHtml(p.name)}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.3rem;">
+        ${sizes.map(sz => {
+          const { price, originalPrice } = getCatalogPriceCO(p, sz);
+          return `<button type="button" class="co-add-size" data-pid="${p.id}" data-size="${escapeHtml(sz)}" style="background:#f4f1e8;border:1px solid var(--border-color);border-radius:5px;padding:.2rem .5rem;font-size:.74rem;cursor:pointer;">${escapeHtml(sz)} (৳${price}${originalPrice ? ` <s style="opacity:.6;">৳${originalPrice}</s>` : ""})</button>`;
+        }).join("")}
+      </div>
+    </div>`;
+  }).join("");
+  box.style.display = "block";
+  box.querySelectorAll(".co-add-size").forEach(btn => {
+    btn.addEventListener("click", () => handleCOAddProduct(btn.dataset.pid, btn.dataset.size));
+  });
+}
+
+function handleCOAddProduct(pid, size) {
+  const product = products.find(p => String(p.id) === String(pid));
+  if (!product) return;
+  const existing = coItems.find(i => i.id === String(pid) && i.size === size);
+  if (existing) {
+    existing.qty += 1;
+  } else {
+    const { price, originalPrice } = getCatalogPriceCO(product, size);
+    coItems.push({ id: String(pid), name: product.name, size, price, qty: 1, image: product.image || "", originalPrice, isFreeGift: false });
+  }
+  document.getElementById("co-search").value = "";
+  document.getElementById("co-search-results").style.display = "none";
+  document.getElementById("co-search-results").innerHTML = "";
+  renderCustomizeItems();
+}
+
+function renderCustomizeItems() {
+  const box = document.getElementById("co-items");
+  if (!coItems.length) {
+    box.innerHTML = `<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:.85rem;border:1px dashed var(--border-color);border-radius:8px;">No items in order</div>`;
+    renderCustomizeSummary();
+    return;
+  }
+  box.innerHTML = coItems.map((item, idx) => {
+    const product = products.find(p => String(p.id) === item.id);
+    const sizes = getOrderedSizesCO(product, item.size);
+    return `<div style="display:flex;align-items:center;gap:.6rem;border:1px solid var(--border-color);border-radius:8px;padding:.55rem;margin-bottom:.5rem;flex-wrap:wrap;">
+      ${item.image ? `<img src="${optimizedUrl(item.image, 42)}" style="width:38px;height:38px;object-fit:contain;background:var(--bg-color);border-radius:6px;flex-shrink:0;">` : ""}
+      <div style="flex:1;min-width:120px;">
+        <div style="font-size:.83rem;font-weight:600;margin-bottom:.25rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.name)}</div>
+        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
+          <select class="co-size-select" data-idx="${idx}" style="font-size:.74rem;padding:.15rem .3rem;width:auto;">
+            ${sizes.map(s => `<option value="${escapeHtml(s)}" ${s === item.size ? "selected" : ""}>${escapeHtml(s)}</option>`).join("")}
+          </select>
+          ${item.isFreeGift
+            ? `<span style="font-size:.74rem;font-weight:700;color:#1e7e34;">FREE</span>`
+            : `<span style="display:flex;align-items:center;gap:.2rem;">৳<input type="number" class="co-price-input" data-idx="${idx}" min="0" value="${item.price}" style="width:60px;font-size:.74rem;padding:.15rem .3rem;">${typeof item.originalPrice === "number" && item.originalPrice > item.price ? `<s style="font-size:.7rem;opacity:.6;">৳${item.originalPrice}</s>` : ""}</span>`}
+          <label style="display:flex;align-items:center;gap:.2rem;font-size:.72rem;color:var(--text-muted);cursor:pointer;">
+            <input type="checkbox" class="co-freegift-toggle" data-idx="${idx}" ${item.isFreeGift ? "checked" : ""} style="width:auto;"> Free Gift
+          </label>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.3rem;flex-shrink:0;">
+        <button type="button" class="co-qty-btn" data-idx="${idx}" data-delta="-1" style="width:22px;height:22px;border:1px solid var(--border-color);border-radius:4px;background:#fff;cursor:pointer;">−</button>
+        <span style="min-width:18px;text-align:center;font-size:.85rem;font-weight:600;">${item.qty}</span>
+        <button type="button" class="co-qty-btn" data-idx="${idx}" data-delta="1" style="width:22px;height:22px;border:1px solid var(--border-color);border-radius:4px;background:#fff;cursor:pointer;">+</button>
+      </div>
+      <button type="button" class="co-remove-btn" data-idx="${idx}" style="background:none;border:none;color:#9b2226;cursor:pointer;padding:.2rem;flex-shrink:0;"><ion-icon name="close-outline" style="font-size:1.1rem;"></ion-icon></button>
+    </div>`;
+  }).join("");
+
+  box.querySelectorAll(".co-qty-btn").forEach(btn => btn.addEventListener("click", () => {
+    const item = coItems[Number(btn.dataset.idx)];
+    if (!item) return;
+    item.qty = Math.max(1, item.qty + Number(btn.dataset.delta));
+    renderCustomizeItems();
+  }));
+  box.querySelectorAll(".co-remove-btn").forEach(btn => btn.addEventListener("click", () => {
+    coItems.splice(Number(btn.dataset.idx), 1);
+    renderCustomizeItems();
+  }));
+  box.querySelectorAll(".co-size-select").forEach(sel => sel.addEventListener("change", () => {
+    const item = coItems[Number(sel.dataset.idx)];
+    if (!item) return;
+    item.size = sel.value;
+    const product = products.find(p => String(p.id) === item.id);
+    if (product && !item.isFreeGift) {
+      const { price, originalPrice } = getCatalogPriceCO(product, item.size);
+      item.price = price; item.originalPrice = originalPrice;
+    }
+    renderCustomizeItems();
+  }));
+  box.querySelectorAll(".co-price-input").forEach(inp => inp.addEventListener("input", () => {
+    const item = coItems[Number(inp.dataset.idx)];
+    if (!item) return;
+    item.price = Math.max(0, Number(inp.value) || 0);
+    renderCustomizeSummary();
+  }));
+  box.querySelectorAll(".co-freegift-toggle").forEach(cb => cb.addEventListener("change", () => {
+    const item = coItems[Number(cb.dataset.idx)];
+    if (!item) return;
+    if (cb.checked) {
+      item.isFreeGift = true;
+      item.originalPrice = item.originalPrice || item.price || undefined;
+      item.price = 0;
+    } else {
+      const product = products.find(p => String(p.id) === item.id);
+      const fallback = product ? getCatalogPriceCO(product, item.size) : { price: 0, originalPrice: undefined };
+      item.isFreeGift = false; item.price = fallback.price; item.originalPrice = fallback.originalPrice;
+    }
+    renderCustomizeItems();
+  }));
+
+  renderCustomizeSummary();
+}
+
+function computeCOTotals() {
+  const subtotal = coItems.reduce((s, i) => s + (i.price || 0) * (i.qty || 1), 0);
+  const delivery = Number(document.getElementById("co-delivery")?.value) || 0;
+  const discountType = document.getElementById("co-discount-type")?.value || "percentage";
+  const discountValue = Number(document.getElementById("co-discount-value")?.value) || 0;
+  const manualDiscount = discountValue > 0
+    ? (discountType === "percentage" ? Math.round(subtotal * Math.min(100, discountValue) / 100) : Math.min(subtotal, discountValue))
+    : 0;
+  const couponDiscount = Math.min(subtotal, coOrder?.discount || 0);
+  const loyaltyDiscount = Math.min(subtotal, coOrder?.loyaltyDiscountAmount || 0);
+  // Promo entries applied at original checkout (tiered/bxgy/referral/etc — referral lives inside
+  // this same promos array/promoDiscount total, see js/orders.js) are preserved as historical fact
+  // rather than re-run through the full 15-feature promo engine, but the sum is clamped so it can
+  // never exceed the new (possibly smaller) subtotal.
+  const promoDiscount = Math.min(subtotal, coOrder?.promoDiscount || 0);
+  const totalDiscount = couponDiscount + promoDiscount + loyaltyDiscount + manualDiscount;
+  const total = Math.max(0, subtotal - totalDiscount + delivery);
+  return { subtotal, delivery, manualDiscount, couponDiscount, loyaltyDiscount, promoDiscount, total, discountType, discountValue };
+}
+
+function renderCustomizeSummary() {
+  if (!coOrder) return;
+  const t = computeCOTotals();
+  const box = document.getElementById("co-summary");
+  box.innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;"><span style="color:var(--text-muted);">Subtotal</span><span>৳${t.subtotal.toLocaleString()}</span></div>
+    ${t.couponDiscount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:.3rem;color:#1e7e34;"><span>Coupon${coOrder.couponCode ? ` (${escapeHtml(coOrder.couponCode)})` : ""}</span><span>−৳${t.couponDiscount.toLocaleString()}</span></div>` : ""}
+    ${t.promoDiscount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:.3rem;color:#163E34;"><span>Promotions</span><span>−৳${t.promoDiscount.toLocaleString()}</span></div>` : ""}
+    ${t.loyaltyDiscount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:.3rem;color:#7b5ea7;"><span>Loyalty Points</span><span>−৳${t.loyaltyDiscount.toLocaleString()}</span></div>` : ""}
+    ${t.manualDiscount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:.3rem;color:#1e7e34;"><span>Extra Discount</span><span>−৳${t.manualDiscount.toLocaleString()}</span></div>` : ""}
+    <div style="display:flex;justify-content:space-between;margin-bottom:.3rem;"><span style="color:var(--text-muted);">Delivery</span><span>৳${t.delivery.toLocaleString()}</span></div>
+    <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1rem;border-top:1px solid var(--border-color);padding-top:.5rem;margin-top:.4rem;"><span>Estimated Total</span><span style="color:var(--primary-color);">৳${t.total.toLocaleString()}</span></div>
+    <div style="font-size:.7rem;color:var(--text-muted);margin-top:.4rem;">Coupon is re-verified against live settings when you save — the final total may differ slightly from this estimate.</div>`;
+}
+
+// Re-verify a coupon fresh against the new subtotal (minOrder threshold may no longer be
+// met, or the coupon may have expired/been deactivated since the order was first placed) —
+// same validation rules as js/coupon.js's validateAndApplyCoupon.
+async function verifyCouponForCO(couponCode, subtotal) {
+  try {
+    const snap = await getDoc(doc(db, "coupons", couponCode.toUpperCase()));
+    if (!snap.exists()) return { discount: 0, removed: true, freeShip: false };
+    const c = snap.data();
+    if (c.active === false) return { discount: 0, removed: true, freeShip: false };
+    if (c.expiresAt) {
+      const exp = c.expiresAt.toDate ? c.expiresAt.toDate() : new Date(c.expiresAt);
+      if (exp < new Date()) return { discount: 0, removed: true, freeShip: false };
+    }
+    if (c.minOrder && subtotal < c.minOrder) return { discount: 0, removed: true, freeShip: false };
+    if (c.type === "freeship") return { discount: 0, removed: false, freeShip: true };
+    if (c.type === "percent" && typeof c.value === "number") {
+      let d = Math.round(subtotal * c.value / 100 * 100) / 100;
+      if (typeof c.maxDiscount === "number" && c.maxDiscount > 0) d = Math.min(d, c.maxDiscount);
+      return { discount: d, removed: false, freeShip: false };
+    }
+    if (c.type === "flat" && typeof c.value === "number") {
+      return { discount: Math.min(subtotal, c.value), removed: false, freeShip: false };
+    }
+    return { discount: 0, removed: false, freeShip: false };
+  } catch (e) {
+    console.warn("[customizeOrder] coupon re-verify failed:", e);
+    return { discount: 0, removed: false, freeShip: false, error: true };
+  }
+}
+
+async function submitCustomizeOrder() {
+  if (!coOrder) return;
+  if (!coItems.length) { adminToast("Add at least one item to the order.", false); return; }
+  if (CUSTOMIZE_LOCKED_STATUSES.has(coOrder.status || "pending")) {
+    adminToast(`Cannot edit an order that is already ${coOrder.status}.`, false);
+    closeCustomizeOrderModal();
+    return;
+  }
+
+  const saveBtn = document.getElementById("co-save");
+  saveBtn.disabled = true; saveBtn.textContent = "Saving…";
+
+  try {
+    const subtotal = coItems.reduce((s, i) => s + (i.price || 0) * (i.qty || 1), 0);
+
+    const couponRes = coOrder.couponCode
+      ? await verifyCouponForCO(coOrder.couponCode, subtotal)
+      : { discount: 0, removed: false, freeShip: false };
+    const couponRemoved = !!coOrder.couponCode && couponRes.removed;
+    const couponDiscount = couponRes.removed ? 0 : couponRes.discount;
+
+    const loyaltyDiscount = Math.min(subtotal, coOrder.loyaltyDiscountAmount || 0);
+    const promoDiscount = Math.min(subtotal, coOrder.promoDiscount || 0);
+
+    const discountType = document.getElementById("co-discount-type").value;
+    const discountValue = Number(document.getElementById("co-discount-value").value) || 0;
+    const manualDiscount = discountValue > 0
+      ? (discountType === "percentage" ? Math.round(subtotal * Math.min(100, discountValue) / 100) : Math.min(subtotal, discountValue))
+      : 0;
+
+    let delivery = Number(document.getElementById("co-delivery").value) || 0;
+    if (!couponRes.removed && couponRes.freeShip) delivery = 0;
+
+    const totalDiscount = couponDiscount + promoDiscount + loyaltyDiscount + manualDiscount;
+    const newTotal = Math.max(0, subtotal - totalDiscount + delivery);
+
+    // Net stock delta per product: +qty for each old item (restored), -qty for each new item (deducted).
+    const netDelta = new Map();
+    for (const item of (coOrder.items || [])) {
+      const pid = String(item.id);
+      const qty = item.quantity ?? item.qty ?? 1;
+      netDelta.set(pid, (netDelta.get(pid) || 0) + qty);
+    }
+    for (const item of coItems) {
+      const pid = String(item.id);
+      netDelta.set(pid, (netDelta.get(pid) || 0) - (item.qty || 1));
+    }
+    const deltaEntries = Array.from(netDelta.entries()).filter(([, d]) => d !== 0);
+
+    const savedItems = coItems.map(i => ({
+      id: i.id, name: i.name, size: i.size, price: i.price, quantity: i.qty,
+      image: i.image, isFreeGift: !!i.isFreeGift,
+      ...(typeof i.originalPrice === "number" ? { originalPrice: i.originalPrice } : {})
+    }));
+
+    // Diff note for the order timeline
+    const itemKey = (id, size) => `${id}_${size || ""}`;
+    const oldItemsList = coOrder.items || [];
+    const oldMap = new Map(oldItemsList.map(i => [itemKey(i.id, i.size), i]));
+    const newMap = new Map(savedItems.map(i => [itemKey(i.id, i.size), i]));
+    const fmtItem = i => `${i.name || "Item"} (${i.size || "—"}) x${i.quantity ?? i.qty ?? 1}`;
+    const addedItems = savedItems.filter(i => !oldMap.has(itemKey(i.id, i.size)));
+    const removedItems = oldItemsList.filter(i => !newMap.has(itemKey(i.id, i.size)));
+    const changedItems = [];
+    for (const [key, ni] of newMap) {
+      const oi = oldMap.get(key);
+      if (!oi) continue;
+      const oq = oi.quantity ?? oi.qty ?? 1, nq = ni.quantity ?? 1;
+      const op = oi.price || 0, np = ni.price || 0;
+      const label = `${ni.name} (${ni.size || "—"})`;
+      if (oq !== nq) changedItems.push(`${label} x${oq} -> x${nq}`);
+      if (op !== np) changedItems.push(`${label}: ৳${op} -> ${np === 0 ? "Free" : "৳" + np}`);
+    }
+    const noteLines = [
+      addedItems.length ? `+ Added: ${addedItems.map(fmtItem).join(", ")}` : "",
+      removedItems.length ? `- Removed: ${removedItems.map(fmtItem).join(", ")}` : "",
+      changedItems.length ? `Changed: ${changedItems.join(", ")}` : "",
+      manualDiscount > 0 ? `Extra discount applied: ${discountType === "percentage" ? Math.min(100, discountValue) + "%" : "flat"} (৳${manualDiscount.toLocaleString()})` : "",
+      couponRemoved ? "Coupon no longer valid — removed" : "",
+      `৳${(coOrder.total || 0).toLocaleString()} -> ৳${newTotal.toLocaleString()}`
+    ].filter(Boolean).join("\n");
+
+    const stockLogEntries = [];
+
+    // Re-verify stock fresh at write time (not just against the cached `products` list from
+    // when this modal opened) — closes the same TOCTOU gap a concurrent live checkout could
+    // otherwise race against. Order update happens in the same transaction so both succeed or
+    // both fail together.
+    await runTransaction(db, async (tx) => {
+      const refs = deltaEntries.map(([pid]) => doc(db, "products", pid));
+      const snaps = await Promise.all(refs.map(r => tx.get(r)));
+
+      snaps.forEach((snap, idx) => {
+        const [pid, delta] = deltaEntries[idx];
+        if (!snap.exists()) return;
+        const stock = snap.data().stock;
+        if (typeof stock !== "number") return; // untracked/unlimited stock — skip
+        if (stock + delta < 0) throw new Error("stock_race_" + pid);
+      });
+
+      snaps.forEach((snap, idx) => {
+        const [pid, delta] = deltaEntries[idx];
+        if (!snap.exists()) return;
+        const stock = snap.data().stock;
+        if (typeof stock !== "number") return;
+        tx.update(refs[idx], { stock: stock + delta });
+        stockLogEntries.push({ pid, before: stock, after: stock + delta, delta });
+      });
+
+      const histEntry = { status: "order_customized", at: new Date().toISOString(), note: noteLines };
+      const orderUpdate = {
+        items: savedItems,
+        subtotal,
+        delivery,
+        discount: couponDiscount,
+        promoDiscount,
+        loyaltyDiscountAmount: loyaltyDiscount,
+        total: newTotal,
+        statusHistory: arrayUnion(histEntry)
+      };
+      if (manualDiscount > 0) {
+        orderUpdate.manualDiscount = manualDiscount;
+        orderUpdate.manualDiscountType = discountType;
+        orderUpdate.manualDiscountValue = discountValue;
+      } else {
+        orderUpdate.manualDiscount = deleteField();
+        orderUpdate.manualDiscountType = deleteField();
+        orderUpdate.manualDiscountValue = deleteField();
+      }
+      if (couponRemoved) orderUpdate.couponCode = deleteField();
+      tx.update(doc(db, "orders", coOrder.id), orderUpdate);
+    });
+
+    // Sync local caches so the UI reflects the save without a full refetch
+    stockLogEntries.forEach(e => {
+      const p = products.find(p => String(p.id) === e.pid);
+      if (p) p.stock = e.after;
+    });
+    const oIdx = orders.findIndex(o => o.id === coOrder.id);
+    let updatedOrder = coOrder;
+    if (oIdx !== -1) {
+      updatedOrder = {
+        ...orders[oIdx], items: savedItems, subtotal, delivery,
+        discount: couponDiscount, promoDiscount, loyaltyDiscountAmount: loyaltyDiscount,
+        total: newTotal
+      };
+      if (couponRemoved) delete updatedOrder.couponCode;
+      orders[oIdx] = updatedOrder;
+    }
+
+    if (stockLogEntries.length) {
+      Promise.all(stockLogEntries.map(e => addDoc(collection(db, "stockHistory"), {
+        productId: e.pid,
+        productName: products.find(p => String(p.id) === e.pid)?.name || "",
+        type: "customize",
+        qty: Math.abs(e.delta),
+        stockBefore: e.before,
+        stockAfter: e.after,
+        orderId: coOrder.id,
+        timestamp: serverTimestamp()
+      }))).catch(() => {});
+    }
+
+    renderOrderTable(); renderDashboard(); updateNotifications(); renderProductTable();
+    if (currentDetailOrder?.id === coOrder.id) openOrderDetail(updatedOrder);
+
+    adminToast(couponRemoved
+      ? `Order updated. Coupon no longer valid — removed. Final total: ৳${newTotal.toLocaleString()}`
+      : "Order updated successfully.");
+    closeCustomizeOrderModal();
+  } catch (e) {
+    if (String(e?.message || "").startsWith("stock_race_")) {
+      adminToast("Stock changed while saving — please retry.", false);
+    } else {
+      console.error("[customizeOrder]", e);
+      adminToast("Failed to update order: " + (e?.message || e?.code || "unknown error"), false);
+    }
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = "Save Changes";
+  }
+}
+
 /* ---- Order invoice print ---------------------------------------------- */
 function printOrderInvoice(order) {
+  // Open the popup FIRST, before any other work — iOS Safari (unlike
+  // desktop/Android browsers) treats window.open() as untrusted and
+  // silently blocks it if even a few milliseconds of synchronous work
+  // (building all the invoice HTML strings below) happen between the tap
+  // and the open() call. This is why the button did nothing on iPhone
+  // while working fine everywhere else: no popup, no error, no visible
+  // feedback. Opening immediately keeps it inside the same tick as the tap.
+  const win = window.open("", "_blank", "width=720,height=960,scrollbars=yes");
+  if (!win) {
+    alert("Your browser blocked the invoice popup. Please allow pop-ups for this site and try again.");
+    return;
+  }
+
   const c = order.customer || {};
   const items = order.items || [];
   const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0);
@@ -4683,7 +5153,6 @@ function printOrderInvoice(order) {
   const loyaltyRow = invoiceLoyalty > 0 ? `<tr class="tot"><td colspan="5" style="text-align:right;color:#7b5ea7;">Loyalty Points</td><td style="text-align:right;color:#7b5ea7;">−৳${invoiceLoyalty.toLocaleString()}</td></tr>` : "";
   const deliveryRow = invoiceDelivery > 0 ? `<tr class="tot"><td colspan="5" style="text-align:right;color:#555;">Delivery</td><td style="text-align:right;">৳${invoiceDelivery.toLocaleString()}</td></tr>` : "";
 
-  const win = window.open("", "_blank", "width=720,height=960,scrollbars=yes");
   win.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <title>Invoice ${orderNumDisplay} | Zahroun</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -547,17 +547,18 @@
             const displaySizes = sizeOrder.filter(s => activeSizeList.includes(s));
             const noSizes = displaySizes.length === 0;
 
-            // Default selected = the size with the cheapest active flash-sale discount (if any),
-            // else admin-chosen defaultDisplaySize, else 50ML, else last available
+            // Default selected = admin-chosen defaultDisplaySize (if any) — this is a deliberate
+            // per-product choice (e.g. the gift-set photo for a combo), so it must win even when a
+            // flash sale is live; else the cheapest active flash-sale discount; else 50ML; else last available
             const _dds = product.defaultDisplaySize;
             const _fsAtLoad = window.getFlashSaleItem ? window.getFlashSaleItem(product.id) : null;
             const _fsBestAtLoad = (_fsAtLoad && _fsAtLoad.prices && window.cheapestFlashSale)
                 ? window.cheapestFlashSale(_fsAtLoad.prices, product.prices)
                 : null;
-            currentSelectedSize = (_fsBestAtLoad && displaySizes.includes(_fsBestAtLoad.size))
-                ? _fsBestAtLoad.size
-                : (_dds && displaySizes.includes(_dds)
-                    ? _dds
+            currentSelectedSize = (_dds && displaySizes.includes(_dds))
+                ? _dds
+                : (_fsBestAtLoad && displaySizes.includes(_fsBestAtLoad.size)
+                    ? _fsBestAtLoad.size
                     : (displaySizes.includes('50ML') ? '50ML' : (displaySizes[displaySizes.length - 1] || null)));
             const productPrice = noSizes
                 ? (product.basePrice || Object.values(product.prices || {}).filter(v => v > 0).sort((a,b) => b - a)[0] || 0)
@@ -884,9 +885,13 @@
                 const rvProducts = rv.filter(id => id !== productId)
                     .map(id => products.find(p => p.id === id)).filter(Boolean).slice(0, 4);
                 localStorage.setItem(RV_KEY, JSON.stringify([productId, ...rv.filter(id => id !== productId)].slice(0, 8)));
+                // products-ready can fire up to 3x per page load (bundled -> cache -> Firestore);
+                // remove any previously-inserted section so stale/duplicate copies never stack up
+                document.getElementById('recently-viewed-section')?.remove();
                 if (rvProducts.length >= 2) {
                     const upsellSection = upsellGrid.closest('section') || upsellGrid.parentElement;
                     const rvSection = document.createElement('section');
+                    rvSection.id = 'recently-viewed-section';
                     rvSection.style.cssText = 'padding:0 0 4rem;';
                     rvSection.innerHTML = `<div class="container">
                         <h2 class="section-title" style="text-align:center;margin-bottom:2rem;">Recently Viewed</h2>
@@ -915,8 +920,9 @@
             const fsItem = window.getFlashSaleItem ? window.getFlashSaleItem(currentProduct.id) : null;
             const fsPrices = fsItem ? fsItem.prices : null;
             // If flash sale arrived after initial render and user hasn't manually picked a size,
-            // switch to the cheapest discounted size so the deal is immediately visible
-            if (fsPrices && !_userPickedSize && window.cheapestFlashSale) {
+            // switch to the cheapest discounted size so the deal is immediately visible — but never
+            // override an admin-chosen defaultDisplaySize (that's a deliberate per-product choice)
+            if (fsPrices && !_userPickedSize && !currentProduct.defaultDisplaySize && window.cheapestFlashSale) {
                 const best = window.cheapestFlashSale(fsPrices, currentProduct.prices);
                 const _avail = currentProduct.activeSizes ?? ['6ML','15ML','30ML','50ML'];
                 if (best && _avail.includes(best.size) && currentSelectedSize !== best.size) {
