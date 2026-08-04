@@ -471,6 +471,19 @@ window.cheapestFlashSale = function(salePrices, regularPrices) {
     return best;
 };
 
+// Card-grid flash sale pick — when admin has chosen a defaultDisplaySize (the
+// size whose photo shows on the product card), the price badge on that same
+// card must quote THAT size's discount, not whichever size happens to be
+// cheapest. Falls back to cheapestFlashSale when no preferred size is set or
+// the preferred size has no live discount.
+window.pickCardFlashSaleSize = function(salePrices, regularPrices, preferredSize) {
+    if (preferredSize && salePrices && regularPrices) {
+        const sp = salePrices[preferredSize], reg = regularPrices[preferredSize];
+        if (reg && sp > 0 && sp < reg) return { size: preferredSize, salePrice: sp };
+    }
+    return window.cheapestFlashSale(salePrices, regularPrices);
+};
+
 window.isFlashSaleLive = function(fs) {
     if (!fs || !fs.enabled) return false;
     if (fs.endDate) {
@@ -519,7 +532,7 @@ async function loadSiteSettings() {
 
       // Floating WhatsApp order button — site-wide except admin; admin-controllable
       const waNum = (s.whatsapp || "01886936581").replace(/\D/g, "");
-      if (s.whatsappEnabled !== false && waNum && !document.getElementById("za-wa-float") && !location.pathname.endsWith("admin.html")) {
+      if (s.whatsappEnabled !== false && waNum && !document.getElementById("za-wa-float") && !/(^|\/)admin(\.html)?$/.test(location.pathname)) {
         const waMsg = s.whatsappMessage || "Hi Zahroun! I'd like to place an order.";
         const wa = document.createElement("a");
         wa.id = "za-wa-float";
@@ -651,14 +664,19 @@ async function loadSiteSettings() {
 
     // Global helper — single source of truth for flash sale item lookup.
     // Returns { productId, prices: { [size]: salePrice } } if product is in an active flash sale, else null.
+    // Must go through isFlashSaleLive (not just fs.enabled) — otherwise every card
+    // grid keeps showing sale pricing forever once the countdown's endDate passes,
+    // until someone remembers to flip the "enabled" toggle off by hand.
     window.getFlashSaleItem = function(productId) {
         const fs = window.zahFlashSale;
-        if (!fs || !fs.enabled || !Array.isArray(fs.items)) return null;
+        if (!window.isFlashSaleLive(fs) || !Array.isArray(fs.items)) return null;
         return fs.items.find(fi => String(fi.productId) === String(productId)) || null;
     };
 
-    // Inject nav link based on enabled state
-    injectFlashSaleNav(flashData.enabled);
+    // Inject nav link based on live state (enabled AND not past endDate) —
+    // otherwise the header keeps advertising "Flash Sale" site-wide long after
+    // the countdown expires, until someone manually flips the toggle off.
+    injectFlashSaleNav(window.isFlashSaleLive(flashData));
 
     // Notify other scripts on this page
     document.dispatchEvent(new CustomEvent("flashsale-status", { detail: flashData }));
@@ -714,7 +732,7 @@ renderAccount(null);
     const btn = e.target.closest('button[aria-label="Search"], a[aria-label="Search"]');
     if (!btn) return;
     // Only intercept if not already on shop.html (there the search is inline)
-    if (!window.location.pathname.endsWith("shop.html")) {
+    if (!/(^|\/)shop(\.html)?$/.test(window.location.pathname)) {
       e.preventDefault();
       e.stopImmediatePropagation();
       openSearch();
@@ -728,11 +746,16 @@ function injectFlashSaleNav(enabled) {
   if (!navLinks) return;
   const existing = navLinks.querySelector(".flash-nav-link");
   if (!enabled) { if (existing) existing.remove(); return; }
-  if (existing) return;
+  // This link only exists in the DOM (every static page's nav omits it,
+  // sale.html included) once JS injects it here — so unlike the other nav
+  // links, whose active page has "active" hardcoded in that page's own HTML,
+  // it never got the underline even while standing on the Flash Sale page.
+  const onSalePage = /(^|\/)sale(\.html)?$/.test(location.pathname);
+  if (existing) { existing.classList.toggle("active", onSalePage); return; }
   const shopLink = Array.from(navLinks.querySelectorAll("a")).find(a => a.textContent.trim() === "Shop");
   const link = document.createElement("a");
   link.href = "sale.html";
-  link.className = "flash-nav-link";
+  link.className = "flash-nav-link" + (onSalePage ? " active" : "");
   link.innerHTML = `Flash Sale <span class="flash-badge">SALE</span>`;
   if (shopLink?.nextSibling) navLinks.insertBefore(link, shopLink.nextSibling);
   else navLinks.appendChild(link);

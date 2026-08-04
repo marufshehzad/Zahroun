@@ -83,6 +83,7 @@ exports.handler = async (event) => {
         ln:      [sha256(ud.last_name)].filter(v => v),
         ct:      [sha256(ud.city)].filter(v => v),
         country: [sha256('bd')],
+        external_id: [sha256(ud.external_id)].filter(v => v),
         client_ip_address: (event.headers['x-forwarded-for'] || '').split(',')[0].trim(),
         client_user_agent: event.headers['user-agent'] || '',
     };

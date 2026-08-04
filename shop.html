@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- This page can also load at /shop/<category> (see vercel.json rewrite) —
+         without this, every relative link/script/image here (js/cart.js,
+         product.html?id=…, …) would resolve against /shop/ instead of the
+         site root and 404. Must come before any element that uses a URL. -->
+    <base href="/">
     <meta name="color-scheme" content="only light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Meta Pixel Code -->
@@ -486,7 +491,16 @@
         const filterList = document.getElementById("category-filter");
         const grid = document.getElementById("shop-products");
         const searchInput = document.getElementById("search-input");
-        const categoryParam = new URLSearchParams(window.location.search).get("category");
+        // Readable per-category URL slug, e.g. "Premium Attar" -> "premium-attar".
+        // Rewritten to /shop.html by vercel.json so /shop/premium-attar loads directly.
+        function slugForUrl(s) {
+            return String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        }
+        // /shop/<category> (path) wins over the legacy ?category= query param —
+        // both still work so existing links (index.html category cards, old ads) keep working.
+        const _pathParts = window.location.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+        const _pathCategory = (_pathParts[0] === "shop" && _pathParts[1]) ? decodeURIComponent(_pathParts[1]) : "";
+        const categoryParam = _pathCategory || new URLSearchParams(window.location.search).get("category");
 
         // Category icon: explicit `icon` field from admin wins, else a sensible default by name
         function _catIconHtml(cat) {
@@ -543,10 +557,14 @@
         let productsReady = typeof products !== "undefined" && products.length > 0;
 
         function applyFlashSaleShop(flashData) {
+            // isFlashSaleLive also checks endDate — without it this nav button/banner
+            // stays visible forever past the countdown's expiry until someone
+            // remembers to flip the "enabled" toggle off by hand.
+            const live = window.isFlashSaleLive ? window.isFlashSaleLive(flashData) : !!flashData.enabled;
             const banner = document.getElementById("sidebar-flash-banner");
-            if (banner) banner.style.display = flashData.enabled ? "flex" : "none";
+            if (banner) banner.style.display = live ? "flex" : "none";
             const existingLi = filterList.querySelector('button[data-filter="flash-sale"]')?.closest("li");
-            if (flashData.enabled) {
+            if (live) {
                 if (!existingLi) {
                     const li = document.createElement("li");
                     li.innerHTML = `<button class="cat-btn" data-filter="flash-sale"><span class="cat-icon"><ion-icon name="flash-outline" style="color:#c0392b;"></ion-icon></span><span class="cat-label" style="color:#c0392b;font-weight:600;">Flash Sale</span></button>`;
@@ -611,7 +629,8 @@
 
         function renderProducts() {
             if (typeof products === "undefined" || !products.length) return;
-            const flashItems = (window.zahFlashSale && window.zahFlashSale.items) || [];
+            const _fsForFilter = window.isFlashSaleLive && window.isFlashSaleLive(window.zahFlashSale);
+            const flashItems = (_fsForFilter && window.zahFlashSale.items) || [];
 
             let filtered;
             if (currentFilter === "flash-sale") {
@@ -657,9 +676,11 @@
                 const active = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
                 const bestSize = ["50ML","30ML","15ML","6ML"].find(s => active.includes(s)) || "50ML";
                 const regularPriceAtBestSize = (p.prices && p.prices[bestSize]) ? p.prices[bestSize] : (p.basePrice || p.price || 0);
-                // Use global getFlashSaleItem for single-source-of-truth pricing — pick the cheapest discounted size
+                // Use global getFlashSaleItem for single-source-of-truth pricing — prefer the
+                // admin's chosen defaultDisplaySize (matches the photo shown on the card),
+                // falling back to the cheapest discounted size when none is set/on sale.
                 const _fsItem = window.getFlashSaleItem ? window.getFlashSaleItem(p.id) : null;
-                const _fsBest = (_fsItem && _fsItem.prices && window.cheapestFlashSale) ? window.cheapestFlashSale(_fsItem.prices, p.prices) : null;
+                const _fsBest = (_fsItem && _fsItem.prices && window.pickCardFlashSaleSize) ? window.pickCardFlashSaleSize(_fsItem.prices, p.prices, p.defaultDisplaySize) : null;
                 const isSale = !!_fsBest;
                 const saleSize = isSale ? _fsBest.size : bestSize;
                 const regularPrice = isSale ? (p.prices[saleSize] || regularPriceAtBestSize) : regularPriceAtBestSize;
@@ -675,9 +696,10 @@
                     ? `<button class="add-to-cart-quick" disabled style="cursor:not-allowed;opacity:.7;background:#aaa;">Out of Stock</button>`
                     : `<button class="add-to-cart-quick" onclick="event.stopPropagation();addToCart(${p.id},'${cartSize}',${price});window.showAddedToast&&window.showAddedToast('${esc(p.name)}')">Add to Cart</button>`;
                 const priceHtml = isSale
-                    ? `<div class="product-price" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span style="color:#e63946;font-weight:700;">Tk ${price.toLocaleString()}</span><span style="font-size:.78rem;color:var(--text-muted);text-decoration:line-through;">Tk ${regularPrice.toLocaleString()}</span>${discPct > 0 ? `<span style="background:#fdecea;color:#e63946;font-size:.65rem;font-weight:700;padding:.1rem .35rem;border-radius:3px;">${discPct}% OFF</span>` : ""}</div>`
+                    ? `<div class="product-price" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;"><span style="color:#e63946;font-weight:700;">Tk ${price.toLocaleString()}</span><span style="font-size:.78rem;color:var(--text-muted);text-decoration:line-through;">Tk ${regularPrice.toLocaleString()}</span>${discPct > 0 ? `<span style="background:#fdecea;color:#e63946;font-size:.65rem;font-weight:700;padding:.1rem .35rem;border-radius:3px;">${discPct}% OFF</span>` : ""}<span style="font-size:.7rem;color:var(--text-muted);font-weight:normal;background:#f5f3f0;padding:.1rem .3rem;border-radius:4px;">${esc(saleSize)}</span></div>`
                     : `<div class="product-price">${priceRange(p)}</div>`;
-                const src1 = cardImg(p.image);
+                const _cardImgSrc = (p.sizeImages && p.defaultDisplaySize && p.sizeImages[p.defaultDisplaySize]) || p.image;
+                const src1 = cardImg(_cardImgSrc);
                 const img2 = (p.images && p.images.length > 1) ? cardImg(p.images[1]) : "";
                 const wrapAttrs = img2 ? ` data-img1="${esc(src1)}" data-img2="${esc(img2)}"` : "";
                 const inWish = window.Wishlist ? window.Wishlist.isIn(p.id) : false;
@@ -723,7 +745,8 @@
                         content_type: 'product',
                         content_category: 'Perfume',
                         value: _avgValue,
-                        currency: 'BDT'
+                        currency: 'BDT',
+                        num_items: _topIds.length
                     });
                     sessionStorage.setItem('zhr_vc_shop', '1');
                 } catch(e) {}
@@ -997,25 +1020,28 @@
                 _updateCatCounts();
             }).catch(() => {});
         }
+        // Slug-insensitive match so /shop/premium-attar or ?category=premium-attar finds "Premium Attar".
+        // Shared by the initial load, the popstate (back/forward) handler, and category-card links.
+        function _applyCategoryParam(param) {
+            if (!param) return false;
+            const slugify = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "");
+            const hit = [...filterList.querySelectorAll("button[data-filter]")]
+                .find(b => slugify(b.dataset.filter) === slugify(param));
+            if (!hit) return false;
+            currentFilter = hit.dataset.filter;
+            filterList.querySelectorAll("button").forEach(b => b.classList.toggle("active", b === hit));
+            const parentLi = hit.closest(".cat-parent-li");
+            if (parentLi) {
+                parentLi.classList.add("open");
+                parentLi.querySelector(".cat-parent-btn")?.setAttribute("aria-expanded", "true");
+            }
+            _renderCatLanding();
+            return true;
+        }
         _catsPromise.then(cats => {
             _buildCatList(cats);
             // Apply URL category param — also open parent if child is matched
-            if (categoryParam) {
-                // Slug-insensitive match so ?category=premium-attar finds "Premium Attar"
-                const slugify = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "");
-                const hit = [...filterList.querySelectorAll("button[data-filter]")]
-                    .find(b => slugify(b.dataset.filter) === slugify(categoryParam));
-                if (hit) {
-                    currentFilter = hit.dataset.filter;
-                    filterList.querySelectorAll("button").forEach(b => b.classList.toggle("active", b === hit));
-                    const parentLi = hit.closest(".cat-parent-li");
-                    if (parentLi) {
-                        parentLi.classList.add("open");
-                        parentLi.querySelector(".cat-parent-btn")?.setAttribute("aria-expanded", "true");
-                    }
-                    _renderCatLanding();
-                }
-            }
+            _applyCategoryParam(categoryParam);
         }).catch(() => {
             // Firestore unavailable — keep all-products view
             currentFilter = "all";
@@ -1060,7 +1086,27 @@
                     currentFilter = btn.dataset.filter;
                     renderProducts();
                     _renderCatLanding();
+                    // Give this category its own address-bar URL — shareable, bookmarkable,
+                    // and restorable on refresh, instead of losing the filter to plain /shop.
+                    const newUrl = currentFilter === "all" ? "/shop" : `/shop/${slugForUrl(currentFilter)}`;
+                    if (window.location.pathname !== newUrl) history.pushState({ zhrCategory: currentFilter }, "", newUrl);
                 });
+            });
+            // Browser back/forward — re-sync the filter (and re-render) from the URL
+            // that's now current, instead of leaving the page showing the old filter.
+            window.addEventListener("popstate", () => {
+                const parts = window.location.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+                const cat = (parts[0] === "shop" && parts[1]) ? decodeURIComponent(parts[1]) : "";
+                allFilterContainers.forEach(c => c.querySelectorAll("button").forEach(b => b.classList.remove("active")));
+                if (cat && _applyCategoryParam(cat)) {
+                    // handled — active state + currentFilter set inside _applyCategoryParam
+                } else {
+                    currentFilter = "all";
+                    const allBtn = filterList.querySelector('button[data-filter="all"]');
+                    if (allBtn) allBtn.classList.add("active");
+                    _renderCatLanding();
+                }
+                renderProducts();
             });
             // Handle ?filter=new URL param
             const filterParam = new URLSearchParams(window.location.search).get("filter");

@@ -366,8 +366,12 @@
             lastBadgeText = badgeText || lastBadgeText;
             lastFetchedProds = allProducts || lastFetchedProds;
 
-            const cheapest = window.cheapestFlashSale || function(salePrices, regularPrices) {
+            const cheapest = window.pickCardFlashSaleSize || function(salePrices, regularPrices, preferredSize) {
                 let best;
+                if (preferredSize && salePrices && regularPrices) {
+                    const sp = salePrices[preferredSize], reg = regularPrices[preferredSize];
+                    if (reg && sp > 0 && sp < reg) return { size: preferredSize, salePrice: sp };
+                }
                 Object.entries(salePrices || {}).forEach(([size, sp]) => {
                     const reg = regularPrices?.[size];
                     if (!reg || sp <= 0 || sp >= reg) return;
@@ -380,7 +384,9 @@
                 .map(item => {
                     const p = lastFetchedProds.find(x => x.id === item.productId);
                     if (!p) return null;
-                    const best = cheapest(item.prices, p.prices);
+                    // Prefer the admin's chosen defaultDisplaySize so the discount shown
+                    // matches the size photo on this card, not just the cheapest one.
+                    const best = cheapest(item.prices, p.prices, p.defaultDisplaySize);
                     if (!best) return null;
                     return { ...p, saleSize: best.size, salePrice: best.salePrice };
                 })
@@ -415,7 +421,7 @@
                     <span style="font-size:.7rem;color:var(--text-muted);font-weight:normal;background:#f5f3f0;padding:.1rem .3rem;border-radius:4px;margin-left:.1rem;">${esc(p.saleSize)}</span>
                 </div>`;
 
-                const src1 = p.image || "";
+                const src1 = (p.sizeImages && p.sizeImages[p.saleSize]) || p.image || "";
                 const img2 = (p.images && p.images.length > 1) ? p.images[1] : "";
                 const wrapAttrs = img2 ? ` data-img1="${esc(src1)}" data-img2="${esc(img2)}"` : "";
 
@@ -493,7 +499,16 @@
                     // Fetch sale products directly from Firestore by their IDs
                     // (avoids race condition with bundled vs Firestore product IDs)
                     const saleItems = window.upgradeFlashSaleItems ? window.upgradeFlashSaleItems(sale.items) : (sale.items || []);
-                    if (saleItems.length) {
+                    if (saleEnded) {
+                        // Discounted prices must not be orderable once the countdown has
+                        // expired — this grid used to keep rendering sale prices (and a
+                        // working Add to Cart at that stale price) even after showing
+                        // "concluded" above it.
+                        document.getElementById("sale-grid").innerHTML =
+                            `<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:2rem;">This sale has ended. Browse current products in the <a href="shop.html">shop</a>.</p>`;
+                        const countEl = document.getElementById("sale-product-count");
+                        if (countEl) countEl.textContent = "0 products";
+                    } else if (saleItems.length) {
                         try {
                             const idStrings = saleItems.map(i => String(i.productId));
                             const pSnap = await getDocs(query(collection(db, "products"), where("__name__", "in", idStrings)));

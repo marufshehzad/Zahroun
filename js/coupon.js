@@ -23,9 +23,12 @@ window.validateAndApplyCoupon = async function (code, subtotal, cartItems) {
   if (c.minOrder && subtotal < c.minOrder) return { valid: false, msg: `Minimum order Tk ${c.minOrder} required for this coupon.` };
   if (c.maxUses && (c.usedCount || 0) >= c.maxUses) return { valid: false, msg: "This coupon's usage limit has been reached." };
 
-  // Check if coupon is blocked on sale products
+  // Check if coupon is blocked on sale products — isFlashSaleLive also checks
+  // endDate, so this stops blocking coupons once a sale has actually ended
+  // (the settings doc's items array otherwise lingers after expiry/disable).
   if (c.allowOnSaleProducts === false && cartItems && cartItems.length) {
-    const flashIds = new Set(((window.zahFlashSale && window.zahFlashSale.items) || []).map(it => it.productId));
+    const fsLive = window.isFlashSaleLive && window.isFlashSaleLive(window.zahFlashSale);
+    const flashIds = new Set((fsLive && window.zahFlashSale.items || []).map(it => it.productId));
     if (flashIds.size > 0 && cartItems.some(item => flashIds.has(item.id))) {
       return { valid: false, msg: "This coupon cannot be applied to sale products." };
     }

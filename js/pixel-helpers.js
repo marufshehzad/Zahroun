@@ -29,13 +29,33 @@
         if (fbp) try { localStorage.setItem('zahr_fbp', fbp); } catch (e) {}
         if (fbc) try { localStorage.setItem('zahr_fbc', fbc); } catch (e) {}
     }
+    // Persistent per-browser ID for Advanced Matching's external_id — raised by
+    // the team as a missing EMQ parameter (WhatsApp thread, Aug 2026). Generated
+    // once and reused for every event so Meta can stitch a visitor's events
+    // together even before they submit any contact info at checkout.
+    function getExternalId() {
+        try {
+            var id = localStorage.getItem('zahr_ext_id');
+            if (!id) {
+                id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+                    : 'xid_' + Date.now() + '_' + Math.random().toString(36).substr(2, 12);
+                localStorage.setItem('zahr_ext_id', id);
+            }
+            return id;
+        } catch (e) { return ''; }
+    }
     window.getCookie = getCookie;
     window.generateEventId = generateEventId;
     window.getFbp = getFbp;
     window.getFbc = getFbc;
     window.getSafeFbp = getSafeFbp;
     window.getSafeFbc = getSafeFbc;
+    window.getExternalId = getExternalId;
     cacheFbIdentifiers();
+    // Re-init the pixel with external_id as an Advanced Matching parameter —
+    // fbq('init') can be called more than once; later calls just merge in
+    // extra matching data used by every event fired after this point.
+    try { if (typeof fbq !== 'undefined') fbq('init', '1581299296765663', { external_id: getExternalId() }); } catch (e) {}
 
     // Generic CAPI sender — usable from any page.
     // userData is optional; when omitted only fbp/fbc are sent (pre-checkout pages).
@@ -55,6 +75,7 @@
                         fn: ud.first_name || '',
                         ln: ud.last_name || '',
                         ct: ud.city || '',
+                        external_id: getExternalId(),
                         fbp: getSafeFbp(),
                         fbc: getSafeFbc()
                     },

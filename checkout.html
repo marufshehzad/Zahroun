@@ -17,7 +17,10 @@
                 var cartTotal = cartData.reduce(function(s, i) { return s + parseFloat(i.selectedPrice) * i.quantity; }, 0);
                 var icoId = window.TrackingManager.processTracking('begin_checkout', {
                     content_ids: cartData.map(function(i) { return String(i.id); }),
+                    content_name: cartData.map(function(i) { return i.name; }),
                     content_type: 'product',
+                    contents: cartData.map(function(i) { return { id: String(i.id), quantity: i.quantity, item_price: Number(i.selectedPrice) || 0 }; }),
+                    sizes: cartData.map(function(i) { return i.size; }),
                     value: Math.round(cartTotal),
                     currency: 'BDT',
                     num_items: cartData.reduce(function(s, i) { return s + i.quantity; }, 0)
@@ -30,6 +33,36 @@
                 var fc = document.getElementById('field_fbc');
                 if (fp && typeof getSafeFbp === 'function') fp.value = getSafeFbp();
                 if (fc && typeof getSafeFbc === 'function') fc.value = getSafeFbc();
+
+                // Re-init Advanced Matching as the customer fills the form — previously
+                // this only happened once, after the order was placed, so ViewContent/
+                // AddToCart/InitiateCheckout on this visit never carried em/ph/fn/ln and
+                // lost EMQ. Blur-triggered (not per-keystroke) so it doesn't re-init on
+                // every character typed.
+                var _nameEl = document.getElementById('fullName');
+                var _mobileEl = document.getElementById('mobile');
+                var _emailEl = document.getElementById('customerEmail');
+                var _districtEl = document.getElementById('district');
+                function _reinitAdvancedMatching() {
+                    try {
+                        if (typeof fbq === 'undefined') return;
+                        var nm = (_nameEl && _nameEl.value || '').trim();
+                        var parts = nm.split(' ').filter(Boolean);
+                        fbq('init', '1581299296765663', {
+                            em: (_emailEl && _emailEl.value || '').trim(),
+                            ph: (_mobileEl && _mobileEl.value || '').trim(),
+                            fn: parts[0] || '',
+                            ln: parts.length > 1 ? parts.slice(1).join(' ') : '',
+                            ct: (_districtEl && _districtEl.value || '').trim(),
+                            country: 'bd',
+                            external_id: typeof getExternalId === 'function' ? getExternalId() : ''
+                        });
+                    } catch (e) {}
+                }
+                [_nameEl, _mobileEl, _emailEl].forEach(function(el) {
+                    if (el) el.addEventListener('blur', _reinitAdvancedMatching);
+                });
+                if (_districtEl) _districtEl.addEventListener('change', _reinitAdvancedMatching);
             }, 500);
         } catch(e) {}
     });
@@ -1138,9 +1171,13 @@
                 if (typeof window.TrackingManager !== 'undefined' && typeof cart !== 'undefined' && cart.length > 0) {
                     window.TrackingManager.processTracking('add_payment_info', {
                         content_ids: cart.map(function(i) { return String(i.id); }),
+                        content_name: cart.map(function(i) { return i.name; }),
                         content_type: 'product',
+                        contents: cart.map(function(i) { return { id: String(i.id), quantity: i.quantity, item_price: Number(i.selectedPrice) || 0 }; }),
+                        sizes: cart.map(function(i) { return i.size; }),
                         value: Math.round(typeof getCartTotal === 'function' ? getCartTotal() : 0),
-                        currency: 'BDT'
+                        currency: 'BDT',
+                        num_items: cart.reduce(function(s, i) { return s + i.quantity; }, 0)
                     });
                 }
             } catch (e) {}
@@ -1172,6 +1209,54 @@
                 else alert(stockErrors[0]);
                 return;
             }
+
+            // ── H9-fix: re-price every cart item against live Firestore data before
+            // placing the order. item.selectedPrice lives in localStorage — fully
+            // client-controlled — and used to be trusted as-is straight into the
+            // order total, so a tampered cart (or just a stale flash-sale price left
+            // over from reconcileCart's old logic) could check out at the wrong
+            // price. This mirrors the coupon re-validation below: read the current
+            // truth from Firestore right before submitting, and correct silently.
+            try {
+                const idStrings = [...new Set(cart.map(item => String(item.id)))].slice(0, 30);
+                if (idStrings.length) {
+                    const { getDoc: _pGetDoc, getDocs: _pGetDocs, query: _pQuery, collection: _pCollection, doc: _pDoc, where: _pWhere } =
+                        await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+                    const { db: _pDb } = await import('./js/firebase-config.js');
+                    const [prodSnap, flashSnap] = await Promise.all([
+                        _pGetDocs(_pQuery(_pCollection(_pDb, "products"), _pWhere("__name__", "in", idStrings))),
+                        _pGetDoc(_pDoc(_pDb, "settings", "flashSale"))
+                    ]);
+                    const liveProducts = {};
+                    prodSnap.forEach(d => { liveProducts[d.id] = d.data(); });
+                    const flashData = flashSnap.exists() ? flashSnap.data() : { enabled: false, items: [] };
+                    const fsLive = window.isFlashSaleLive ? window.isFlashSaleLive(flashData) : !!flashData.enabled;
+                    const fsMap = {};
+                    if (fsLive && Array.isArray(flashData.items)) {
+                        flashData.items.forEach(it => { if (it && it.productId != null && it.prices) fsMap[String(it.productId)] = it.prices; });
+                    }
+                    cart.forEach(item => {
+                        const p = liveProducts[String(item.id)];
+                        if (!p) return; // stock check above already blocks unknown/removed products
+                        const size = item.size || '50ML';
+                        const catalogPrice = (p.prices && typeof p.prices[size] === 'number') ? p.prices[size] : (p.basePrice || p.price || 0);
+                        const salePrice = fsMap[String(item.id)]?.[size];
+                        const correctPrice = (typeof salePrice === 'number' && salePrice > 0 && salePrice < catalogPrice) ? salePrice : catalogPrice;
+                        if (correctPrice > 0 && Number(item.selectedPrice) !== correctPrice) {
+                            console.warn('[Zahroun] Corrected checkout price for', item.name, item.size, ':', item.selectedPrice, '->', correctPrice);
+                            item.selectedPrice = correctPrice;
+                            if (correctPrice === salePrice) item.flashSalePrice = salePrice;
+                            else delete item.flashSalePrice;
+                        }
+                    });
+                    saveCart();
+                }
+            } catch (priceRevalErr) {
+                // Network hiccup — proceed with the cart's existing prices rather
+                // than blocking a legitimate order over a transient failure.
+                console.warn('Price re-validation failed — proceeding with cached prices:', priceRevalErr);
+            }
+            // ── end H9-fix ──
 
             const name = document.getElementById('fullName').value;
             const mobile = document.getElementById('mobile').value;
@@ -1372,7 +1457,8 @@
                         fn: name ? name.split(' ')[0] : '',
                         ln: name && name.split(' ').length > 1 ? name.split(' ').slice(1).join(' ') : '',
                         ct: district || '',
-                        country: 'bd'
+                        country: 'bd',
+                        external_id: typeof getExternalId === 'function' ? getExternalId() : ''
                     };
                     fbq('init', '1581299296765663', _amData);
                     const _storageKey = 'zhr_px_' + orderId;
@@ -1382,10 +1468,14 @@
                         first_name: name ? name.split(' ')[0] : '',
                         last_name: name && name.split(' ').length > 1 ? name.split(' ').slice(1).join(' ') : '',
                         city: district || '',
+                        external_id: typeof getExternalId === 'function' ? getExternalId() : ''
                     };
                     const _purchaseCustomData = {
                         content_ids: items.map(i => String(i.id)),
+                        content_name: items.map(i => i.name),
                         content_type: 'product',
+                        contents: items.map(i => ({ id: String(i.id), quantity: i.quantity, item_price: Number(i.selectedPrice) || 0 })),
+                        sizes: items.map(i => i.size),
                         value: total,
                         currency: 'BDT',
                         num_items: items.reduce((s, i) => s + i.quantity, 0),

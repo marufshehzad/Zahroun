@@ -147,17 +147,17 @@
                         const bestSize = ['50ML','30ML','15ML','6ML'].find(s => active.includes(s)) || '50ML';
                         const regularPriceAtBestSize = (p.prices && p.prices[bestSize]) ? p.prices[bestSize] : (p.basePrice || p.price || 0);
                         const _fsItem = window.getFlashSaleItem ? window.getFlashSaleItem(p.id) : null;
-                        const _fsBest = (_fsItem && _fsItem.prices && window.cheapestFlashSale) ? window.cheapestFlashSale(_fsItem.prices, p.prices) : null;
+                        const _fsBest = (_fsItem && _fsItem.prices && window.pickCardFlashSaleSize) ? window.pickCardFlashSaleSize(_fsItem.prices, p.prices, p.defaultDisplaySize) : null;
                         const isSale = !!_fsBest;
                         const saleSize = isSale ? _fsBest.size : bestSize;
                         const regularPrice = isSale ? (p.prices[saleSize] || regularPriceAtBestSize) : regularPriceAtBestSize;
                         const effectivePrice = isSale ? _fsBest.salePrice : regularPrice;
                         const discPct = isSale ? Math.round((regularPrice - effectivePrice) / regularPrice * 100) : 0;
                         const priceHtml = isSale
-                            ? `<div class="price" style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;"><span style="color:#e63946;font-weight:700;">Tk ${effectivePrice.toLocaleString()}</span><span style="font-size:.78rem;color:var(--text-muted);text-decoration:line-through;">Tk ${regularPrice.toLocaleString()}</span>${discPct > 0 ? `<span style="background:#fdecea;color:#e63946;font-size:.65rem;font-weight:700;padding:.1rem .35rem;border-radius:3px;">${discPct}% OFF</span>` : ''}</div>`
+                            ? `<div class="price" style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;"><span style="color:#e63946;font-weight:700;">Tk ${effectivePrice.toLocaleString()}</span><span style="font-size:.78rem;color:var(--text-muted);text-decoration:line-through;">Tk ${regularPrice.toLocaleString()}</span>${discPct > 0 ? `<span style="background:#fdecea;color:#e63946;font-size:.65rem;font-weight:700;padding:.1rem .35rem;border-radius:3px;">${discPct}% OFF</span>` : ''}<span style="font-size:.7rem;color:var(--text-muted);font-weight:normal;background:#f5f3f0;padding:.1rem .3rem;border-radius:4px;">${esc(saleSize)}</span></div>`
                             : `<div class="price">${priceRange(p)}</div>`;
                         return `<div class="wl-card" style="position:relative;">
-                            <a href="product.html?id=${p.id}"><img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy"></a>
+                            <a href="product.html?id=${p.id}"><img src="${esc((p.sizeImages && p.defaultDisplaySize && p.sizeImages[p.defaultDisplaySize]) || p.image)}" alt="${esc(p.name)}" loading="lazy"></a>
                             ${isSale ? `<span style="position:absolute;top:.5rem;left:.5rem;background:#c0392b;color:#fff;font-size:.62rem;font-weight:700;padding:.2rem .48rem;border-radius:4px;letter-spacing:.04em;z-index:2;">SALE</span>` : ''}
                             <button class="wl-remove" data-remove="${p.id}" title="Remove from wishlist"><ion-icon name="heart"></ion-icon></button>
                             <div class="wl-card-body">

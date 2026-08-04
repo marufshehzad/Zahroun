@@ -4,8 +4,23 @@ let _prevCartCount = 0;
 // Reconcile saved cart items against the live product list (refresh prices /
 // images, drop deleted products). Runs only once products are loaded, so it
 // never wipes the cart while the async product fetch is still in flight.
+//
+// Flash-sale prices are re-validated against the LIVE settings/flashSale doc
+// on every reconcile — previously an item's stored flashSalePrice was trusted
+// forever once set (it short-circuited before the live check ever ran), so a
+// cart item kept its discount even after the sale ended, was disabled, or
+// that size was dropped from the sale; the same unconditional trust also let
+// a tampered localStorage cart (any price below catalog was accepted as
+// "intentional") complete checkout at an arbitrary price. Only when the
+// flash-sale settings genuinely haven't loaded yet this page load do we keep
+// the item's existing price, to avoid a full-price flicker before that first
+// load resolves — the next reconcile (products-ready fires multiple times,
+// and flashsale-status once settings land) corrects it either way.
 function reconcileCart() {
     if (typeof products === 'undefined' || !Array.isArray(products) || products.length === 0) return;
+    const fsLoaded = typeof window.zahFlashSale !== 'undefined';
+    const fs = window.zahFlashSale;
+    const fsLive = fsLoaded && (window.isFlashSaleLive ? window.isFlashSaleLive(fs) : !!(fs && fs.enabled));
     cart = cart
         .filter(item => products.some(p => p.id === item.id))
         .map(item => {
@@ -13,39 +28,27 @@ function reconcileCart() {
             if (!item.size || item.size === 'undefined') item.size = '50ML';
             if (!prod.prices[item.size] && prod.prices['50ML']) item.size = '50ML';
             const catalogPrice = (prod.prices && prod.prices[item.size]) ? prod.prices[item.size] : prod.price;
-            // Layer 1: explicit flash sale marker (set by addToCart when price < catalog)
-            if (item.flashSalePrice) {
-                item.selectedPrice = item.flashSalePrice;
-                return { ...prod, size: item.size, selectedPrice: item.flashSalePrice, flashSalePrice: item.flashSalePrice, quantity: item.quantity || 1 };
-            }
-            // Layer 2: active flash sale covers this product (handles pre-marker cart items)
-            const fs = window.zahFlashSale;
-            if (fs && fs.enabled && Array.isArray(fs.items)) {
-                const fsItem = fs.items.find(fi => String(fi.productId) === String(item.id));
+
+            if (fsLoaded) {
+                const fsItem = fsLive && Array.isArray(fs.items) ? fs.items.find(fi => String(fi.productId) === String(item.id)) : null;
                 const fsPrice = fsItem?.prices?.[item.size];
                 if (typeof fsPrice === 'number' && fsPrice > 0 && fsPrice < catalogPrice) {
-                    item.selectedPrice = fsPrice;
-                    item.flashSalePrice = fsPrice;
                     return { ...prod, size: item.size, selectedPrice: fsPrice, flashSalePrice: fsPrice, quantity: item.quantity || 1 };
                 }
+                return { ...prod, size: item.size, selectedPrice: catalogPrice || prod.price, quantity: item.quantity || 1 };
             }
-            // Layer 3: never overwrite with a higher price (price below catalog = intentional)
-            if (item.selectedPrice && catalogPrice && Number(item.selectedPrice) < Number(catalogPrice)) {
+
+            if (item.selectedPrice) {
                 return { ...prod, size: item.size, selectedPrice: item.selectedPrice,
                          ...(item.flashSalePrice ? { flashSalePrice: item.flashSalePrice } : {}),
                          quantity: item.quantity || 1 };
             }
-            // Regular catalog price
-            if (catalogPrice) {
-                item.selectedPrice = catalogPrice;
-            } else if (item.selectedPrice === undefined || isNaN(item.selectedPrice) || item.selectedPrice === null) {
-                item.selectedPrice = prod.price;
-            }
-            return { ...prod, size: item.size, selectedPrice: item.selectedPrice, quantity: item.quantity || 1 };
+            return { ...prod, size: item.size, selectedPrice: catalogPrice || prod.price, quantity: item.quantity || 1 };
         });
     saveCart();
 }
 document.addEventListener('products-ready', reconcileCart);
+document.addEventListener('flashsale-status', reconcileCart);
 
 let discountMultiplier = 1;
 
@@ -107,6 +110,8 @@ window.addToCart = function(productId, size = '50ML', price = null) {
                 content_ids: [String(productId)],
                 content_type: 'product',
                 content_name: product.name,
+                content_category: product.category || 'Perfume',
+                size: size,
                 value: Math.round(Number(itemPrice) || 0),
                 currency: 'BDT',
                 num_items: 1

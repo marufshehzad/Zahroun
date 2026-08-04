@@ -1444,7 +1444,7 @@ function sendCancelCAPI(order, orderId) {
         order_id: orderId,
         original_event_id: order.pixelEventId,
       },
-      source_url: 'https://zahroun.com/checkout.html',
+      source_url: 'https://zahroun.com/checkout',
     }),
   }).catch(() => {});
 }
