@@ -693,8 +693,14 @@
             renderGifts(giftOptions);
         }
 
+        const _IK_BASE = 'https://ik.imagekit.io/zahroun/';
         function _fctf(url) {
-            if (!url || !url.includes('/upload/')) return url || '';
+            if (!url) return '';
+            if (url.startsWith(_IK_BASE)) {
+                if (url.includes('/tr:')) return url;
+                return url.replace(_IK_BASE, `${_IK_BASE}tr:w-400,h-400,f-auto/`);
+            }
+            if (!url.includes('/upload/')) return url;
             // Only skip if a Cloudinary TRANSFORM is already present (e.g. w_400, f_auto).
             // The old check wrongly matched the folder path (…/upload/zahroun/…) and
             // served full-res originals — the cause of slow gift images.

@@ -460,8 +460,23 @@
         import { db } from "./js/firebase-config.js";
         import { getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+        const IK_BASE = "https://ik.imagekit.io/zahroun/";
         function cloudinaryTransform(url, transform) {
-            if (!url || !url.includes("/upload/")) return url;
+            if (!url) return url;
+            if (url.startsWith(IK_BASE)) {
+                const tr = transform.split(",").map(t => {
+                    const m = t.match(/^([a-z]+)_(.+)$/i);
+                    if (!m) return null;
+                    const [, k, v] = m;
+                    if (k === "w" || k === "h") return `${k}-${v}`;
+                    if (k === "g" && v === "auto") return "fo-auto";
+                    if (k === "f") return v === "auto" ? "f-auto" : `f-${v}`;
+                    if (k === "q" && v !== "auto") return `q-${v}`;
+                    return null;
+                }).filter(Boolean).join(",");
+                return url.replace(IK_BASE, `${IK_BASE}tr:${tr}/`);
+            }
+            if (!url.includes("/upload/")) return url;
             return url.replace("/upload/", `/upload/${transform}/`);
         }
 
@@ -565,9 +580,12 @@
         }
     </script>
     <script>
+        const CTF_IK_BASE = "https://ik.imagekit.io/zahroun/";
         function ctf(url) {
-            if (!url || !url.includes("/upload/")) return url;
+            if (!url) return url;
             /* Same crop engine as shop cards: card ratio 20/27 (1.35), c_fill,g_auto */
+            if (url.startsWith(CTF_IK_BASE)) return url.replace(CTF_IK_BASE, `${CTF_IK_BASE}tr:w-600,h-810,fo-auto,f-auto/`);
+            if (!url.includes("/upload/")) return url;
             return url.replace("/upload/", "/upload/w_600,h_810,c_fill,g_auto,f_auto,q_auto/");
         }
         function renderFeatured() {

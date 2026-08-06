@@ -603,8 +603,11 @@
         }
 
         /* ---- Wishlist tab ---- */
+        const _IK_BASE = "https://ik.imagekit.io/zahroun/";
         function _cardImg(url) {
-            if (!url || !url.includes("/upload/")) return url || "";
+            if (!url) return "";
+            if (url.startsWith(_IK_BASE)) return url.replace(_IK_BASE, `${_IK_BASE}tr:w-400,h-540,fo-auto,f-auto/`);
+            if (!url.includes("/upload/")) return url;
             return url.replace("/upload/", "/upload/w_400,h_540,c_fill,g_auto,f_auto,q_auto/");
         }
 

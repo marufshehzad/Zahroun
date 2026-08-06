@@ -576,14 +576,17 @@
             }
         }
 
+        const IK_BASE = "https://ik.imagekit.io/zahroun/";
         function cardImg(url, w = 400) {
-            if (!url || !url.includes("/upload/")) return url || "";
+            if (!url) return "";
             const h = Math.round(w * 1.35);
+            if (url.startsWith(IK_BASE)) return url.replace(IK_BASE, `${IK_BASE}tr:w-${w},h-${h},fo-auto,f-auto/`);
+            if (!url.includes("/upload/")) return url;
             return url.replace("/upload/", `/upload/w_${w},h_${h},c_fill,g_auto,f_auto,q_auto/`);
         }
         // Responsive srcset — phones download ~250px files instead of 400px ones
         function cardSrcset(url) {
-            if (!url || !url.includes("/upload/")) return "";
+            if (!url || !(url.startsWith(IK_BASE) || url.includes("/upload/"))) return "";
             return `${cardImg(url, 250)} 250w, ${cardImg(url, 400)} 400w, ${cardImg(url, 600)} 600w`;
         }
         const CARD_SIZES = "(max-width: 768px) 46vw, 280px";
@@ -856,7 +859,7 @@
             _acBox.innerHTML = hits.map((p, i) => {
                 const vals = p.prices ? Object.values(p.prices).filter(v => typeof v === "number" && v > 0) : [];
                 const pr = vals.length ? Math.min(...vals) : (p.basePrice || p.price || 0);
-                const img = p.image && p.image.includes("/upload/") ? p.image.replace("/upload/", "/upload/w_80,h_80,c_fill,f_auto,q_auto/") : (p.image || "");
+                const img = cardImg(p.image, 80);
                 return `<a href="product.html?id=${p.id}" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .6rem;text-decoration:none;color:var(--text-main);${i < hits.length - 1 ? "border-bottom:1px solid #F4F0E8;" : ""}">
                     <img src="${esc(img)}" alt="" width="38" height="38" style="width:38px;height:38px;object-fit:cover;border-radius:6px;background:#fff;flex-shrink:0;">
                     <span style="flex:1;min-width:0;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.name)}</span>
@@ -880,7 +883,9 @@
             }
             const cat = (_allCats || []).find(c => c.name === currentFilter);
             if (!cat || (!cat.banner && !cat.description)) { host.innerHTML = ""; return; }
-            const bImg = cat.banner && cat.banner.includes("/upload/") ? cat.banner.replace("/upload/", "/upload/w_1200,h_320,c_fill,f_auto,q_auto/") : cat.banner;
+            const bImg = cat.banner && cat.banner.startsWith(IK_BASE) ? cat.banner.replace(IK_BASE, `${IK_BASE}tr:w-1200,h-320,f-auto/`)
+                : cat.banner && cat.banner.includes("/upload/") ? cat.banner.replace("/upload/", "/upload/w_1200,h_320,c_fill,f_auto,q_auto/")
+                : cat.banner;
             host.innerHTML = `<div style="margin:-.75rem 0 1.75rem;border-radius:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.06);">
                 ${cat.banner ? `<img src="${esc(bImg)}" alt="${esc(cat.name)}" style="width:100%;height:170px;object-fit:cover;display:block;">` : ""}
                 ${cat.description ? `<p style="padding:.9rem 1.15rem;margin:0;font-size:.88rem;color:var(--text-muted);background:var(--surface-color);">${esc(cat.description)}</p>` : ""}

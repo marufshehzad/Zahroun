@@ -10,7 +10,7 @@
         - Build > Authentication  (Email/Password + Google sign-in)
         - Build > Firestore Database  (Start in *production* mode)
    NOTE: Firebase Storage now requires the paid Blaze plan, so image
-   uploads use Cloudinary's free tier instead (see js/cloudinary.js).
+   uploads use ImageKit's free tier instead (see js/imagekit.js).
 
    NOTE: These config values are NOT secrets. They are public client
    identifiers and are safe to commit. Real security comes from the
@@ -49,4 +49,4 @@ export const db = initializeFirestore(app, {
 });
 
 export default app;
-/* Image uploads use Cloudinary (js/cloudinary.js), not Firebase Storage. */
+/* Image uploads use ImageKit (js/imagekit.js), not Firebase Storage. */

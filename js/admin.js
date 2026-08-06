@@ -9,7 +9,7 @@ import {
   serverTimestamp, Timestamp, query, limit, onSnapshot, where, orderBy, arrayUnion,
   runTransaction, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { uploadImage, optimizedUrl } from "./cloudinary.js";
+import { uploadImage, optimizedUrl } from "./imagekit.js";
 
 const $ = (sel) => document.querySelector(sel);
 const gate = $("#admin-gate");
