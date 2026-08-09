@@ -583,10 +583,14 @@
         const CTF_IK_BASE = "https://ik.imagekit.io/zahroun/";
         function ctf(url) {
             if (!url) return url;
-            /* Same crop engine as shop cards: card ratio 20/27 (1.35), c_fill,g_auto */
-            if (url.startsWith(CTF_IK_BASE)) return url.replace(CTF_IK_BASE, `${CTF_IK_BASE}tr:w-600,h-810,fo-auto,f-auto/`);
+            // Must request the EXACT same dimensions as shop.html's cardImg(url) default
+            // (w-400,h-540). Same ratio but a different absolute size can make ImageKit's
+            // AI auto-crop (fo-auto) pick a different framing for the same photo — that's
+            // what caused Bestsellers to crop differently than the Shop grid. Requesting
+            // identical params hits the identical cached derivative on both pages.
+            if (url.startsWith(CTF_IK_BASE)) return url.replace(CTF_IK_BASE, `${CTF_IK_BASE}tr:w-400,h-540,fo-auto,f-auto/`);
             if (!url.includes("/upload/")) return url;
-            return url.replace("/upload/", "/upload/w_600,h_810,c_fill,g_auto,f_auto,q_auto/");
+            return url.replace("/upload/", "/upload/w_400,h_540,c_fill,g_auto,f_auto,q_auto/");
         }
         function renderFeatured() {
             const grid = document.getElementById('featured-products');
@@ -873,6 +877,7 @@
       });
     })();
     </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
 

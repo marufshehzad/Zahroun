@@ -540,7 +540,19 @@
             const urlParams = new URLSearchParams(window.location.search);
             const productId = parseInt(urlParams.get('id'));
 
-            const product = products.find(p => p.id === productId) || products[0]; // fallback to first product
+            // js/store.js dispatches this event up to 3x (bundled → cache → firestore),
+            // each with a growing/changing product list. Falling back to products[0]
+            // on the "bundled" list (a hardcoded 11-product snapshot, missing anything
+            // added since) caused the wrong product (usually id 1) to flash briefly
+            // before the real one loaded. "cache"/"firestore" both reflect real
+            // database contents, so only "bundled" is untrustworthy for a 404 verdict.
+            // (store.js also sometimes skips its "firestore" republish entirely when
+            // the cached list already matches, so "firestore" can't be required here.)
+            let product = products.find(p => p.id === productId);
+            if (!product) {
+                if (window.ZahrounStore?.source === 'bundled') return;
+                product = products[0]; // genuinely doesn't exist — fall back
+            }
             currentProduct = product;
             window.currentProduct = product;
             window.currentProductId = product.id;
@@ -1430,6 +1442,7 @@
             }
         });
     </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
 
