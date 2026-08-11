@@ -43,10 +43,24 @@ export const auth = getAuth(app);
 // Persist login across sessions (prevents repeated login on return visits)
 setPersistence(auth, browserLocalPersistence).catch(() => {});
 
-// IndexedDB offline cache for fast loads.
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-});
+// IndexedDB offline cache for fast loads — but IndexedDB/BroadcastChannel
+// are often locked down inside in-app browsers (Facebook/Instagram ad
+// clicks open the site in one of these). There, initializeFirestore()
+// throws synchronously, which — since every page imports `db` from here —
+// took down the whole site with a blank stuck-loading screen. Fall back to
+// Firestore's default in-memory cache so the site still loads there; it
+// just loses cross-reload offline persistence, which bundled/session
+// fallbacks elsewhere already cover.
+let _db;
+try {
+  _db = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  });
+} catch (e) {
+  console.warn("[Zahroun] Persistent Firestore cache unavailable (likely a restrictive in-app browser); using in-memory cache instead.", e);
+  _db = initializeFirestore(app, {});
+}
+export const db = _db;
 
 export default app;
 /* Image uploads use ImageKit (js/imagekit.js), not Firebase Storage. */
