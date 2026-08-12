@@ -24,6 +24,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   initializeFirestore,
+  getFirestore,
   persistentLocalCache,
   persistentMultipleTabManager
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -58,7 +59,7 @@ try {
   });
 } catch (e) {
   console.warn("[Zahroun] Persistent Firestore cache unavailable (likely a restrictive in-app browser); using in-memory cache instead.", e);
-  _db = initializeFirestore(app, {});
+  _db = getFirestore(app);
 }
 export const db = _db;
 
