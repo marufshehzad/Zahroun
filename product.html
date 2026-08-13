@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -536,23 +536,86 @@
         // events per actual visit, inflating reported ViewContent counts.
         let viewContentFired = false;
 
-        document.addEventListener('products-ready', () => {
+        function getRequestedProductRef() {
             const urlParams = new URLSearchParams(window.location.search);
-            const productId = parseInt(urlParams.get('id'));
+            return urlParams.get('id') || urlParams.get('product') || urlParams.get('slug') || urlParams.get('name') || urlParams.get('item');
+        }
 
-            // js/store.js dispatches this event up to 3x (bundled → cache → firestore),
-            // each with a growing/changing product list. Falling back to products[0]
-            // on the "bundled" list (a hardcoded 11-product snapshot, missing anything
-            // added since) caused the wrong product (usually id 1) to flash briefly
-            // before the real one loaded. "cache"/"firestore" both reflect real
-            // database contents, so only "bundled" is untrustworthy for a 404 verdict.
-            // (store.js also sometimes skips its "firestore" republish entirely when
-            // the cached list already matches, so "firestore" can't be required here.)
-            let product = products.find(p => p.id === productId);
-            if (!product) {
-                if (window.ZahrounStore?.source === 'bundled') return;
-                product = products[0]; // genuinely doesn't exist — fall back
+        function findProductMatch(targetRef, list) {
+            const prodList = list || window.products;
+            if (!prodList || !prodList.length) return null;
+            if (!targetRef) return prodList[0];
+
+            const refStr = String(targetRef).trim().toLowerCase();
+            const refNum = parseInt(refStr, 10);
+
+            // 1. Match by numeric ID or string ID
+            let found = prodList.find(p => String(p.id).trim().toLowerCase() === refStr || (!isNaN(refNum) && Number(p.id) === refNum));
+            if (found) return found;
+
+            // 2. Match by Name or Slug (e.g. "aquavor", "sahraa-oudh")
+            found = prodList.find(p => {
+                if (!p.name) return false;
+                const nameLower = String(p.name).trim().toLowerCase();
+                const slug = nameLower.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                return nameLower === refStr || slug === refStr || refStr.includes(slug) || slug.includes(refStr);
+            });
+            return found || null;
+        }
+
+        let renderHasCompleted = false;
+        let safetyTimeoutTimer = null;
+
+        function showProductNotFoundUI() {
+            renderHasCompleted = true;
+            const container = document.getElementById('product-detail-content');
+            if (container) {
+                container.innerHTML = `
+                    <div style="grid-column:1/-1;text-align:center;padding:4rem 1rem;background:var(--surface-color,#f9f8f6);border-radius:12px;margin:2rem 0;box-shadow:0 4px 18px rgba(0,0,0,0.04);">
+                        <ion-icon name="alert-circle-outline" style="font-size:3.5rem;color:var(--primary-color,#9b2226);margin-bottom:1rem;"></ion-icon>
+                        <h2 style="font-family:var(--font-serif);font-size:1.8rem;margin-bottom:0.75rem;">Product Not Found</h2>
+                        <p style="color:var(--text-muted);max-width:500px;margin:0 auto 2rem;font-size:1rem;line-height:1.6;">The fragrance you are looking for is currently unavailable or may have been updated.</p>
+                        <a href="shop.html" class="btn btn-black" style="display:inline-block;padding:0.85rem 2rem;">Explore All Fragrances &rarr;</a>
+                    </div>
+                `;
             }
+        }
+
+        document.addEventListener('products-ready', () => {
+            const targetRef = getRequestedProductRef();
+            let product = findProductMatch(targetRef);
+
+            if (!product) {
+                if (window.ZahrounStore?.source === 'bundled') {
+                    // Non-bundled product (e.g. added in Firestore like Aquavor); wait for Firestore/cache update.
+                    if (!safetyTimeoutTimer) {
+                        safetyTimeoutTimer = setTimeout(() => {
+                            if (!renderHasCompleted) {
+                                const retryProduct = findProductMatch(targetRef) || (window.products && window.products[0]);
+                                if (retryProduct) {
+                                    renderProductPage(retryProduct);
+                                } else {
+                                    showProductNotFoundUI();
+                                }
+                            }
+                        }, 3000);
+                    }
+                    return;
+                }
+                product = (window.products && window.products.length) ? window.products[0] : null;
+            }
+
+            if (product) {
+                if (safetyTimeoutTimer) { clearTimeout(safetyTimeoutTimer); safetyTimeoutTimer = null; }
+                renderProductPage(product);
+            } else {
+                showProductNotFoundUI();
+            }
+        });
+
+        function renderProductPage(product) {
+            renderHasCompleted = true;
+            const productId = product.id;
             currentProduct = product;
             window.currentProduct = product;
             window.currentProductId = product.id;
@@ -799,7 +862,7 @@
 
             // Set document title + dynamic SEO
             document.title = `${product.name} | Zahroun`;
-            const pid = new URLSearchParams(location.search).get("id") || "";
+            const pid = new URLSearchParams(location.search).get("id") || String(product.id);
             document.querySelector('meta[name="description"]').content = `${product.name} — ${(product.description || "").slice(0,120)}. Shop Zahroun luxury perfumes online in Bangladesh.`;
 
             // Clear existing dynamic SEO tags to prevent duplicates
@@ -906,7 +969,7 @@
                     </div>
                 </div>`;
             };
-            upsellGrid.innerHTML = upsellProducts.map(_upCard).join('');
+            if (upsellGrid) upsellGrid.innerHTML = upsellProducts.map(_upCard).join('');
 
             // Recently viewed — localStorage only, no extra reads
             try {
@@ -915,10 +978,8 @@
                 const rvProducts = rv.filter(id => id !== productId)
                     .map(id => products.find(p => p.id === id)).filter(Boolean).slice(0, 4);
                 localStorage.setItem(RV_KEY, JSON.stringify([productId, ...rv.filter(id => id !== productId)].slice(0, 8)));
-                // products-ready can fire up to 3x per page load (bundled -> cache -> Firestore);
-                // remove any previously-inserted section so stale/duplicate copies never stack up
                 document.getElementById('recently-viewed-section')?.remove();
-                if (rvProducts.length >= 2) {
+                if (rvProducts.length >= 2 && upsellGrid) {
                     const upsellSection = upsellGrid.closest('section') || upsellGrid.parentElement;
                     const rvSection = document.createElement('section');
                     rvSection.id = 'recently-viewed-section';
@@ -927,10 +988,10 @@
                         <h2 class="section-title" style="text-align:center;margin-bottom:2rem;">Recently Viewed</h2>
                         <div class="product-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.5rem;">${rvProducts.map(_upCard).join('')}</div>
                     </div>`;
-                    upsellSection.insertAdjacentElement('afterend', rvSection);
+                    if (upsellSection) upsellSection.insertAdjacentElement('afterend', rvSection);
                 }
             } catch {}
-        });
+        }
 
         function getSizePrice(product, size) {
             return product.prices && product.prices[size] ? product.prices[size] : product.price;

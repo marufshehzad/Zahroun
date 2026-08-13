@@ -22,8 +22,11 @@ const _PROD_KEY = 'zhr_products_v1';
 const _PROD_TTL = 2 * 60 * 1000; // 2 minutes — balances nav speed vs. stock accuracy
 
 function normalize(p) {
-  const id = typeof p.id === "number" ? p.id : Number(p.id);
-  const seed = seedProducts.find(s => Number(s.id) === id);
+  let id = p.id;
+  if (typeof id === "string" && id.trim() !== "" && !isNaN(Number(id))) {
+    id = Number(id);
+  }
+  const seed = seedProducts.find(s => String(s.id) === String(id));
   const normalized = { ...p, id };
   if (seed) {
     if (normalized.image && !normalized.image.startsWith('http')) {
@@ -48,18 +51,28 @@ function publish(list, source) {
     ready: true,
     source,
     products: list,
-    getById: (id) => list.find(p => p.id === Number(id)) || null
+    getById: (id) => {
+      if (!id) return null;
+      const targetStr = String(id).toLowerCase().trim();
+      const numVal = parseInt(targetStr, 10);
+      return list.find(p => 
+        String(p.id).toLowerCase().trim() === targetStr ||
+        (!isNaN(numVal) && Number(p.id) === numVal) ||
+        (p.name && p.name.toLowerCase().trim() === targetStr) ||
+        (p.name && p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') === targetStr)
+      ) || null;
+    }
   };
   document.dispatchEvent(new Event("products-ready"));
   console.info(`[Zahroun Store] ${list.length} products ready (${source}).`);
 }
 
 // 1) Instant render with bundled data — never an empty storefront.
-publish(seedProducts.map(normalize).sort((a, b) => a.id - b.id), "bundled");
+publish(seedProducts.map(normalize).sort((a, b) => (typeof a.id === 'number' && typeof b.id === 'number') ? a.id - b.id : 0), "bundled");
 
 // 2) Upgrade to live data: sessionStorage cache → Firestore (stale-while-revalidate).
 //    Cache renders instantly; a fresh fetch still runs in the background and
-//    re-publishes only if something changed — admin edits appear within seconds.
+//    re-publishes live Firestore data so admin edits & new products appear immediately.
 (async () => {
   let servedFromCache = false;
   let cachedJson = null;
@@ -70,7 +83,7 @@ publish(seedProducts.map(normalize).sort((a, b) => a.id - b.id), "bundled");
       if (raw) {
         const { data, ts } = JSON.parse(raw);
         if (Date.now() - ts < _PROD_TTL && Array.isArray(data) && data.length) {
-          publish(data.map(normalize).sort((a, b) => a.id - b.id), "cache");
+          publish(data.map(normalize).sort((a, b) => (typeof a.id === 'number' && typeof b.id === 'number') ? a.id - b.id : 0), "cache");
           servedFromCache = true;
           cachedJson = JSON.stringify(data);
         }
@@ -82,12 +95,19 @@ publish(seedProducts.map(normalize).sort((a, b) => a.id - b.id), "bundled");
       const list = snap.docs
         .map(d => normalize({ id: d.id, ...d.data() }))
         .filter(p => p.hidden !== true)
-        .sort((a, b) => a.id - b.id);
+        .sort((a, b) => {
+          const numA = Number(a.id), numB = Number(b.id);
+          if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+          return String(a.id).localeCompare(String(b.id));
+        });
       try { sessionStorage.setItem(_PROD_KEY, JSON.stringify({ data: list, ts: Date.now() })); } catch {}
-      // Skip the re-render when the fresh data is identical to what's on screen
-      if (!servedFromCache || JSON.stringify(list) !== cachedJson) publish(list, "firestore");
+      // Always publish live Firestore data if it differs or if coming from bundled
+      if (!servedFromCache || JSON.stringify(list) !== cachedJson || window.ZahrounStore?.source === 'bundled') {
+        publish(list, "firestore");
+      }
     }
   } catch (err) {
     if (!servedFromCache) console.warn("[Zahroun Store] Firestore unavailable; using bundled products.", err);
   }
 })();
+
