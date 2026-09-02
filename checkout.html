@@ -441,6 +441,14 @@
                         <div id="free-gift-row" style="display:none;justify-content:space-between;margin-bottom:.5rem;color:#163E34;background:#f0f7f4;border-radius:6px;padding:.35rem .65rem;font-size:.82rem;font-weight:600;">
                             <span id="free-gift-label">🎁 Free Gift</span><span>Added!</span>
                         </div>
+                        <!-- Loyalty redemption line. Loyalty used to be folded into the
+                             promo-discount lines above; it is now its own field end to end
+                             (see js/promotions.js), so it needs its own row or the customer
+                             would not see the deduction they are getting. -->
+                        <div id="loyalty-discount-row" style="display:none;justify-content:space-between;margin-bottom:.5rem;color:#163E34;font-weight:600;">
+                            <span id="loyalty-discount-label">Loyalty points</span>
+                            <span id="summary-loyalty-discount">-Tk 0</span>
+                        </div>
                         <!-- Loyalty Points Redemption -->
                         <div id="loyalty-row" style="display:none;margin-bottom:1rem;">
                           <div style="background:#fff;border:1.5px solid #e4e0d8;border-radius:14px;padding:1rem 1.1rem;box-shadow:0 2px 10px rgba(0,0,0,.05);">
@@ -545,7 +553,7 @@
             <div id="cart-items" style="flex: 1; overflow-y: auto;"></div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
-                    <span>Total</span>
+                    <span>Subtotal</span>
                     <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn checkout-redirect-btn" style="width: 100%;">Checkout</button>
@@ -554,6 +562,7 @@
     </div>
 
     <script type="module" src="js/store.js"></script>
+    <script src="js/pricing.js"></script>
     <script type="module" src="js/orders.js"></script>
     <script type="module" src="js/coupon.js"></script>
     <script type="module" src="js/promotions.js"></script>
@@ -894,7 +903,21 @@
             togglePaymentDetails();
 
             const form = document.getElementById('checkout-form');
-            form.addEventListener('submit', handleCheckout);
+            // Safety net: handleCheckout disables the button on its very first
+            // statement, so ANY unforeseen throw before the order is written
+            // would otherwise strand the customer with a dead "Placing order..."
+            // button and no way to retry. Never re-enable after the order has
+            // actually committed — that would invite a duplicate.
+            form.addEventListener('submit', (e) => {
+                handleCheckout(e).catch(err => {
+                    console.error('[Checkout] unexpected failure in handleCheckout:', err);
+                    if (!window._zhrOrderCommitted) {
+                        releaseCheckoutSubmit();
+                        const m = 'Something went wrong. Please try again.';
+                        if (window.showToast) window.showToast(m, 'error'); else alert(m);
+                    }
+                });
+            });
             form.addEventListener('input', checkFormValidity);
             form.addEventListener('change', checkFormValidity);
             checkFormValidity();
@@ -1017,7 +1040,11 @@
                 if (fo && fo.pct) fo.discount = (cart.reduce((s,i)=>s+(parseFloat(i.selectedPrice)*i.quantity),0) * fo.pct / 100);
                 if (fo) opts.firstOrderDiscount = fo;
             }
-            if (window._loyaltyDiscount)  opts.loyaltyDiscount  = window._loyaltyDiscount;
+            // Loyalty is deliberately NOT handed to the promo engine. It is
+            // carried as its own field through the summary, the order payload
+            // and js/orders.js. Feeding it in here put it inside
+            // promoResult.totalDiscount as well, and the order then subtracted
+            // both — the customer's redemption came off the bill twice.
             if (window._referralResult)   opts.referralDiscount = window._referralResult;
 
             // Apply Buy X Get Y customer-selected free items (overrides auto cheapest logic)
@@ -1030,35 +1057,37 @@
             window._promoResult = await window.ZahrounPromos.evaluate(cart, opts).catch(() => null);
         }
 
-        function calculateTotal() {
-            const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.selectedPrice) * item.quantity), 0);
+        /* Build the canonical summary for the CURRENT page state. The same
+           call is made again in handleCheckout() just before the order is
+           written, so what the customer approves and what Firestore stores are
+           produced by the same function from the same inputs. */
+        function currentSummary() {
             const deliverySelect = document.getElementById('deliveryArea');
-            const deliveryCharge = parseInt(deliverySelect.value) || 0;
+            return window.ZahrounPricing.computeOrderSummary({
+                cart,
+                coupon: window.appliedCoupon || null,
+                promoResult: window._promoResult || null,
+                loyalty: window._loyaltyDiscount || null,
+                deliveryFee: parseInt(deliverySelect && deliverySelect.value, 10) || 0
+            });
+        }
 
+        function calculateTotal() {
+            const s = currentSummary();
             const coupon = window.appliedCoupon || null;
-            const discount = coupon ? (coupon.discount || 0) : 0;
             const promoResult = window._promoResult;
-            const promoDiscount = promoResult ? Math.min(promoResult.totalDiscount, subtotal) : 0;
-            const promoFreeShip = !!(promoResult?.freeShipping);
+            const discount = s.couponDiscount;
+            const deliveryCharge = s.deliveryFee;
+            const freeDelivery = s.freeShipping;
+            const total = s.total;
 
-            const freeDelivery = !!(coupon && coupon.freeDelivery) || promoFreeShip
-                || (window._freeDeliveryThreshold > 0 && subtotal >= window._freeDeliveryThreshold);
-            const effectiveDelivery = freeDelivery ? 0 : deliveryCharge;
-
-            const total = (subtotal - discount - promoDiscount) + effectiveDelivery;
-
-            document.getElementById('summary-subtotal').textContent = 'Tk ' + Math.round(subtotal).toLocaleString();
+            document.getElementById('summary-subtotal').textContent = 'Tk ' + s.subtotal.toLocaleString();
 
             // Flash sale savings (informational — already baked into selectedPrice)
-            const flashSavings = cart.reduce((sum, item) => {
-                if (!item.flashSalePrice) return sum;
-                const catalogPr = (item.prices && item.prices[item.size]) ? item.prices[item.size] : 0;
-                return sum + Math.max(0, (catalogPr - item.flashSalePrice) * item.quantity);
-            }, 0);
             const flashRow = document.getElementById('flash-sale-row');
             if (flashRow) {
-                if (flashSavings > 0) {
-                    document.getElementById('flash-savings-amount').textContent = 'Saved Tk ' + Math.round(flashSavings).toLocaleString();
+                if (s.flashSaleDiscount > 0) {
+                    document.getElementById('flash-savings-amount').textContent = 'Saved Tk ' + s.flashSaleDiscount.toLocaleString();
                     flashRow.style.display = '';
                 } else {
                     flashRow.style.display = 'none';
@@ -1100,10 +1129,25 @@
                 fgRow.style.display = 'none';
             }
 
+            // Loyalty redemption — its own line now that it is no longer inside promoDiscount
+            const loyRow = document.getElementById('loyalty-discount-row');
+            if (loyRow) {
+                if (s.loyaltyDiscount > 0) {
+                    const pts = window._loyaltyDiscount && window._loyaltyDiscount.points;
+                    document.getElementById('loyalty-discount-label').textContent =
+                        pts ? `Loyalty points (${pts} pts)` : 'Loyalty points';
+                    document.getElementById('summary-loyalty-discount').textContent =
+                        '-Tk ' + s.loyaltyDiscount.toLocaleString();
+                    loyRow.style.display = 'flex';
+                } else {
+                    loyRow.style.display = 'none';
+                }
+            }
+
             document.getElementById('summary-delivery').textContent = freeDelivery
                 ? 'FREE' + (deliveryCharge ? ` (was Tk ${deliveryCharge.toLocaleString()})` : '')
                 : 'Tk ' + deliveryCharge.toLocaleString();
-            document.getElementById('summary-total').textContent = 'Tk ' + Math.round(Math.max(0, total)).toLocaleString();
+            document.getElementById('summary-total').textContent = 'Tk ' + total.toLocaleString();
         }
 
         async function refreshTotals() {
@@ -1183,10 +1227,160 @@
             } catch (e) {}
         }
 
+        /* ── Duplicate-order protection (BUG-4) ───────────────────────────
+           The submit button used to be disabled only AFTER the H9 price
+           re-validation and H8 coupon re-validation had both round-tripped to
+           Firestore. On a slow mobile connection that window is seconds long,
+           and a second tap re-entered handleCheckout — which then threw at the
+           `document.getElementById('fullName').value` read, because by then the
+           success screen had already replaced the whole form. The guard below
+           closes the window on the very first statement instead. */
+        let _checkoutInFlight = false;
+        let _checkoutSlowTimer = null;
+
+        function releaseCheckoutSubmit() {
+            _checkoutInFlight = false;
+            if (_checkoutSlowTimer) { clearTimeout(_checkoutSlowTimer); _checkoutSlowTimer = null; }
+            // Re-query rather than reuse a captured reference, so this still
+            // works if the summary around the button has been re-rendered.
+            const b = document.querySelector('#checkout-form button[type="submit"]');
+            if (b) { b.disabled = false; b.textContent = 'Place Order'; }
+        }
+
+        /* Idempotency key. Stored in sessionStorage so it survives a same-tab
+           refresh — the exact case where a customer, having seen no success
+           screen because the connection dropped mid-write, reloads and submits
+           again while the original write is still queued in Firestore's offline
+           cache. It is retired as soon as an order commits, so the next order
+           gets a fresh one. sessionStorage (not localStorage) keeps it from
+           leaking into an unrelated order days later in another tab. */
+        const CLIENT_ORDER_ID_KEY = 'zhr_client_order_id';
+        function getClientOrderId() {
+            let k = null;
+            try { k = sessionStorage.getItem(CLIENT_ORDER_ID_KEY); } catch {}
+            if (!k) {
+                k = (window.crypto && crypto.randomUUID)
+                    ? crypto.randomUUID()
+                    : 'co_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+                try { sessionStorage.setItem(CLIENT_ORDER_ID_KEY, k); } catch {}
+            }
+            return k;
+        }
+
+        /* ── SEC-5-fix: free gifts are re-derived, never trusted ──────────
+           localStorage 'zahroun_bxgy_free' is fully client-controlled. It used
+           to be appended to the order verbatim as price-0 line items with no
+           checks at all, so setting that one key granted any product for free —
+           even with the Buy-X-Get-Y promo switched off, as a guest, on every
+           order. The same entries' `price` field also fed the promo engine's
+           discount maths, so inflating it drove promoDiscount up to the full
+           subtotal (pay delivery only).
+
+           This re-derives the entire entitlement from the live promotions
+           config and the live product documents: promo enabled, scope, the cart
+           genuinely qualifying for a rule, membership of the admin's
+           freeProductSizes allow-list, the ML size cap, stock, and the
+           rule.getFree count. Name/price/image come from the product doc.
+           Returns the validated gifts and rewrites localStorage so the promo
+           engine downstream also sees only validated data. */
+        async function validateFreeGifts() {
+            let raw = {};
+            try { raw = JSON.parse(localStorage.getItem('zahroun_bxgy_free') || '{}'); } catch {}
+            const claimed = Object.values(raw).filter(f => f && f.id);
+            if (!claimed.length) return { gifts: [], changed: false };   // common case — no reads
+
+            const drop = () => {
+                try { localStorage.removeItem('zahroun_bxgy_free'); } catch {}
+                return { gifts: [], changed: true };
+            };
+
+            const P = window.ZahrounPromos;
+            if (!P) return drop();
+
+            let cfg = null;
+            try { cfg = await P.load(true); } catch {}
+            if (!cfg) return drop();
+
+            const bx = cfg.buyXGetY || {};
+            if (!bx.enabled || bx.freeItemScope !== 'select') return drop();
+
+            // Re-qualify from the CART (already re-priced by H9 above)
+            const totalQty = cart.reduce((s, i) => s + (i.quantity || 1), 0);
+            const rule = [...(bx.rules || [])].sort((a, b) => b.buy - a.buy)
+                                              .find(r => totalQty >= r.buy);
+            if (!rule) return drop();
+
+            // Admin allow-list (freeProductSizes, or the legacy freeProductIds shape)
+            const SZ = { '6ML': 6, '15ML': 15, '30ML': 30, '50ML': 50 };
+            const allow = new Set();
+            if (bx.freeProductSizes?.length) {
+                bx.freeProductSizes.forEach(f => allow.add(`${String(f.productId ?? f.id)}_${f.size}`));
+            } else if (bx.freeProductIds?.length) {
+                bx.freeProductIds.forEach(id => ['6ML','15ML','30ML','50ML']
+                    .forEach(s => allow.add(`${String(id)}_${s}`)));
+            }
+            if (!allow.size) return drop();
+
+            // ML cap — mirrors free-gift-selection.html's eligibility rule
+            const maxMl = Math.max(...cart.map(i => SZ[i.size] || 0), 6);
+
+            const wanted = [];
+            for (const f of claimed) {
+                const key = `${String(f.id)}_${f.size || ''}`;
+                if (!allow.has(key)) continue;
+                if ((SZ[f.size] || 0) > maxMl) continue;
+                if (wanted.some(w => w.key === key)) continue;
+                wanted.push({ key, id: String(f.id), size: f.size });
+                if (wanted.length >= (rule.getFree || 1)) break;
+            }
+            if (!wanted.length) return drop();
+
+            let gifts = [];
+            try {
+                const { doc: _gDoc, getDoc: _gGet } =
+                    await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+                const { db: _gDb } = await import('./js/firebase-config.js');
+                const ids = [...new Set(wanted.map(w => w.id))];
+                const snaps = await Promise.all(ids.map(id => _gGet(_gDoc(_gDb, 'products', id))));
+                const prods = {};
+                snaps.filter(s => s.exists()).forEach(s => { prods[s.id] = s.data(); });
+                gifts = wanted.map(w => {
+                    const p = prods[w.id];
+                    if (!p) return null;
+                    if (typeof p.stock === 'number' && p.stock <= 0) return null;
+                    const price = (p.prices && p.prices[w.size]) || p.price || 0;
+                    if (!(price > 0)) return null;
+                    return {
+                        id: w.id, size: w.size, name: p.name || '', price,
+                        image: (p.sizeImages && p.sizeImages[w.size]) || p.image || ''
+                    };
+                }).filter(Boolean);
+            } catch { return drop(); }    // cannot price it -> cannot honour it
+            if (!gifts.length) return drop();
+
+            const changed = gifts.length !== claimed.length || gifts.some(g => {
+                const o = raw[`${g.id}_${g.size}`];
+                return !o || Number(o.price) !== g.price || String(o.name || '') !== g.name;
+            });
+            // Rewrite with validated data so evaluatePromos() below prices the
+            // discount from the live product, not from whatever was in storage.
+            const rebuilt = {};
+            gifts.forEach(g => { rebuilt[`${g.id}_${g.size}`] = g; });
+            try { localStorage.setItem('zahroun_bxgy_free', JSON.stringify(rebuilt)); } catch {}
+            return { gifts, changed };
+        }
+
         async function handleCheckout(e) {
             e.preventDefault();
 
+            if (_checkoutInFlight) return;
+            _checkoutInFlight = true;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Placing order...'; }
+            const clientOrderId = getClientOrderId();
+
             if (cart.length === 0) {
+                releaseCheckoutSubmit();
                 alert('Your cart is empty! Add products to proceed.');
                 return;
             }
@@ -1205,6 +1399,7 @@
                 }
             }
             if (stockErrors.length) {
+                releaseCheckoutSubmit();
                 if (window.showToast) window.showToast(stockErrors[0], 'error');
                 else alert(stockErrors[0]);
                 return;
@@ -1258,6 +1453,26 @@
             }
             // ── end H9-fix ──
 
+            // SEC-5-fix: re-derive the free-gift entitlement from live data, and
+            // re-run the promo engine afterwards so the discount is computed from
+            // the corrected cart prices AND the validated gifts rather than from
+            // whatever window._promoResult was left holding at page-load time.
+            // Both calls are defensively wrapped: an unhandled throw here would
+            // escape handleCheckout with _checkoutInFlight still true and the
+            // button still disabled, leaving the customer unable to order at all.
+            // Failing closed on gifts (granting none) is the safe direction.
+            let validatedGifts = [];
+            try {
+                const _giftCheck = await validateFreeGifts();
+                validatedGifts = (_giftCheck && _giftCheck.gifts) || [];
+            } catch (giftErr) {
+                console.warn('[Checkout] free-gift validation failed — proceeding without a gift:', giftErr);
+                try { localStorage.removeItem('zahroun_bxgy_free'); } catch {}
+            }
+            if (typeof evaluatePromos === 'function') {
+                try { await evaluatePromos(); } catch (e) { console.warn('[Checkout] promo re-evaluation failed:', e); }
+            }
+
             const name = document.getElementById('fullName').value;
             const mobile = document.getElementById('mobile').value;
             const address = document.getElementById('address').value;
@@ -1283,7 +1498,10 @@
                 senderMobile = document.getElementById('nagadMobile').value.trim();
             }
 
-            const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.selectedPrice) * item.quantity), 0);
+            // Provisional — replaced below by the canonical whole-taka subtotal.
+            // Kept here because the H8 coupon re-validation needs a subtotal to
+            // re-check minOrder and re-derive the discount against.
+            let subtotal = window.ZahrounPricing.subtotalOf(cart);
             let coupon = window.appliedCoupon || null;
 
             // ── H8-fix: re-validate session coupon against Firestore before placing order ──
@@ -1296,6 +1514,7 @@
                     if (!freshSnap.exists()) {
                         window.clearAppliedCoupon && window.clearAppliedCoupon();
                         coupon = null;
+                        releaseCheckoutSubmit();
                         if (window.showToast) window.showToast('Coupon no longer exists — it has been removed.', 'error');
                         else alert('Coupon no longer exists — it has been removed.');
                         return;
@@ -1304,6 +1523,7 @@
                     if (!fresh.active) {
                         window.clearAppliedCoupon && window.clearAppliedCoupon();
                         coupon = null;
+                        releaseCheckoutSubmit();
                         if (window.showToast) window.showToast('Your coupon has been deactivated. Please remove it and try again.', 'error');
                         else alert('Your coupon has been deactivated. Please remove it and try again.');
                         return;
@@ -1313,6 +1533,7 @@
                         if (exp < new Date()) {
                             window.clearAppliedCoupon && window.clearAppliedCoupon();
                             coupon = null;
+                            releaseCheckoutSubmit();
                             if (window.showToast) window.showToast('Your coupon has expired. Please remove it and try again.', 'error');
                             else alert('Your coupon has expired. Please remove it and try again.');
                             return;
@@ -1321,10 +1542,37 @@
                     if (fresh.maxUses && (fresh.usedCount || 0) >= fresh.maxUses) {
                         window.clearAppliedCoupon && window.clearAppliedCoupon();
                         coupon = null;
+                        releaseCheckoutSubmit();
                         if (window.showToast) window.showToast('This coupon\'s usage limit has been reached.', 'error');
                         else alert('This coupon\'s usage limit has been reached.');
                         return;
                     }
+                    // SEC-7-fix: the checks above only proved the coupon still
+                    // EXISTS and is usable. The AMOUNT was never re-derived, so
+                    // window.appliedCoupon.discount — plain client state — went
+                    // straight into the order. Recompute it from the freshly
+                    // read document against the freshly computed subtotal, and
+                    // re-check minOrder, which was previously only ever tested
+                    // at apply time (shrinking the cart afterwards slipped past it).
+                    if (fresh.minOrder && subtotal < fresh.minOrder) {
+                        window.clearAppliedCoupon && window.clearAppliedCoupon();
+                        coupon = null;
+                        releaseCheckoutSubmit();
+                        const m = `This coupon needs a minimum order of Tk ${fresh.minOrder}. Your cart is now Tk ${Math.round(subtotal)} — please remove the coupon or add more items.`;
+                        if (window.showToast) window.showToast(m, 'error'); else alert(m);
+                        return;
+                    }
+                    const _recomputed = window.computeCouponDiscount
+                        ? window.computeCouponDiscount(fresh, subtotal)
+                        : { discount: coupon.discount || 0, freeDelivery: !!coupon.freeDelivery };
+                    if (Number(coupon.discount || 0) !== Number(_recomputed.discount)) {
+                        console.warn('[Zahroun] Corrected coupon discount at submit:',
+                                     coupon.discount, '->', _recomputed.discount);
+                    }
+                    coupon = { ...coupon, ...fresh, id: coupon.id,
+                               discount: _recomputed.discount,
+                               freeDelivery: _recomputed.freeDelivery };
+                    window.appliedCoupon = coupon;
                 } catch (revalErr) {
                     console.warn('Coupon re-validation failed — proceeding without coupon:', revalErr);
                     window.clearAppliedCoupon && window.clearAppliedCoupon();
@@ -1333,14 +1581,27 @@
             }
             // ── end H8-fix ──
 
-            const discount = coupon ? (coupon.discount || 0) : 0;
+            /* The order's money comes from the SAME canonical function that
+               produced the summary the customer just approved, fed the same
+               inputs. That is what guarantees "displayed total == stored total"
+               rather than two parallel formulas that have to be kept in step by
+               hand — which is exactly how the loyalty amount ended up being
+               subtracted twice. */
             const promoResult = window._promoResult;
-            const promoDiscount = promoResult ? Math.min(promoResult.totalDiscount || 0, subtotal) : 0;
-            const promoFreeShip = !!(promoResult?.freeShipping);
-            const freeDelivery = !!(coupon && coupon.freeDelivery) || promoFreeShip
-                || (window._freeDeliveryThreshold > 0 && subtotal >= window._freeDeliveryThreshold);
-            const effectiveDelivery = freeDelivery ? 0 : deliveryCharge;
-            const total = Math.max(0, (subtotal - discount - promoDiscount) + effectiveDelivery);
+            const _sum = window.ZahrounPricing.computeOrderSummary({
+                cart,
+                coupon,
+                promoResult,
+                loyalty: window._loyaltyDiscount || null,
+                deliveryFee: deliveryCharge
+            });
+            const discount = _sum.couponDiscount;
+            const promoDiscount = _sum.promoDiscount;
+            const loyaltyDiscount = _sum.loyaltyDiscount;
+            const freeDelivery = _sum.freeShipping;
+            const effectiveDelivery = _sum.effectiveDelivery;
+            const total = _sum.total;
+            subtotal = _sum.subtotal;   // canonical, whole-taka
 
             // Build the order items snapshot
             const items = cart.map(item => {
@@ -1362,24 +1623,22 @@
                 };
             });
 
-            // Append selected free gift as a real item (price: 0, isFreeGift: true)
-            try {
-                const bxgyRaw = JSON.parse(localStorage.getItem('zahroun_bxgy_free') || '{}');
-                Object.values(bxgyRaw).forEach(fi => {
-                    if (fi && fi.id) {
-                        items.push({
-                            id: fi.id,
-                            name: fi.name || '',
-                            size: fi.size || '',
-                            price: 0,
-                            originalPrice: parseFloat(fi.price) || 0,
-                            quantity: 1,
-                            image: fi.image || '',
-                            isFreeGift: true
-                        });
-                    }
+            // Append the free gift as a real order line (price 0). These come
+            // from validateFreeGifts() above — re-derived from the live promo
+            // config and the live product docs — NOT from localStorage, which
+            // is attacker-controlled and previously granted any product free.
+            validatedGifts.forEach(g => {
+                items.push({
+                    id: g.id,
+                    name: g.name || '',
+                    size: g.size || '',
+                    price: 0,
+                    originalPrice: g.price,
+                    quantity: 1,
+                    image: g.image || '',
+                    isFreeGift: true
                 });
-            } catch {}
+            });
 
             // WhatsApp notification message (offered after the order is saved)
             let itemList = '';
@@ -1421,33 +1680,88 @@
             }
             // ── end C3-fix ──
 
-            // Save the order to Firestore
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Placing order...';
+            // Save the order to Firestore.
+            // The button was already disabled at the top of this function.
+            //
+            // If the connection drops mid-write, Firestore's offline cache
+            // leaves addDoc pending — it neither resolves nor rejects — and the
+            // write commits later on reconnect. Without feedback the customer
+            // assumes it failed and submits again. This timer tells them not to.
+            _checkoutSlowTimer = setTimeout(() => {
+                const b = document.querySelector('#checkout-form button[type="submit"]');
+                if (b) b.textContent = 'Still placing your order…';
+                const m = 'Still trying to place your order — please do NOT tap again or refresh. We will confirm in a moment.';
+                if (window.showToast) window.showToast(m, 'info'); else console.warn(m);
+            }, 12000);
+
+            let orderResult;
             try {
-                const orderResult = await window.saveOrder({
+                orderResult = await window.saveOrder({
+                    clientOrderId,
                     customer: { name, mobile, address, district, area: deliveryAreaText },
                     items,
-                    subtotal: +subtotal.toFixed(2),
-                    discount: +discount.toFixed(2),
-                    promoDiscount: +promoDiscount.toFixed(2),
-                    promos: promoResult?.discounts?.map(d => ({ label: d.label, discount: +d.discount.toFixed(2) })) || [],
+                    // Whole taka throughout — see the currency policy in js/pricing.js.
+                    subtotal,
+                    discount,
+                    promoDiscount,
+                    promos: promoResult?.discounts?.map(d => ({ label: d.label, discount: window.ZahrounPricing.bdt(d.discount) })) || [],
                     couponCode: coupon ? coupon.id : null,
                     delivery: effectiveDelivery,
-                    total: +total.toFixed(2),
+                    total,
                     payment: { method: paymentMethod, txnId: txnId || null, senderMobile: senderMobile || null },
                     paymentStatus: paymentMethod === 'COD' ? 'cod' : 'pending',
                     giftMessage: giftMessage || null,
                     guestEmail: user ? null : customerEmail,
                     loyaltyRedeemedPoints: window._loyaltyDiscount ? (window._loyaltyDiscount.points || 0) : 0,
-                    loyaltyDiscountAmount: window._loyaltyDiscount ? +(window._loyaltyDiscount.discount || 0).toFixed(2) : 0,
+                    loyaltyDiscountAmount: loyaltyDiscount,
                     referrerUid: window._referralResult ? window._referralResult.referrerUid : null,
                     referralCode: window._referralResult ? window._referralResult.code : null
                 });
-                const orderId = typeof orderResult === 'object' ? orderResult.id : orderResult;
-                const orderNum = typeof orderResult === 'object' ? orderResult.orderNum : null;
+            } catch (err) {
+                releaseCheckoutSubmit();
+                const msg = 'Could not place order: ' + (err.code === 'out-of-stock' ? err.message : (err.code || err.message));
+                if (window.showToast) window.showToast(msg, 'error'); else alert(msg);
+                return;
+            }
+            if (_checkoutSlowTimer) { clearTimeout(_checkoutSlowTimer); _checkoutSlowTimer = null; }
+            // Tells the submit-binding safety net not to re-enable the button:
+            // past this point the money is committed and a retry would duplicate.
+            window._zhrOrderCommitted = true;
 
+            /* ───── THE ORDER IS COMMITTED FROM HERE DOWN. ─────
+               Nothing below may surface a failure to the customer or leave the
+               cart intact. Previously analytics, the coupon increment and the
+               loyalty deduction all sat inside the same try as the write, so any
+               exception among them showed "Could not place order" for an order
+               that had actually succeeded — with the cart still full, inviting a
+               genuine duplicate. Each step is now independently guarded, and the
+               cart is cleared BEFORE any of them. */
+            const orderId = typeof orderResult === 'object' ? orderResult.id : orderResult;
+            const orderNum = typeof orderResult === 'object' ? orderResult.orderNum : null;
+
+            // Retire the idempotency key first, so a later throw cannot cause
+            // the next order to reuse it.
+            try { sessionStorage.removeItem(CLIENT_ORDER_ID_KEY); } catch {}
+
+            // Snapshot the promo state before clearing it — the loyalty
+            // deduction and referral credit below still need these values.
+            const _loyaltyAtOrder = window._loyaltyDiscount;
+            const _referralAtOrder = window._referralResult;
+
+            // Clear the cart before anything else. An empty cart makes a
+            // re-submit impossible (the guard at the top of this function bails
+            // on it), which is what actually prevents a duplicate order.
+            window._promoResult = null; window._loyaltyDiscount = null; window._referralResult = null;
+            try {
+                localStorage.removeItem('zahroun_cart');
+                localStorage.removeItem('zahroun_bxgy_free');
+                cart = [];
+                if (typeof updateCartUI === 'function') updateCartUI();
+                localStorage.removeItem('zahroun_bxgy_free');
+            } catch (e) { console.error('[Checkout] cart clear failed', e); }
+            try { if (window.clearAppliedCoupon) window.clearAppliedCoupon(); } catch (e) { console.error('[Checkout] clearAppliedCoupon failed', e); }
+
+            try {
                 if (window.zahrounGA) window.zahrounGA.trackPurchase(orderId, items, total, coupon ? coupon.id : null);
                 if (typeof window.TrackingManager !== 'undefined') {
                     // Advanced matching re-init with customer data for higher EMQ score
@@ -1490,30 +1804,35 @@
                         }
                     }
                 }
-                // Email is sent by admin when order is confirmed — not here
-                // Increment coupon usage counter if one was applied
+            } catch (analyticsErr) {
+                // Analytics must never be able to report a committed order as failed.
+                console.error('[Checkout] post-order analytics failed (order WAS placed):', analyticsErr);
+            }
+
+            // Email is sent by admin when order is confirmed — not here.
+            // Coupon usage + loyalty deduction are best-effort network writes;
+            // each is isolated so neither can block the success screen.
+            try {
                 if (coupon && window.incrementCouponUsage) window.incrementCouponUsage(coupon.id).catch(e => console.error('[Coupon] Usage increment failed for', coupon.id, '—', e));
-                if (window.clearAppliedCoupon) window.clearAppliedCoupon();
-                // Apply loyalty deduction + referral after order
+            } catch (e) { console.error('[Checkout] coupon increment failed', e); }
+            try {
                 // NOTE: Points are EARNED only when order status changes to "Delivered" (not here)
                 if (user && window.ZahrounPromos) {
-                    if (window._referralResult?.referrerUid) {
-                        window.ZahrounPromos.applyReferralAfterOrder(window._referralResult, user.uid).catch(() => {});
+                    if (_referralAtOrder?.referrerUid) {
+                        window.ZahrounPromos.applyReferralAfterOrder(_referralAtOrder, user.uid).catch(() => {});
                     }
-                    if (window._loyaltyDiscount) {
-                        window.ZahrounPromos.deductLoyaltyPoints(user.uid, window._loyaltyDiscount.points).catch(() => {});
+                    if (_loyaltyAtOrder) {
+                        window.ZahrounPromos.deductLoyaltyPoints(user.uid, _loyaltyAtOrder.points).catch(() => {});
                     }
                 }
-                window._promoResult = null; window._loyaltyDiscount = null; window._referralResult = null;
+            } catch (e) { console.error('[Checkout] loyalty/referral post-order failed', e); }
 
-                // Clear the cart
-                localStorage.removeItem('zahroun_cart');
-                localStorage.removeItem('zahroun_bxgy_free');
-                cart = [];
-                if (typeof updateCartUI === 'function') updateCartUI();
-
+            try {
                 const displayNum = orderNum ? orderNum : orderId.slice(0,8).toUpperCase();
-                const trackUrl = `track.html?order=${orderNum || ''}&phone=${encodeURIComponent(mobile)}`;
+                // No phone in the URL — query strings end up in browser history,
+                // referrer headers and server logs, and track.html only needs
+                // the order number now that lookup happens server-side.
+                const trackUrl = orderNum ? `track.html?order=${orderNum}` : 'track.html';
 
                 // Success screen
                 document.querySelector('.checkout-container').innerHTML = `
@@ -1530,12 +1849,18 @@
                         </div>
                     </div>`;
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-            } catch (err) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Place Order';
-                const msg = 'Could not place order: ' + (err.code || err.message);
-                if (window.showToast) window.showToast(msg, 'error'); else alert(msg);
+            } catch (screenErr) {
+                // The order IS placed; only the confirmation screen failed to
+                // render. Never say "could not place order" here — that would
+                // send the customer back to re-order something they already own.
+                console.error('[Checkout] success screen render failed (order WAS placed):', screenErr);
+                const num = orderNum ? '#' + orderNum : '';
+                const m = 'Your order ' + num + ' was placed successfully. Please save this number.';
+                if (window.showToast) window.showToast(m, 'success'); else alert(m);
             }
+            // Deliberately NOT calling releaseCheckoutSubmit() — the order is
+            // committed and the form is gone; re-enabling the button would only
+            // invite a duplicate.
         }
 
         // ── Loyalty + Referral section initialiser ──────────────────────

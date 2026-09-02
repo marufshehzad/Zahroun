@@ -10,6 +10,37 @@ import {
 
 window.appliedCoupon = null;
 
+/* ── SEC-7-fix: single source of truth for the coupon amount ───────────────
+   The discount used to be computed once, at apply time, and then carried on
+   window.appliedCoupon until submit. That was wrong twice over:
+
+     1. `maxDiscount` was never applied. A 10%-with-Tk-300-cap coupon on a
+        Tk 6,830 cart granted Tk 683 instead of Tk 300 — while the admin's
+        own recompute (js/admin.js verifyCouponForCO) DID apply the cap, so
+        the two sides disagreed about the same coupon.
+     2. The amount was frozen. Applying a percentage coupon to a large cart
+        and then removing items in the cart drawer kept the original absolute
+        discount against a much smaller subtotal, which also slipped past
+        `minOrder`. That needed no developer tools at all.
+
+   This function is now the only place the amount is derived, and it is called
+   both at apply time and again at submit against the freshly-read coupon
+   document. It deliberately mirrors js/admin.js verifyCouponForCO() so the
+   customer, the order document and the admin panel can never disagree. */
+window.computeCouponDiscount = function (c, subtotal) {
+  if (!c) return { discount: 0, freeDelivery: false };
+  if (c.type === "freeship") return { discount: 0, freeDelivery: true };
+  if (c.type === "percent" && typeof c.value === "number") {
+    let d = Math.round(subtotal * c.value / 100 * 100) / 100;
+    if (typeof c.maxDiscount === "number" && c.maxDiscount > 0) d = Math.min(d, c.maxDiscount);
+    return { discount: Math.min(d, subtotal), freeDelivery: false };
+  }
+  if (typeof c.value === "number") {
+    return { discount: Math.min(c.value, subtotal), freeDelivery: false };
+  }
+  return { discount: 0, freeDelivery: false };
+};
+
 window.validateAndApplyCoupon = async function (code, subtotal, cartItems) {
   if (!code) return { valid: false, msg: "Please enter a coupon code." };
   const snap = await getDoc(doc(db, "coupons", code.trim().toUpperCase()));
@@ -34,12 +65,7 @@ window.validateAndApplyCoupon = async function (code, subtotal, cartItems) {
     }
   }
 
-  const freeDelivery = c.type === "freeship";
-  const discount = freeDelivery
-    ? 0
-    : c.type === "percent"
-      ? Math.round(subtotal * c.value / 100 * 100) / 100
-      : Math.min(c.value, subtotal);
+  const { discount, freeDelivery } = window.computeCouponDiscount(c, subtotal);
 
   window.appliedCoupon = { id: code.trim().toUpperCase(), ...c, discount, freeDelivery };
   const label = freeDelivery ? "Free delivery" : c.type === "percent" ? `${c.value}% off` : `Tk ${c.value} off`;

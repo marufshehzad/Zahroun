@@ -495,7 +495,7 @@
             <div id="cart-items" style="flex: 1; overflow-y: auto;"></div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
-                    <span>Total</span>
+                    <span>Subtotal</span>
                     <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
@@ -505,6 +505,7 @@
 
     <script type="module" src="js/store.js"></script>
     <script type="module" src="js/promotions.js"></script>
+    <script src="js/pricing.js"></script>
     <script defer src="js/cart.js"></script>
     <script defer src="js/ui.js"></script>
     <script>
@@ -568,6 +569,28 @@
 
         function showProductNotFoundUI() {
             renderHasCompleted = true;
+            if (safetyTimeoutTimer) { clearTimeout(safetyTimeoutTimer); safetyTimeoutTimer = null; }
+            // Keep bad product URLs out of the index. Without this, a deleted or
+            // mistyped id was previously rendered as some other product AND
+            // stamped with that URL's canonical/OG/JSON-LD, so search engines
+            // could index a nonexistent product page carrying another item's data.
+            document.title = 'Product Not Found | Zahroun';
+            let robots = document.querySelector('meta[name="robots"]');
+            if (!robots) {
+                robots = document.createElement('meta');
+                robots.setAttribute('name', 'robots');
+                document.head.appendChild(robots);
+            }
+            robots.setAttribute('content', 'noindex, follow');
+            // MUST carry the dynamic-seo class. store.js publishes up to three
+            // times per load (bundled -> cache -> Firestore), so on a slow
+            // connection this not-found screen can render at the 3s safety
+            // timer and then be REPLACED by the real product when the Firestore
+            // publish lands. renderProductPage() clears stale SEO tags with
+            // querySelectorAll('.dynamic-seo'), so without this class the
+            // noindex would survive onto a perfectly valid, orderable product
+            // page — precisely the slow/in-app-browser path commit a7f81ab fixed.
+            robots.className = 'dynamic-seo';
             const container = document.getElementById('product-detail-content');
             if (container) {
                 container.innerHTML = `
@@ -591,7 +614,10 @@
                     if (!safetyTimeoutTimer) {
                         safetyTimeoutTimer = setTimeout(() => {
                             if (!renderHasCompleted) {
-                                const retryProduct = findProductMatch(targetRef) || (window.products && window.products[0]);
+                                // Same rule as below: only fall back to the first
+                                // product when no specific product was requested.
+                                const retryProduct = findProductMatch(targetRef)
+                                    || (!targetRef && window.products && window.products[0]);
                                 if (retryProduct) {
                                     renderProductPage(retryProduct);
                                 } else {
@@ -602,7 +628,22 @@
                     }
                     return;
                 }
-                product = (window.products && window.products.length) ? window.products[0] : null;
+                // BUG-6: this used to fall back to window.products[0] whenever the
+                // requested product could not be found, so an old ad link or a
+                // shared URL for a deleted/hidden product silently rendered a
+                // COMPLETELY DIFFERENT product — while still stamping the
+                // canonical, OG tags and JSON-LD with the requested (bad) id.
+                // Customers landed on the wrong item and could order it by
+                // mistake. The first-product fallback is only correct when NO
+                // product was asked for at all (a bare product.html visit).
+                //
+                // Reaching here means live data has already been published
+                // (source !== 'bundled'), so a miss really is a miss — this does
+                // not regress the Facebook-ad case fixed in a7f81ab, where the
+                // stale bundled seed list simply did not contain the product yet.
+                product = (!targetRef && window.products && window.products.length)
+                    ? window.products[0]
+                    : null;
             }
 
             if (product) {
@@ -1429,7 +1470,11 @@
                                 productName: window.currentProduct?.name || "",
                                 uid: currentUser.uid,
                                 reviewerName: currentUser.displayName || currentUser.email.split("@")[0],
-                                reviewerEmail: currentUser.email,
+                                // reviewerEmail deliberately NOT stored: review
+                                // documents are world-readable (the storefront
+                                // renders them), so writing the reviewer's email
+                                // here published it to anyone. Admin can still
+                                // identify the reviewer from `uid`.
                                 rating, text,
                                 status: "pending",
                                 createdAt: serverTimestamp()

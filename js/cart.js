@@ -50,6 +50,20 @@ function reconcileCart() {
 document.addEventListener('products-ready', reconcileCart);
 document.addEventListener('flashsale-status', reconcileCart);
 
+// Catch-up reconcile. Both events above can fire BEFORE this file runs: this is
+// a deferred classic script, while js/store.js and js/auth.js are modules that
+// execute earlier in the deferred queue. store.js publishes the bundled catalog
+// synchronously ("products-ready" #1), and when settings/store and
+// settings/flashSale are both warm in sessionStorage, loadSiteSettings() takes
+// its cache branch, which has no await at all and so dispatches
+// "flashsale-status" synchronously too. Every such dispatch lands before the
+// listeners exist, and nothing re-fires them — so an expired flash sale kept
+// its stale selectedPrice in the cart and checkout summary, quoting a total the
+// order document (which re-prices server-side) then contradicted.
+// reconcileCart is idempotent and no-ops until products are loaded, so calling
+// it once here is safe on a cold cache and repairs the warm one.
+reconcileCart();
+
 let discountMultiplier = 1;
 
 function saveCart() {
@@ -140,9 +154,16 @@ window.updateQuantity = function(productId, size, newQuantity) {
 }
 
 function getCartSubtotal() {
+    // Canonical whole-taka subtotal — same helper the cart page, checkout and
+    // the order writer use, so the drawer can never disagree with them.
+    if (window.ZahrounPricing) return window.ZahrounPricing.subtotalOf(cart);
     return cart.reduce((total, item) => total + (parseFloat(item.selectedPrice) * parseInt(item.quantity)), 0);
 }
 
+/* The drawer shows the goods subtotal only — it has no delivery area, coupon or
+   loyalty context, so it cannot show a true payable total. It is labelled
+   "Subtotal" in the drawer markup for that reason; it used to say "Total",
+   which read as the final amount and disagreed with every later screen. */
 function getCartTotal() {
     return getCartSubtotal();
 }

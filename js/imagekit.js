@@ -10,6 +10,8 @@
    token/signature pair does.
    ========================================================================= */
 
+import { auth } from "./firebase-config.js";
+
 const IK_URL_ENDPOINT = "https://ik.imagekit.io/zahroun";
 const IK_PUBLIC_KEY = "public_3Pd1lxXtRc2yHWaaICeO9+RC4sI=";
 const IK_AUTH_ENDPOINT = "/api/imagekit-auth";
@@ -17,9 +19,27 @@ const IK_UPLOAD_ENDPOINT = "https://upload.imagekit.io/api/v1/files/upload";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
-async function getAuthParams() {
-  const res = await fetch(IK_AUTH_ENDPOINT);
-  if (!res.ok) throw new Error("Could not authenticate upload.");
+/* SEC-9: the signer now requires a verified Firebase admin, so the caller's ID
+   token must be attached. A cached token can be stale (expired, or minted
+   before the account was promoted to admin), so a 401/403 is retried once with
+   a force-refreshed token before giving up. */
+async function getAuthParams({ forceRefresh = false } = {}) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Sign in as an admin to upload images.");
+
+  const idToken = await user.getIdToken(forceRefresh);
+  const res = await fetch(IK_AUTH_ENDPOINT, {
+    headers: { Authorization: `Bearer ${idToken}` }
+  });
+
+  if ((res.status === 401 || res.status === 403) && !forceRefresh) {
+    return getAuthParams({ forceRefresh: true });
+  }
+  if (!res.ok) {
+    let msg = "Could not authenticate upload.";
+    try { const j = await res.json(); if (j && j.error) msg = j.error; } catch {}
+    throw new Error(msg);
+  }
   return res.json(); // { token, expire, signature }
 }
 

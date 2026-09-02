@@ -33,6 +33,27 @@ logs/
 *.log
 screenshots/
 
+# Internal security audit — NEVER commit to this repository.
+# github.com/marufshehzad/Zahroun is PUBLIC. AUDIT_REPORT.md enumerates every
+# known Critical/High weakness with file:line precision, so publishing it hands
+# an attacker a map of anything not yet fixed. Keep it local.
+AUDIT_REPORT.md
+
+# Unfinished analytics rework — NOT production ready.
+# js/analytics-enhanced.js renders a consent banner whose Accept/Decline
+# buttons call methods that do not exist, and nothing ever removes the banner
+# from the DOM, so it becomes a permanent overlay covering the mobile
+# Add-to-Cart bar on every page. It also has several independent defects
+# (dead session tracking, 90% event sampling, an inert Sentry block) and its
+# copy incorrectly claims Bangladesh is governed by the GDPR. The script tags
+# were removed from the 11 pages that referenced it; these entries stop a
+# stray `git add -A` from committing it. Delete these lines when the file is
+# actually fixed and wanted.
+js/analytics-enhanced.js
+ANALYTICS_DEPLOY.md
+ANALYTICS_SETUP.md
+ANALYTICS_SUMMARY.md
+
 # Dev-only pages (not for production)
 seed.html
 test_images.html

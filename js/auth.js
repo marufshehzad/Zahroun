@@ -443,6 +443,43 @@ window.zahrounAuth = {
 /* Site-wide settings: announcement bar, hero text override, WhatsApp link, Flash Sale status. */
 const _ZSK = 'zhr_store_v1', _ZFK = 'zhr_flash_v1', _ZTTL = 3 * 60 * 1000; // short TTL — admin changes appear within minutes, sessionStorage still skips most reads
 
+/* Firestore Timestamp -> Date, tolerant of every shape the value can arrive in.
+   THIS IS LOAD-BEARING FOR FLASH-SALE EXPIRY. settings/flashSale is cached in
+   sessionStorage as JSON (see the zhr_flash_v1 write below), and JSON.stringify
+   turns a Firestore Timestamp into a plain { seconds, nanoseconds } object —
+   the prototype, and with it .toDate(), is gone on read-back. The old code did
+   `endDate.toDate ? endDate.toDate() : new Date(endDate)`, which on that plain
+   object produced an Invalid Date. Every comparison against an Invalid Date is
+   false, so `end < new Date()` was false and an EXPIRED SALE REPORTED ITSELF AS
+   LIVE for the rest of the session: the storefront kept showing sale prices,
+   while checkout's submit-time re-price (which reads Firestore fresh and does
+   get a real Timestamp) correctly charged the catalog price — so the customer
+   was shown one total and charged a higher one. */
+window.toDateSafe = function(v) {
+    if (v == null) return null;
+    if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+    if (typeof v.toDate === 'function') {            // live Firestore Timestamp
+        try { const d = v.toDate(); return isNaN(d.getTime()) ? null : d; } catch { return null; }
+    }
+    if (typeof v.seconds === 'number') {             // JSON round-tripped Timestamp
+        const d = new Date(v.seconds * 1000 + Math.floor((v.nanoseconds || 0) / 1e6));
+        return isNaN(d.getTime()) ? null : d;
+    }
+    if (typeof v._seconds === 'number') {            // Admin-SDK / REST shape
+        const d = new Date(v._seconds * 1000);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    if (typeof v === 'number') {                     // epoch millis
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    if (typeof v === 'string') {                     // ISO 8601
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    return null;
+};
+
 /* Flash Sale per-size helpers — single source of truth, shared by admin.js and every storefront page.
    items shape: [{ productId, prices: { [size]: salePrice } }]. Legacy docs may still have a flat
    { productId, salePrice } shape (pre-per-size); upgradeFlashSaleItems() normalizes those on read. */
@@ -487,8 +524,12 @@ window.pickCardFlashSaleSize = function(salePrices, regularPrices, preferredSize
 window.isFlashSaleLive = function(fs) {
     if (!fs || !fs.enabled) return false;
     if (fs.endDate) {
-        const end = fs.endDate.toDate ? fs.endDate.toDate() : new Date(fs.endDate);
-        if (end < new Date()) return false;
+        const end = window.toDateSafe(fs.endDate);
+        // Fail CLOSED on an unparseable end date. Treating "I cannot tell when
+        // this ends" as "still running" is what let expired sales linger; a sale
+        // that stops a little early is a far cheaper mistake than one the
+        // storefront advertises but checkout refuses to honour.
+        if (!end || end < new Date()) return false;
     }
     return true;
 };

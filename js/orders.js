@@ -109,74 +109,115 @@ window.saveOrder = async function (order) {
   // amount gets discounted twice.
   const clientReferralEntry = (order.promos || []).find(p => p.label === 'Referral Discount');
   if (clientReferralEntry && user) {
+    const referralBefore = Number(clientReferralEntry.discount) || 0;
+    let referralAfter = referralBefore;
     try {
       const cfgSnap2 = await getDoc(doc(db, "settings", "promotions"));
       const rc = cfgSnap2.exists() ? (cfgSnap2.data()?.referral || {}) : {};
       if (rc.enabled) {
         const maxReferral = rc.refereeAmt || 0;
-        const verifiedReferralDiscount = Math.min(clientReferralEntry.discount || 0, maxReferral);
-        if (verifiedReferralDiscount !== (clientReferralEntry.discount || 0)) {
-          console.warn(`[saveOrder] C3: referral discount clamped from ${clientReferralEntry.discount} to ${verifiedReferralDiscount}`);
+        referralAfter = Math.min(referralBefore, maxReferral);
+        if (referralAfter !== referralBefore) {
+          console.warn(`[saveOrder] C3: referral discount clamped from ${referralBefore} to ${referralAfter}`);
         }
         // Update promo entry with clamped value
-        clientReferralEntry.discount = verifiedReferralDiscount;
+        clientReferralEntry.discount = referralAfter;
       } else {
         // Referral not enabled server-side — strip it
+        referralAfter = 0;
         order.promos = (order.promos || []).filter(p => p.label !== 'Referral Discount');
       }
     } catch (e) {
       console.warn('[saveOrder] C3: referral verification read failed, discarding:', e);
+      referralAfter = 0;
       order.promos = (order.promos || []).filter(p => p.label !== 'Referral Discount');
     }
-    // promoDiscount must reflect the (possibly clamped/stripped) promos array, not the
-    // client's original aggregate — otherwise a clamp above silently doesn't take effect.
-    order.promoDiscount = (order.promos || []).reduce((s, p) => s + (p.discount || 0), 0);
+    // Apply the clamp as a DELTA against the aggregate, instead of re-summing
+    // order.promos. Each promos[] entry is already rounded to whole taka by
+    // checkout.html, whereas promoDiscount is the single rounding of the
+    // engine's exact total — the figure js/pricing.js computed and the summary
+    // showed. Re-summing the rounded parts can therefore land a taka away from
+    // it, and that taka would be a stored total the customer never approved.
+    // Subtracting only what the clamp actually removed keeps the clamp fully
+    // effective while leaving an unclamped order byte-identical to its quote.
+    if (referralAfter !== referralBefore) {
+      order.promoDiscount = Math.max(0, (Number(order.promoDiscount) || 0) - (referralBefore - referralAfter));
+    }
   }
 
-  // Rebuild the verified total (server-side recompute to match clamped discounts)
-  const verifiedTotal = Math.max(0,
-    (order.subtotal     || 0)
-    - (order.discount   || 0)        // coupon (already re-validated at submit in H8-fix)
-    - (order.promoDiscount || 0)     // promo engine discounts (referral discount, if any, is included here)
-    - verifiedLoyaltyDiscount
-    + (order.delivery   || 0)
-  );
+  // Rebuild the verified total from the clamped values. This mirrors
+  // js/pricing.js computeOrderSummary() exactly — same component order, same
+  // whole-taka rounding, same floor at 0 — so the amount stored here is the
+  // amount the checkout summary showed. It re-derives the total rather than
+  // trusting order.total, which is what keeps a tampered total from landing.
+  //
+  // promoDiscount does NOT contain the loyalty amount: js/promotions.js keeps
+  // loyalty out of its discounts[] on purpose, so subtracting both here counts
+  // it exactly once. (Previously loyalty was inside promoDiscount as well and
+  // this line removed it a second time.)
+  const _bdt = (n) => { const v = Number(n); return Number.isFinite(v) ? Math.round(v) : 0; };
+  const _subtotal = Math.max(0, _bdt(order.subtotal));
+  let _coupon  = Math.max(0, _bdt(order.discount));
+  let _promo   = Math.max(0, _bdt(order.promoDiscount));
+  let _loyalty = Math.max(0, _bdt(verifiedLoyaltyDiscount));
+  // Discounts can never exceed the goods value; trim loyalty, then promo, then coupon.
+  let _over = (_coupon + _promo + _loyalty) - _subtotal;
+  if (_over > 0) {
+    const _trim = (v) => { const t = Math.min(v, _over); _over -= t; return v - t; };
+    _loyalty = _trim(_loyalty);
+    _promo   = _trim(_promo);
+    _coupon  = _trim(_coupon);
+  }
+  const verifiedTotal = Math.max(0, _bdt(_subtotal - (_coupon + _promo + _loyalty) + _bdt(order.delivery)));
+  // If the clamp trimmed the loyalty amount, scale the redeemed POINTS down to
+  // match — otherwise the customer would be billed for points they did not
+  // actually receive credit for.
+  if (_loyalty < Math.max(0, _bdt(verifiedLoyaltyDiscount)) && verifiedLoyaltyDiscount > 0) {
+    verifiedLoyaltyPoints = Math.floor(verifiedLoyaltyPoints * (_loyalty / verifiedLoyaltyDiscount));
+  }
+  verifiedLoyaltyDiscount = _loyalty;
   // ── end C3-fix ──
 
   // 6-digit sequential order number (100001, 100002, …)
   const orderNum = await getNextOrderNum();
   const ref = await addDoc(collection(db, "orders"), {
     ...order,
-    // Overwrite with server-verified values
+    // Overwrite with server-verified values. subtotal/discount/promoDiscount are
+    // written back as the CLAMPED, whole-taka figures the total was actually
+    // computed from — if a clamp trimmed one of them and the document still
+    // carried the untrimmed number, the order would be internally inconsistent
+    // and firestore.rules' total-identity check would reject the whole write.
+    subtotal:              _subtotal,
+    discount:              _coupon,
+    promoDiscount:         _promo,
     loyaltyRedeemedPoints: verifiedLoyaltyPoints,
     loyaltyDiscountAmount: verifiedLoyaltyDiscount,
+    delivery:              _bdt(order.delivery),
     total:                 verifiedTotal,
     orderNum,
     uid:       user ? user.uid : null,
     userEmail: user ? (user.email || order.guestEmail || null) : (order.guestEmail || null),
     isGuest:   !user,
     status:    "pending",
-    // Stock is decremented right below, at placement time — flag it here so
-    // admin.js's deductOrderStock()/restoreOrderStock() (which gate on this
-    // flag when the order is later confirmed/cancelled) don't double-deduct
-    // on confirm or skip restoring stock when an unconfirmed order is cancelled.
-    stockDeducted: true,
+    // Stock is NOT touched at placement. Products are admin-write-only
+    // (firestore.rules: match /products -> allow write: if isAdmin()), so the
+    // client-side decrement that used to live here was rejected by the security
+    // rules and swallowed by its own empty catch — while this flag still
+    // claimed the stock HAD been taken. That combination meant admin.js's
+    // deductOrderStock() skipped the real deduction on confirm, and
+    // restoreOrderStock() handed back stock on every cancellation that had
+    // never been removed, so inventory only ever drifted upward.
+    //
+    // The admin panel now owns stock movement end to end: it deducts when an
+    // order reaches confirmed/shipped/delivered and restores when it returns to
+    // pending/follow-up/cancelled/returned.
+    //
+    // NOTE: the ABSENCE of stockState marks a legacy order (placed before this
+    // change) whose stockDeducted:true was a lie. admin.js reads a missing
+    // stockState as 'none', so those orders will not restore phantom stock.
+    stockState: "none",
     createdAt: serverTimestamp()
   });
-
-  // Atomically decrement stock with floor at 0 — prevents negative stock
-  await Promise.all((order.items || []).map(async item => {
-    if (!item.id || !item.quantity) return;
-    try {
-      const prodRef = doc(db, "products", String(item.id));
-      await runTransaction(db, async tx => {
-        const snap = await tx.get(prodRef);
-        if (snap.exists() && typeof snap.data().stock === "number") {
-          tx.update(prodRef, { stock: Math.max(0, snap.data().stock - item.quantity) });
-        }
-      });
-    } catch { /* stock update failed silently — admin can correct manually */ }
-  }));
 
   return { id: ref.id, orderNum };
 };

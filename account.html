@@ -426,7 +426,7 @@
             </div>
             <div id="cart-items" style="flex: 1; overflow-y: auto;"></div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;"><span>Total</span><span id="cart-total">Tk 0</span></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;"><span>Subtotal</span><span id="cart-total">Tk 0</span></div>
                 <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
         </div>
@@ -434,6 +434,7 @@
 
     <script type="module" src="js/store.js"></script>
     <script type="module" src="js/promotions.js"></script>
+    <script src="js/pricing.js"></script>
     <script defer src="js/cart.js"></script>
     <script defer src="js/ui.js"></script>
     <script type="module">
@@ -547,9 +548,9 @@
                     return;
                 }
                 panel.innerHTML = `<h2 style="margin-bottom:1.5rem;font-size:1.1rem;">Order History <span style="font-size:.85rem;font-weight:400;color:var(--text-muted);">(${orders.length} order${orders.length > 1 ? "s" : ""})</span></h2>` + orders.map(o => {
-                    const trackUrl = o.orderNum
-                        ? `track.html?order=${o.orderNum}&phone=${encodeURIComponent(o.customer?.mobile || "")}`
-                        : "track.html";
+                    // No phone in the URL — query strings end up in browser
+                    // history, referrer headers and server logs.
+                    const trackUrl = o.orderNum ? `track.html?order=${o.orderNum}` : "track.html";
                     return `
                     <div class="order-card">
                         <div class="top">

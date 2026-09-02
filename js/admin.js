@@ -52,7 +52,7 @@ async function sendConfirmationEmail(order) {
         if (fb && fb.startsWith("https://")) imgUrl = fb;
       }
       const imgContent = imgUrl
-        ? `<img src="${imgUrl}" alt="${item.name}" width="80" height="80" style="width:80px;height:80px;object-fit:cover;display:block;">`
+        ? `<img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(item.name)}" width="80" height="80" style="width:80px;height:80px;object-fit:cover;display:block;">`
         : `<div style="width:80px;height:80px;background:rgba(10,58,49,0.55);border:1px solid rgba(212,166,74,0.18);"></div>`;
       const imgCell = `<div style="width:80px;height:80px;border-radius:10px;overflow:hidden;">${imgContent}</div>`;
       const size    = item.size || item.selectedSize || "";
@@ -64,8 +64,8 @@ async function sendConfirmationEmail(order) {
         return `<tr style="background:rgba(10,58,49,0.22);">
   <td width="100" valign="middle" style="padding:20px 0 20px 20px;">${imgCell}</td>
   <td valign="middle" style="padding:20px 14px;">
-    <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;line-height:1.4;margin-bottom:5px;">${item.name}</div>
-    ${size ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:600;color:#9E9E9E;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;">${size}</div>` : ""}
+    <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;line-height:1.4;margin-bottom:5px;">${escapeHtml(item.name)}</div>
+    ${size ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:600;color:#9E9E9E;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;">${escapeHtml(size)}</div>` : ""}
     <div style="display:inline-block;padding:3px 9px;background:#D4A64A;color:#041A16;font-family:'Inter',Arial,sans-serif;font-size:9px;font-weight:800;letter-spacing:3px;text-transform:uppercase;border-radius:3px;">Complimentary Gift</div>
   </td>
   <td align="right" valign="middle" style="padding:20px 20px 20px 0;white-space:nowrap;">
@@ -80,9 +80,9 @@ async function sendConfirmationEmail(order) {
       return `<tr>
   <td width="100" valign="middle" style="padding:20px 0 20px 20px;">${imgCell}</td>
   <td valign="middle" style="padding:20px 14px;">
-    <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;line-height:1.4;margin-bottom:5px;">${item.name}</div>
-    ${size ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:600;color:#9E9E9E;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">${size}</div>` : ""}
-    <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:#8A8A8A;">Qty&nbsp;&times;&nbsp;${item.quantity}</div>
+    <div style="font-family:'Inter',Arial,sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;line-height:1.4;margin-bottom:5px;">${escapeHtml(item.name)}</div>
+    ${size ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:10px;font-weight:600;color:#9E9E9E;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">${escapeHtml(size)}</div>` : ""}
+    <div style="font-family:'Inter',Arial,sans-serif;font-size:12px;color:#8A8A8A;">Qty&nbsp;&times;&nbsp;${safeNum(item.quantity)}</div>
   </td>
   <td align="right" valign="middle" style="padding:20px 20px 20px 0;white-space:nowrap;">
     <div style="font-family:'Playfair Display',Georgia,serif;font-size:16px;font-weight:600;color:#D4A64A;letter-spacing:0.5px;">BDT&nbsp;${rowTotal}</div>
@@ -103,7 +103,7 @@ async function sendConfirmationEmail(order) {
         rows += `<tr>
   <td style="padding:13px 22px;border-bottom:1px solid rgba(255,255,255,0.05);">
     <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-      <td style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#CFCFCF;">Coupon Discount${order.couponCode ? " (" + order.couponCode + ")" : ""}</td>
+      <td style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#CFCFCF;">Coupon Discount${order.couponCode ? " (" + escapeHtml(order.couponCode) + ")" : ""}</td>
       <td align="right" style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#EDEDED;font-weight:500;">-BDT ${fmtNum(discount)}</td>
     </tr></table>
   </td>
@@ -459,6 +459,79 @@ const SUBTITLES = {
 };
 const ORDER_STATUSES = ["pending", "follow-up", "confirmed", "shipped", "delivered", "cancelled", "returned"];
 const STATUS_COLORS = { pending: "#f0b429", "follow-up": "#c05c00", confirmed: "#1a56b8", shipped: "#7c3aed", delivered: "#1e7e34", cancelled: "#9b2226", returned: "#7b2d8b" };
+const PAYMENT_STATUSES = ["cod", "pending", "verified", "failed"];
+
+/* ---- Stock bookkeeping (LOG-1) ------------------------------------------
+   Stock is held while an order sits in one of the HELD statuses and released
+   in any of the FREE ones. Membership — not the specific transition — is what
+   drives deduct/restore, so out-of-ladder moves (pending -> shipped, or
+   confirmed -> pending) still behave correctly.
+
+   Legacy orders placed before this change carry stockDeducted:true and NO
+   stockState. That flag was always a lie: the checkout's client-side decrement
+   was rejected by the security rules (products are admin-write-only) and
+   silently swallowed. Absence of stockState is therefore an unforgeable
+   "legacy" marker — no code that ever ran wrote that key — and must read as
+   'none' so a cancellation never restores stock that was never taken. Legacy
+   documents shed the misleading flag lazily, via deleteField(), the first time
+   an admin action touches them. ------------------------------------------- */
+const STOCK_HELD_STATUSES = new Set(["confirmed", "shipped", "delivered"]);
+const STOCK_FREE_STATUSES = new Set(["pending", "follow-up", "cancelled", "returned"]);
+const stockStateOf = (order) => (order && order.stockState) || "none";
+
+/* ---- Untrusted-document hardening (SEC-3) -------------------------------
+   Order, review and contact-message documents are written by the customer's
+   browser, so every field in them is attacker-controlled — including the
+   Firestore document ID, which a client chooses freely by calling setDoc()
+   instead of addDoc(). Those values were interpolated straight into this
+   panel's innerHTML, so a hostile order could run script with the admin's
+   Firebase session (a full admin-takeover primitive that cost an attacker
+   nothing more than placing an order).
+
+   Defence is in two layers:
+     1. normalizeOrder() below runs at every load point and coerces numeric
+        fields to real numbers and pins status/paymentStatus to known values.
+        That neutralises the large number of `${o.total}` / `${o.status}`
+        style interpolations at once, without having to find every one.
+     2. Render sites escape the remaining free-text fields and document IDs
+        with escapeHtml().
+   Note the property order below: `{ ...data, id }` and NOT `{ id, ...data }`.
+   The old form let an order document carrying its own `id` field overwrite
+   the real Firestore document ID in memory, which both broke admin lookups
+   and smuggled an arbitrary string into every data-oid attribute. ---------- */
+function safeNum(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function normalizeOrder(id, data) {
+  const o = { ...data, id };
+  ["total", "subtotal", "discount", "promoDiscount", "delivery",
+   "loyaltyDiscountAmount", "loyaltyRedeemedPoints", "orderNum",
+   "manualDiscount", "loyaltyPointsEarned"].forEach(k => {
+    if (k in o && o[k] !== null && o[k] !== undefined) o[k] = safeNum(o[k]);
+  });
+  o.status = ORDER_STATUSES.includes(o.status) ? o.status : "pending";
+  o.paymentStatus = PAYMENT_STATUSES.includes(o.paymentStatus) ? o.paymentStatus : "pending";
+  o.items = Array.isArray(o.items) ? o.items.map(it => {
+    const n = { ...it };
+    ["price", "originalPrice", "quantity", "discountPercent", "flashSalePrice"].forEach(k => {
+      if (k in n && n[k] !== null && n[k] !== undefined) n[k] = safeNum(n[k]);
+    });
+    return n;
+  }) : [];
+  o.promos = Array.isArray(o.promos) ? o.promos.map(p => ({
+    label: p && p.label, discount: safeNum(p && p.discount)
+  })) : [];
+  return o;
+}
+
+function normalizeReview(id, data) {
+  const r = { ...data, id };
+  r.rating = Math.max(0, Math.min(5, safeNum(r.rating)));
+  r.status = ["pending", "approved", "rejected"].includes(r.status) ? r.status : "pending";
+  return r;
+}
 
 /* ---- Admin gate -------------------------------------------------------- */
 let _authResolved = false;
@@ -728,7 +801,7 @@ function startOrderListener() {
     if (_knownOrderIds === null) return;
     snap.docChanges().forEach(change => {
       if (change.type === "added" && !_knownOrderIds.has(change.doc.id)) {
-        const order = { id: change.doc.id, ...change.doc.data() };
+        const order = normalizeOrder(change.doc.id, change.doc.data());
         orders.unshift(order);
         _knownOrderIds.add(change.doc.id);
         showOrderNotification(order);
@@ -899,7 +972,7 @@ async function fetchOrders() {
     // on this cache at all — it queries Firestore directly, see awardLoyaltyPointsForOrder.)
     const q = query(collection(db, "orders"), limit(1000));
     const snap = await getDocs(q);
-    orders = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    orders = snap.docs.map(d => normalizeOrder(d.id, d.data()))
       .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     updateOrdersBadge();
   } catch (e) { console.error("fetchOrders:", e); }
@@ -936,7 +1009,7 @@ async function fetchCoupons() {
 async function fetchReviews() {
   try {
     const snap = await getDocs(collection(db, "reviews"));
-    reviews = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    reviews = snap.docs.map(d => normalizeReview(d.id, d.data()))
       .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     const pending = reviews.filter(r => r.status === "pending").length;
     const msg = $("#pending-review-msg");
@@ -1084,9 +1157,9 @@ function renderRecentOrders() {
   if (!orders.length) { el.innerHTML = `<p class="muted-note">No orders yet.</p>`; return; }
   el.innerHTML = `<div class="ro-row ro-head"><span>Order</span><span>Customer</span><span>Amount</span><span>Status</span></div>` +
     orders.slice(0, 5).map(o => `<div class="ro-row">
-      <span><strong>${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</strong></span>
+      <span><strong>${o.orderNum ? "#" + safeNum(o.orderNum) : "#" + escapeHtml(String(o.id).slice(0,6).toUpperCase())}</strong></span>
       <span>${escapeHtml(o.customer?.name || "—")}</span>
-      <span>৳${o.total || 0}</span>
+      <span>৳${safeNum(o.total)}</span>
       <span><span class="o-status ${escapeHtml(o.status || "pending")}">${escapeHtml((o.status || "pending").replace('-',' '))}</span></span>
     </div>`).join("");
 }
@@ -1102,7 +1175,7 @@ function renderTopSelling() {
   const top = Object.values(map).sort((a, b) => b.qty - a.qty).slice(0, 5);
   if (!top.length) { el.innerHTML = `<p class="muted-note">No sales yet.</p>`; return; }
   el.innerHTML = top.map(t => `<div class="ts-row">
-    <img src="${optimizedUrl(t.image, 80)}" alt="">
+    <img src="${escapeHtml(optimizedUrl(t.image, 80))}" alt="">
     <div class="nm">${escapeHtml(t.name)}<small>${t.qty} sold</small></div>
     <div class="val"><strong>৳${t.rev.toLocaleString()}</strong></div>
   </div>`).join("");
@@ -1457,8 +1530,12 @@ async function changeOrderStatus(orderId, newStatus) {
     // reversal applies to either (a "returned" order that keeps its stock deducted and
     // its loyalty/referral rewards awarded forever is exactly the same bug as an unreversed cancel).
     const isReversal = (newStatus === "cancelled" || newStatus === "returned") && prevStatus !== newStatus;
-    if (newStatus === "confirmed" && prevStatus !== "confirmed") await deductOrderStock(order);
-    if (isReversal) await restoreOrderStock(order);
+    // Stock follows status MEMBERSHIP, not a specific transition, so skipping a
+    // step (pending -> shipped) or bouncing back (confirmed -> pending) is
+    // handled correctly. Both helpers are idempotent via their own stockState
+    // guard, so no prevStatus comparison is needed here.
+    if (STOCK_HELD_STATUSES.has(newStatus)) await deductOrderStock(order);
+    else if (STOCK_FREE_STATUSES.has(newStatus)) await restoreOrderStock(order);
     const histEntry = { status: newStatus, at: new Date().toISOString() };
     await updateDoc(doc(db, "orders", orderId), { status: newStatus, statusHistory: arrayUnion(histEntry) });
     if (order) { order.status = newStatus; order.statusHistory = [...(order.statusHistory || []), histEntry]; }
@@ -1540,20 +1617,20 @@ function renderOrderTable() {
     const c = o.customer || {};
     const st = o.status || "pending";
     const isNew = isNewOrder(o) && st === "pending";
-    const items = (o.items || []).map(i => `${escapeHtml(i.name)} (${i.size}) ×${i.quantity}`).join("<br>");
-    return `<tr data-oid="${o.id}" ${isNew ? 'class="new-order-row"' : ''} style="cursor:pointer;">
-      <td><strong>${o.orderNum ? "#" + o.orderNum : "#" + o.id.slice(0,6).toUpperCase()}</strong>${isNew ? '<span class="new-order-badge">New</span>' : ''}</td>
+    const items = (o.items || []).map(i => `${escapeHtml(i.name)} (${escapeHtml(i.size)}) ×${safeNum(i.quantity)}`).join("<br>");
+    return `<tr data-oid="${escapeHtml(o.id)}" ${isNew ? 'class="new-order-row"' : ''} style="cursor:pointer;">
+      <td><strong>${o.orderNum ? "#" + safeNum(o.orderNum) : "#" + escapeHtml(String(o.id).slice(0,6).toUpperCase())}</strong>${isNew ? '<span class="new-order-badge">New</span>' : ''}</td>
       <td>${escapeHtml(c.name || "")}<br><span class="muted-note">${escapeHtml(c.mobile || "")}</span></td>
       <td style="font-size:.82rem;">${items}</td>
-      <td>৳${o.total || 0}</td>
+      <td>৳${safeNum(o.total)}</td>
       <td>${escapeHtml(o.payment?.method || "")}
         ${o.payment?.senderMobile ? `<br><span class="muted-note">${escapeHtml(o.payment.senderMobile)}</span>` : ""}
         ${o.payment?.txnId ? `<br><span class="muted-note">${escapeHtml(o.payment.txnId)}</span>` : ""}
         ${(o.payment?.method === 'bKash' || o.payment?.method === 'Nagad') ? (o.paymentStatus === "verified"
-          ? `<br><span style="color:#1e7e34;font-size:.74rem;font-weight:600;">✓ Verified</span><br><button onclick="window._unverifyPayment('${o.id}')" style="margin-top:.2rem;background:none;color:#9b2226;border:1px solid #d9a5a5;border-radius:4px;padding:.15rem .5rem;font-size:.7rem;cursor:pointer;">Undo</button>`
-          : `<br><button onclick="window._verifyPayment('${o.id}')" style="margin-top:.3rem;background:#e65100;color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.75rem;font-weight:600;cursor:pointer;">Verify Payment</button>`) : ""}
+          ? `<br><span style="color:#1e7e34;font-size:.74rem;font-weight:600;">✓ Verified</span><br><button data-unverify-inline="${escapeHtml(o.id)}" style="margin-top:.2rem;background:none;color:#9b2226;border:1px solid #d9a5a5;border-radius:4px;padding:.15rem .5rem;font-size:.7rem;cursor:pointer;">Undo</button>`
+          : `<br><button data-verify-inline="${escapeHtml(o.id)}" style="margin-top:.3rem;background:#e65100;color:#fff;border:none;border-radius:5px;padding:.3rem .8rem;font-size:.75rem;font-weight:600;cursor:pointer;">Verify Payment</button>`) : ""}
       </td>
-      <td>${(()=>{const nm={pending:{s:'confirmed',l:'Confirm',bg:'#163E34'},'follow-up':{s:'confirmed',l:'Confirm',bg:'#163E34'},confirmed:{s:'shipped',l:'Ship',bg:'#1a56b8'},shipped:{s:'delivered',l:'Delivered',bg:'#1e7e34'}};const nx=nm[st];return `<select data-order="${o.id}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);width:100%;">${opts(st)}</select>${nx?`<button class="tbl-quickact" data-oid="${o.id}" data-next="${nx.s}" style="display:block;margin-top:.3rem;width:100%;background:${nx.bg};color:#fff;border:none;border-radius:5px;padding:.28rem .5rem;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font-sans);">${nx.l}</button>`:''}`})()}</td>
+      <td>${(()=>{const nm={pending:{s:'confirmed',l:'Confirm',bg:'#163E34'},'follow-up':{s:'confirmed',l:'Confirm',bg:'#163E34'},confirmed:{s:'shipped',l:'Ship',bg:'#1a56b8'},shipped:{s:'delivered',l:'Delivered',bg:'#1e7e34'}};const nx=nm[st];return `<select data-order="${escapeHtml(o.id)}" style="padding:.35rem;border-radius:6px;border:1px solid var(--border-color);width:100%;">${opts(st)}</select>${nx?`<button class="tbl-quickact" data-oid="${escapeHtml(o.id)}" data-next="${nx.s}" style="display:block;margin-top:.3rem;width:100%;background:${nx.bg};color:#fff;border:none;border-radius:5px;padding:.28rem .5rem;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font-sans);">${nx.l}</button>`:''}`})()}</td>
       <td class="muted-note">${fmtDate(o.createdAt)}</td>
     </tr>`;
   }).join("");
@@ -1575,6 +1652,17 @@ function renderOrderTable() {
       await changeOrderStatus(btn.dataset.oid, nextSt);
     });
   });
+  // Payment verify/undo — bound as listeners rather than inline onclick
+  // handlers. An inline handler interpolates the order ID into a JS string
+  // literal, where HTML escaping does NOT protect it (the HTML parser decodes
+  // entities before the JS parser runs), and Firestore document IDs are
+  // attacker-chosen. dataset lookups carry no such parsing hazard.
+  tbody.querySelectorAll("[data-verify-inline]").forEach(btn => {
+    btn.addEventListener("click", e => { e.stopPropagation(); showVerifyConfirm(btn.dataset.verifyInline); });
+  });
+  tbody.querySelectorAll("[data-unverify-inline]").forEach(btn => {
+    btn.addEventListener("click", e => { e.stopPropagation(); unverifyPayment(btn.dataset.unverifyInline); });
+  });
   tbody.querySelectorAll("tr[data-oid]").forEach(row => {
     row.addEventListener("click", e => {
       if (e.target.closest("select") || e.target.closest("button")) return;
@@ -1589,19 +1677,19 @@ function renderOrderTable() {
     const c = o.customer || {};
     const st = o.status || "pending";
     const isNewCard = isNewOrder(o) && st === "pending";
-    const ordId = o.orderNum ? "#" + String(o.orderNum).padStart(6,"0") : "#" + o.id.slice(0,6).toUpperCase();
-    const initial = (c.name || "?")[0].toUpperCase();
+    const ordId = o.orderNum ? "#" + String(safeNum(o.orderNum)).padStart(6,"0") : "#" + escapeHtml(String(o.id).slice(0,6).toUpperCase());
+    const initial = escapeHtml(String(c.name || "?")[0].toUpperCase());
     const d = fmtDate(o.createdAt);
     const itemsHtml = (o.items || []).map(i =>
-      `<div class="orc-item"><span>${escapeHtml(i.name)} <span class="orc-size">(${i.size})</span></span><span class="orc-qty">×${i.quantity}</span></div>`
+      `<div class="orc-item"><span>${escapeHtml(i.name)} <span class="orc-size">(${escapeHtml(i.size)})</span></span><span class="orc-qty">×${safeNum(i.quantity)}</span></div>`
     ).join("");
-    return `<div class="orc" data-oid="${o.id}" ${isNewCard ? 'style="border-left:3px solid #e63946;"' : ''}>
+    return `<div class="orc" data-oid="${escapeHtml(o.id)}" ${isNewCard ? 'style="border-left:3px solid #e63946;"' : ''}>
       <div class="orc-head">
         <div>
           <div class="orc-ordnum">${ordId}${isNewCard ? '<span class="new-order-badge" style="font-size:.58rem;padding:.14rem .45rem;">New</span>' : ''}${o.adminNotes ? '<span class="note-dot" title="Has staff note"><ion-icon name="document-text-outline" style="font-size:.62rem;"></ion-icon></span>' : ''}</div>
           <div class="orc-date-pay">${d} · ${escapeHtml(o.payment?.method || "")}</div>
         </div>
-        <span class="orc-badge st-${st}">${st.replace('-',' ')}</span>
+        <span class="orc-badge st-${escapeHtml(st)}">${escapeHtml(st.replace('-',' '))}</span>
       </div>
       ${(o.payment?.method === 'bKash' || o.payment?.method === 'Nagad') ? `
       <div class="orc-pay-strip ${o.paymentStatus === 'verified' ? 'orc-pay-verified' : 'orc-pay-pending'}">
@@ -1610,8 +1698,8 @@ function renderOrderTable() {
           ${o.payment?.txnId ? `<br>TxnID: ${escapeHtml(o.payment.txnId)}` : ''}
         </div>
         ${o.paymentStatus === 'verified'
-          ? `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.25rem;"><span class="orc-verified-tag">✓ Verified</span><button class="orc-unverify-btn" data-unverify="${o.id}">Undo</button></div>`
-          : `<button class="orc-verify-btn" data-verify="${o.id}">Verify Payment</button>`}
+          ? `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.25rem;"><span class="orc-verified-tag">✓ Verified</span><button class="orc-unverify-btn" data-unverify="${escapeHtml(o.id)}">Undo</button></div>`
+          : `<button class="orc-verify-btn" data-verify="${escapeHtml(o.id)}">Verify Payment</button>`}
       </div>` : ''}
       <div class="orc-customer">
         <div class="orc-av">${initial}</div>
@@ -1620,16 +1708,16 @@ function renderOrderTable() {
           <div class="orc-phone">${escapeHtml(c.mobile || "")}</div>
           <div class="orc-addr">${escapeHtml(c.address || "")}</div>
         </div>
-        <div class="orc-amount">৳${(o.total || 0).toLocaleString()}</div>
+        <div class="orc-amount">৳${safeNum(o.total).toLocaleString()}</div>
       </div>
       <div class="orc-items-block">${itemsHtml}</div>
-      ${(()=>{ const nm={pending:{s:'confirmed',l:'Confirm',ic:'checkmark-circle-outline',bg:'#163E34'},'follow-up':{s:'confirmed',l:'Confirm',ic:'checkmark-circle-outline',bg:'#163E34'},confirmed:{s:'shipped',l:'Ship',ic:'car-outline',bg:'#1a56b8'},shipped:{s:'delivered',l:'Delivered',ic:'bag-check-outline',bg:'#1e7e34'}};const nx=nm[st];return nx?`<div style="padding:.4rem .85rem .1rem;"><button class="orc-quickact" data-oid="${o.id}" data-next="${nx.s}" style="width:100%;background:${nx.bg};color:#fff;border:none;border-radius:8px;padding:.5rem;font-size:.84rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;font-family:var(--font-sans);"><ion-icon name="${nx.ic}" style="font-size:1rem;"></ion-icon>${nx.l}</button></div>`:'';})()}
+      ${(()=>{ const nm={pending:{s:'confirmed',l:'Confirm',ic:'checkmark-circle-outline',bg:'#163E34'},'follow-up':{s:'confirmed',l:'Confirm',ic:'checkmark-circle-outline',bg:'#163E34'},confirmed:{s:'shipped',l:'Ship',ic:'car-outline',bg:'#1a56b8'},shipped:{s:'delivered',l:'Delivered',ic:'bag-check-outline',bg:'#1e7e34'}};const nx=nm[st];return nx?`<div style="padding:.4rem .85rem .1rem;"><button class="orc-quickact" data-oid="${escapeHtml(o.id)}" data-next="${nx.s}" style="width:100%;background:${nx.bg};color:#fff;border:none;border-radius:8px;padding:.5rem;font-size:.84rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;font-family:var(--font-sans);"><ion-icon name="${nx.ic}" style="font-size:1rem;"></ion-icon>${nx.l}</button></div>`:'';})()}
       <div class="orc-actions">
-        <button class="orc-act-btn" data-view="${o.id}"><ion-icon name="eye-outline"></ion-icon> View</button>
+        <button class="orc-act-btn" data-view="${escapeHtml(o.id)}"><ion-icon name="eye-outline"></ion-icon> View</button>
         <button class="orc-act-btn" data-call="${escapeHtml(c.mobile || "")}"><ion-icon name="call-outline"></ion-icon> Call</button>
         <div class="orc-act-btn orc-status-cell">
           <ion-icon name="swap-vertical-outline"></ion-icon> Status
-          <select class="orc-status-sel" data-order="${o.id}">${opts(st)}</select>
+          <select class="orc-status-sel" data-order="${escapeHtml(o.id)}">${opts(st)}</select>
         </div>
       </div>
     </div>`;
@@ -1677,6 +1765,10 @@ async function verifyPayment(orderId) {
     await updateDoc(doc(db, "orders", orderId), { paymentStatus: "verified", status: "confirmed" });
     const idx = orders.findIndex(o => o.id === orderId);
     if (idx !== -1) { orders[idx].paymentStatus = "verified"; orders[idx].status = "confirmed"; }
+    // Verifying a payment is a SECOND path to "confirmed" that bypasses
+    // changeOrderStatus entirely. Without this call every prepaid (bKash /
+    // Nagad) order would reach confirmed without ever deducting stock.
+    if (order) await deductOrderStock(order);
     if (!wasConfirmed && order) sendConfirmationEmail(order);
     renderOrderTable();
     if (currentDetailOrder?.id === orderId) {
@@ -1727,6 +1819,11 @@ async function unverifyPayment(orderId) {
     await updateDoc(doc(db, "orders", orderId), { paymentStatus: "pending", status: "pending" });
     const idx = orders.findIndex(o => o.id === orderId);
     if (idx !== -1) { orders[idx].paymentStatus = "pending"; orders[idx].status = "pending"; }
+    // Mirror of the deduction in verifyPayment: this path returns the order to
+    // "pending" without going through changeOrderStatus, so it must release the
+    // stock itself or the goods stay reserved forever.
+    const order = orders.find(o => o.id === orderId);
+    if (order) await restoreOrderStock(order);
     renderOrderTable();
     if (currentDetailOrder?.id === orderId) {
       currentDetailOrder.paymentStatus = "pending";
@@ -2595,15 +2692,15 @@ function renderReviewTable() {
       <td style="min-width:160px;">
         ${hasReply
           ? `<span style="font-size:.78rem;color:#1e7e34;font-style:italic;">"${escapeHtml(r.adminReply.slice(0,60))}${r.adminReply.length > 60 ? "…" : ""}"</span>
-             <button class="link-btn" style="font-size:.73rem;margin-top:.2rem;display:block;" data-rv-edit-reply="${r.id}">Edit</button>`
-          : `<textarea data-rv-reply="${r.id}" placeholder="Reply to review…" rows="2" style="width:100%;font-size:.78rem;padding:.3rem .5rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);resize:vertical;box-sizing:border-box;"></textarea>
-             <button class="icon-btn" data-rv-save-reply="${r.id}" style="margin-top:.2rem;font-size:.75rem;padding:.25rem .6rem;" title="Save reply"><ion-icon name="checkmark-outline"></ion-icon> Reply</button>`
+             <button class="link-btn" style="font-size:.73rem;margin-top:.2rem;display:block;" data-rv-edit-reply="${escapeHtml(r.id)}">Edit</button>`
+          : `<textarea data-rv-reply="${escapeHtml(r.id)}" placeholder="Reply to review…" rows="2" style="width:100%;font-size:.78rem;padding:.3rem .5rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);resize:vertical;box-sizing:border-box;"></textarea>
+             <button class="icon-btn" data-rv-save-reply="${escapeHtml(r.id)}" style="margin-top:.2rem;font-size:.75rem;padding:.25rem .6rem;" title="Save reply"><ion-icon name="checkmark-outline"></ion-icon> Reply</button>`
         }
       </td>
       <td style="white-space:nowrap;">
-        ${!isApproved ? `<button class="icon-btn" data-rv-approve="${r.id}" title="Approve"><ion-icon name="checkmark-outline"></ion-icon></button>` : ""}
-        ${r.status !== "rejected" ? `<button class="icon-btn" data-rv-reject="${r.id}" title="Reject"><ion-icon name="close-outline"></ion-icon></button>` : ""}
-        <button class="icon-btn danger" data-rv-del="${r.id}" title="Delete"><ion-icon name="trash-outline"></ion-icon></button>
+        ${!isApproved ? `<button class="icon-btn" data-rv-approve="${escapeHtml(r.id)}" title="Approve"><ion-icon name="checkmark-outline"></ion-icon></button>` : ""}
+        ${r.status !== "rejected" ? `<button class="icon-btn" data-rv-reject="${escapeHtml(r.id)}" title="Reject"><ion-icon name="close-outline"></ion-icon></button>` : ""}
+        <button class="icon-btn danger" data-rv-del="${escapeHtml(r.id)}" title="Delete"><ion-icon name="trash-outline"></ion-icon></button>
       </td>
     </tr>`;
   }).join("");
@@ -2614,7 +2711,10 @@ function renderReviewTable() {
   // Mobile: tap row → bottom sheet with full review
   tbody.querySelectorAll("[data-rv-save-reply]").forEach(b => b.addEventListener("click", async () => {
     const id = b.dataset.rvSaveReply;
-    const ta = tbody.querySelector(`textarea[data-rv-reply="${id}"]`);
+    // Locate the textarea structurally, not by interpolating the document ID
+    // into a CSS attribute selector — a quote in an attacker-chosen ID makes
+    // that selector a SyntaxError and takes the whole Reviews tab down.
+    const ta = (b.closest("td") || tbody).querySelector("textarea[data-rv-reply]");
     const reply = ta ? ta.value.trim() : "";
     if (!reply) return;
     b.disabled = true;
@@ -2631,9 +2731,9 @@ function renderReviewTable() {
     const r = reviews.find(x => x.id === id);
     if (!r) return;
     const td = b.closest("td");
-    td.innerHTML = `<textarea data-rv-reply="${id}" rows="2" style="width:100%;font-size:.78rem;padding:.3rem .5rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);resize:vertical;box-sizing:border-box;">${escapeHtml(r.adminReply || "")}</textarea>
-      <button data-rv-save-reply="${id}" style="margin-top:.2rem;font-size:.75rem;padding:.25rem .6rem;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;"><ion-icon name="checkmark-outline"></ion-icon> Update</button>`;
-    td.querySelector(`[data-rv-save-reply="${id}"]`).addEventListener("click", async (ev) => {
+    td.innerHTML = `<textarea data-rv-reply="${escapeHtml(id)}" rows="2" style="width:100%;font-size:.78rem;padding:.3rem .5rem;border:1px solid var(--border-color);border-radius:6px;font-family:var(--font-sans);resize:vertical;box-sizing:border-box;">${escapeHtml(r.adminReply || "")}</textarea>
+      <button data-rv-save-reply="${escapeHtml(id)}" style="margin-top:.2rem;font-size:.75rem;padding:.25rem .6rem;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;"><ion-icon name="checkmark-outline"></ion-icon> Update</button>`;
+    td.querySelector("[data-rv-save-reply]").addEventListener("click", async (ev) => {
       const reply = td.querySelector("textarea").value.trim();
       ev.target.disabled = true;
       try {
@@ -2677,9 +2777,9 @@ function showReviewSheet(r) {
       <p style="font-size:.9rem;line-height:1.65;color:var(--text-main);margin-bottom:1rem;">${escapeHtml(r.text || "")}</p>
       ${r.adminReply ? `<div style="background:#f5f3ef;border-left:3px solid var(--primary-color);padding:.6rem .9rem;border-radius:0 8px 8px 0;font-size:.82rem;font-style:italic;color:var(--primary-color);margin-bottom:1rem;">Reply: ${escapeHtml(r.adminReply)}</div>` : ""}
       <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
-        ${r.status !== "approved" ? `<button class="btn" style="flex:1;padding:.55rem;" data-sheet-approve="${r.id}">Approve</button>` : ""}
-        ${r.status !== "rejected" ? `<button class="btn btn-outline" style="flex:1;padding:.55rem;" data-sheet-reject="${r.id}">Reject</button>` : ""}
-        <button class="btn" style="background:#9b2226;border-color:#9b2226;flex:1;padding:.55rem;" data-sheet-del="${r.id}">Delete</button>
+        ${r.status !== "approved" ? `<button class="btn" style="flex:1;padding:.55rem;" data-sheet-approve="${escapeHtml(r.id)}">Approve</button>` : ""}
+        ${r.status !== "rejected" ? `<button class="btn btn-outline" style="flex:1;padding:.55rem;" data-sheet-reject="${escapeHtml(r.id)}">Reject</button>` : ""}
+        <button class="btn" style="background:#9b2226;border-color:#9b2226;flex:1;padding:.55rem;" data-sheet-del="${escapeHtml(r.id)}">Delete</button>
       </div>
       <button style="margin-top:.75rem;width:100%;padding:.5rem;background:none;border:1px solid var(--border-color);border-radius:8px;font-size:.88rem;cursor:pointer;" id="rv-sheet-close">Close</button>
     </div>`;
@@ -3234,7 +3334,11 @@ async function renderLoyaltyMembersTable() {
 
     snap.forEach(d => {
       const data   = d.data();
-      const status = data.status || 'pending';
+      // Whitelist, don't just default. loyaltyPoints create only constrains
+      // `points`, so `status` is attacker-writable free text, and it is the one
+      // field on this row that reaches innerHTML raw (statusLabels[status]
+      // falls through to `status` itself for any unknown value).
+      const status = ['pending', 'approved', 'rejected'].includes(data.status) ? data.status : 'pending';
       const tier   = data.tier   || 'silver';
       const pts    = data.points || 0;
       const ti     = tierInfo[tier] || tierInfo.silver;
@@ -3841,7 +3945,10 @@ async function saveBroadcast() {
 async function fetchMessages() {
   try {
     const snap = await getDocs(query(collection(db, "messages"), limit(200)));
-    messages = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    // `{ ...data, id }`, never `{ id, ...data }` — messages/{id} is created by
+    // `allow create: if true`, so a visitor controls every field. The old order
+    // let a message carrying its own `id` field overwrite the real document ID.
+    messages = snap.docs.map(d => ({ ...d.data(), id: d.id }))
       .sort((a, b) => (b.sentAt?.seconds || 0) - (a.sentAt?.seconds || 0));
     const unread = messages.filter(m => !m.read).length;
     const badge = $("#nav-messages-badge");
@@ -3870,8 +3977,8 @@ function renderMessagesTable() {
       <td style="white-space:nowrap;">${date}</td>
       <td>${m.read ? `<span style="color:var(--text-muted);font-size:.8rem;">Read</span>` : `<span style="color:#1a56b8;font-size:.8rem;">New</span>`}</td>
       <td style="white-space:nowrap;">
-        ${!m.read ? `<button class="qa-btn" data-msg-read="${m.id}" title="Mark as read"><ion-icon name="checkmark-outline"></ion-icon></button>` : ""}
-        <button class="qa-btn" style="color:#9b2226;" data-msg-del="${m.id}" title="Delete"><ion-icon name="trash-outline"></ion-icon></button>
+        ${!m.read ? `<button class="qa-btn" data-msg-read="${escapeHtml(m.id)}" title="Mark as read"><ion-icon name="checkmark-outline"></ion-icon></button>` : ""}
+        <button class="qa-btn" style="color:#9b2226;" data-msg-del="${escapeHtml(m.id)}" title="Delete"><ion-icon name="trash-outline"></ion-icon></button>
       </td>
     </tr>`;
   }).join("");
@@ -4264,7 +4371,7 @@ async function deleteProduct(id) {
 
 /* ---- Inventory management --------------------------------------------- */
 async function deductOrderStock(order) {
-  if (!order || order.stockDeducted) return;
+  if (!order || stockStateOf(order) === "deducted") return;
   const changes = [];
   for (const item of (order.items || [])) {
     const product = products.find(p => String(p.id) === String(item.id));
@@ -4274,19 +4381,29 @@ async function deductOrderStock(order) {
       changes.push({ product, item, before, after });
     }
   }
-  if (!changes.length) return;
-  await Promise.all(changes.map(c => updateDoc(doc(db, "products", String(c.product.id)), { stock: c.after })));
-  changes.forEach(c => { c.product.stock = c.after; });
-  await updateDoc(doc(db, "orders", order.id), { stockDeducted: true });
-  order.stockDeducted = true;
-  logStockHistory(changes, order.id, "deduct").catch(() => {});
-  renderProductTable();
-  updateNotifications();
-  adminToast("Stock updated — order confirmed.");
+  if (changes.length) {
+    await Promise.all(changes.map(c => updateDoc(doc(db, "products", String(c.product.id)), { stock: c.after })));
+    changes.forEach(c => { c.product.stock = c.after; });
+  }
+  // Record the state even when no item had trackable stock, so the paired
+  // restore is a clean no-op rather than re-evaluating a stale flag. The
+  // deleteField() also migrates a legacy order off the misleading flag.
+  await updateDoc(doc(db, "orders", order.id), { stockState: "deducted", stockDeducted: deleteField() });
+  order.stockState = "deducted";
+  delete order.stockDeducted;
+  if (changes.length) {
+    logStockHistory(changes, order.id, "deduct").catch(() => {});
+    renderProductTable();
+    updateNotifications();
+    adminToast("Stock updated — order confirmed.");
+  }
 }
 
 async function restoreOrderStock(order) {
-  if (!order || !order.stockDeducted) return;
+  // Only an order that is actually holding stock can release it. This single
+  // guard is what stops legacy orders (no stockState -> 'none') from handing
+  // back inventory that was never deducted.
+  if (!order || stockStateOf(order) !== "deducted") return;
   const changes = [];
   for (const item of (order.items || [])) {
     const product = products.find(p => String(p.id) === String(item.id));
@@ -4296,15 +4413,19 @@ async function restoreOrderStock(order) {
       changes.push({ product, item, before, after });
     }
   }
-  if (!changes.length) return;
-  await Promise.all(changes.map(c => updateDoc(doc(db, "products", String(c.product.id)), { stock: c.after })));
-  changes.forEach(c => { c.product.stock = c.after; });
-  await updateDoc(doc(db, "orders", order.id), { stockDeducted: false });
-  order.stockDeducted = false;
-  logStockHistory(changes, order.id, "restore").catch(() => {});
-  renderProductTable();
-  updateNotifications();
-  adminToast("Stock restored — order cancelled.");
+  if (changes.length) {
+    await Promise.all(changes.map(c => updateDoc(doc(db, "products", String(c.product.id)), { stock: c.after })));
+    changes.forEach(c => { c.product.stock = c.after; });
+  }
+  await updateDoc(doc(db, "orders", order.id), { stockState: "restored", stockDeducted: deleteField() });
+  order.stockState = "restored";
+  delete order.stockDeducted;
+  if (changes.length) {
+    logStockHistory(changes, order.id, "restore").catch(() => {});
+    renderProductTable();
+    updateNotifications();
+    adminToast("Stock restored — order cancelled.");
+  }
 }
 
 async function logStockHistory(changes, orderId, type) {
@@ -4589,13 +4710,13 @@ function openOrderDetail(order) {
           <strong>${escapeHtml(order.payment?.method || "—")}</strong>
           ${(order.payment?.method === 'bKash' || order.payment?.method === 'Nagad')
             ? (order.paymentStatus === "verified"
-              ? `<span style="display:inline-block;margin-left:.5rem;background:#e6f4ea;color:#1e7e34;font-size:.72rem;font-weight:700;padding:.1rem .5rem;border-radius:4px;vertical-align:middle;">✓ VERIFIED</span> <button onclick="window._unverifyPayment('${order.id}')" style="background:none;color:#9b2226;border:1px solid #d9a5a5;border-radius:4px;padding:.1rem .45rem;font-size:.72rem;cursor:pointer;font-family:var(--font-sans);">Undo</button>`
+              ? `<span style="display:inline-block;margin-left:.5rem;background:#e6f4ea;color:#1e7e34;font-size:.72rem;font-weight:700;padding:.1rem .5rem;border-radius:4px;vertical-align:middle;">✓ VERIFIED</span> <button data-od-unverify="${escapeHtml(order.id)}" style="background:none;color:#9b2226;border:1px solid #d9a5a5;border-radius:4px;padding:.1rem .45rem;font-size:.72rem;cursor:pointer;font-family:var(--font-sans);">Undo</button>`
               : `<span style="display:inline-block;margin-left:.5rem;background:#fdecea;color:#9b2226;font-size:.72rem;font-weight:600;padding:.1rem .5rem;border-radius:4px;vertical-align:middle;">⏳ UNVERIFIED</span>`)
             : ""}<br>
           ${order.payment?.senderMobile ? `Paid from: <strong>${escapeHtml(order.payment.senderMobile)}</strong><br>` : ""}
           ${order.payment?.txnId ? `TxnID: <code style="font-size:.82rem;background:var(--bg-color);padding:.1rem .3rem;border-radius:4px;">${escapeHtml(order.payment.txnId)}</code><br>` : ""}
           ${(order.payment?.method === 'bKash' || order.payment?.method === 'Nagad') && order.paymentStatus !== "verified"
-            ? `<button onclick="window._verifyPayment('${order.id}')" style="margin-top:.4rem;background:#1e7e34;color:#fff;border:none;border-radius:6px;padding:.4rem 1rem;font-size:.82rem;cursor:pointer;font-family:var(--font-sans);">✓ Mark as Verified</button><br>`
+            ? `<button data-od-verify="${escapeHtml(order.id)}" style="margin-top:.4rem;background:#1e7e34;color:#fff;border:none;border-radius:6px;padding:.4rem 1rem;font-size:.82rem;cursor:pointer;font-family:var(--font-sans);">✓ Mark as Verified</button><br>`
             : ""}
           ${couponCode ? `Coupon: <code style="font-size:.82rem;background:#e6f4ea;color:#1e7e34;padding:.1rem .4rem;border-radius:4px;font-weight:600;">${escapeHtml(couponCode)}</code>${couponDiscount > 0 ? ` <span style="font-size:.82rem;color:#1e7e34;">−৳${couponDiscount.toLocaleString()}</span>` : ""}` : `<span style="color:var(--text-muted);font-size:.85rem;">No coupon</span>`}
           ${promos.length ? `<div style="margin-top:.25rem;font-size:.82rem;color:#163E34;">${promos.map(p => `<span style="background:#e6f0ea;border-radius:3px;padding:.05rem .35rem;margin-right:.3rem;">${escapeHtml(p.label)}: −৳${Number(p.discount).toLocaleString()}</span>`).join("")}</div>` : ""}
@@ -4607,7 +4728,7 @@ function openOrderDetail(order) {
       <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin-bottom:.75rem;">Items</div>
       ${items.map(i => i.isFreeGift ? `
         <div style="display:flex;align-items:center;gap:.75rem;background:#f4f9f6;border-radius:8px;border:1px solid #c3dfd2;padding:.65rem .75rem;margin-bottom:.35rem;">
-          ${i.image ? `<img src="${optimizedUrl(i.image, 50)}" alt="" style="width:44px;height:44px;object-fit:contain;background:#fff;border-radius:6px;flex-shrink:0;border:1px solid #c3dfd2;">` : ""}
+          ${i.image ? `<img src="${escapeHtml(optimizedUrl(i.image, 50))}" alt="" style="width:44px;height:44px;object-fit:contain;background:#fff;border-radius:6px;flex-shrink:0;border:1px solid #c3dfd2;">` : ""}
           <div style="flex:1;font-size:.88rem;">
             <div style="font-weight:600;margin-bottom:.2rem;">${escapeHtml(i.name || "")}</div>
             <div style="color:var(--text-muted);font-size:.8rem;">Size: ${escapeHtml(i.size || "—")}</div>
@@ -4620,7 +4741,7 @@ function openOrderDetail(order) {
           </div>
         </div>` : `
         <div style="display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid #f0eee8;">
-          ${i.image ? `<img src="${optimizedUrl(i.image, 50)}" alt="" style="width:44px;height:44px;object-fit:contain;background:var(--bg-color);border-radius:6px;flex-shrink:0;">` : ""}
+          ${i.image ? `<img src="${escapeHtml(optimizedUrl(i.image, 50))}" alt="" style="width:44px;height:44px;object-fit:contain;background:var(--bg-color);border-radius:6px;flex-shrink:0;">` : ""}
           <div style="flex:1;font-size:.88rem;">
             <div style="font-weight:500;margin-bottom:.2rem;">${escapeHtml(i.name || "")}</div>
             <div style="color:var(--text-muted);font-size:.8rem;">Size: ${escapeHtml(i.size || "—")}</div>
@@ -4667,6 +4788,12 @@ function openOrderDetail(order) {
       <button id="order-notes-save" style="margin-top:.5rem;padding:.4rem 1.1rem;background:var(--primary-color,#163E34);color:#fff;border:none;border-radius:7px;font-size:.82rem;cursor:pointer;font-family:var(--font-sans);">Save Note</button>
     </div>`;
   document.getElementById("order-detail-modal").classList.add("open");
+  // Bound as listeners rather than inline onclick handlers — see the note on
+  // data-verify-inline in renderOrderTable(). Order IDs are attacker-chosen.
+  document.querySelectorAll("[data-od-verify]").forEach(b =>
+    b.addEventListener("click", () => showVerifyConfirm(b.dataset.odVerify)));
+  document.querySelectorAll("[data-od-unverify]").forEach(b =>
+    b.addEventListener("click", () => unverifyPayment(b.dataset.odUnverify)));
   document.getElementById("order-notes-save").addEventListener("click", async () => {
     const notes = document.getElementById("order-notes-ta").value.trim();
     const btn = document.getElementById("order-notes-save");
@@ -4725,7 +4852,14 @@ function openCustomizeOrderModal(order) {
   buildCOSalePriceMap();
   coItems = (order.items || []).map(i => ({
     id: String(i.id), name: i.name || "", size: i.size || "",
-    price: i.price ?? 0, qty: i.quantity ?? i.qty ?? 1, image: i.image || "",
+    // Coerce the quantity. normalizeOrder() only numericises `quantity`, so an
+    // order item that OMITS it and carries a hostile `qty` string instead slips
+    // through `??` untouched and used to reach this modal's innerHTML raw —
+    // guest order creation is unauthenticated, so that string is attacker-set.
+    // A quantity is a positive integer; anything else becomes 1.
+    price: i.price ?? 0,
+    qty: Math.max(1, Math.floor(safeNum(i.quantity ?? i.qty ?? 1)) || 1),
+    image: i.image || "",
     originalPrice: i.originalPrice, isFreeGift: !!i.isFreeGift
   }));
   document.getElementById("co-order-id").textContent = order.orderNum ? `#${order.orderNum}` : `#${order.id.slice(0, 8).toUpperCase()}`;
@@ -4795,7 +4929,7 @@ function renderCustomizeItems() {
     const product = products.find(p => String(p.id) === item.id);
     const sizes = getOrderedSizesCO(product, item.size);
     return `<div style="display:flex;align-items:center;gap:.6rem;border:1px solid var(--border-color);border-radius:8px;padding:.55rem;margin-bottom:.5rem;flex-wrap:wrap;">
-      ${item.image ? `<img src="${optimizedUrl(item.image, 42)}" style="width:38px;height:38px;object-fit:contain;background:var(--bg-color);border-radius:6px;flex-shrink:0;">` : ""}
+      ${item.image ? `<img src="${escapeHtml(optimizedUrl(item.image, 42))}" style="width:38px;height:38px;object-fit:contain;background:var(--bg-color);border-radius:6px;flex-shrink:0;">` : ""}
       <div style="flex:1;min-width:120px;">
         <div style="font-size:.83rem;font-weight:600;margin-bottom:.25rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.name)}</div>
         <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
@@ -4976,7 +5110,15 @@ async function submitCustomizeOrder() {
       const pid = String(item.id);
       netDelta.set(pid, (netDelta.get(pid) || 0) - (item.qty || 1));
     }
-    const deltaEntries = Array.from(netDelta.entries()).filter(([, d]) => d !== 0);
+    // Only re-balance stock if this order is actually holding stock right now.
+    // Pending / follow-up orders have never been deducted, so their "old items"
+    // are not sitting in a reserved pool — re-balancing them would credit back
+    // inventory that was never taken. (CUSTOMIZE_LOCKED_STATUSES leaves
+    // pending and follow-up editable, so this case is reachable in normal use.)
+    const holdsStock = stockStateOf(coOrder) === "deducted";
+    const deltaEntries = holdsStock
+      ? Array.from(netDelta.entries()).filter(([, d]) => d !== 0)
+      : [];
 
     const savedItems = coItems.map(i => ({
       id: i.id, name: i.name, size: i.size, price: i.price, quantity: i.qty,

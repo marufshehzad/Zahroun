@@ -226,19 +226,23 @@ async function evaluate(cartItems, opts = {}) {
   const subtotal = subtotalOf(cartItems);
   const discounts = [];
 
-  // Quantity offers — best one wins (not stackable)
-  // If customer manually selected free items (Buy X Get Y), override auto-calculation
-  let bxgyResult = null;
-  if (opts.bxgySelectedFree?.length && cfg.buyXGetY?.enabled) {
-    const totalQty = cartItems.reduce((s, i) => s + (i.quantity || 1), 0);
-    const rules = [...(cfg.buyXGetY.rules || [])].sort((a, b) => b.buy - a.buy);
-    const rule = rules.find(r => totalQty >= r.buy);
-    if (rule) {
-      const discount = opts.bxgySelectedFree.slice(0, rule.getFree).reduce((s, f) => s + (parseFloat(f.price) || 0), 0);
-      if (discount > 0) bxgyResult = { label: `Buy ${rule.buy} Get ${rule.getFree} Free`, discount, detail: `${rule.getFree} free item (selected)` };
-    }
-  }
-  if (!bxgyResult) bxgyResult = evalBuyXGetY(cartItems, cfg.buyXGetY);
+  // Quantity offers — best one wins (not stackable).
+  //
+  // 'select' scope pays the benefit ONCE, as the free gift line itself.
+  // It used to ALSO emit a discount equal to that gift's price, which was a
+  // straight double giveaway: the gift is not in the cart, so it contributes
+  // nothing to `subtotal` (computed above from cartItems only) — the discount
+  // therefore came off the items the customer was actually paying for, while
+  // the gift shipped free on top. A "buy 1 get 1 free" on a Tk 2,450 bottle
+  // with a Tk 750 gift billed Tk 1,700 for Tk 3,200 of goods.
+  //
+  // 'any' scope (evalBuyXGetY below) is different and stays as it was: there
+  // the free item IS one of the cart lines, so discounting its price is exactly
+  // how the benefit is expressed, and nothing extra is shipped.
+  // In 'select' scope evalBuyXGetY() returns null by design, so nothing is
+  // added here — opts.bxgySelectedFree is intentionally NOT turned into a
+  // discount any more.
+  const bxgyResult = evalBuyXGetY(cartItems, cfg.buyXGetY);
 
   const qOffers = [
     bxgyResult,
@@ -255,10 +259,18 @@ async function evaluate(cartItems, opts = {}) {
     evalSeasonal(subtotal, cfg.seasonal)
   ].filter(Boolean).forEach(d => discounts.push(d));
 
-  // External discounts (passed in from checkout)
+  // External discounts (passed in from checkout).
+  //
+  // Loyalty is deliberately NOT folded in here. It is carried as its own field
+  // all the way through — checkout's summary, the order payload's
+  // loyaltyDiscountAmount, and js/orders.js verifiedTotal, which subtracts
+  // promoDiscount AND loyaltyDiscountAmount separately. Pushing it into this
+  // array made it part of totalDiscount too, so it came off the order twice and
+  // the stored total was lower than the total the customer was shown (a Tk 200
+  // redemption cost the shop Tk 400). If a caller still passes
+  // opts.loyaltyDiscount, it is ignored rather than double-counted.
   if (opts.firstOrderDiscount) discounts.push(opts.firstOrderDiscount);
   if (opts.referralDiscount)   discounts.push(opts.referralDiscount);
-  if (opts.loyaltyDiscount)    discounts.push(opts.loyaltyDiscount);
 
   const totalDiscount = Math.min(discounts.reduce((s, d) => s + d.discount, 0), subtotal);
   const fsCfg = cfg.freeShipping || {};

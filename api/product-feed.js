@@ -30,6 +30,11 @@ function fsValue(v) {
     if ('integerValue' in v) return parseInt(v.integerValue, 10);
     if ('doubleValue' in v) return v.doubleValue;
     if ('booleanValue' in v) return v.booleanValue;
+    // Without this branch a timestampValue unwrapped to null, so the flash
+    // sale's endDate was always null here and isFlashSaleLive() below could
+    // never expire a sale — the catalog feed kept advertising sale_price after
+    // the sale had ended on the site. Same expiry defect as js/auth.js had.
+    if ('timestampValue' in v) return v.timestampValue;   // ISO 8601 string
     if ('mapValue' in v) return fsFields(v.mapValue.fields || {});
     if ('arrayValue' in v) return (v.arrayValue.values || []).map(fsValue);
     if ('nullValue' in v) return null;

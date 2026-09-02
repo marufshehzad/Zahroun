@@ -445,7 +445,7 @@
             </div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
-                    <span>Total</span>
+                    <span>Subtotal</span>
                     <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
@@ -454,6 +454,7 @@
     </div>
 
     <script type="module" src="js/store.js"></script>
+    <script src="js/pricing.js"></script>
     <script defer src="js/cart.js"></script>
     <script defer src="js/ui.js"></script>
     <script type="module">
@@ -592,6 +593,21 @@
             if (!url.includes("/upload/")) return url;
             return url.replace("/upload/", "/upload/w_400,h_540,c_fill,g_auto,f_auto,q_auto/");
         }
+        /* Shared by renderFeatured() AND renderNewArrivals(). This used to be
+           declared inside renderFeatured, so renderNewArrivals threw a
+           ReferenceError for any New Arrival that was not currently on flash
+           sale — the only branch that calls it. The section heading is shown
+           before the grid is populated, so the failure surfaced as a "New
+           Arrivals" title above a permanently empty grid, and the error
+           re-threw on each of the four events that trigger a re-render. */
+        function priceRange(p) {
+            const active = p.activeSizes ?? ['6ML','15ML','30ML','50ML'];
+            const vals = p.prices ? Object.entries(p.prices).filter(([k,v]) => active.includes(k) && typeof v === 'number' && v > 0).map(([,v]) => v) : [];
+            if (!vals.length) return `Tk ${(p.basePrice || p.price || 0).toLocaleString()}`;
+            const mn = Math.min(...vals), mx = Math.max(...vals);
+            return mn === mx ? `Tk ${mn.toLocaleString()}` : `Tk ${mn.toLocaleString()} – Tk ${mx.toLocaleString()}`;
+        }
+
         function renderFeatured() {
             const grid = document.getElementById('featured-products');
             if (!grid || !window.products) return;
@@ -599,13 +615,6 @@
             if (!featured.length) featured = window.products;
             featured = featured.slice(0, 4);
 
-            function priceRange(p) {
-                const active = p.activeSizes ?? ['6ML','15ML','30ML','50ML'];
-                const vals = p.prices ? Object.entries(p.prices).filter(([k,v]) => active.includes(k) && typeof v === 'number' && v > 0).map(([,v]) => v) : [];
-                if (!vals.length) return `Tk ${(p.basePrice || p.price || 0).toLocaleString()}`;
-                const mn = Math.min(...vals), mx = Math.max(...vals);
-                return mn === mx ? `Tk ${mn.toLocaleString()}` : `Tk ${mn.toLocaleString()} – Tk ${mx.toLocaleString()}`;
-            }
             grid.innerHTML = featured.map(p => {
                 const active = p.activeSizes ?? ['6ML','15ML','30ML','50ML'];
                 const bestSize = ['50ML','30ML','15ML','6ML'].find(s => active.includes(s)) || '50ML';

@@ -448,36 +448,31 @@
             </div>
             <div id="cart-items" style="flex:1;overflow-y:auto;"></div>
             <div style="border-top:1px solid var(--border-color);padding-top:1rem;margin-top:1rem;">
-                <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-weight:600;font-size:1.2rem;"><span>Total</span><span id="cart-total">Tk 0</span></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-weight:600;font-size:1.2rem;"><span>Subtotal</span><span id="cart-total">Tk 0</span></div>
                 <button class="btn" style="width:100%;" onclick="window.location.href='checkout.html'">Checkout</button>
             </div>
         </div>
     </div>
 
     <script type="module" src="js/store.js"></script>
+    <script src="js/pricing.js"></script>
     <script defer src="js/cart.js"></script>
     <script defer src="js/ui.js"></script>
     <script type="module">
-        import { db } from "./js/firebase-config.js";
-        import { collection, query, where, getDocs, orderBy, limit }
-            from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        // Order lookups go through /api/track-order (a Vercel serverless
+        // function with admin credentials) — the Firestore orders collection
+        // is no longer publicly readable, and the API returns only
+        // non-sensitive fields (status, items, totals, area, masked phone).
 
         const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
             ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
-        const fmtDate = ts => {
+        const fmtDate = iso => {
             try {
-                return ts?.toDate
-                    ? ts.toDate().toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" })
-                    : "";
+                if (!iso) return "";
+                const d = new Date(iso);
+                return isNaN(d) ? "" : d.toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" });
             } catch { return ""; }
-        };
-
-        const normPhone = p => String(p || "").replace(/[\s\-()]/g, "");
-
-        const phoneMatch = (stored, input) => {
-            const s = normPhone(stored), i = normPhone(input);
-            return s === i || s.endsWith(i.slice(-10)) || i.endsWith(s.slice(-10));
         };
 
         const STEPS = [
@@ -538,7 +533,7 @@
         function renderOrderDetail(order, compact = false) {
             const c = order.customer || {};
             const items = order.items || [];
-            const ordNum = order.orderNum ? `#${order.orderNum}` : `#${order.id.slice(0,8).toUpperCase()}`;
+            const ordNum = order.orderNum ? `#${order.orderNum}` : `#${order.displayId || ""}`;
             const isCancelled = order.status === "cancelled";
             const isReturned = order.status === "returned";
             const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0);
@@ -586,8 +581,10 @@
             </div>
 
             <div class="o-meta">
-                <strong>Delivery to:</strong> ${esc(c.address || "—")}${c.area ? ` · ${esc(c.area)}` : ""}<br>
-                <strong>Payment:</strong> ${esc(order.payment?.method || "—")}
+                <strong>Delivery area:</strong> ${esc(c.area || "—")}${c.mobileMasked ? `<br>
+                <strong>Phone:</strong> ${esc(c.mobileMasked)}` : ""}<br>
+                <strong>Payment:</strong> ${esc(order.payment?.method || "—")}<br>
+                <span style="font-size:.76rem;">For your privacy, full delivery details are shown only in <a href="account.html" style="color:var(--primary-color);font-weight:600;">your account</a>.</span>
             </div>
 
             <div style="text-align:center;margin-top:1.25rem;">
@@ -597,45 +594,20 @@
             </div>`;
         }
 
-        // ── Firestore lookups ──────────────────────────────────────────────
-
-        async function lookupByOrderId(numStr) {
-            const num = parseInt(numStr.replace(/\D/g, ""));
-            if (!num) return [];
-            const snap = await getDocs(query(collection(db, "orders"), where("orderNum", "==", num)));
-            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        }
-
-        async function lookupByPhone(phone) {
-            const cleaned = normPhone(phone);
-            if (cleaned.length < 7) return [];
-            // Try exact match first
-            const q1 = query(collection(db, "orders"), where("customer.mobile", "==", cleaned), limit(20));
-            const snap1 = await getDocs(q1);
-            if (!snap1.empty) {
-                return snap1.docs
-                    .map(d => ({ id: d.id, ...d.data() }))
-                    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        // ── Server-side lookup (order-ID vs phone detection happens there) ─
+        async function lookupOrders(q) {
+            const resp = await fetch("/api/track-order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query: q })
+            });
+            if (!resp.ok) {
+                const err = new Error("lookup failed");
+                err.httpStatus = resp.status;
+                throw err;
             }
-            // Fallback: fetch recent orders and filter client-side (handles leading-0 variants)
-            const q2 = query(collection(db, "orders"), orderBy("createdAt", "desc"), limit(200));
-            const snap2 = await getDocs(q2);
-            return snap2.docs
-                .map(d => ({ id: d.id, ...d.data() }))
-                .filter(o => phoneMatch(o.customer?.mobile || "", cleaned))
-                .slice(0, 20);
-        }
-
-        // ── Detect input type ──────────────────────────────────────────────
-        function detectInputType(val) {
-            const digits = val.replace(/\D/g, "");
-            // 6-digit order ID
-            if (/^\d{6}$/.test(digits) && /^\d+$/.test(val.trim())) return "orderId";
-            // Looks like a phone number (8-15 digits, may start with 0/+)
-            if (digits.length >= 8 && digits.length <= 15) return "phone";
-            // Numeric but short → could be order ID attempt
-            if (/^\d+$/.test(val.trim())) return "orderId";
-            return "phone";
+            const data = await resp.json();
+            return Array.isArray(data.orders) ? data.orders : [];
         }
 
         // ── Render functions ───────────────────────────────────────────────
@@ -658,7 +630,7 @@
                 <ion-icon name="list-outline"></ion-icon>${orders.length} order${orders.length > 1 ? "s" : ""} found
             </div>`;
             const cards = orders.map((o, idx) => {
-                const ordNum = o.orderNum ? `#${o.orderNum}` : `#${o.id.slice(0,8).toUpperCase()}`;
+                const ordNum = o.orderNum ? `#${o.orderNum}` : `#${o.displayId || ""}`;
                 return `<div class="order-summary-card fade-up" style="animation-delay:${idx*60}ms" id="ocard-${idx}">
                     <div class="order-summary-head" onclick="toggleCard(${idx})">
                         <div>
@@ -719,21 +691,7 @@
             resultEl.innerHTML = `<div class="track-loading"><div class="spinner"></div><p>Looking up your order…</p></div>`;
 
             try {
-                const type = detectInputType(val);
-                let orders = [];
-
-                if (type === "orderId") {
-                    orders = await lookupByOrderId(val);
-                    if (!orders.length) {
-                        // Maybe it's a phone number after all
-                        orders = await lookupByPhone(val);
-                    }
-                } else {
-                    orders = await lookupByPhone(val);
-                    if (!orders.length && /^\d{5,10}$/.test(val.trim())) {
-                        orders = await lookupByOrderId(val);
-                    }
-                }
+                const orders = await lookupOrders(val);
 
                 if (!orders.length) {
                     showError("No order found");
@@ -744,14 +702,15 @@
                 }
             } catch (err) {
                 console.error("[Track] lookup failed:", err);
-                const code = err?.code || "";
-                const isNet = code === "unavailable" || code === "deadline-exceeded" ||
-                              /network|offline|fetch|failed to get/i.test(err?.message || "");
-                const msg = code === "permission-denied"
-                    ? "Order tracking is temporarily unavailable. Please try again shortly."
-                    : isNet
-                        ? "Network error — please check your connection and try again."
-                        : "Something went wrong. Please try again.";
+                const status = err?.httpStatus || 0;
+                const isNet = !status && err instanceof TypeError;
+                const msg = status === 429
+                    ? "Too many attempts — please wait a minute and try again."
+                    : status === 503
+                        ? "Order tracking is temporarily unavailable. Please try again shortly."
+                        : isNet
+                            ? "Network error — please check your connection and try again."
+                            : "Something went wrong. Please try again.";
                 resultEl.innerHTML = `<div class="track-error fade-up">
                     <ion-icon name="${isNet ? 'cloud-offline-outline' : 'alert-circle-outline'}" class="err-icon"></ion-icon>
                     <p style="font-weight:600;color:var(--text-main);margin-bottom:.35rem;">${msg}</p>

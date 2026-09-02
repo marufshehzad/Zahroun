@@ -106,7 +106,7 @@
             <div id="cart-items" style="flex: 1; overflow-y: auto;"></div>
             <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 1.2rem;">
-                    <span>Total</span>
+                    <span>Subtotal</span>
                     <span id="cart-total">Tk 0</span>
                 </div>
                 <button class="btn" style="width: 100%;" onclick="window.location.href='checkout.html'">Checkout</button>
@@ -116,10 +116,14 @@
 
     <script type="module" src="js/store.js"></script>
     <script type="module" src="js/promotions.js"></script>
+    <script src="js/pricing.js"></script>
     <script defer src="js/cart.js"></script>
     <script defer src="js/ui.js"></script>
     <script>
-    (function renderCartPage() {
+    /* Declared (not an IIFE-scoped expression) so the freshness listeners at the
+       bottom of this script can call it again once settings and live product
+       data arrive. */
+    function renderCartPage() {
         const wrap = document.getElementById("cart-page-content");
         if (!wrap) return;
         const cartData = JSON.parse(localStorage.getItem("zahroun_cart") || "[]");
@@ -130,7 +134,17 @@
 
         function saveAndRender(newCart) {
             localStorage.setItem("zahroun_cart", JSON.stringify(newCart));
+            // Every promotion is a function of the cart's contents and
+            // quantities (tier and seasonal scale with subtotal; BXGY, BOGO and
+            // min-qty scale with item count), so a result cached from the
+            // previous cart is wrong the moment a line is changed or removed.
+            // Drop it first so the summary can never show a discount this cart
+            // has not earned — with Buy-2-Get-1 on three bottles, keeping it
+            // after deleting two priced the whole order at the delivery fee —
+            // then re-evaluate and render again with the real figure.
+            window._cartPromoResult = null;
             renderCartPage();
+            if (window.zahRefreshCartPromos) window.zahRefreshCartPromos();
         }
 
         if (!cartData.length) {
@@ -142,10 +156,25 @@
             return;
         }
 
-        const subtotal = cartData.reduce((s, i) => s + (parseFloat(i.selectedPrice) || i.price || 0) * (i.quantity || 1), 0);
-        const FREE_THRESHOLD = 5000;
-        const delivery = subtotal >= FREE_THRESHOLD ? 0 : 70;
-        const total = subtotal + delivery;
+        /* Canonical pricing — the same function checkout and the order writer
+           use. This page used to hard-code `delivery = subtotal >= 5000 ? 0 : 70`,
+           which ignored the admin's configured delivery charge and free-delivery
+           threshold entirely: it quoted Tk 70 where checkout charged Tk 60, and
+           advertised "add Tk X more for free delivery" against a Tk 5,000 bar
+           that did not exist in settings. */
+        const settings = window.ZahrounPricing.getStoreSettings();
+        const summary = window.ZahrounPricing.computeOrderSummary({
+            cart: cartData,
+            promoResult: window._cartPromoResult || null
+            // No coupon or loyalty here — both are entered at checkout, so they
+            // can only ever REDUCE this figure. deliveryFee is omitted, which
+            // uses the Inside-Dhaka rate: the same default checkout's area
+            // selector starts on, so the two totals agree on arrival.
+        });
+        const subtotal = summary.subtotal;
+        const delivery = summary.effectiveDelivery;
+        const total = summary.total;
+        const FREE_THRESHOLD = settings.freeDeliveryThreshold;
         const itemCount = cartData.reduce((s, i) => s + (i.quantity || 1), 0);
 
         wrap.innerHTML = `
@@ -183,11 +212,15 @@
                     <span>Subtotal (${itemCount} item${itemCount !== 1 ? "s" : ""})</span>
                     <span>Tk ${subtotal.toLocaleString()}</span>
                 </div>
+                ${summary.promoDiscount > 0 ? `<div class="summary-row" style="color:#163E34;font-weight:600;">
+                    <span>Promotions</span>
+                    <span>-Tk ${summary.promoDiscount.toLocaleString()}</span>
+                </div>` : ""}
                 <div class="summary-row">
-                    <span>Delivery</span>
-                    <span>${delivery === 0 ? '<span style="color:#1e7e34;font-weight:600;">Free</span>' : "Tk " + delivery}</span>
+                    <span>Delivery <span style="font-size:.72rem;color:var(--text-muted);font-weight:400;">(inside Dhaka)</span></span>
+                    <span>${delivery === 0 ? '<span style="color:#1e7e34;font-weight:600;">Free</span>' : "Tk " + delivery.toLocaleString()}</span>
                 </div>
-                ${delivery > 0 ? `<div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.4rem;">Add Tk ${(FREE_THRESHOLD - subtotal).toLocaleString()} more for free delivery</div>` : ""}
+                ${FREE_THRESHOLD > 0 && subtotal < FREE_THRESHOLD ? `<div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.4rem;">Add Tk ${(FREE_THRESHOLD - subtotal).toLocaleString()} more for free delivery</div>` : ""}
                 <div class="summary-row total-row">
                     <span>Total</span>
                     <span>Tk ${total.toLocaleString()}</span>
@@ -215,6 +248,49 @@
                 }
             });
         });
+    }
+    renderCartPage();
+
+    /* This page renders synchronously from localStorage, before store settings,
+       live product data and the flash-sale document have loaded. Without these
+       listeners it kept whatever it drew first — showing dead flash-sale prices
+       after a sale ended, and a delivery figure computed from defaults rather
+       than the shop's real settings. js/cart.js reconcileCart() rewrites the
+       stored cart on products-ready / flashsale-status; re-rendering afterwards
+       is what makes this page agree with checkout. */
+    (function keepCartPageFresh() {
+        const rerender = () => {
+            const wrap = document.getElementById("cart-page-content");
+            if (wrap && typeof renderCartPage === "function") renderCartPage();
+        };
+        document.addEventListener("products-ready", rerender);
+        document.addEventListener("flashsale-status", rerender);
+        window.addEventListener("promos-updated", rerender);
+
+        // Evaluate promotions with the same engine checkout uses, so any
+        // automatic discount is reflected here too rather than appearing for the
+        // first time on the checkout screen.
+        const evaluateCartPromos = async () => {
+            try {
+                const cartData = JSON.parse(localStorage.getItem("zahroun_cart") || "[]");
+                if (!cartData.length || !window.ZahrounPromos) return;
+                window._cartPromoResult = await window.ZahrounPromos.evaluate(cartData, {});
+                rerender();
+            } catch { /* promos are additive here; a failure just shows no promo line */ }
+        };
+        document.addEventListener("products-ready", evaluateCartPromos);
+        window.addEventListener("promos-updated", evaluateCartPromos);
+        // A sale ending re-prices every line, and promo tiers keyed off subtotal
+        // move with it — so the promo result needs recomputing here too, not
+        // just the item rows.
+        document.addEventListener("flashsale-status", evaluateCartPromos);
+        // renderCartPage() is a top-level declaration outside this IIFE, so its
+        // quantity/remove handlers cannot see this const. Publish it so an edit
+        // to the cart can recompute the promotions it just invalidated.
+        window.zahRefreshCartPromos = evaluateCartPromos;
+        if (window.ZahrounPromos && window.ZahrounPromos.ready) {
+            window.ZahrounPromos.ready.then(evaluateCartPromos).catch(() => {});
+        }
     })();
     </script>
     <script defer src="/_vercel/speed-insights/script.js"></script>
