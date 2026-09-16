@@ -2670,33 +2670,21 @@
             <div class="fg"><label>Description</label><textarea name="description" rows="2"></textarea></div>
             <div class="fg"><label>Ingredients</label><textarea name="ingredients" rows="2"></textarea></div>
 
-            <label class="muted-note" style="display:block;margin-bottom:.4rem;">Sizes & Prices (BDT) <span style="font-size:.7rem;">— uncheck to hide a size from customers</span></label>
-            <div class="grid4">
-                <div class="fg">
-                    <label style="display:flex;align-items:center;gap:.3rem;margin-bottom:.35rem;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--text-main);">
-                        <input type="checkbox" id="sizeOn-6ML" style="width:14px;height:14px;cursor:pointer;" checked> 6ML
-                    </label>
-                    <input type="number" name="price6" min="0" style="width:100%;">
-                </div>
-                <div class="fg">
-                    <label style="display:flex;align-items:center;gap:.3rem;margin-bottom:.35rem;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--text-main);">
-                        <input type="checkbox" id="sizeOn-15ML" style="width:14px;height:14px;cursor:pointer;" checked> 15ML
-                    </label>
-                    <input type="number" name="price15" min="0" style="width:100%;">
-                </div>
-                <div class="fg">
-                    <label style="display:flex;align-items:center;gap:.3rem;margin-bottom:.35rem;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--text-main);">
-                        <input type="checkbox" id="sizeOn-30ML" style="width:14px;height:14px;cursor:pointer;" checked> 30ML
-                    </label>
-                    <input type="number" name="price30" min="0" style="width:100%;">
-                </div>
-                <div class="fg">
-                    <label style="display:flex;align-items:center;gap:.3rem;margin-bottom:.35rem;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--text-main);">
-                        <input type="checkbox" id="sizeOn-50ML" style="width:14px;height:14px;cursor:pointer;" checked> 50ML
-                    </label>
-                    <input type="number" name="price50" min="0" style="width:100%;">
-                </div>
+            <label class="muted-note" style="display:block;margin-bottom:.4rem;">Sizes & Prices (BDT) <span style="font-size:.75rem;">— uncheck to hide a size from customers</span></label>
+            <div style="display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;margin-bottom:.6rem;font-size:.85rem;color:var(--text-main);">
+                <label style="display:inline-flex;align-items:center;gap:.35rem;cursor:pointer;">
+                    <input type="radio" name="sizeMode" value="standard" checked> Standard sizes (6 / 15 / 30 / 50ML)
+                </label>
+                <label style="display:inline-flex;align-items:center;gap:.35rem;cursor:pointer;">
+                    <input type="radio" name="sizeMode" value="custom"> Custom sizes <span class="muted-note" style="font-size:.75rem;">(e.g. attar)</span>
+                </label>
             </div>
+            <div id="custom-size-add" style="display:none;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.65rem;">
+                <input type="number" id="custom-size-ml" min="0.5" max="1000" step="0.5" placeholder="ML, e.g. 3" style="width:140px;">
+                <button type="button" class="btn btn-outline" id="custom-size-add-btn" style="font-size:.8rem;padding:.4rem .9rem;">+ Add size</button>
+                <span class="muted-note" id="custom-size-msg" style="font-size:.78rem;"></span>
+            </div>
+            <div class="grid4" id="size-price-grid"></div>
 
             <div class="grid2" style="margin-top:.85rem;">
                 <div class="fg">
@@ -2874,6 +2862,7 @@
         </div>
     </div>
 
+    <script src="js/pricing.js"></script>
     <script type="module" src="js/promotions.js"></script>
     <script type="module" src="js/admin.js?v=7.0"></script>
     <script>

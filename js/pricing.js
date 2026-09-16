@@ -165,3 +165,104 @@
     computeOrderSummary
   };
 })();
+
+/* =========================================================================
+   ZAHROUN — product sizes
+   =========================================================================
+   Most products come in the four standard sizes. Some (attar, for example)
+   are sold in different ones, so the admin can give a product its own size
+   list in `product.sizes`. Every page asks this module which sizes a product
+   has instead of hard-coding ['6ML','15ML','30ML','50ML'].
+
+   Rules:
+     * A size label is always a number of millilitres: "3ML", "12ML", "2.5ML".
+       normalize() is the only way a label is created, so two spellings of the
+       same size ("3 ml", "3ML") can never become two different cart lines,
+       and a label is always safe to drop into markup or an inline handler.
+     * A product WITHOUT a usable `sizes` array uses the four defaults, so every
+       product that existed before this change behaves exactly as it did.
+     * A product WITH one uses only those sizes — the defaults do not apply.
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  const DEFAULT_SIZES = Object.freeze(['6ML', '15ML', '30ML', '50ML']);
+  const MAX_ML = 1000;
+
+  /* "3", "3ml", " 3 ML", "3.0ML" -> "3ML". Anything else -> "". */
+  function normalize(v) {
+    const m = String(v == null ? '' : v).trim().toUpperCase().replace(/\s+/g, '')
+      .match(/^(\d{1,4}(?:\.\d)?)(?:ML)?$/);
+    if (!m) return '';
+    const n = parseFloat(m[1]);
+    if (!(n > 0) || n > MAX_ML) return '';
+    return `${n}ML`;
+  }
+
+  /* Millilitres in a label, or 0 if it is not a valid size. */
+  function mlOf(size) {
+    const s = normalize(size);
+    return s ? parseFloat(s) : 0;
+  }
+
+  /* Valid, de-duplicated, smallest first. */
+  function sortSizes(list) {
+    const seen = new Set();
+    (Array.isArray(list) ? list : []).forEach(v => { const s = normalize(v); if (s) seen.add(s); });
+    return [...seen].sort((a, b) => mlOf(a) - mlOf(b));
+  }
+
+  function hasCustomSizes(product) {
+    return !!(product && Array.isArray(product.sizes) && sortSizes(product.sizes).length);
+  }
+
+  /* Every size this product is sold in, smallest first. */
+  function sizesOf(product) {
+    return hasCustomSizes(product) ? sortSizes(product.sizes) : DEFAULT_SIZES.slice();
+  }
+
+  /* The sizes the admin has switched on. A missing activeSizes means all. */
+  function activeSizesOf(product) {
+    const all = sizesOf(product);
+    const act = product && Array.isArray(product.activeSizes) ? product.activeSizes : null;
+    return act ? all.filter(s => act.includes(s)) : all;
+  }
+
+  /* Switched on AND priced — the sizes a customer can actually buy. */
+  function pricedSizesOf(product) {
+    const prices = (product && product.prices) || {};
+    return activeSizesOf(product).filter(s => Number(prices[s]) > 0);
+  }
+
+  /* The size a card or quick "Add to Cart" uses when none was chosen: 50ML
+     when the product has it (unchanged behaviour for standard products),
+     otherwise the largest size it is sold in. */
+  function fallbackSizeOf(product) {
+    const priced = pricedSizesOf(product);
+    const pool = priced.length ? priced : (activeSizesOf(product).length ? activeSizesOf(product) : sizesOf(product));
+    return pool.includes('50ML') ? '50ML' : (pool[pool.length - 1] || '50ML');
+  }
+
+  /* The size a product CARD advertises: the largest switched-on size, priced
+     or not. For standard products that is exactly the old
+     ['50ML','30ML','15ML','6ML'].find(active) || '50ML' rule. */
+  function cardSizeOf(product) {
+    const act = activeSizesOf(product);
+    if (act.length) return act[act.length - 1];
+    const all = sizesOf(product);
+    return all[all.length - 1] || '50ML';
+  }
+
+  window.ZahrounSizes = {
+    DEFAULT_SIZES,
+    cardSizeOf,
+    normalize,
+    mlOf,
+    sortSizes,
+    hasCustomSizes,
+    sizesOf,
+    activeSizesOf,
+    pricedSizesOf,
+    fallbackSizeOf
+  };
+})();

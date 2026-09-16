@@ -658,7 +658,7 @@
             if (_advSel.note)     filtered = filtered.filter(p => (p.fragrance_notes || []).some(n => String(n).toLowerCase() === _advSel.note));
             // Sorting
             const _minP = p => {
-                const act = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
+                const act = window.ZahrounSizes.activeSizesOf(p);
                 const v = p.prices ? Object.entries(p.prices).filter(([k, x]) => act.includes(k) && typeof x === "number" && x > 0).map(([, x]) => x) : [];
                 return v.length ? Math.min(...v) : (p.basePrice || p.price || 0);
             };
@@ -668,7 +668,7 @@
             else if (_sortBy === "newest")     filtered = [...filtered].sort((a, b) => (b.newArrival ? 1 : 0) - (a.newArrival ? 1 : 0) || b.id - a.id);
             if (!filtered.length) { grid.innerHTML = `<p style="color:var(--text-muted)">No products found.</p>`; _updateCatCounts(); return; }
             function priceRange(p) {
-                const active = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
+                const active = window.ZahrounSizes.activeSizesOf(p);
                 const vals = p.prices
                     ? Object.entries(p.prices).filter(([k,v]) => active.includes(k) && typeof v === 'number' && v > 0).map(([,v]) => v)
                     : [];
@@ -677,8 +677,8 @@
                 return mn === mx ? `Tk ${mn.toLocaleString()}` : `Tk ${mn.toLocaleString()} – Tk ${mx.toLocaleString()}`;
             }
             grid.innerHTML = filtered.map((p, _idx) => {
-                const active = p.activeSizes ?? ["6ML","15ML","30ML","50ML"];
-                const bestSize = ["50ML","30ML","15ML","6ML"].find(s => active.includes(s)) || "50ML";
+                const active = window.ZahrounSizes.activeSizesOf(p);
+                const bestSize = window.ZahrounSizes.cardSizeOf(p);
                 const regularPriceAtBestSize = (p.prices && p.prices[bestSize]) ? p.prices[bestSize] : (p.basePrice || p.price || 0);
                 // Use global getFlashSaleItem for single-source-of-truth pricing — prefer the
                 // admin's chosen defaultDisplaySize (matches the photo shown on the card),

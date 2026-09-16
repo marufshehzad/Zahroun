@@ -1311,7 +1311,8 @@
             if (!rule) return drop();
 
             // Admin allow-list (freeProductSizes, or the legacy freeProductIds shape)
-            const SZ = { '6ML': 6, '15ML': 15, '30ML': 30, '50ML': 50 };
+            // Millilitres in a size label; works for custom sizes (3ML, 12ML) too.
+            const mlOf = window.ZahrounSizes.mlOf;
             const allow = new Set();
             if (bx.freeProductSizes?.length) {
                 bx.freeProductSizes.forEach(f => allow.add(`${String(f.productId ?? f.id)}_${f.size}`));
@@ -1322,13 +1323,13 @@
             if (!allow.size) return drop();
 
             // ML cap — mirrors free-gift-selection.html's eligibility rule
-            const maxMl = Math.max(...cart.map(i => SZ[i.size] || 0), 6);
+            const maxMl = Math.max(...cart.map(i => mlOf(i.size)), 6);
 
             const wanted = [];
             for (const f of claimed) {
                 const key = `${String(f.id)}_${f.size || ''}`;
                 if (!allow.has(key)) continue;
-                if ((SZ[f.size] || 0) > maxMl) continue;
+                if (mlOf(f.size) > maxMl) continue;
                 if (wanted.some(w => w.key === key)) continue;
                 wanted.push({ key, id: String(f.id), size: f.size });
                 if (wanted.length >= (rule.getFree || 1)) break;
@@ -1348,6 +1349,10 @@
                     const p = prods[w.id];
                     if (!p) return null;
                     if (typeof p.stock === 'number' && p.stock <= 0) return null;
+                    // Same rule as free-gift-selection.html: a product priced per size
+                    // must actually sell the claimed size (sizes can now be removed or
+                    // customised per product, so p.price is not a safe fallback).
+                    if (p.prices && Object.keys(p.prices).length && !(Number(p.prices[w.size]) > 0)) return null;
                     const price = (p.prices && p.prices[w.size]) || p.price || 0;
                     if (!(price > 0)) return null;
                     return {
@@ -1433,7 +1438,7 @@
                     cart.forEach(item => {
                         const p = liveProducts[String(item.id)];
                         if (!p) return; // stock check above already blocks unknown/removed products
-                        const size = item.size || '50ML';
+                        const size = item.size || window.ZahrounSizes.fallbackSizeOf(p);
                         const catalogPrice = (p.prices && typeof p.prices[size] === 'number') ? p.prices[size] : (p.basePrice || p.price || 0);
                         const salePrice = fsMap[String(item.id)]?.[size];
                         const correctPrice = (typeof salePrice === 'number' && salePrice > 0 && salePrice < catalogPrice) ? salePrice : catalogPrice;

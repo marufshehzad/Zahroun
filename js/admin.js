@@ -154,6 +154,96 @@ let settings = {};
 let editing = null, editingCat = null, editingCoupon = null;
 const SIZE_KEYS = ["6ML", "15ML", "30ML", "50ML"];
 let sizeImagesMap = { "6ML": "", "15ML": "", "30ML": "", "50ML": "" };
+
+/* ---- Product sizes -------------------------------------------------------
+   A product uses either the standard sizes (SIZE_KEYS) or its own custom list
+   (e.g. an attar sold in 3/6/12ML), stored in `product.sizes`. The price grid
+   is rendered from `formSizes`, so the same form handles both. Size labels are
+   only ever produced by ZahrounSizes.normalize(), which guarantees the
+   "<number>ML" shape — that is what makes them safe inside attributes.
+   Each mode keeps its own unsaved state, so flipping Standard <-> Custom while
+   editing never throws away prices the admin already typed. */
+let formSizeMode = "standard";
+let formSizes = [...SIZE_KEYS];
+let _sizeBuckets = { standard: null, custom: null };
+
+function _readSizeFormState() {
+  const state = {};
+  formSizes.forEach(sz => {
+    const inp = document.querySelector(`#size-price-grid input[data-size-price="${sz}"]`);
+    const cb = document.getElementById(`sizeOn-${sz}`);
+    state[sz] = { price: inp ? inp.value : "", on: cb ? cb.checked : true };
+  });
+  return state;
+}
+
+function renderSizePriceGrid(state) {
+  const grid = document.getElementById("size-price-grid");
+  if (!grid) return;
+  const custom = formSizeMode === "custom";
+  grid.innerHTML = formSizes.length ? formSizes.map(sz => {
+    const st = (state && state[sz]) || { price: "", on: true };
+    const safe = escapeHtml(sz);
+    return `
+      <div class="fg" style="opacity:${st.on ? "1" : "0.42"};">
+        <div style="display:flex;align-items:center;gap:.3rem;margin-bottom:.35rem;">
+          <label style="display:flex;align-items:center;gap:.3rem;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--text-main);">
+            <input type="checkbox" id="sizeOn-${safe}" data-size-on="${safe}" style="width:14px;height:14px;cursor:pointer;" ${st.on ? "checked" : ""}> ${safe}
+          </label>
+          ${custom ? `<button type="button" data-size-remove="${safe}" title="Remove ${safe}" aria-label="Remove ${safe}" style="margin-left:auto;background:none;border:none;color:#9b2226;cursor:pointer;font-size:1.05rem;line-height:1;padding:0 .2rem;">&times;</button>` : ""}
+        </div>
+        <input type="number" data-size-price="${safe}" min="0" style="width:100%;" value="${escapeHtml(String(st.price ?? ""))}" ${st.on ? "" : "disabled"}>
+      </div>`;
+  }).join("") : `<p class="muted-note" style="font-size:.8rem;grid-column:1/-1;margin:0;">No sizes yet — add one above.</p>`;
+
+  grid.querySelectorAll("[data-size-on]").forEach(cb => cb.addEventListener("change", () => {
+    const inp = grid.querySelector(`input[data-size-price="${cb.dataset.sizeOn}"]`);
+    if (inp) { inp.disabled = !cb.checked; inp.closest(".fg").style.opacity = cb.checked ? "1" : "0.42"; }
+    updateDefaultSizeSelect();
+  }));
+  grid.querySelectorAll("[data-size-remove]").forEach(btn => btn.addEventListener("click", () => {
+    const st = _readSizeFormState();
+    formSizes = formSizes.filter(sz => sz !== btn.dataset.sizeRemove);
+    delete sizeImagesMap[btn.dataset.sizeRemove];
+    renderSizePriceGrid(st);
+    renderSizeImageGrid();
+  }));
+  updateDefaultSizeSelect();
+}
+
+function switchSizeMode(mode) {
+  const next = mode === "custom" ? "custom" : "standard";
+  if (next === formSizeMode) return;
+  _sizeBuckets[formSizeMode] = { sizes: [...formSizes], state: _readSizeFormState(), images: { ...sizeImagesMap } };
+  formSizeMode = next;
+  const b = _sizeBuckets[next];
+  formSizes = b ? [...b.sizes] : (next === "standard" ? [...SIZE_KEYS] : []);
+  if (b) sizeImagesMap = { ...b.images };
+  else { sizeImagesMap = {}; formSizes.forEach(sz => { sizeImagesMap[sz] = ""; }); }
+  const addRow = document.getElementById("custom-size-add");
+  if (addRow) addRow.style.display = next === "custom" ? "flex" : "none";
+  const msg = document.getElementById("custom-size-msg");
+  if (msg) msg.textContent = "";
+  renderSizePriceGrid(b ? b.state : {});
+  renderSizeImageGrid();
+}
+
+function addCustomSize() {
+  const inp = document.getElementById("custom-size-ml");
+  const msg = document.getElementById("custom-size-msg");
+  const sz = window.ZahrounSizes.normalize(inp ? inp.value : "");
+  if (!sz) { if (msg) msg.textContent = "Enter a size in ML, e.g. 3 or 12."; return; }
+  if (formSizes.includes(sz)) { if (msg) msg.textContent = `${sz} is already added.`; return; }
+  if (formSizes.length >= 12) { if (msg) msg.textContent = "Up to 12 sizes per product."; return; }
+  const st = _readSizeFormState();
+  st[sz] = { price: "", on: true };
+  formSizes = window.ZahrounSizes.sortSizes([...formSizes, sz]);
+  if (!(sz in sizeImagesMap)) sizeImagesMap[sz] = "";
+  renderSizePriceGrid(st);
+  renderSizeImageGrid();
+  if (inp) { inp.value = ""; inp.focus(); }
+  if (msg) msg.textContent = "";
+}
 let revenueChart = null, statusChart = null, anRevChart = null, anStatusChart = null;
 let anDays = 30;
 let anCustomFrom = null;
@@ -607,20 +697,17 @@ async function initAdmin(user, profile) {
   document.getElementById("si-sync-btn")?.addEventListener("click", () => {
     const mainImg = galleryImages[0] || "";
     if (!mainImg) { if (window.showToast) window.showToast("Add a main image first.", "error"); return; }
-    SIZE_KEYS.forEach(k => { sizeImagesMap[k] = mainImg; });
+    formSizes.forEach(k => { sizeImagesMap[k] = mainImg; });
     renderSizeImageGrid();
   });
 
-  // Size on/off toggles
-  SIZE_KEYS.forEach(sz => {
-    const cb  = document.getElementById(`sizeOn-${sz}`);
-    const num = sz.replace("ML","");
-    const inp = document.querySelector(`#product-form input[name="price${num}"]`);
-    if (cb && inp) cb.addEventListener("change", () => {
-      inp.disabled = !cb.checked;
-      inp.closest(".fg").style.opacity = cb.checked ? "1" : "0.42";
-      updateDefaultSizeSelect();
-    });
+  // Sizes: Standard / Custom mode, and adding a custom size. (Per-size on/off
+  // checkboxes are wired inside renderSizePriceGrid, which rebuilds them.)
+  document.querySelectorAll('#product-form input[name="sizeMode"]').forEach(r =>
+    r.addEventListener("change", () => { if (r.checked) switchSizeMode(r.value); }));
+  document.getElementById("custom-size-add-btn")?.addEventListener("click", addCustomSize);
+  document.getElementById("custom-size-ml")?.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); addCustomSize(); }   // never submit the product form
   });
 
   // Product type → show/hide combo fields
@@ -1214,7 +1301,8 @@ function renderProductTable() {
     return;
   }
   tbody.innerHTML = filtered.map((p, i) => {
-    const price = (p.prices && p.prices["50ML"]) ? p.prices["50ML"] : (p.price || 0);
+    const _listSize = window.ZahrounSizes.fallbackSizeOf(p);
+    const price = (p.prices && p.prices[_listSize]) ? p.prices[_listSize] : (p.price || 0);
     const flags = [p.featured ? `<span class="badge green">Featured</span>` : "", p.bestseller ? `<span class="badge">Bestseller</span>` : "", p.newArrival ? `<span class="badge" style="background:#1a1a1a;color:#D4AF37;">New</span>` : "", p.productType === "combo" ? `<span class="badge" style="background:#E07B2E;color:#fff;">Gift Set</span>` : "", p.hidden ? `<span class="badge">Hidden</span>` : ""].join(" ");
     return `<tr data-pid="${p.id}">
       <td style="padding-left:.75rem;"><input type="checkbox" class="bulk-chk" data-pid="${p.id}"></td>
@@ -3062,7 +3150,7 @@ function buildFlashProductRows() {
   wrap.innerHTML = products.filter(p => !p.hidden).map(p => {
     const item = items.find(i => i.productId === p.id);
     const checked = !!item;
-    const activeSzs = p.activeSizes ?? SIZE_KEYS;
+    const activeSzs = window.ZahrounSizes.activeSizesOf(p);
     const sizesToShow = activeSzs.filter(sz => p.prices && p.prices[sz]);
 
     return `<div class="fprod-card ${checked ? "is-selected" : ""}" id="fcard-${p.id}">
@@ -4108,7 +4196,25 @@ function openForm(product) {
   $("#product-form-title").textContent = product ? "Edit Product" : "Add Product";
   galleryImages = product?.images ? [...product.images] : (product?.image ? [product.image] : []);
   f.image.value = galleryImages[0] || "";
-  sizeImagesMap = product?.sizeImages ? { ...product.sizeImages } : { "6ML": "", "15ML": "", "30ML": "", "50ML": "" };
+  // Sizes: a product with its own list opens in Custom mode, everything else in Standard.
+  const ZS = window.ZahrounSizes;
+  _sizeBuckets = { standard: null, custom: null };
+  formSizeMode = product && ZS.hasCustomSizes(product) ? "custom" : "standard";
+  formSizes = product ? ZS.sizesOf(product) : [...SIZE_KEYS];
+  document.querySelectorAll('#product-form input[name="sizeMode"]').forEach(r => { r.checked = r.value === formSizeMode; });
+  const _addRow = document.getElementById("custom-size-add");
+  if (_addRow) _addRow.style.display = formSizeMode === "custom" ? "flex" : "none";
+  const _addMsg = document.getElementById("custom-size-msg");
+  if (_addMsg) _addMsg.textContent = "";
+  const _pr = product?.prices || {};
+  const _act = product ? ZS.activeSizesOf(product) : formSizes;
+  const _sizeState = {};
+  formSizes.forEach(sz => { _sizeState[sz] = { price: _pr[sz] || "", on: _act.includes(sz) }; });
+  // Legacy products stored their 50ML price only in `price`
+  if (product && formSizeMode === "standard" && !_pr["50ML"] && product.price) _sizeState["50ML"].price = product.price;
+  sizeImagesMap = {};
+  formSizes.forEach(sz => { sizeImagesMap[sz] = (product?.sizeImages && product.sizeImages[sz]) || ""; });
+  renderSizePriceGrid(_sizeState);
   renderGalleryThumbs();
   renderSizeImageGrid();
   document.getElementById("img-status").textContent = "";
@@ -4119,8 +4225,6 @@ function openForm(product) {
     f.category.value = product.category || categories.find(c => c.active !== false)?.name || "";
     f.description.value = product.description || "";
     f.ingredients.value = product.ingredients || "";
-    const pr = product.prices || {};
-    f.price6.value = pr["6ML"] || ""; f.price15.value = pr["15ML"] || ""; f.price30.value = pr["30ML"] || ""; f.price50.value = pr["50ML"] || product.price || "";
     f.stock.value = product.stock ?? 100;
     f.concentration.value = product.tags?.concentration || "";
     f.gender.value = product.tags?.gender || "";
@@ -4132,19 +4236,10 @@ function openForm(product) {
     f.bestseller.checked = !!product.bestseller;
     f.newArrival.checked = !!product.newArrival;
     f.hidden.checked = !!product.hidden;
-    // Active sizes
-    const activeSzs = product.activeSizes ?? SIZE_KEYS;
-    SIZE_KEYS.forEach(sz => {
-      const cb = document.getElementById(`sizeOn-${sz}`);
-      const num = sz.replace("ML","");
-      const inp = document.querySelector(`#product-form input[name="price${num}"]`);
-      if (cb) cb.checked = activeSzs.includes(sz);
-      if (inp) { inp.disabled = !activeSzs.includes(sz); inp.closest(".fg").style.opacity = activeSzs.includes(sz) ? "1" : "0.42"; }
-    });
     // Default display size
     updateDefaultSizeSelect();
     const dds = document.getElementById("si-default-size");
-    if (dds && product.defaultDisplaySize && activeSzs.includes(product.defaultDisplaySize)) dds.value = product.defaultDisplaySize;
+    if (dds && product.defaultDisplaySize && _act.includes(product.defaultDisplaySize)) dds.value = product.defaultDisplaySize;
     // Product type & combo
     const pType = product.productType || "regular";
     document.getElementById("product-type-sel").value = pType;
@@ -4156,14 +4251,6 @@ function openForm(product) {
   } else {
     _populateCatSelects();
     f.id.value = "";
-    // Reset size toggles to all active
-    SIZE_KEYS.forEach(sz => {
-      const cb = document.getElementById(`sizeOn-${sz}`);
-      const num = sz.replace("ML","");
-      const inp = document.querySelector(`#product-form input[name="price${num}"]`);
-      if (cb) cb.checked = true;
-      if (inp) { inp.disabled = false; inp.closest(".fg").style.opacity = "1"; }
-    });
     document.getElementById("product-type-sel").value = "regular";
     document.getElementById("combo-items-row").style.display = "none";
     document.getElementById("base-price-row").style.display  = "none";
@@ -4257,7 +4344,7 @@ function renderGalleryThumbs() {
 function renderSizeImageGrid() {
   const grid = document.getElementById("size-img-grid");
   if (!grid) return;
-  grid.innerHTML = SIZE_KEYS.map(size => {
+  grid.innerHTML = formSizes.map(size => {
     const url = sizeImagesMap[size] || "";
     const thumb = url
       ? `<img src="${optimizedUrl(url, 120)}" style="width:100%;height:100%;object-fit:contain;">`
@@ -4291,7 +4378,7 @@ function renderSizeImageGrid() {
 function updateDefaultSizeSelect() {
   const sel = document.getElementById("si-default-size");
   if (!sel) return;
-  const activeSzs = SIZE_KEYS.filter(sz => {
+  const activeSzs = formSizes.filter(sz => {
     const cb = document.getElementById(`sizeOn-${sz}`);
     return !cb || cb.checked;
   });
@@ -4324,26 +4411,50 @@ async function saveProduct(e) {
   e.preventDefault();
   const f = e.target;
   const saveBtn = $("#save-product");
+  const isCustomSizes = formSizeMode === "custom";
+  const prices = {};
+  formSizes.forEach(sz => {
+    const inp = document.querySelector(`#size-price-grid input[data-size-price="${sz}"]`);
+    const n = numOrNull(inp ? inp.value : "");
+    if (n !== null) prices[sz] = n;
+  });
+  const activeSizes = formSizes.filter(sz => { const cb = document.getElementById(`sizeOn-${sz}`); return !cb || cb.checked; });
+  if (isCustomSizes && !activeSizes.some(sz => prices[sz] > 0)) {
+    alert("Custom sizes: add at least one size, keep it switched on, and give it a price.");
+    return;
+  }
   saveBtn.disabled = true; saveBtn.textContent = "Saving…";
   let id = numOrNull(f.id.value);
   const isNew = id === null;
   if (isNew) id = (products.reduce((m, p) => Math.max(m, p.id), 0) || 0) + 1;
-  const price50 = numOrNull(f.price50.value) || 0;
-  const prices = {};
-  [["6ML", f.price6.value], ["15ML", f.price15.value], ["30ML", f.price30.value], ["50ML", f.price50.value]]
-    .forEach(([k, v]) => { const n = numOrNull(v); if (n !== null) prices[k] = n; });
+  // `price` is the headline price older code falls back to: 50ML for standard
+  // products (unchanged), the default size's price for custom-size products.
+  const headlineSize = isCustomSizes
+    ? window.ZahrounSizes.fallbackSizeOf({ sizes: formSizes, prices, activeSizes })
+    : "50ML";
+  const headlinePrice = prices[headlineSize] || 0;
   const image = galleryImages[0] || "";
   const images = [...galleryImages];
   const sizeImages = {};
-  SIZE_KEYS.forEach(k => { sizeImages[k] = sizeImagesMap[k] || image; });
+  formSizes.forEach(k => { sizeImages[k] = sizeImagesMap[k] || image; });
+
+  // setDoc(..., { merge: true }) merges nested maps key by key, so a size that
+  // was removed (or a price box that was cleared) would otherwise survive in
+  // Firestore and keep showing up on the storefront. Delete those keys.
+  const pricesOut = { ...prices };
+  const sizeImagesOut = { ...sizeImages };
+  if (!isNew && editing) {
+    Object.keys(editing.prices || {}).forEach(k => { if (!(k in prices)) pricesOut[k] = deleteField(); });
+    Object.keys(editing.sizeImages || {}).forEach(k => { if (!(k in sizeImages)) sizeImagesOut[k] = deleteField(); });
+  }
   const data = {
-    id, name: f.name.value.trim(), category: f.category.value, price: price50, prices, image, images, sizeImages: sizeImages || {},
+    id, name: f.name.value.trim(), category: f.category.value, price: headlinePrice, prices: pricesOut, image, images, sizeImages: sizeImagesOut,
     description: f.description.value.trim(), ingredients: f.ingredients.value.trim(),
     tags: { gender: f.gender.value.trim(), type: f.type.value.trim(), concentration: f.concentration.value.trim() },
     fragrance_notes: csv(f.fragrance_notes.value), seasons: csv(f.seasons.value), occasions: csv(f.occasions.value),
     stock: numOrNull(f.stock.value) ?? 0,
     featured: f.featured.checked, bestseller: f.bestseller.checked, newArrival: f.newArrival.checked, hidden: f.hidden.checked,
-    activeSizes: SIZE_KEYS.filter(sz => { const cb = document.getElementById(`sizeOn-${sz}`); return !cb || cb.checked; }),
+    activeSizes,
     defaultDisplaySize: document.getElementById("si-default-size")?.value || "",
     productType: document.getElementById("product-type-sel")?.value || "regular",
     comboItems: (document.querySelector('#product-form [name="comboItems"]')?.value || "").split("\n").map(s => s.trim()).filter(Boolean),
@@ -4351,6 +4462,10 @@ async function saveProduct(e) {
     updatedAt: serverTimestamp()
   };
   if (isNew) data.createdAt = serverTimestamp();
+  // Custom sizes are stored as the product's own size list; switching a product
+  // back to Standard removes that list so it uses the default four again.
+  if (isCustomSizes) data.sizes = [...formSizes];
+  else if (!isNew) data.sizes = deleteField();
   try {
     await setDoc(doc(db, "products", String(id)), data, { merge: true });
     closeForm();
@@ -5947,7 +6062,6 @@ async function initPromotionsPanel() {
     if (e.target.value === 'select' && !_bxgyAllProducts) loadBxgyProducts('');
   }));
   // Load products for free item selection — size-aware checkboxes
-  const _BXGY_SIZES = ['6ML', '15ML', '30ML', '50ML'];
   let _bxgyAllProducts = null;
   async function loadBxgyProducts(filterText) {
     const list = $('bxgy-prod-list'); if (!list) return;
@@ -5962,7 +6076,7 @@ async function initPromotionsPanel() {
       if (!filtered.length) { list.innerHTML = '<span style="color:var(--text-muted);font-size:.8rem">No products found.</span>'; return; }
       list.innerHTML = filtered.map(p => {
         const sizePrices = p.prices || {};
-        const availSizes = _BXGY_SIZES.filter(s => sizePrices[s]);
+        const availSizes = window.ZahrounSizes.sizesOf(p).filter(s => sizePrices[s]);
         if (!availSizes.length) {
           // Fallback for products without granular pricing
           const key = `${p.id}_50ML`;

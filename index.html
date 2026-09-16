@@ -601,7 +601,7 @@
            Arrivals" title above a permanently empty grid, and the error
            re-threw on each of the four events that trigger a re-render. */
         function priceRange(p) {
-            const active = p.activeSizes ?? ['6ML','15ML','30ML','50ML'];
+            const active = window.ZahrounSizes.activeSizesOf(p);
             const vals = p.prices ? Object.entries(p.prices).filter(([k,v]) => active.includes(k) && typeof v === 'number' && v > 0).map(([,v]) => v) : [];
             if (!vals.length) return `Tk ${(p.basePrice || p.price || 0).toLocaleString()}`;
             const mn = Math.min(...vals), mx = Math.max(...vals);
@@ -616,8 +616,8 @@
             featured = featured.slice(0, 4);
 
             grid.innerHTML = featured.map(p => {
-                const active = p.activeSizes ?? ['6ML','15ML','30ML','50ML'];
-                const bestSize = ['50ML','30ML','15ML','6ML'].find(s => active.includes(s)) || '50ML';
+                const active = window.ZahrounSizes.activeSizesOf(p);
+                const bestSize = window.ZahrounSizes.cardSizeOf(p);
                 const regularPriceAtBestSize = (p.prices && p.prices[bestSize]) ? p.prices[bestSize] : (p.basePrice || p.price || 0);
                 const _fsItem = window.getFlashSaleItem ? window.getFlashSaleItem(p.id) : null;
                 const _fsBest = (_fsItem && _fsItem.prices && window.pickCardFlashSaleSize) ? window.pickCardFlashSaleSize(_fsItem.prices, p.prices, p.defaultDisplaySize) : null;
@@ -637,7 +637,7 @@
                         <img src="${ctf((p.sizeImages && p.defaultDisplaySize && p.sizeImages[p.defaultDisplaySize]) || p.image)}" alt="${p.name}" class="product-img" loading="lazy" style="background-color:#FFFFFF;">
                         ${saleBadge}
                         <button class="wish-btn${inWish ? ' active' : ''}" data-pid="${p.id}" onclick="event.stopPropagation();window.Wishlist&&window.Wishlist.toggle(${p.id})" title="Wishlist" aria-label="Add to wishlist" style="position:absolute;top:.5rem;right:.5rem;background:rgba(255,255,255,.85);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.15rem;color:${inWish?'#c0392b':'#888'};box-shadow:0 1px 4px rgba(0,0,0,.12);z-index:2;transition:all .2s;"><ion-icon name="${inWish?'heart':'heart-outline'}"></ion-icon></button>
-                        <button class="add-to-cart-quick" onclick="event.stopPropagation(); addToCart(${p.id}, '${active.length ? saleSize : '50ML'}', ${effectivePrice}); showAddedToast('${p.name}')">Add to Cart</button>
+                        <button class="add-to-cart-quick" onclick="event.stopPropagation(); addToCart(${p.id}, '${active.length ? saleSize : bestSize}', ${effectivePrice}); showAddedToast('${p.name}')">Add to Cart</button>
                     </div>
                     <div class="product-info">
                         <span class="product-category">${p.category}</span>
@@ -656,8 +656,8 @@
             if (!newProds.length) { sec.style.display = 'none'; return; }
             sec.style.display = '';
             grid.innerHTML = newProds.map(p => {
-                const active = p.activeSizes ?? ['6ML','15ML','30ML','50ML'];
-                const bestSize = ['50ML','30ML','15ML','6ML'].find(s => active.includes(s)) || '50ML';
+                const active = window.ZahrounSizes.activeSizesOf(p);
+                const bestSize = window.ZahrounSizes.cardSizeOf(p);
                 const regularPriceAtBestSize = (p.prices && p.prices[bestSize]) ? p.prices[bestSize] : (p.basePrice || p.price || 0);
                 const _fsItem = window.getFlashSaleItem ? window.getFlashSaleItem(p.id) : null;
                 const _fsBest = (_fsItem && _fsItem.prices && window.pickCardFlashSaleSize) ? window.pickCardFlashSaleSize(_fsItem.prices, p.prices, p.defaultDisplaySize) : null;

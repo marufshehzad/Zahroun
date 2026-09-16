@@ -259,10 +259,18 @@
        stored cart on products-ready / flashsale-status; re-rendering afterwards
        is what makes this page agree with checkout. */
     (function keepCartPageFresh() {
-        const rerender = () => {
+        // Deferred one tick on purpose. js/cart.js also listens to
+        // products-ready / flashsale-status and re-prices the stored cart
+        // (reconcileCart) — but it is a deferred script, so its listener is
+        // registered AFTER this one and runs second. Rendering synchronously
+        // here painted the stale localStorage prices first: with an expired
+        // flash sale, a first (cold-cache) visit showed the old sale total on
+        // this page while checkout showed the real one. setTimeout lets every
+        // listener for the event finish before the page is drawn.
+        const rerender = () => setTimeout(() => {
             const wrap = document.getElementById("cart-page-content");
             if (wrap && typeof renderCartPage === "function") renderCartPage();
-        };
+        }, 0);
         document.addEventListener("products-ready", rerender);
         document.addEventListener("flashsale-status", rerender);
         window.addEventListener("promos-updated", rerender);

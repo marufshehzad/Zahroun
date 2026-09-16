@@ -527,7 +527,6 @@
             }
             return url.includes('/upload/') ? url.replace('/upload/', '/upload/' + tr + '/') : url;
         }
-        const sizeOrder = ['6ML', '15ML', '30ML', '50ML'];
         let currentProduct = null;
         let hoverPreviewTimer = null;
         // js/store.js publishes products up to 3x per page load (bundled →
@@ -676,9 +675,10 @@
                     num_items: 1
                 });
             }
-            // Filter active sizes (backward compat: if no activeSizes, all 4 are shown)
-            const activeSizeList = product.activeSizes ?? sizeOrder;
-            const displaySizes = sizeOrder.filter(s => activeSizeList.includes(s));
+            // The product's own sizes (the 4 standard ones unless the admin gave it
+            // a custom list, e.g. an attar), filtered to the switched-on ones and
+            // smallest first. No activeSizes means all of them are shown.
+            const displaySizes = window.ZahrounSizes.activeSizesOf(product);
             const noSizes = displaySizes.length === 0;
 
             // Default selected = admin-chosen defaultDisplaySize (if any) — this is a deliberate
@@ -704,7 +704,7 @@
                 const isActive = size === currentSelectedSize;
                 return `
                     <button class="size-btn ${isActive ? 'active' : ''}" data-size="${size}" onclick="selectSize('${size}', ${price}, this)">
-                        <ion-icon name="checkmark-outline" class="check-icon" style="${isActive ? '' : 'display:none;'}"></ion-icon> ${size} SPRAY
+                        <ion-icon name="checkmark-outline" class="check-icon" style="${isActive ? '' : 'display:none;'}"></ion-icon> ${size}
                     </button>`;
             }).join('');
             const sizePreviews = displaySizes.map(size => {
@@ -921,7 +921,8 @@
             `);
 
             // Product rich result schema — shows price + availability in Google search
-            const _price = (product.prices && product.prices["50ML"]) ? product.prices["50ML"] : (product.price || 0);
+            const _schemaSize = window.ZahrounSizes.fallbackSizeOf(product);
+            const _price = (product.prices && product.prices[_schemaSize]) ? product.prices[_schemaSize] : (product.price || 0);
             const _schema = document.createElement("script");
             _schema.type = "application/ld+json";
             _schema.className = "dynamic-seo";
@@ -1056,7 +1057,7 @@
             // override an admin-chosen defaultDisplaySize (that's a deliberate per-product choice)
             if (fsPrices && !_userPickedSize && !currentProduct.defaultDisplaySize && window.cheapestFlashSale) {
                 const best = window.cheapestFlashSale(fsPrices, currentProduct.prices);
-                const _avail = currentProduct.activeSizes ?? ['6ML','15ML','30ML','50ML'];
+                const _avail = window.ZahrounSizes.activeSizesOf(currentProduct);
                 if (best && _avail.includes(best.size) && currentSelectedSize !== best.size) {
                     currentSelectedSize = best.size;
                     updateSelectedSizeUI(best.size);

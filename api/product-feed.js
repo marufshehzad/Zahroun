@@ -9,6 +9,21 @@ const PROJECT_ID = 'zahroun';
 const API_KEY = 'AIzaSyA8D5-muT5d_kFekNU1lSSYtgZGJI5_OZA'; // public web key — see js/firebase-config.js
 const SITE = 'https://zahroun.com';
 const SIZE_ORDER = ['50ML', '30ML', '15ML', '6ML'];
+
+// Millilitres in a size label ("12ML" -> 12). Mirrors js/pricing.js
+// ZahrounSizes.mlOf — this runs server-side, so it cannot use the browser copy.
+function mlOf(size) {
+    const m = String(size == null ? '' : size).trim().toUpperCase().replace(/\s+/g, '').match(/^(\d{1,4}(?:\.\d)?)(?:ML)?$/);
+    const n = m ? parseFloat(m[1]) : 0;
+    return n > 0 && n <= 1000 ? n : 0;
+}
+
+// The sizes a product is sold in: its own custom list (e.g. an attar in
+// 3/6/12ML) when the admin set one, otherwise the four standard sizes.
+function sizesOf(p) {
+    const custom = Array.isArray(p.sizes) ? p.sizes.filter(s => mlOf(s) > 0) : [];
+    return custom.length ? custom : SIZE_ORDER;
+}
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 
 function httpsGetJson(url) {
@@ -93,10 +108,14 @@ module.exports = async (req, res) => {
 
         products.forEach(p => {
             if (!p || p.hidden || p.id == null) return;
-            const active = (p.activeSizes && p.activeSizes.length) ? p.activeSizes : SIZE_ORDER;
+            const own = sizesOf(p);
+            const active = (p.activeSizes && p.activeSizes.length) ? p.activeSizes.filter(s => own.includes(s)) : own;
+            // Largest switched-on size — for standard products that is the old
+            // SIZE_ORDER.find() pick (50ML first), for custom ones the biggest.
+            const largest = [...active].sort((a, b) => mlOf(b) - mlOf(a))[0];
             const repSize = (p.defaultDisplaySize && active.includes(p.defaultDisplaySize))
                 ? p.defaultDisplaySize
-                : (SIZE_ORDER.find(s => active.includes(s)) || '50ML');
+                : (largest || '50ML');
             const price = (p.prices && p.prices[repSize]) || p.basePrice || p.price || 0;
             if (!price) return;
             const image = (p.sizeImages && p.sizeImages[repSize]) || p.image || '';

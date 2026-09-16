@@ -569,7 +569,8 @@
         import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
         const SIZE_ML = { "6ML": 6, "15ML": 15, "30ML": 30, "50ML": 50 };
-        function sizeNum(s) { return SIZE_ML[s] || 0; }
+        // Millilitres in a size label — custom sizes (3ML, 12ML) included.
+        function sizeNum(s) { return window.ZahrounSizes.mlOf(s); }
 
         let _selectedGift = null;
 
@@ -679,6 +680,10 @@
                 if (!prod) return null;
                 // Respect stock: if product has a numeric stock field and it's 0, exclude it
                 if (typeof prod.stock === 'number' && prod.stock <= 0) return null;
+                // A product priced per size must actually sell this size. Sizes can
+                // now be removed or customised in the admin panel, and falling back to
+                // prod.price would offer a gift in a size that no longer exists.
+                if (prod.prices && Object.keys(prod.prices).length && !(Number(prod.prices[fps.size]) > 0)) return null;
                 const price = (prod.prices && prod.prices[fps.size]) || prod.price || 0;
                 const rawImg = (prod.sizeImages && prod.sizeImages[fps.size]) || prod.image || '';
                 const image = rawImg;

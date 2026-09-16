@@ -25,8 +25,13 @@ function reconcileCart() {
         .filter(item => products.some(p => p.id === item.id))
         .map(item => {
             const prod = products.find(p => p.id === item.id);
-            if (!item.size || item.size === 'undefined') item.size = '50ML';
-            if (!prod.prices[item.size] && prod.prices['50ML']) item.size = '50ML';
+            // A cart line whose size is missing, or no longer priced on this
+            // product, falls back to the product's own default size: 50ML for a
+            // standard product, the largest size for a custom one (e.g. attar).
+            const _prices = prod.prices || {};
+            const _fallback = window.ZahrounSizes.fallbackSizeOf(prod);
+            if (!item.size || item.size === 'undefined') item.size = _fallback;
+            if (!_prices[item.size] && _prices[_fallback]) item.size = _fallback;
             const catalogPrice = (prod.prices && prod.prices[item.size]) ? prod.prices[item.size] : prod.price;
 
             if (fsLoaded) {
@@ -84,9 +89,11 @@ function cartToast(msg) {
     }
 }
 
-window.addToCart = function(productId, size = '50ML', price = null) {
+window.addToCart = function(productId, size = null, price = null) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
+    // No size given -> the product's own default (50ML for standard products).
+    if (!size) size = window.ZahrounSizes.fallbackSizeOf(product);
 
     let itemPrice = price;
     if (itemPrice === null || isNaN(itemPrice)) {
