@@ -701,19 +701,29 @@
         }
 
         const _IK_BASE = 'https://ik.imagekit.io/zahroun/';
+        // Width-only, no forced height/crop — gift.image is EITHER a size-specific
+        // image (already square, cropped 1:1 in admin) OR a fallback to the
+        // product's own main image (cropped 20:27 portrait in admin — see
+        // `rawImg = prod.sizeImages[fps.size] || prod.image` above). Forcing a
+        // w-400,h-400 SQUARE crop here used to chop the top/bottom off whichever
+        // gifts fell back to the portrait image, while the square ones looked
+        // fine — the inconsistent "sometimes cropped wrong" bug. The
+        // `.fgs-card-img-wrap img { object-fit: contain }` CSS already letterboxes
+        // non-square images correctly, so a plain width resize (whatever aspect
+        // ratio the source actually is) always renders the full, uncropped photo.
         function _fctf(url) {
             if (!url) return '';
-            if (isR2Url(url)) return r2Url(url, 400, 400);
+            if (isR2Url(url)) return r2Url(url, 400);
             if (url.startsWith(_IK_BASE)) {
                 if (url.includes('/tr:')) return url;
-                return url.replace(_IK_BASE, `${_IK_BASE}tr:w-400,h-400,f-auto/`);
+                return url.replace(_IK_BASE, `${_IK_BASE}tr:w-400,f-auto/`);
             }
             if (!url.includes('/upload/')) return url;
             // Only skip if a Cloudinary TRANSFORM is already present (e.g. w_400, f_auto).
             // The old check wrongly matched the folder path (…/upload/zahroun/…) and
             // served full-res originals — the cause of slow gift images.
             if (url.includes('f_auto') || /\/upload\/[a-z]{1,2}_[a-z0-9]/i.test(url)) return url;
-            return url.replace('/upload/', '/upload/w_400,h_400,c_fill,f_auto,q_auto/');
+            return url.replace('/upload/', '/upload/w_400,f_auto,q_auto/');
         }
 
         function renderGifts(giftOptions) {

@@ -1092,10 +1092,17 @@
             const raw = product.sizeImages && product.sizeImages[size] ? product.sizeImages[size] : product.image;
             return _ctf(raw, 'w_800,f_auto,q_auto');
         }
-        // Separate thumbnail transform for the 62px size-preview buttons
+        // Separate thumbnail transform for the 62px size-preview buttons.
+        // Width-only, no forced crop — `raw` is EITHER a size-specific image
+        // (already square, cropped 1:1 in admin) or a fallback to the product's
+        // own main image (cropped 20:27 portrait in admin). Forcing a
+        // w_130,h_130,c_fill SQUARE crop here used to chop the top/bottom off
+        // whichever sizes fell back to the portrait image. `.size-preview img`
+        // is already `aspect-ratio:1 / object-fit:contain`, so a plain width
+        // resize always renders the full, uncropped photo, letterboxed if needed.
         function getSizeThumb(product, size) {
             const raw = product.sizeImages && product.sizeImages[size] ? product.sizeImages[size] : product.image;
-            return _ctf(raw, 'w_130,h_130,c_fill,f_auto,q_auto');
+            return _ctf(raw, 'w_130,f_auto,q_auto');
         }
 
         function updateSelectedSizeUI(size) {
