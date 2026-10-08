@@ -5,6 +5,10 @@
     "api/*.js": {
       "memory": 128,
       "maxDuration": 10
+    },
+    "api/img.js": {
+      "memory": 512,
+      "maxDuration": 10
     }
   },
   "rewrites": [

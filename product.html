@@ -505,13 +505,29 @@
 
     <script type="module" src="js/store.js"></script>
     <script type="module" src="js/promotions.js"></script>
-    <script src="js/pricing.js"></script>
+    <script src="js/pricing.js?v=20260917b"></script>
     <script defer src="js/cart.js"></script>
     <script defer src="js/ui.js"></script>
     <script>
         const _IK_BASE = "https://ik.imagekit.io/zahroun/";
+        // R2-backed uploads (see js/images.js) are served through our own
+        // /api/img?key=...&w=...&h=... resize proxy instead of ik.imagekit.io's
+        // tr: params — this is a plain classic <script> (no import), so the
+        // couple lines of R2-url detection are duplicated here rather than
+        // imported from js/images.js.
+        function _isR2(url) { return typeof url === "string" && url.startsWith("/api/img?"); }
+        function _r2(url, w, h) {
+            const u = new URL(url, window.location.origin);
+            if (w) u.searchParams.set("w", String(Math.round(w)));
+            if (h) u.searchParams.set("h", String(Math.round(h)));
+            return u.pathname + u.search;
+        }
         function _ctf(url, tr) {
             if (!url) return '';
+            if (_isR2(url)) {
+                const wm = /w_(\d+)/.exec(tr), hm = /h_(\d+)/.exec(tr);
+                return _r2(url, wm ? Number(wm[1]) : undefined, hm ? Number(hm[1]) : undefined);
+            }
             if (url.startsWith(_IK_BASE)) {
                 const ikTr = tr.split(',').map(t => {
                     const m = t.match(/^([a-z]+)_(.+)$/i);

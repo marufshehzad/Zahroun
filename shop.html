@@ -481,12 +481,13 @@
 
     <script type="module" src="js/store.js"></script>
     <script type="module" src="js/promotions.js"></script>
-    <script src="js/pricing.js"></script>
+    <script src="js/pricing.js?v=20260917b"></script>
     <script defer src="js/cart.js"></script>
     <script defer src="js/ui.js"></script>
     <script type="module">
         import { db } from "./js/firebase-config.js";
         import { collection, getDocs, getDoc, doc, addDoc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { isR2Url, r2Url } from "./js/images.js";
 
         const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
         const filterList = document.getElementById("category-filter");
@@ -581,13 +582,14 @@
         function cardImg(url, w = 400) {
             if (!url) return "";
             const h = Math.round(w * 1.35);
+            if (isR2Url(url)) return r2Url(url, w, h);
             if (url.startsWith(IK_BASE)) return url.replace(IK_BASE, `${IK_BASE}tr:w-${w},h-${h},fo-auto,f-auto/`);
             if (!url.includes("/upload/")) return url;
             return url.replace("/upload/", `/upload/w_${w},h_${h},c_fill,g_auto,f_auto,q_auto/`);
         }
         // Responsive srcset — phones download ~250px files instead of 400px ones
         function cardSrcset(url) {
-            if (!url || !(url.startsWith(IK_BASE) || url.includes("/upload/"))) return "";
+            if (!url || !(url.startsWith(IK_BASE) || url.includes("/upload/") || isR2Url(url))) return "";
             return `${cardImg(url, 250)} 250w, ${cardImg(url, 400)} 400w, ${cardImg(url, 600)} 600w`;
         }
         const CARD_SIZES = "(max-width: 768px) 46vw, 280px";
@@ -884,7 +886,8 @@
             }
             const cat = (_allCats || []).find(c => c.name === currentFilter);
             if (!cat || (!cat.banner && !cat.description)) { host.innerHTML = ""; return; }
-            const bImg = cat.banner && cat.banner.startsWith(IK_BASE) ? cat.banner.replace(IK_BASE, `${IK_BASE}tr:w-1200,h-320,f-auto/`)
+            const bImg = cat.banner && isR2Url(cat.banner) ? r2Url(cat.banner, 1200, 320)
+                : cat.banner && cat.banner.startsWith(IK_BASE) ? cat.banner.replace(IK_BASE, `${IK_BASE}tr:w-1200,h-320,f-auto/`)
                 : cat.banner && cat.banner.includes("/upload/") ? cat.banner.replace("/upload/", "/upload/w_1200,h_320,c_fill,f_auto,q_auto/")
                 : cat.banner;
             host.innerHTML = `<div style="margin:-.75rem 0 1.75rem;border-radius:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.06);">

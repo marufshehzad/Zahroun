@@ -246,16 +246,21 @@
     </div>
 
     <script type="module" src="js/store.js"></script>
-    <script src="js/pricing.js"></script>
+    <script src="js/pricing.js?v=20260917b"></script>
     <script defer src="js/cart.js"></script>
     <script defer src="js/ui.js"></script>
     <script type="module">
         import { db } from "./js/firebase-config.js";
         import { getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { isR2Url, r2Url } from "./js/images.js";
 
         const IK_BASE = "https://ik.imagekit.io/zahroun/";
         function cloudinaryTransform(url, transform) {
             if (!url) return url;
+            if (isR2Url(url)) {
+                const wm = /w_(\d+)/.exec(transform), hm = /h_(\d+)/.exec(transform);
+                return r2Url(url, wm ? Number(wm[1]) : undefined, hm ? Number(hm[1]) : undefined);
+            }
             if (url.startsWith(IK_BASE)) {
                 const tr = transform.split(",").map(t => {
                     const m = t.match(/^([a-z]+)_(.+)$/i);

@@ -9,7 +9,7 @@ import {
   serverTimestamp, Timestamp, query, limit, onSnapshot, where, orderBy, arrayUnion,
   runTransaction, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { uploadImage, optimizedUrl } from "./imagekit.js";
+import { uploadImage, optimizedUrl, deleteImage } from "./images.js";
 
 const $ = (sel) => document.querySelector(sel);
 const gate = $("#admin-gate");
@@ -1000,6 +1000,7 @@ function setupSection(name) {
       } catch (err) { status.textContent = err.message || "Upload failed."; }
     });
     $("#cat-banner-del").addEventListener("click", () => {
+      void deleteImage($("#cat-form [name=banner]").value);
       $("#cat-form [name=banner]").value = "";
       _setCatBannerPreview("");
       document.getElementById("cat-banner-status").textContent = "";
@@ -4319,6 +4320,7 @@ function renderGalleryThumbs() {
   el.querySelectorAll(".th-del").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
+      void deleteImage(galleryImages[Number(btn.dataset.gi)]);
       galleryImages.splice(Number(btn.dataset.gi), 1);
       document.getElementById("product-form").image.value = galleryImages[0] || "";
       renderGalleryThumbs();
@@ -4368,6 +4370,7 @@ function renderSizeImageGrid() {
   });
   grid.querySelectorAll(".si-clear").forEach(btn => {
     btn.addEventListener("click", () => {
+      void deleteImage(sizeImagesMap[btn.dataset.size]);
       sizeImagesMap[btn.dataset.size] = "";
       renderSizeImageGrid();
     });
@@ -5728,6 +5731,7 @@ function bindPageUpload(fileId, previewId, statusId, delId, { aspectRatio = NaN 
 
   if (delBtn) {
     delBtn.addEventListener("click", () => {
+      void deleteImage(fileInput._uploadedUrl);
       preview.src = "";
       preview.classList.remove("has-img");
       delBtn.style.display = "none";
@@ -5799,6 +5803,7 @@ function renderGalleryPageThumbs() {
   el.querySelectorAll(".th-del").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
+      void deleteImage(galleryPageImages[Number(btn.dataset.gpi)]);
       galleryPageImages.splice(Number(btn.dataset.gpi), 1);
       renderGalleryPageThumbs();
     });

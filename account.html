@@ -434,13 +434,14 @@
 
     <script type="module" src="js/store.js"></script>
     <script type="module" src="js/promotions.js"></script>
-    <script src="js/pricing.js"></script>
+    <script src="js/pricing.js?v=20260917b"></script>
     <script defer src="js/cart.js"></script>
     <script defer src="js/ui.js"></script>
     <script type="module">
         import { db, auth } from "./js/firebase-config.js";
         import { onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { isR2Url, r2Url } from "./js/images.js";
 
         const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
         const fmtDate = (ts) => { try { return ts?.toDate ? ts.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : ""; } catch { return ""; } };
@@ -607,6 +608,7 @@
         const _IK_BASE = "https://ik.imagekit.io/zahroun/";
         function _cardImg(url) {
             if (!url) return "";
+            if (isR2Url(url)) return r2Url(url, 400, 540);
             if (url.startsWith(_IK_BASE)) return url.replace(_IK_BASE, `${_IK_BASE}tr:w-400,h-540,fo-auto,f-auto/`);
             if (!url.includes("/upload/")) return url;
             return url.replace("/upload/", "/upload/w_400,h_540,c_fill,g_auto,f_auto,q_auto/");

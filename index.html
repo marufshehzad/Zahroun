@@ -454,7 +454,7 @@
     </div>
 
     <script type="module" src="js/store.js"></script>
-    <script src="js/pricing.js"></script>
+    <script src="js/pricing.js?v=20260917b"></script>
     <script defer src="js/cart.js"></script>
     <script defer src="js/ui.js"></script>
     <script type="module">
@@ -582,6 +582,18 @@
     </script>
     <script>
         const CTF_IK_BASE = "https://ik.imagekit.io/zahroun/";
+        // R2-backed uploads (see js/images.js) are served through our own
+        // /api/img?key=...&w=...&h=... resize proxy instead of ik.imagekit.io's
+        // tr: params — this is a plain classic <script> (no import), so the
+        // couple lines of R2-url detection are duplicated here rather than
+        // imported from js/images.js.
+        function _isR2(url) { return typeof url === "string" && url.startsWith("/api/img?"); }
+        function _r2(url, w, h) {
+            const u = new URL(url, window.location.origin);
+            if (w) u.searchParams.set("w", String(Math.round(w)));
+            if (h) u.searchParams.set("h", String(Math.round(h)));
+            return u.pathname + u.search;
+        }
         function ctf(url) {
             if (!url) return url;
             // Must request the EXACT same dimensions as shop.html's cardImg(url) default
@@ -589,6 +601,7 @@
             // AI auto-crop (fo-auto) pick a different framing for the same photo — that's
             // what caused Bestsellers to crop differently than the Shop grid. Requesting
             // identical params hits the identical cached derivative on both pages.
+            if (_isR2(url)) return _r2(url, 400, 540);
             if (url.startsWith(CTF_IK_BASE)) return url.replace(CTF_IK_BASE, `${CTF_IK_BASE}tr:w-400,h-540,fo-auto,f-auto/`);
             if (!url.includes("/upload/")) return url;
             return url.replace("/upload/", "/upload/w_400,h_540,c_fill,g_auto,f_auto,q_auto/");

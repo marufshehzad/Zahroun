@@ -10,7 +10,7 @@
         - Build > Authentication  (Email/Password + Google sign-in)
         - Build > Firestore Database  (Start in *production* mode)
    NOTE: Firebase Storage now requires the paid Blaze plan, so image
-   uploads use ImageKit's free tier instead (see js/imagekit.js).
+   uploads go to Cloudflare R2 instead (see js/images.js).
 
    NOTE: These config values are NOT secrets. They are public client
    identifiers and are safe to commit. Real security comes from the
@@ -64,4 +64,4 @@ try {
 export const db = _db;
 
 export default app;
-/* Image uploads use ImageKit (js/imagekit.js), not Firebase Storage. */
+/* Image uploads go to Cloudflare R2 (js/images.js), not Firebase Storage. */
