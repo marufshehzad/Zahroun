@@ -4395,7 +4395,14 @@ async function handleSizeImageUpload(e) {
   if (!file) return;
   const size = e.target.dataset.size;
   let blob;
-  try { blob = await openCropModal(file, { aspectRatio: 1 }); } catch { e.target.value = ""; return; }
+  // Same 20/27 ratio as the main product gallery image (handleMultiImageUpload),
+  // not a 1:1 square. Every grid/card context that falls back between
+  // `sizeImages[size]` and `product.image` (shop grid, Bestsellers, New
+  // Arrivals — see defaultDisplaySize) assumes a portrait photo; a square
+  // size-image forced into that same 20:27 card slot got its left/right
+  // edges cropped off. Cropping to the same ratio here means every stored
+  // photo — main or per-size — is interchangeable everywhere it's shown.
+  try { blob = await openCropModal(file, { aspectRatio: 20 / 27 }); } catch { e.target.value = ""; return; }
   const statusEl = document.getElementById("img-status");
   _showUploadProgress(statusEl, 0, size);
   try {
