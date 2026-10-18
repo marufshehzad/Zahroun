@@ -1766,53 +1766,9 @@
             } catch (e) { console.error('[Checkout] cart clear failed', e); }
             try { if (window.clearAppliedCoupon) window.clearAppliedCoupon(); } catch (e) { console.error('[Checkout] clearAppliedCoupon failed', e); }
 
-            try {
-                if (window.zahrounGA) window.zahrounGA.trackPurchase(orderId, items, total, coupon ? coupon.id : null);
-                if (typeof window.TrackingManager !== 'undefined') {
-                    // Advanced matching re-init with customer data for higher EMQ score
-                    const _amData = {
-                        em: customerEmail || '',
-                        ph: mobile || '',
-                        fn: name ? name.split(' ')[0] : '',
-                        ln: name && name.split(' ').length > 1 ? name.split(' ').slice(1).join(' ') : '',
-                        ct: district || '',
-                        country: 'bd',
-                        external_id: typeof getExternalId === 'function' ? getExternalId() : ''
-                    };
-                    fbq('init', '1581299296765663', _amData);
-                    const _storageKey = 'zhr_px_' + orderId;
-                    const _purchaseUserData = {
-                        email: customerEmail || '',
-                        phone: mobile || '',
-                        first_name: name ? name.split(' ')[0] : '',
-                        last_name: name && name.split(' ').length > 1 ? name.split(' ').slice(1).join(' ') : '',
-                        city: district || '',
-                        external_id: typeof getExternalId === 'function' ? getExternalId() : ''
-                    };
-                    const _purchaseCustomData = {
-                        content_ids: items.map(i => String(i.id)),
-                        content_name: items.map(i => i.name),
-                        content_type: 'product',
-                        contents: items.map(i => ({ id: String(i.id), quantity: i.quantity, item_price: Number(i.selectedPrice) || 0 })),
-                        sizes: items.map(i => i.size),
-                        value: total,
-                        currency: 'BDT',
-                        num_items: items.reduce((s, i) => s + i.quantity, 0),
-                        order_id: orderId,
-                    };
-                    if (!sessionStorage.getItem(_storageKey)) {
-                        const _purId = window.TrackingManager.processTracking('purchase', _purchaseCustomData, _purchaseUserData, 'PUR');
-                        if (_purId) {
-                            document.getElementById('field_purchase_event_id').value = _purId;
-                            sessionStorage.setItem(_storageKey, '1');
-                            if (typeof window.updateOrderPixelEventId === 'function') window.updateOrderPixelEventId(orderId, _purId);
-                        }
-                    }
-                }
-            } catch (analyticsErr) {
-                // Analytics must never be able to report a committed order as failed.
-                console.error('[Checkout] post-order analytics failed (order WAS placed):', analyticsErr);
-            }
+            // Purchase is intentionally NOT reported from the browser (neither Meta Pixel/CAPI nor GA4):
+            // a placed COD order is not yet a real sale. The server reports it after admin confirmation
+            // (tracking roadmap). Do not re-add a browser-side Purchase here.
 
             // Email is sent by admin when order is confirmed — not here.
             // Coupon usage + loyalty deduction are best-effort network writes;
